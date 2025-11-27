@@ -35,6 +35,21 @@ const photographers = {
       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
     ]
+  },
+  sophie: {
+    name: "Sophie M.",
+    location: "Notting Hill, London",
+    bio: "Fashion and editorial photography specialist. I help brands and influencers create stunning visual stories that stand out.",
+    price: "£50",
+    rating: 5.0,
+    reviews: 42,
+    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400",
+    portfolio: [
+      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400", 
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400"
+    ]
   }
 };
 
@@ -102,7 +117,7 @@ export default function PhotographerProfile() {
           <div className="grid grid-cols-3 gap-2">
             {data.portfolio.map((img, i) => (
               <div key={i} className="aspect-square rounded-xl overflow-hidden bg-card">
-                <img src={img} className="w-full h-full object-cover hover:scale-110 transition-transform duration-500" />
+                <img src={img} className="w-full h-full object-cover active:scale-95 transition-transform duration-200" />
               </div>
             ))}
           </div>
