@@ -9,6 +9,7 @@ import PhotographerProfile from "@/pages/photographer";
 import Booking from "@/pages/booking";
 
 import PhotographerDashboard from "@/pages/photographer-dashboard";
+import Login from "@/pages/login";
 
 function Router() {
   return (
