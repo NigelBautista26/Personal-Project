@@ -121,19 +121,19 @@ export default function PhotographerProfile() {
         <div className="px-6 mb-4">
           <h3 className="font-bold text-white">Portfolio</h3>
         </div>
-        <div className="grid grid-cols-3 gap-0.5">
+        <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
           {data.portfolio.map((img, i) => (
             <div 
               key={i} 
-              className="aspect-square relative group cursor-pointer overflow-hidden bg-card"
+              className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
               onClick={() => setSelectedImage(img)}
             >
               <img 
                 src={img} 
-                className="w-full h-full object-cover transition-opacity hover:opacity-90" 
+                className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
                 alt={`Portfolio ${i + 1}`}
               />
-              <div className="absolute inset-0 bg-white/10 opacity-0 active:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
             </div>
           ))}
         </div>
