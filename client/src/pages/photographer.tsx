@@ -109,8 +109,8 @@ export default function PhotographerProfile() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-white/10 z-50">
-        <div className="max-w-md mx-auto flex gap-4 items-center">
+      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
+        <div className="flex gap-4 items-center">
           <div className="flex-1">
             <span className="text-muted-foreground text-xs uppercase tracking-wider">Starting from</span>
             <div className="flex items-baseline gap-1">

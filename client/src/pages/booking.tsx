@@ -137,8 +137,8 @@ export default function Booking() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t border-white/10 z-50">
-        <div className="max-w-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
+        <div className="">
           <Button 
             onClick={() => step === 1 ? setStep(2) : setStep(3)}
             className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
