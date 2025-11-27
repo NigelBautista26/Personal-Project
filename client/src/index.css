@@ -41,7 +41,7 @@
 }
 
 :root {
-  /* Dark Mode Strict for SnapCity */
+  /* Dark Mode Strict for SnapNow */
   --background: 220 13% 6%; /* Almost black */
   --foreground: 0 0% 100%;
 
@@ -51,7 +51,7 @@
   --popover: 220 13% 10%;
   --popover-foreground: 0 0% 100%;
 
-  --primary: 221 83% 53%; /* SnapCity Blue */
+  --primary: 221 83% 53%; /* SnapNow Blue */
   --primary-foreground: 0 0% 100%;
 
   --secondary: 220 13% 18%;

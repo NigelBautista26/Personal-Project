@@ -14,7 +14,7 @@ export default function Welcome() {
           <MapPin className="w-10 h-10 text-black fill-black" />
         </div>
         
-        <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">SnapCity</h1>
+        <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">SnapNow</h1>
         <p className="text-muted-foreground text-center max-w-[250px] leading-relaxed">
           Get professional photos, anywhere you travel.
         </p>
