@@ -10,6 +10,7 @@ import Booking from "@/pages/booking";
 
 import PhotographerDashboard from "@/pages/photographer-dashboard";
 import Login from "@/pages/login";
+import BusinessCase from "@/pages/business-case";
 
 function Router() {
   return (
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/home" component={Home} />
       <Route path="/dashboard" component={PhotographerDashboard} />
+      <Route path="/business-case" component={BusinessCase} />
       <Route path="/photographer/:id" component={PhotographerProfile} />
       <Route path="/book/:id" component={Booking} />
       <Route component={NotFound} />
