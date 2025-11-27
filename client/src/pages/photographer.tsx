@@ -1,6 +1,8 @@
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Heart, Share, Star, MapPin, Clock, ChevronRight } from "lucide-react";
+import { ArrowLeft, Heart, Share, Star, MapPin, Clock, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import annaImg from "@assets/generated_images/portrait_of_a_professional_female_photographer_named_anna.png";
 import joseImg from "@assets/generated_images/portrait_of_a_professional_male_photographer_named_jose.png";
 
@@ -57,6 +59,7 @@ export default function PhotographerProfile() {
   const [match, params] = useRoute("/photographer/:id");
   const id = params?.id || "anna";
   const data = photographers[id as keyof typeof photographers] || photographers.anna;
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -111,18 +114,59 @@ export default function PhotographerProfile() {
             {data.bio}
           </p>
         </div>
+      </div>
 
-        <div className="mb-6">
-          <h3 className="font-bold text-white mb-4">Portfolio</h3>
-          <div className="grid grid-cols-3 gap-2">
-            {data.portfolio.map((img, i) => (
-              <div key={i} className="aspect-square rounded-xl overflow-hidden bg-card">
-                <img src={img} className="w-full h-full object-cover active:scale-95 transition-transform duration-200" />
-              </div>
-            ))}
-          </div>
+      {/* Portfolio Grid - Full Width */}
+      <div className="mb-6">
+        <div className="px-6 mb-4">
+          <h3 className="font-bold text-white">Portfolio</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-0.5">
+          {data.portfolio.map((img, i) => (
+            <div 
+              key={i} 
+              className="aspect-square relative group cursor-pointer overflow-hidden bg-card"
+              onClick={() => setSelectedImage(img)}
+            >
+              <img 
+                src={img} 
+                className="w-full h-full object-cover transition-opacity hover:opacity-90" 
+                alt={`Portfolio ${i + 1}`}
+              />
+              <div className="absolute inset-0 bg-white/10 opacity-0 active:opacity-100 transition-opacity" />
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-6 right-6 text-white/80 hover:text-white z-10 p-2 rounded-full hover:bg-white/10"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={selectedImage}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
         <div className="flex gap-4 items-center">
