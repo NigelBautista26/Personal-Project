@@ -1,41 +1,92 @@
-import { BalanceCard } from "@/components/balance-card";
-import { ActionButtons } from "@/components/action-buttons";
-import { CryptoList } from "@/components/crypto-list";
+import { MapMock } from "@/components/map-mock";
 import { BottomNav } from "@/components/bottom-nav";
-import { Bell, Search } from "lucide-react";
+import { PhotographerCard } from "@/components/photographer-card";
+import { Search, SlidersHorizontal, MapPin } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+import annaImg from "@assets/generated_images/portrait_of_a_professional_female_photographer_named_anna.png";
+import joseImg from "@assets/generated_images/portrait_of_a_professional_male_photographer_named_jose.png";
 
 export default function Home() {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const photographers = [
+    {
+      id: "anna",
+      name: "Anna L.",
+      location: "London, UK",
+      price: "£40",
+      rating: 4.9,
+      reviews: 128,
+      image: annaImg
+    },
+    {
+      id: "jose",
+      name: "Jose V.",
+      location: "Shoreditch, London",
+      price: "£35",
+      rating: 4.7,
+      reviews: 84,
+      image: joseImg
+    },
+    {
+      id: "sophie",
+      name: "Sophie M.",
+      location: "Notting Hill, London",
+      price: "£50",
+      rating: 5.0,
+      reviews: 42,
+      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100" // Fallback/Stock
+    }
+  ];
+
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="px-6 pt-8 pb-4 flex justify-between items-center">
-        <div>
-          <p className="text-muted-foreground text-sm">Welcome back,</p>
-          <h1 className="text-2xl font-bold text-white">Alex Chen</h1>
-        </div>
-        <div className="flex gap-3">
-          <button className="w-10 h-10 rounded-full bg-card border border-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-white/20 transition-colors">
-            <Search className="w-5 h-5" />
-          </button>
-          <button className="w-10 h-10 rounded-full bg-card border border-white/5 flex items-center justify-center text-muted-foreground hover:text-white hover:border-white/20 transition-colors relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full ring-2 ring-card" />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Top Bar - Floating */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-6 pt-12 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          <div className="flex-1 h-12 glass-dark rounded-full flex items-center px-4 gap-2 shadow-lg">
+            <MapPin className="w-5 h-5 text-white" />
+            <span className="text-white font-medium">London</span>
+            <span className="text-muted-foreground ml-auto text-xs">Change</span>
+          </div>
+          <button className="w-12 h-12 glass-dark rounded-full flex items-center justify-center text-white shadow-lg">
+            <SlidersHorizontal className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      <div className="px-6">
-        <BalanceCard />
-        <ActionButtons />
+      {/* Map Area */}
+      <MapMock />
+
+      {/* Bottom Sheet */}
+      <motion.div 
+        initial={{ y: "60%" }}
+        animate={{ y: isExpanded ? "20%" : "60%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        drag="y"
+        dragConstraints={{ top: 100, bottom: 400 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y < -50) setIsExpanded(true);
+          if (info.offset.y > 50) setIsExpanded(false);
+        }}
+        className="absolute bottom-0 left-0 right-0 h-[80vh] bg-black border-t border-white/10 rounded-t-3xl z-30 p-6 pb-24 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+      >
+        <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6" />
         
-        <div className="mt-8">
-          <div className="flex justify-between items-end mb-4">
-            <h2 className="text-xl font-bold text-white">Top Assets</h2>
-            <button className="text-primary text-sm font-medium hover:underline">See All</button>
-          </div>
-          <CryptoList limit={3} />
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-white">Nearby Photographers</h2>
+          <span className="text-sm text-primary">View All</span>
         </div>
-      </div>
-      
+
+        <div className="space-y-3 overflow-y-auto h-full pb-20">
+          {photographers.map(p => (
+            <PhotographerCard key={p.id} {...p} />
+          ))}
+        </div>
+      </motion.div>
+
       <BottomNav />
     </div>
   );

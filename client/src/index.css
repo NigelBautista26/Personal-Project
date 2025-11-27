@@ -37,53 +37,40 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
   
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
-  
   --font-sans: 'Inter', sans-serif;
-  --font-display: 'Space Grotesk', sans-serif;
 }
 
 :root {
-  /* Dark Mode by Default for this theme */
-  --background: 224 71% 4%;
-  --foreground: 210 40% 98%;
+  /* Dark Mode Strict for SnapCity */
+  --background: 220 13% 6%; /* Almost black */
+  --foreground: 0 0% 100%;
 
-  --card: 222 47% 11%;
-  --card-foreground: 210 40% 98%;
+  --card: 220 13% 10%;
+  --card-foreground: 0 0% 100%;
 
-  --popover: 222 47% 11%;
-  --popover-foreground: 210 40% 98%;
+  --popover: 220 13% 10%;
+  --popover-foreground: 0 0% 100%;
 
-  --primary: 162 94% 39%; /* Neon Green */
-  --primary-foreground: 222 47% 11%;
+  --primary: 221 83% 53%; /* SnapCity Blue */
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 217 19% 27%;
-  --secondary-foreground: 210 40% 98%;
+  --secondary: 220 13% 18%;
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 217 19% 27%;
+  --muted: 220 13% 18%;
   --muted-foreground: 215 20% 65%;
 
-  --accent: 217 19% 27%;
-  --accent-foreground: 210 40% 98%;
+  --accent: 220 13% 18%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 30%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 217 19% 27%;
-  --input: 217 19% 27%;
-  --ring: 162 94% 39%;
+  --border: 220 13% 18%;
+  --input: 220 13% 18%;
+  --ring: 221 83% 53%;
 
-  --radius: 1rem;
-
-  --chart-1: 162 94% 39%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
+  --radius: 0.75rem;
 }
 
 @layer base {
@@ -93,17 +80,14 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight;
-  }
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-card/50 backdrop-blur-xl border border-white/5 shadow-xl;
+  .glass-dark {
+    @apply bg-black/60 backdrop-blur-md border border-white/10;
   }
   
-  .text-gradient {
-    @apply bg-gradient-to-r from-white to-white/60 bg-clip-text text-transparent;
+  .map-pin-shadow {
+    filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.5));
   }
 }
