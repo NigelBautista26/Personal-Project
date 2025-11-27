@@ -10,7 +10,7 @@ export function BottomNav() {
     { icon: Search, label: "Search", href: "/search" },
     { icon: Calendar, label: "Bookings", href: "/bookings" },
     { icon: MessageSquare, label: "Chat", href: "/chat" },
-    { icon: User, label: "Profile", href: "/profile" },
+    { icon: User, label: "Stats", href: "/dashboard" },
   ];
 
   return (
