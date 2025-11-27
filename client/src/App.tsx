@@ -8,10 +8,13 @@ import Home from "@/pages/home";
 import PhotographerProfile from "@/pages/photographer";
 import Booking from "@/pages/booking";
 
+import Login from "@/pages/login";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Welcome} />
+      <Route path="/login" component={Login} />
       <Route path="/home" component={Home} />
       <Route path="/photographer/:id" component={PhotographerProfile} />
       <Route path="/book/:id" component={Booking} />
