@@ -1,38 +1,131 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { 
+  type User, 
+  type InsertUser, 
+  type Photographer,
+  type InsertPhotographer,
+  type Booking,
+  type InsertBooking,
+  type Earning,
+  type InsertEarning,
+  users,
+  photographers,
+  bookings,
+  earnings
+} from "@shared/schema";
+import { db } from "@db";
+import { eq, and, desc } from "drizzle-orm";
 
 export interface IStorage {
+  // User methods
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  
+  // Photographer methods
+  getPhotographer(id: string): Promise<Photographer | undefined>;
+  getPhotographerByUserId(userId: string): Promise<Photographer | undefined>;
+  getAllPhotographers(): Promise<Photographer[]>;
+  createPhotographer(photographer: InsertPhotographer): Promise<Photographer>;
+  updatePhotographer(id: string, updates: Partial<InsertPhotographer>): Promise<Photographer | undefined>;
+  
+  // Booking methods
+  getBooking(id: string): Promise<Booking | undefined>;
+  getBookingsByCustomer(customerId: string): Promise<Booking[]>;
+  getBookingsByPhotographer(photographerId: string): Promise<Booking[]>;
+  createBooking(booking: InsertBooking): Promise<Booking>;
+  updateBookingStatus(id: string, status: string): Promise<Booking | undefined>;
+  
+  // Earnings methods
+  getEarningsByPhotographer(photographerId: string): Promise<Earning[]>;
+  createEarning(earning: InsertEarning): Promise<Earning>;
+  getTotalEarnings(photographerId: string): Promise<{ total: number; pending: number; paid: number }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-
-  constructor() {
-    this.users = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
+  // User methods
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  // Photographer methods
+  async getPhotographer(id: string): Promise<Photographer | undefined> {
+    const result = await db.select().from(photographers).where(eq(photographers.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPhotographerByUserId(userId: string): Promise<Photographer | undefined> {
+    const result = await db.select().from(photographers).where(eq(photographers.userId, userId)).limit(1);
+    return result[0];
+  }
+
+  async getAllPhotographers(): Promise<Photographer[]> {
+    return await db.select().from(photographers).where(eq(photographers.isAvailable, true));
+  }
+
+  async createPhotographer(photographer: InsertPhotographer): Promise<Photographer> {
+    const result = await db.insert(photographers).values(photographer).returning();
+    return result[0];
+  }
+
+  async updatePhotographer(id: string, updates: Partial<InsertPhotographer>): Promise<Photographer | undefined> {
+    const result = await db.update(photographers).set(updates).where(eq(photographers.id, id)).returning();
+    return result[0];
+  }
+
+  // Booking methods
+  async getBooking(id: string): Promise<Booking | undefined> {
+    const result = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
+    return await db.select().from(bookings).where(eq(bookings.customerId, customerId)).orderBy(desc(bookings.createdAt));
+  }
+
+  async getBookingsByPhotographer(photographerId: string): Promise<Booking[]> {
+    return await db.select().from(bookings).where(eq(bookings.photographerId, photographerId)).orderBy(desc(bookings.createdAt));
+  }
+
+  async createBooking(booking: InsertBooking): Promise<Booking> {
+    const result = await db.insert(bookings).values(booking).returning();
+    return result[0];
+  }
+
+  async updateBookingStatus(id: string, status: string): Promise<Booking | undefined> {
+    const result = await db.update(bookings).set({ status }).where(eq(bookings.id, id)).returning();
+    return result[0];
+  }
+
+  // Earnings methods
+  async getEarningsByPhotographer(photographerId: string): Promise<Earning[]> {
+    return await db.select().from(earnings).where(eq(earnings.photographerId, photographerId)).orderBy(desc(earnings.createdAt));
+  }
+
+  async createEarning(earning: InsertEarning): Promise<Earning> {
+    const result = await db.insert(earnings).values(earning).returning();
+    return result[0];
+  }
+
+  async getTotalEarnings(photographerId: string): Promise<{ total: number; pending: number; paid: number }> {
+    const allEarnings = await this.getEarningsByPhotographer(photographerId);
+    
+    const total = allEarnings.reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
+    const pending = allEarnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
+    const paid = allEarnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
+    
+    return { total, pending, paid };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
