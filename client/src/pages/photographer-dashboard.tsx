@@ -13,7 +13,7 @@ export default function PhotographerDashboard() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="p-6 pt-12 flex items-center gap-4 mb-6">
-        <Link href="/home">
+        <Link href="/photographer-home">
           <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10">
             <ArrowLeft className="w-5 h-5" />
           </button>
