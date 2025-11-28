@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,13 +16,14 @@ export default function PhotographerProfilePage() {
   const [, setLocation] = useLocation();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
     queryFn: getCurrentUser,
   });
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!userLoading && !user) {
       setLocation("/login");
@@ -83,11 +84,116 @@ export default function PhotographerProfilePage() {
     },
   });
 
+  const deletePhotoMutation = useMutation({
+    mutationFn: async (imageUrl: string) => {
+      const res = await fetch("/api/photographers/me/portfolio", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl }),
+      });
+      if (!res.ok) throw new Error("Failed to delete photo");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+      toast({
+        title: "Photo deleted",
+        description: "The photo has been removed from your portfolio.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Delete failed",
+        description: "Could not delete the photo. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file",
+        description: "Please select an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Get signed upload URL
+      const urlRes = await fetch("/api/photographers/me/upload-url", {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      const { uploadUrl } = await urlRes.json();
+
+      // Upload to object storage
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: file,
+        headers: {
+          "Content-Type": file.type,
+        },
+      });
+
+      if (!uploadRes.ok) throw new Error("Failed to upload file");
+
+      // Extract the object path from the signed URL
+      const url = new URL(uploadUrl);
+      const objectPath = url.pathname;
+      
+      // Add to portfolio
+      const addRes = await fetch("/api/photographers/me/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl: objectPath }),
+      });
+
+      if (!addRes.ok) throw new Error("Failed to add to portfolio");
+
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+      
+      toast({
+        title: "Photo added!",
+        description: "Your new photo has been added to your portfolio.",
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload the photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const handleSave = () => {
     updateMutation.mutate(formData);
   };
 
-  if (isLoading) {
+  const handleDeletePhoto = (imageUrl: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm("Are you sure you want to delete this photo?")) {
+      deletePhotoMutation.mutate(imageUrl);
+    }
+  };
+
+  if (isLoading || userLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
@@ -100,16 +206,28 @@ export default function PhotographerProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Header Image Area - Same as customer view */}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
+      {/* Header Image Area */}
       <div className="relative h-72 w-full">
         <img src={portfolioImages[0] || profileImage} className="w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
         
-        {/* Edit overlay for cover photo */}
         {isEditing && (
-          <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-2 text-white border border-white/20 hover:bg-black/80 transition-colors">
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-2 text-white border border-white/20 hover:bg-black/80 transition-colors disabled:opacity-50"
+          >
             <Camera className="w-5 h-5" />
-            <span className="text-sm font-medium">Change Cover</span>
+            <span className="text-sm font-medium">{isUploading ? "Uploading..." : "Change Cover"}</span>
           </button>
         )}
         
@@ -158,7 +276,11 @@ export default function PhotographerProfilePage() {
               <img src={profileImage} className="w-full h-full object-cover" alt={user?.fullName} data-testid="img-profile" />
             </div>
             {isEditing && (
-              <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg" data-testid="button-change-photo">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg" 
+                data-testid="button-change-photo"
+              >
                 <Camera className="w-4 h-4 text-white" />
               </button>
             )}
@@ -212,14 +334,19 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
 
-      {/* Portfolio Grid - Same as customer view */}
+      {/* Portfolio Grid */}
       <div className="mb-6">
         <div className="px-6 mb-4 flex items-center justify-between">
           <h3 className="font-bold text-white">Portfolio</h3>
           {isEditing && (
-            <button className="flex items-center gap-1 text-primary text-sm font-medium" data-testid="button-add-photo">
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="flex items-center gap-1 text-primary text-sm font-medium disabled:opacity-50" 
+              data-testid="button-add-photo"
+            >
               <Plus className="w-4 h-4" />
-              Add Photo
+              {isUploading ? "Uploading..." : "Add Photo"}
             </button>
           )}
         </div>
@@ -237,13 +364,16 @@ export default function PhotographerProfilePage() {
                 alt={`Portfolio ${i + 1}`}
               />
               {isEditing ? (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); }}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-500/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  data-testid={`button-delete-photo-${i}`}
-                >
-                  <Trash2 className="w-3.5 h-3.5 text-white" />
-                </button>
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <button 
+                    onClick={(e) => handleDeletePhoto(img, e)}
+                    disabled={deletePhotoMutation.isPending}
+                    className="w-10 h-10 bg-red-500/90 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                    data-testid={`button-delete-photo-${i}`}
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
+                </div>
               ) : (
                 <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
               )}
@@ -251,10 +381,19 @@ export default function PhotographerProfilePage() {
           ))}
           
           {isEditing && (
-            <div className="break-inside-avoid aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="break-inside-avoid aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+            >
               <div className="text-center p-4">
-                <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                <span className="text-xs text-muted-foreground">Add Photo</span>
+                {isUploading ? (
+                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+                ) : (
+                  <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {isUploading ? "Uploading..." : "Add Photo"}
+                </span>
               </div>
             </div>
           )}
@@ -291,7 +430,7 @@ export default function PhotographerProfilePage() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Bar - Pricing (editable for owner) */}
+      {/* Bottom Bar - Pricing */}
       <div className="fixed bottom-16 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-40">
         <div className="flex gap-4 items-center">
           <div className="flex-1">

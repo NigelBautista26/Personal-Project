@@ -140,6 +140,120 @@ export async function registerRoutes(
     }
   });
 
+  // Get upload URL for portfolio photos
+  app.post("/api/photographers/me/upload-url", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      const objectStorageService = new ObjectStorageService();
+      const uploadUrl = await objectStorageService.getObjectEntityUploadURL();
+      
+      res.json({ uploadUrl });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  // Add photo to portfolio
+  app.post("/api/photographers/me/portfolio", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ error: "Image URL required" });
+      }
+      
+      // Add to existing portfolio images
+      const currentImages = photographer.portfolioImages || [];
+      const updatedImages = [...currentImages, imageUrl];
+      
+      const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
+        portfolioImages: updatedImages,
+      });
+      
+      res.json(updatedPhotographer);
+    } catch (error) {
+      console.error("Error adding portfolio photo:", error);
+      res.status(500).json({ error: "Failed to add photo" });
+    }
+  });
+
+  // Delete photo from portfolio
+  app.delete("/api/photographers/me/portfolio", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ error: "Image URL required" });
+      }
+      
+      // Remove from portfolio images
+      const currentImages = photographer.portfolioImages || [];
+      const updatedImages = currentImages.filter((img: string) => img !== imageUrl);
+      
+      const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
+        portfolioImages: updatedImages,
+      });
+      
+      res.json(updatedPhotographer);
+    } catch (error) {
+      console.error("Error deleting portfolio photo:", error);
+      res.status(500).json({ error: "Failed to delete photo" });
+    }
+  });
+
+  // Reorder portfolio photos
+  app.put("/api/photographers/me/portfolio/reorder", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      const { images } = req.body;
+      if (!Array.isArray(images)) {
+        return res.status(400).json({ error: "Images array required" });
+      }
+      
+      const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
+        portfolioImages: images,
+      });
+      
+      res.json(updatedPhotographer);
+    } catch (error) {
+      console.error("Error reordering portfolio photos:", error);
+      res.status(500).json({ error: "Failed to reorder photos" });
+    }
+  });
+
   app.get("/api/photographers", async (req, res) => {
     try {
       const photographers = await storage.getAllPhotographersWithUsers();
