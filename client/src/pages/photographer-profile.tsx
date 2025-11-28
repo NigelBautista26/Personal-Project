@@ -1,18 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { ArrowLeft, Camera, MapPin, Star, Edit2, Plus, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { BottomNav } from "@/components/bottom-nav";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { BottomNav } from "@/components/bottom-nav";
 
 export default function PhotographerProfilePage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
   const { data: user } = useQuery({
@@ -20,7 +21,6 @@ export default function PhotographerProfilePage() {
     queryFn: getCurrentUser,
   });
 
-  // Fetch photographer profile
   const { data: photographer, isLoading } = useQuery({
     queryKey: ["myPhotographerProfile"],
     queryFn: async () => {
@@ -31,15 +31,13 @@ export default function PhotographerProfilePage() {
     enabled: !!user,
   });
 
-  // Form state
   const [formData, setFormData] = useState({
     bio: "",
     hourlyRate: "",
     location: "",
   });
 
-  // Update form when data loads
-  useState(() => {
+  useEffect(() => {
     if (photographer) {
       setFormData({
         bio: photographer.bio || "",
@@ -47,7 +45,7 @@ export default function PhotographerProfilePage() {
         location: photographer.location || "",
       });
     }
-  });
+  }, [photographer]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
@@ -89,199 +87,232 @@ export default function PhotographerProfilePage() {
     );
   }
 
+  const profileImage = photographer?.profileImageUrl || "https://via.placeholder.com/100";
+  const portfolioImages = photographer?.portfolioImages || [];
+
   return (
-    <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="p-6 pt-12 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background pb-32">
+      {/* Header Image Area - Same as customer view */}
+      <div className="relative h-72 w-full">
+        <img src={portfolioImages[0] || profileImage} className="w-full h-full object-cover opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
+        
+        {/* Edit overlay for cover photo */}
+        {isEditing && (
+          <button className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-2 text-white border border-white/20 hover:bg-black/80 transition-colors">
+            <Camera className="w-5 h-5" />
+            <span className="text-sm font-medium">Change Cover</span>
+          </button>
+        )}
+        
+        <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-center z-10">
           <Link href="/photographer-home">
             <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-back">
               <ArrowLeft className="w-5 h-5" />
             </button>
           </Link>
-          <h1 className="text-xl font-bold text-white">My Profile</h1>
+          
+          {!isEditing ? (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="h-10 px-4 glass-dark rounded-full flex items-center gap-2 text-white hover:bg-white/10"
+              data-testid="button-edit"
+            >
+              <Edit2 className="w-4 h-4" />
+              <span className="text-sm font-medium">Edit</span>
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setIsEditing(false)}
+                className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={handleSave}
+                disabled={updateMutation.isPending}
+                className="h-10 px-4 bg-primary rounded-full flex items-center gap-2 text-white hover:bg-primary/90"
+                data-testid="button-save"
+              >
+                <Save className="w-4 h-4" />
+                <span className="text-sm font-medium">{updateMutation.isPending ? "Saving..." : "Save"}</span>
+              </button>
+            </div>
+          )}
         </div>
-        {!isEditing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setFormData({
-                bio: photographer?.bio || "",
-                hourlyRate: photographer?.hourlyRate || "",
-                location: photographer?.location || "",
-              });
-              setIsEditing(true);
-            }}
-            className="border-white/20 text-white hover:bg-white/10"
-            data-testid="button-edit"
-          >
-            <Edit2 className="w-4 h-4 mr-2" />
-            Edit
-          </Button>
-        ) : (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(false)}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={updateMutation.isPending}
-              className="bg-primary hover:bg-primary/90"
-              data-testid="button-save"
-            >
-              <Save className="w-4 h-4 mr-2" />
-              Save
-            </Button>
-          </div>
-        )}
       </div>
 
-      <div className="px-6 space-y-6">
-        {/* Profile Header */}
-        <div className="flex items-center gap-4">
+      <div className="px-6 -mt-12 relative z-10">
+        <div className="flex justify-between items-end mb-6">
           <div className="relative">
-            <img
-              src={photographer?.profileImageUrl || "https://via.placeholder.com/100"}
-              alt={user?.fullName}
-              className="w-20 h-20 rounded-full object-cover border-2 border-primary"
-            />
-            <button className="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full flex items-center justify-center" data-testid="button-change-photo">
-              <Camera className="w-4 h-4 text-white" />
-            </button>
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">{user?.fullName}</h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="w-4 h-4" />
-              {photographer?.location || "Location not set"}
+            <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden shadow-xl">
+              <img src={profileImage} className="w-full h-full object-cover" alt={user?.fullName} data-testid="img-profile" />
             </div>
-            <div className="flex items-center gap-1 mt-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-white font-medium">{photographer?.rating || "0.0"}</span>
-              <span className="text-muted-foreground">({photographer?.reviewCount || 0} reviews)</span>
+            {isEditing && (
+              <button className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg" data-testid="button-change-photo">
+                <Camera className="w-4 h-4 text-white" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-1 bg-card/80 backdrop-blur px-3 py-1.5 rounded-full border border-white/10">
+              <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+              <span className="font-bold text-white" data-testid="text-rating">{parseFloat(photographer?.rating || "5.0")}</span>
+              <span className="text-xs text-muted-foreground">({photographer?.reviewCount || 0})</span>
             </div>
           </div>
         </div>
 
-        {/* Hourly Rate */}
-        <div className="glass-dark rounded-2xl p-4 border border-white/10">
-          <Label className="text-muted-foreground text-sm">Hourly Rate</Label>
-          {isEditing ? (
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-white text-xl">£</span>
-              <Input
-                type="number"
-                value={formData.hourlyRate}
-                onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                className="bg-card border-white/10 text-white text-xl font-bold w-24"
-                data-testid="input-rate"
-              />
-              <span className="text-muted-foreground">/hour</span>
+        <div className="mb-6">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex-1">
+              <h1 className="text-2xl font-bold text-white mb-1" data-testid="text-photographer-name">{user?.fullName}</h1>
+              {isEditing ? (
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <Input
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="bg-card/50 border-white/20 text-white text-sm h-8 max-w-[200px]"
+                    placeholder="Your location"
+                    data-testid="input-location"
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center text-muted-foreground text-sm">
+                  <MapPin className="w-4 h-4 mr-1" />
+                  <span data-testid="text-location">{photographer?.location}</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <p className="text-2xl font-bold text-white mt-1">£{photographer?.hourlyRate || "0"}/hour</p>
-          )}
-        </div>
-
-        {/* Location */}
-        <div className="glass-dark rounded-2xl p-4 border border-white/10">
-          <Label className="text-muted-foreground text-sm">Location</Label>
-          {isEditing ? (
-            <Input
-              value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="bg-card border-white/10 text-white mt-2"
-              placeholder="e.g., London, UK"
-              data-testid="input-location"
-            />
-          ) : (
-            <p className="text-white mt-1">{photographer?.location || "Not set"}</p>
-          )}
-        </div>
-
-        {/* Bio */}
-        <div className="glass-dark rounded-2xl p-4 border border-white/10">
-          <Label className="text-muted-foreground text-sm">About Me</Label>
+          </div>
+          
           {isEditing ? (
             <Textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              className="bg-card border-white/10 text-white mt-2 min-h-[100px]"
-              placeholder="Tell customers about yourself and your photography style..."
+              className="bg-card/50 border-white/20 text-white text-sm min-h-[80px]"
+              placeholder="Tell customers about yourself..."
               data-testid="input-bio"
             />
           ) : (
-            <p className="text-white mt-2 leading-relaxed">{photographer?.bio || "No bio set"}</p>
+            <p className="text-muted-foreground text-sm leading-relaxed" data-testid="text-bio">
+              {photographer?.bio}
+            </p>
           )}
         </div>
+      </div>
 
-        {/* Portfolio */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-white">Portfolio</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-white/20 text-white hover:bg-white/10"
-              data-testid="button-add-photo"
-            >
-              <Plus className="w-4 h-4 mr-2" />
+      {/* Portfolio Grid - Same as customer view */}
+      <div className="mb-6">
+        <div className="px-6 mb-4 flex items-center justify-between">
+          <h3 className="font-bold text-white">Portfolio</h3>
+          {isEditing && (
+            <button className="flex items-center gap-1 text-primary text-sm font-medium" data-testid="button-add-photo">
+              <Plus className="w-4 h-4" />
               Add Photo
-            </Button>
-          </div>
+            </button>
+          )}
+        </div>
+        <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
+          {portfolioImages.map((img: string, i: number) => (
+            <div 
+              key={i} 
+              className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
+              onClick={() => !isEditing && setSelectedImage(img)}
+              data-testid={`img-portfolio-${i}`}
+            >
+              <img 
+                src={img} 
+                className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
+                alt={`Portfolio ${i + 1}`}
+              />
+              {isEditing ? (
+                <button 
+                  onClick={(e) => { e.stopPropagation(); }}
+                  className="absolute top-2 right-2 w-7 h-7 bg-red-500/90 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  data-testid={`button-delete-photo-${i}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-white" />
+                </button>
+              ) : (
+                <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+              )}
+            </div>
+          ))}
           
-          <div className="grid grid-cols-3 gap-2">
-            {photographer?.portfolioImages?.map((img: string, index: number) => (
-              <div key={index} className="relative aspect-square group">
-                <img
-                  src={img}
-                  alt={`Portfolio ${index + 1}`}
-                  className="w-full h-full object-cover rounded-xl"
-                />
-                {isEditing && (
-                  <button
-                    className="absolute top-2 right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    data-testid={`button-delete-photo-${index}`}
-                  >
-                    <Trash2 className="w-3 h-3 text-white" />
-                  </button>
-                )}
+          {isEditing && (
+            <div className="break-inside-avoid aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+              <div className="text-center p-4">
+                <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                <span className="text-xs text-muted-foreground">Add Photo</span>
               </div>
-            ))}
-            {(!photographer?.portfolioImages || photographer.portfolioImages.length === 0) && (
-              <div className="aspect-square bg-card border border-dashed border-white/20 rounded-xl flex items-center justify-center col-span-3">
-                <div className="text-center text-muted-foreground">
-                  <Camera className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">No portfolio photos yet</p>
-                </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-6 right-6 text-white/80 hover:text-white z-10 p-2 rounded-full hover:bg-white/10"
+              data-testid="button-close-lightbox"
+            >
+              <X className="w-8 h-8" />
+            </button>
+            
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={selectedImage}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Bottom Bar - Pricing (editable for owner) */}
+      <div className="fixed bottom-16 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-40">
+        <div className="flex gap-4 items-center">
+          <div className="flex-1">
+            <span className="text-muted-foreground text-xs uppercase tracking-wider">Your rate</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1">
+                <span className="text-2xl font-bold text-white">£</span>
+                <Input
+                  type="number"
+                  value={formData.hourlyRate}
+                  onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                  className="bg-transparent border-none text-2xl font-bold text-white w-20 h-8 p-0 focus-visible:ring-0"
+                  data-testid="input-rate"
+                />
+                <span className="text-sm text-muted-foreground">/ hour</span>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold text-white" data-testid="text-price">£{parseFloat(photographer?.hourlyRate || "0")}</span>
+                <span className="text-sm text-muted-foreground">/ hour</span>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Account Actions */}
-        <div className="space-y-3 pt-4">
-          <Button
-            variant="outline"
-            className="w-full h-12 border-white/20 text-white hover:bg-white/10 rounded-xl"
-            data-testid="button-change-password"
-          >
-            Change Password
-          </Button>
-          <Button
-            variant="outline"
-            className="w-full h-12 border-red-500/50 text-red-400 hover:bg-red-500/10 rounded-xl"
-            data-testid="button-logout"
-          >
-            Log Out
-          </Button>
+          <div className="text-right">
+            <span className="text-muted-foreground text-xs">You earn (80%)</span>
+            <p className="text-lg font-bold text-primary">
+              £{(parseFloat(isEditing ? formData.hourlyRate : photographer?.hourlyRate || "0") * 0.8).toFixed(2)}
+            </p>
+          </div>
         </div>
       </div>
 
