@@ -179,9 +179,13 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Image URL required" });
       }
       
+      // Convert object storage path to accessible URL
+      const objectStorageService = new ObjectStorageService();
+      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      
       // Add to existing portfolio images
       const currentImages = photographer.portfolioImages || [];
-      const updatedImages = [...currentImages, imageUrl];
+      const updatedImages = [...currentImages, normalizedUrl];
       
       const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
         portfolioImages: updatedImages,
@@ -191,6 +195,38 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error adding portfolio photo:", error);
       res.status(500).json({ error: "Failed to add photo" });
+    }
+  });
+
+  // Update profile picture
+  app.post("/api/photographers/me/profile-picture", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ error: "Image URL required" });
+      }
+      
+      // Convert object storage path to accessible URL
+      const objectStorageService = new ObjectStorageService();
+      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      
+      const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
+        profileImageUrl: normalizedUrl,
+      });
+      
+      res.json(updatedPhotographer);
+    } catch (error) {
+      console.error("Error updating profile picture:", error);
+      res.status(500).json({ error: "Failed to update profile picture" });
     }
   });
 

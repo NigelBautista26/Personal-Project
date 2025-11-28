@@ -1,14 +1,33 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, Move } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/bottom-nav";
+
+// Helper to get displayable image URL
+const getImageUrl = (url: string) => {
+  if (!url) return "";
+  // If it's already a full URL, return as-is
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    return url;
+  }
+  // If it's an object path, serve through our endpoint
+  if (url.startsWith("/objects/")) {
+    return url;
+  }
+  // Legacy paths from before normalization
+  if (url.includes("/.private/")) {
+    const parts = url.split("/.private/");
+    return `/objects/${parts[1]}`;
+  }
+  return url;
+};
 
 export default function PhotographerProfilePage() {
   const { toast } = useToast();
@@ -17,7 +36,9 @@ export default function PhotographerProfilePage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadType, setUploadType] = useState<"portfolio" | "profile">("portfolio");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [portfolioOrder, setPortfolioOrder] = useState<string[]>([]);
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -53,6 +74,7 @@ export default function PhotographerProfilePage() {
         hourlyRate: photographer.hourlyRate || "",
         location: photographer.location || "",
       });
+      setPortfolioOrder(photographer.portfolioImages || []);
     }
   }, [photographer]);
 
@@ -111,6 +133,22 @@ export default function PhotographerProfilePage() {
     },
   });
 
+  const reorderMutation = useMutation({
+    mutationFn: async (images: string[]) => {
+      const res = await fetch("/api/photographers/me/portfolio/reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ images }),
+      });
+      if (!res.ok) throw new Error("Failed to reorder photos");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+    },
+  });
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -151,21 +189,27 @@ export default function PhotographerProfilePage() {
       const url = new URL(uploadUrl);
       const objectPath = url.pathname;
       
-      // Add to portfolio
-      const addRes = await fetch("/api/photographers/me/portfolio", {
+      // Add to portfolio or set as profile picture
+      const endpoint = uploadType === "profile" 
+        ? "/api/photographers/me/profile-picture"
+        : "/api/photographers/me/portfolio";
+      
+      const addRes = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ imageUrl: objectPath }),
       });
 
-      if (!addRes.ok) throw new Error("Failed to add to portfolio");
+      if (!addRes.ok) throw new Error("Failed to save photo");
 
       queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
       
       toast({
-        title: "Photo added!",
-        description: "Your new photo has been added to your portfolio.",
+        title: uploadType === "profile" ? "Profile picture updated!" : "Photo added!",
+        description: uploadType === "profile" 
+          ? "Your profile picture has been updated."
+          : "Your new photo has been added to your portfolio.",
       });
     } catch (error) {
       console.error("Upload error:", error);
@@ -176,10 +220,21 @@ export default function PhotographerProfilePage() {
       });
     } finally {
       setIsUploading(false);
+      setUploadType("portfolio");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
+  };
+
+  const handleAddPhoto = () => {
+    setUploadType("portfolio");
+    fileInputRef.current?.click();
+  };
+
+  const handleChangeProfilePicture = () => {
+    setUploadType("profile");
+    fileInputRef.current?.click();
   };
 
   const handleSave = () => {
@@ -193,6 +248,16 @@ export default function PhotographerProfilePage() {
     }
   };
 
+  const handleReorder = (newOrder: string[]) => {
+    setPortfolioOrder(newOrder);
+  };
+
+  const handleReorderEnd = () => {
+    if (JSON.stringify(portfolioOrder) !== JSON.stringify(photographer?.portfolioImages)) {
+      reorderMutation.mutate(portfolioOrder);
+    }
+  };
+
   if (isLoading || userLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -201,8 +266,8 @@ export default function PhotographerProfilePage() {
     );
   }
 
-  const profileImage = photographer?.profileImageUrl || "https://via.placeholder.com/100";
-  const portfolioImages = photographer?.portfolioImages || [];
+  const profileImage = getImageUrl(photographer?.profileImageUrl || "");
+  const displayImages = isEditing ? portfolioOrder : (photographer?.portfolioImages || []);
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -217,19 +282,11 @@ export default function PhotographerProfilePage() {
 
       {/* Header Image Area */}
       <div className="relative h-72 w-full">
-        <img src={portfolioImages[0] || profileImage} className="w-full h-full object-cover opacity-60" />
+        <img 
+          src={getImageUrl(displayImages[0]) || profileImage || "https://via.placeholder.com/400"} 
+          className="w-full h-full object-cover opacity-60" 
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
-        
-        {isEditing && (
-          <button 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-sm rounded-xl px-4 py-3 flex items-center gap-2 text-white border border-white/20 hover:bg-black/80 transition-colors disabled:opacity-50"
-          >
-            <Camera className="w-5 h-5" />
-            <span className="text-sm font-medium">{isUploading ? "Uploading..." : "Change Cover"}</span>
-          </button>
-        )}
         
         <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-center z-10">
           <Link href="/photographer-home">
@@ -250,7 +307,10 @@ export default function PhotographerProfilePage() {
           ) : (
             <div className="flex gap-2">
               <button 
-                onClick={() => setIsEditing(false)}
+                onClick={() => {
+                  setIsEditing(false);
+                  setPortfolioOrder(photographer?.portfolioImages || []);
+                }}
                 className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10"
               >
                 <X className="w-5 h-5" />
@@ -273,12 +333,18 @@ export default function PhotographerProfilePage() {
         <div className="flex justify-between items-end mb-6">
           <div className="relative">
             <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden shadow-xl">
-              <img src={profileImage} className="w-full h-full object-cover" alt={user?.fullName} data-testid="img-profile" />
+              <img 
+                src={profileImage || "https://via.placeholder.com/100"} 
+                className="w-full h-full object-cover" 
+                alt={user?.fullName} 
+                data-testid="img-profile" 
+              />
             </div>
             {isEditing && (
               <button 
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg" 
+                onClick={handleChangeProfilePicture}
+                disabled={isUploading}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" 
                 data-testid="button-change-photo"
               >
                 <Camera className="w-4 h-4 text-white" />
@@ -339,32 +405,43 @@ export default function PhotographerProfilePage() {
         <div className="px-6 mb-4 flex items-center justify-between">
           <h3 className="font-bold text-white">Portfolio</h3>
           {isEditing && (
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading}
-              className="flex items-center gap-1 text-primary text-sm font-medium disabled:opacity-50" 
-              data-testid="button-add-photo"
-            >
-              <Plus className="w-4 h-4" />
-              {isUploading ? "Uploading..." : "Add Photo"}
-            </button>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <Move className="w-3 h-3" /> Drag to reorder
+              </span>
+              <button 
+                onClick={handleAddPhoto}
+                disabled={isUploading}
+                className="flex items-center gap-1 text-primary text-sm font-medium disabled:opacity-50" 
+                data-testid="button-add-photo"
+              >
+                <Plus className="w-4 h-4" />
+                {isUploading && uploadType === "portfolio" ? "Uploading..." : "Add Photo"}
+              </button>
+            </div>
           )}
         </div>
-        <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
-          {portfolioImages.map((img: string, i: number) => (
-            <div 
-              key={i} 
-              className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
-              onClick={() => !isEditing && setSelectedImage(img)}
-              data-testid={`img-portfolio-${i}`}
-            >
-              <img 
-                src={img} 
-                className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
-                alt={`Portfolio ${i + 1}`}
-              />
-              {isEditing ? (
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        
+        {isEditing ? (
+          <Reorder.Group 
+            axis="y" 
+            values={portfolioOrder} 
+            onReorder={handleReorder}
+            className="grid grid-cols-3 gap-1 px-1"
+          >
+            {portfolioOrder.map((img: string, i: number) => (
+              <Reorder.Item 
+                key={img} 
+                value={img}
+                onDragEnd={handleReorderEnd}
+                className="relative aspect-square cursor-grab active:cursor-grabbing"
+              >
+                <img 
+                  src={getImageUrl(img)} 
+                  className="w-full h-full object-cover rounded-lg" 
+                  alt={`Portfolio ${i + 1}`}
+                />
+                <div className="absolute inset-0 bg-black/30 rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button 
                     onClick={(e) => handleDeletePhoto(img, e)}
                     disabled={deletePhotoMutation.isPending}
@@ -374,30 +451,40 @@ export default function PhotographerProfilePage() {
                     <Trash2 className="w-4 h-4 text-white" />
                   </button>
                 </div>
-              ) : (
-                <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
-              )}
-            </div>
-          ))}
-          
-          {isEditing && (
+              </Reorder.Item>
+            ))}
             <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="break-inside-avoid aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={handleAddPhoto}
+              className="aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
             >
-              <div className="text-center p-4">
-                {isUploading ? (
-                  <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-2" />
+              <div className="text-center p-2">
+                {isUploading && uploadType === "portfolio" ? (
+                  <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                 ) : (
-                  <Plus className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                  <Plus className="w-6 h-6 text-muted-foreground mx-auto" />
                 )}
-                <span className="text-xs text-muted-foreground">
-                  {isUploading ? "Uploading..." : "Add Photo"}
-                </span>
               </div>
             </div>
-          )}
-        </div>
+          </Reorder.Group>
+        ) : (
+          <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
+            {displayImages.map((img: string, i: number) => (
+              <div 
+                key={i} 
+                className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
+                onClick={() => setSelectedImage(getImageUrl(img))}
+                data-testid={`img-portfolio-${i}`}
+              >
+                <img 
+                  src={getImageUrl(img)} 
+                  className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
+                  alt={`Portfolio ${i + 1}`}
+                />
+                <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Lightbox */}
