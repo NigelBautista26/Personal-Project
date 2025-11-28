@@ -1,44 +1,67 @@
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { useEffect, useState, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-leaflet";
 import L from "leaflet";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { getPhotographers } from "@/lib/api";
+import { Navigation } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
-function LocationMarker() {
-  const [position, setPosition] = useState<[number, number] | null>(null);
+function LocationMarker({ userPosition }: { userPosition: [number, number] | null }) {
   const map = useMap();
 
   useEffect(() => {
-    map.locate({ setView: true, maxZoom: 14 });
-    
-    map.on("locationfound", (e) => {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-    });
-
-    map.on("locationerror", () => {
-      map.setView([51.5074, -0.1278], 13);
-    });
-  }, [map]);
+    if (userPosition) {
+      map.setView(userPosition, 14);
+    }
+  }, [userPosition, map]);
 
   const userIcon = L.divIcon({
     className: "user-location-marker",
     html: `
-      <div style="
-        width: 20px;
-        height: 20px;
-        background: #3b82f6;
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 10px rgba(59, 130, 246, 0.5);
-      "></div>
+      <div style="position: relative;">
+        <div style="
+          position: absolute;
+          width: 60px;
+          height: 60px;
+          background: rgba(59, 130, 246, 0.2);
+          border-radius: 50%;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          animation: pulse 2s infinite;
+        "></div>
+        <div style="
+          width: 24px;
+          height: 24px;
+          background: #3b82f6;
+          border: 4px solid white;
+          border-radius: 50%;
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.6);
+          position: relative;
+          z-index: 10;
+        "></div>
+      </div>
     `,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10],
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
   });
 
-  return position ? <Marker position={position} icon={userIcon} /> : null;
+  return userPosition ? (
+    <>
+      <Marker position={userPosition} icon={userIcon} />
+      <Circle 
+        center={userPosition} 
+        radius={100} 
+        pathOptions={{ 
+          color: '#3b82f6', 
+          fillColor: '#3b82f6', 
+          fillOpacity: 0.1,
+          weight: 2
+        }} 
+      />
+    </>
+  ) : null;
 }
 
 interface PhotographerMarkerProps {
@@ -113,12 +136,43 @@ function PhotographerMarker({ id, name, lat, lng, price, image }: PhotographerMa
 }
 
 export function RealMap() {
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
   const { data: photographers = [] } = useQuery({
     queryKey: ["photographers"],
     queryFn: getPhotographers,
   });
 
   const defaultCenter: [number, number] = [51.5074, -0.1278];
+
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocation not supported");
+      return;
+    }
+
+    setIsLocating(true);
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserPosition([position.coords.latitude, position.coords.longitude]);
+        setIsLocating(false);
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        setLocationError("Location access denied");
+        setIsLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    handleLocateMe();
+  }, [handleLocateMe]);
 
   return (
     <div className="absolute inset-0 w-full h-full z-0">
@@ -152,9 +206,13 @@ export function RealMap() {
         .leaflet-control-attribution a {
           color: rgba(255,255,255,0.7) !important;
         }
+        @keyframes pulse {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
       `}</style>
       <MapContainer
-        center={defaultCenter}
+        center={userPosition || defaultCenter}
         zoom={13}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
@@ -163,7 +221,7 @@ export function RealMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        <LocationMarker />
+        <LocationMarker userPosition={userPosition} />
         {photographers.map((p: any) => (
           <PhotographerMarker
             key={p.id}
@@ -176,7 +234,35 @@ export function RealMap() {
           />
         ))}
       </MapContainer>
+      
+      {/* Gradient overlay */}
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-[1000]" />
+      
+      {/* Locate me button */}
+      <button
+        onClick={handleLocateMe}
+        disabled={isLocating}
+        className="absolute bottom-[45%] right-4 z-[1000] w-12 h-12 bg-black/80 hover:bg-black rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 transition-all"
+        data-testid="button-locate-me"
+      >
+        {isLocating ? (
+          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Navigation className="w-5 h-5" />
+        )}
+      </button>
+      
+      {/* Location status */}
+      {locationError && (
+        <div className="absolute bottom-[52%] right-4 z-[1000] bg-red-500/90 text-white text-xs px-3 py-1.5 rounded-full">
+          {locationError}
+        </div>
+      )}
+      {userPosition && !locationError && (
+        <div className="absolute bottom-[52%] right-4 z-[1000] bg-green-500/90 text-white text-xs px-3 py-1.5 rounded-full">
+          Location found
+        </div>
+      )}
     </div>
   );
 }
