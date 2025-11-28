@@ -22,8 +22,8 @@ export default function Welcome() {
       </div>
 
       <div className="w-full space-y-4 mb-8">
-        <Link href="/home">
-          <Button className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25">
+        <Link href="/signup">
+          <Button className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25" data-testid="button-get-started">
             Get Started
           </Button>
         </Link>

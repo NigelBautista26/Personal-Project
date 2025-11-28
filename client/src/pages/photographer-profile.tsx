@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, Settings, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCurrentUser } from "@/lib/api";
+import { getCurrentUser, logout } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -147,6 +147,18 @@ export default function PhotographerProfilePage() {
       toast({
         title: "Order saved",
         description: "Your portfolio has been reordered.",
+      });
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      queryClient.clear();
+      setLocation("/");
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully.",
       });
     },
   });
@@ -487,6 +499,24 @@ export default function PhotographerProfilePage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Settings Section */}
+      <div className="px-6 py-8 space-y-4">
+        <h3 className="font-bold text-white mb-4">Settings</h3>
+        <div className="glass-panel rounded-2xl overflow-hidden">
+          <button
+            onClick={() => logoutMutation.mutate()}
+            className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left"
+            data-testid="button-logout"
+          >
+            <div className="flex items-center gap-3">
+              <LogOut className="w-5 h-5 text-destructive" />
+              <span className="font-medium text-destructive">Log Out</span>
+            </div>
+            <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
+          </button>
         </div>
       </div>
 
