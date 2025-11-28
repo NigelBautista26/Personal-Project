@@ -91,6 +91,55 @@ export async function registerRoutes(
   });
 
   // Photographer Routes
+  
+  // Get current photographer's own profile
+  app.get("/api/photographers/me", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      res.json(photographer);
+    } catch (error) {
+      console.error("Error fetching own photographer profile:", error);
+      res.status(500).json({ error: "Failed to fetch profile" });
+    }
+  });
+
+  // Update current photographer's own profile
+  app.patch("/api/photographers/me", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      // Only allow updating certain fields
+      const allowedFields = ["bio", "hourlyRate", "location", "profileImageUrl", "portfolioImages"];
+      const updateData: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      const updatedPhotographer = await storage.updatePhotographer(photographer.id, updateData);
+      res.json(updatedPhotographer);
+    } catch (error) {
+      console.error("Error updating photographer profile:", error);
+      res.status(400).json({ error: "Failed to update profile" });
+    }
+  });
+
   app.get("/api/photographers", async (req, res) => {
     try {
       const photographers = await storage.getAllPhotographersWithUsers();
