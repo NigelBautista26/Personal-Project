@@ -15,14 +15,16 @@ export default function Home() {
     queryFn: getPhotographers,
   });
 
-  const photographerCards = photographers.map((p) => ({
+  const photographerCards = photographers.map((p: any) => ({
     id: p.id,
-    name: p.userId.split("-")[0], // Use first part of UUID as display name for now
+    name: p.fullName || "Photographer",
     location: p.location,
     price: `£${parseFloat(p.hourlyRate)}`,
     rating: parseFloat(p.rating || "5.0"),
     reviews: p.reviewCount || 0,
-    image: p.profileImageUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+    image: p.profileImageUrl?.startsWith('/') 
+      ? `/public-objects${p.profileImageUrl}` 
+      : p.profileImageUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
   }));
 
   return (

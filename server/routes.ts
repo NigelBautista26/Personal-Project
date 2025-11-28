@@ -93,21 +93,23 @@ export async function registerRoutes(
   // Photographer Routes
   app.get("/api/photographers", async (req, res) => {
     try {
-      const photographers = await storage.getAllPhotographers();
+      const photographers = await storage.getAllPhotographersWithUsers();
       res.json(photographers);
     } catch (error) {
+      console.error("Error fetching photographers:", error);
       res.status(500).json({ error: "Failed to fetch photographers" });
     }
   });
 
   app.get("/api/photographers/:id", async (req, res) => {
     try {
-      const photographer = await storage.getPhotographer(req.params.id);
+      const photographer = await storage.getPhotographerWithUser(req.params.id);
       if (!photographer) {
         return res.status(404).json({ error: "Photographer not found" });
       }
       res.json(photographer);
     } catch (error) {
+      console.error("Error fetching photographer:", error);
       res.status(500).json({ error: "Failed to fetch photographer" });
     }
   });

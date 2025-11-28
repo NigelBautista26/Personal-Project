@@ -3,78 +3,59 @@ import { ArrowLeft, Heart, Share, Star, MapPin, Clock, ChevronRight, X } from "l
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import annaImg from "@assets/generated_images/portrait_of_a_professional_female_photographer_named_anna.png";
-import joseImg from "@assets/generated_images/portrait_of_a_professional_male_photographer_named_jose.png";
-
-const photographers = {
-  anna: {
-    name: "Anna L.",
-    location: "London, UK",
-    bio: "Professional portrait and lifestyle photographer. I love capturing candid moments and natural light. Let's create something magic!",
-    price: "£40",
-    rating: 4.9,
-    reviews: 128,
-    image: annaImg,
-    portfolio: [
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400",
-      "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400",
-      "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400",
-      "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400",
-      "https://images.unsplash.com/photo-1519764622345-23439dd776f7?w=400",
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400"
-    ]
-  },
-  jose: {
-    name: "Jose V.",
-    location: "Shoreditch, London",
-    bio: "Street style and urban vibes. If you want edgy, cool content for your socials, I'm your guy.",
-    price: "£35",
-    rating: 4.7,
-    reviews: 84,
-    image: joseImg,
-    portfolio: [
-      "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400"
-    ]
-  },
-  sophie: {
-    name: "Sophie M.",
-    location: "Notting Hill, London",
-    bio: "Fashion and editorial photography specialist. I help brands and influencers create stunning visual stories that stand out.",
-    price: "£50",
-    rating: 5.0,
-    reviews: 42,
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400",
-    portfolio: [
-      "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400",
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400", 
-      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=400",
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400"
-    ]
-  }
-};
+import { useQuery } from "@tanstack/react-query";
+import { getPhotographer } from "@/lib/api";
 
 export default function PhotographerProfile() {
   const [match, params] = useRoute("/photographer/:id");
-  const id = params?.id || "anna";
-  const data = photographers[id as keyof typeof photographers] || photographers.anna;
+  const id = params?.id || "";
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const { data: photographer, isLoading, error } = useQuery({
+    queryKey: ["photographer", id],
+    queryFn: () => getPhotographer(id),
+    enabled: !!id,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error || !photographer) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="text-white text-center mb-4">Photographer not found</div>
+        <Link href="/home">
+          <Button variant="outline">Go Back</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const profileImage = photographer.profileImageUrl?.startsWith('/')
+    ? `/public-objects${photographer.profileImageUrl}`
+    : photographer.profileImageUrl;
+
+  const portfolioImages = photographer.portfolioImages || [];
 
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header Image Area */}
       <div className="relative h-72 w-full">
-        <img src={data.portfolio[0]} className="w-full h-full object-cover opacity-60" />
+        <img src={portfolioImages[0] || profileImage} className="w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
         
         <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-center z-10">
           <Link href="/home">
-            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10">
+            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-back">
               <ArrowLeft className="w-5 h-5" />
             </button>
           </Link>
-          <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10">
+          <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-share">
             <Share className="w-5 h-5" />
           </button>
         </div>
@@ -83,10 +64,10 @@ export default function PhotographerProfile() {
       <div className="px-6 -mt-12 relative z-10">
         <div className="flex justify-between items-end mb-6">
           <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden shadow-xl">
-            <img src={data.image} className="w-full h-full object-cover" />
+            <img src={profileImage} className="w-full h-full object-cover" alt={photographer.fullName} data-testid="img-profile" />
           </div>
           <div className="flex gap-2 mb-2">
-             <button className="w-10 h-10 bg-card rounded-full flex items-center justify-center text-white border border-white/10 hover:border-primary hover:text-primary transition-colors">
+             <button className="w-10 h-10 bg-card rounded-full flex items-center justify-center text-white border border-white/10 hover:border-primary hover:text-primary transition-colors" data-testid="button-favorite">
                 <Heart className="w-5 h-5" />
              </button>
           </div>
@@ -95,23 +76,23 @@ export default function PhotographerProfile() {
         <div className="mb-6">
           <div className="flex justify-between items-start mb-2">
             <div>
-              <h1 className="text-2xl font-bold text-white mb-1">{data.name}</h1>
+              <h1 className="text-2xl font-bold text-white mb-1" data-testid="text-photographer-name">{photographer.fullName}</h1>
               <div className="flex items-center text-muted-foreground text-sm">
                 <MapPin className="w-4 h-4 mr-1" />
-                {data.location}
+                <span data-testid="text-location">{photographer.location}</span>
               </div>
             </div>
             <div className="text-right">
               <div className="flex items-center justify-end gap-1 text-yellow-500 mb-1">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="font-bold text-white">{data.rating}</span>
+                <span className="font-bold text-white" data-testid="text-rating">{parseFloat(photographer.rating || "5.0")}</span>
               </div>
-              <span className="text-xs text-muted-foreground underline">{data.reviews} reviews</span>
+              <span className="text-xs text-muted-foreground underline" data-testid="text-reviews">{photographer.reviewCount || 0} reviews</span>
             </div>
           </div>
           
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            {data.bio}
+          <p className="text-muted-foreground text-sm leading-relaxed" data-testid="text-bio">
+            {photographer.bio}
           </p>
         </div>
       </div>
@@ -122,11 +103,12 @@ export default function PhotographerProfile() {
           <h3 className="font-bold text-white">Portfolio</h3>
         </div>
         <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
-          {data.portfolio.map((img, i) => (
+          {portfolioImages.map((img: string, i: number) => (
             <div 
               key={i} 
               className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
               onClick={() => setSelectedImage(img)}
+              data-testid={`img-portfolio-${i}`}
             >
               <img 
                 src={img} 
@@ -152,6 +134,7 @@ export default function PhotographerProfile() {
             <button 
               onClick={() => setSelectedImage(null)}
               className="absolute top-6 right-6 text-white/80 hover:text-white z-10 p-2 rounded-full hover:bg-white/10"
+              data-testid="button-close-lightbox"
             >
               <X className="w-8 h-8" />
             </button>
@@ -162,7 +145,7 @@ export default function PhotographerProfile() {
               exit={{ scale: 0.9, opacity: 0 }}
               src={selectedImage}
               className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image
+              onClick={(e) => e.stopPropagation()}
             />
           </motion.div>
         )}
@@ -173,12 +156,12 @@ export default function PhotographerProfile() {
           <div className="flex-1">
             <span className="text-muted-foreground text-xs uppercase tracking-wider">Starting from</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-bold text-white">{data.price}</span>
+              <span className="text-2xl font-bold text-white" data-testid="text-price">£{parseFloat(photographer.hourlyRate)}</span>
               <span className="text-sm text-muted-foreground">/ hour</span>
             </div>
           </div>
           <Link href={`/book/${id}`}>
-            <Button className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25">
+            <Button className="h-12 px-8 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25" data-testid="button-book-now">
               Book Now
             </Button>
           </Link>
