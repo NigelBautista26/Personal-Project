@@ -252,15 +252,10 @@ export function RealMap() {
         )}
       </button>
       
-      {/* Location status */}
+      {/* Location error only */}
       {locationError && (
         <div className="absolute bottom-[52%] right-4 z-[1000] bg-red-500/90 text-white text-xs px-3 py-1.5 rounded-full">
           {locationError}
-        </div>
-      )}
-      {userPosition && !locationError && (
-        <div className="absolute bottom-[52%] right-4 z-[1000] bg-green-500/90 text-white text-xs px-3 py-1.5 rounded-full">
-          Location found
         </div>
       )}
     </div>
