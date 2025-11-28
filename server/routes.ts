@@ -179,9 +179,15 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Image URL required" });
       }
       
-      // Convert object storage path to accessible URL
+      // Convert object storage path to accessible URL and make it public
       const objectStorageService = new ObjectStorageService();
-      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      const normalizedUrl = await objectStorageService.trySetObjectEntityAclPolicy(
+        imageUrl,
+        {
+          owner: req.session.userId,
+          visibility: "public",
+        }
+      );
       
       // Add to existing portfolio images
       const currentImages = photographer.portfolioImages || [];
@@ -215,9 +221,15 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Image URL required" });
       }
       
-      // Convert object storage path to accessible URL
+      // Convert object storage path to accessible URL and make it public
       const objectStorageService = new ObjectStorageService();
-      const normalizedUrl = objectStorageService.normalizeObjectEntityPath(imageUrl);
+      const normalizedUrl = await objectStorageService.trySetObjectEntityAclPolicy(
+        imageUrl,
+        {
+          owner: req.session.userId,
+          visibility: "public",
+        }
+      );
       
       const updatedPhotographer = await storage.updatePhotographer(photographer.id, {
         profileImageUrl: normalizedUrl,
