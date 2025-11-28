@@ -1,4 +1,4 @@
-import { MapMock } from "@/components/map-mock";
+import { RealMap } from "@/components/real-map";
 import { BottomNav } from "@/components/bottom-nav";
 import { PhotographerCard } from "@/components/photographer-card";
 import { Search, SlidersHorizontal, MapPin } from "lucide-react";
@@ -42,7 +42,7 @@ export default function Home() {
       </div>
 
       {/* Map Area */}
-      <MapMock />
+      <RealMap />
 
       {/* Bottom Sheet */}
       <motion.div 
