@@ -15,6 +15,8 @@ import {
 import { db } from "@db";
 import { eq, and, desc } from "drizzle-orm";
 
+export type PhotographerWithUser = Photographer & { fullName: string };
+
 export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
@@ -23,8 +25,10 @@ export interface IStorage {
   
   // Photographer methods
   getPhotographer(id: string): Promise<Photographer | undefined>;
+  getPhotographerWithUser(id: string): Promise<PhotographerWithUser | undefined>;
   getPhotographerByUserId(userId: string): Promise<Photographer | undefined>;
   getAllPhotographers(): Promise<Photographer[]>;
+  getAllPhotographersWithUsers(): Promise<PhotographerWithUser[]>;
   createPhotographer(photographer: InsertPhotographer): Promise<Photographer>;
   updatePhotographer(id: string, updates: Partial<InsertPhotographer>): Promise<Photographer | undefined>;
   
@@ -69,8 +73,56 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async getPhotographerWithUser(id: string): Promise<PhotographerWithUser | undefined> {
+    const result = await db
+      .select({
+        id: photographers.id,
+        userId: photographers.userId,
+        bio: photographers.bio,
+        hourlyRate: photographers.hourlyRate,
+        location: photographers.location,
+        latitude: photographers.latitude,
+        longitude: photographers.longitude,
+        rating: photographers.rating,
+        reviewCount: photographers.reviewCount,
+        profileImageUrl: photographers.profileImageUrl,
+        portfolioImages: photographers.portfolioImages,
+        isAvailable: photographers.isAvailable,
+        stripeAccountId: photographers.stripeAccountId,
+        fullName: users.fullName,
+      })
+      .from(photographers)
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .where(eq(photographers.id, id))
+      .limit(1);
+    return result[0];
+  }
+
   async getAllPhotographers(): Promise<Photographer[]> {
     return await db.select().from(photographers).where(eq(photographers.isAvailable, true));
+  }
+
+  async getAllPhotographersWithUsers(): Promise<PhotographerWithUser[]> {
+    return await db
+      .select({
+        id: photographers.id,
+        userId: photographers.userId,
+        bio: photographers.bio,
+        hourlyRate: photographers.hourlyRate,
+        location: photographers.location,
+        latitude: photographers.latitude,
+        longitude: photographers.longitude,
+        rating: photographers.rating,
+        reviewCount: photographers.reviewCount,
+        profileImageUrl: photographers.profileImageUrl,
+        portfolioImages: photographers.portfolioImages,
+        isAvailable: photographers.isAvailable,
+        stripeAccountId: photographers.stripeAccountId,
+        fullName: users.fullName,
+      })
+      .from(photographers)
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .where(eq(photographers.isAvailable, true));
   }
 
   async createPhotographer(photographer: InsertPhotographer): Promise<Photographer> {
