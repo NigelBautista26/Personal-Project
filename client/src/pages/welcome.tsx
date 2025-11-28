@@ -16,9 +16,8 @@ export default function Welcome() {
           <img src={generatedImage} alt="SnapNow Logo" className="w-full h-full object-cover" />
         </div>
         
-        <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">SnapNow</h1>
-        <p className="text-muted-foreground text-center max-w-[250px] leading-relaxed">
-          Get professional photos, anywhere you travel.
+        <p className="text-muted-foreground text-center max-w-[280px] leading-relaxed text-lg">
+          Get professional photos, anytime & anywhere you travel.
         </p>
       </div>
 
