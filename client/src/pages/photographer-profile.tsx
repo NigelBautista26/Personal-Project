@@ -1,30 +1,26 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, Move } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/bottom-nav";
 
-// Helper to get displayable image URL
 const getImageUrl = (url: string) => {
   if (!url) return "";
-  // If it's already a full URL, return as-is
   if (url.startsWith("http://") || url.startsWith("https://")) {
     return url;
   }
-  // If it's an object path, serve through our endpoint
   if (url.startsWith("/objects/")) {
     return url;
   }
-  // Legacy paths from before normalization
-  if (url.includes("/.private/")) {
-    const parts = url.split("/.private/");
-    return `/objects/${parts[1]}`;
+  const privateMatch = url.match(/\/replit-objstore-[^/]+\/\.private\/(.+)/);
+  if (privateMatch) {
+    return `/objects/${privateMatch[1]}`;
   }
   return url;
 };
@@ -39,6 +35,8 @@ export default function PhotographerProfilePage() {
   const [uploadType, setUploadType] = useState<"portfolio" | "profile">("portfolio");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [portfolioOrder, setPortfolioOrder] = useState<string[]>([]);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -146,6 +144,10 @@ export default function PhotographerProfilePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+      toast({
+        title: "Order saved",
+        description: "Your portfolio has been reordered.",
+      });
     },
   });
 
@@ -165,7 +167,6 @@ export default function PhotographerProfilePage() {
     setIsUploading(true);
 
     try {
-      // Get signed upload URL
       const urlRes = await fetch("/api/photographers/me/upload-url", {
         method: "POST",
         credentials: "include",
@@ -174,7 +175,6 @@ export default function PhotographerProfilePage() {
       if (!urlRes.ok) throw new Error("Failed to get upload URL");
       const { uploadUrl } = await urlRes.json();
 
-      // Upload to object storage
       const uploadRes = await fetch(uploadUrl, {
         method: "PUT",
         body: file,
@@ -185,11 +185,9 @@ export default function PhotographerProfilePage() {
 
       if (!uploadRes.ok) throw new Error("Failed to upload file");
 
-      // Extract the object path from the signed URL
       const url = new URL(uploadUrl);
       const objectPath = url.pathname;
       
-      // Add to portfolio or set as profile picture
       const endpoint = uploadType === "profile" 
         ? "/api/photographers/me/profile-picture"
         : "/api/photographers/me/portfolio";
@@ -248,14 +246,27 @@ export default function PhotographerProfilePage() {
     }
   };
 
-  const handleReorder = (newOrder: string[]) => {
-    setPortfolioOrder(newOrder);
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
   };
 
-  const handleReorderEnd = () => {
-    if (JSON.stringify(portfolioOrder) !== JSON.stringify(photographer?.portfolioImages)) {
-      reorderMutation.mutate(portfolioOrder);
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex !== null && draggedIndex !== index) {
+      setDragOverIndex(index);
     }
+  };
+
+  const handleDragEnd = () => {
+    if (draggedIndex !== null && dragOverIndex !== null && draggedIndex !== dragOverIndex) {
+      const newOrder = [...portfolioOrder];
+      const [draggedItem] = newOrder.splice(draggedIndex, 1);
+      newOrder.splice(dragOverIndex, 0, draggedItem);
+      setPortfolioOrder(newOrder);
+      reorderMutation.mutate(newOrder);
+    }
+    setDraggedIndex(null);
+    setDragOverIndex(null);
   };
 
   if (isLoading || userLoading) {
@@ -271,7 +282,6 @@ export default function PhotographerProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -280,7 +290,6 @@ export default function PhotographerProfilePage() {
         className="hidden"
       />
 
-      {/* Header Image Area */}
       <div className="relative h-72 w-full">
         <img 
           src={getImageUrl(displayImages[0]) || profileImage || "https://via.placeholder.com/400"} 
@@ -400,14 +409,13 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
 
-      {/* Portfolio Grid */}
       <div className="mb-6">
         <div className="px-6 mb-4 flex items-center justify-between">
           <h3 className="font-bold text-white">Portfolio</h3>
           {isEditing && (
             <div className="flex items-center gap-3">
               <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Move className="w-3 h-3" /> Drag to reorder
+                <GripVertical className="w-3 h-3" /> Drag to reorder
               </span>
               <button 
                 onClick={handleAddPhoto}
@@ -422,26 +430,36 @@ export default function PhotographerProfilePage() {
           )}
         </div>
         
-        {isEditing ? (
-          <Reorder.Group 
-            axis="y" 
-            values={portfolioOrder} 
-            onReorder={handleReorder}
-            className="grid grid-cols-3 gap-1 px-1"
-          >
-            {portfolioOrder.map((img: string, i: number) => (
-              <Reorder.Item 
-                key={img} 
-                value={img}
-                onDragEnd={handleReorderEnd}
-                className="relative aspect-square cursor-grab active:cursor-grabbing"
-              >
-                <img 
-                  src={getImageUrl(img)} 
-                  className="w-full h-full object-cover rounded-lg" 
-                  alt={`Portfolio ${i + 1}`}
-                />
-                <div className="absolute inset-0 bg-black/30 rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="grid grid-cols-3 gap-1 px-1">
+          {displayImages.map((img: string, i: number) => (
+            <div
+              key={img + i}
+              draggable={isEditing}
+              onDragStart={() => handleDragStart(i)}
+              onDragOver={(e) => handleDragOver(e, i)}
+              onDragEnd={handleDragEnd}
+              onClick={() => !isEditing && setSelectedImage(getImageUrl(img))}
+              className={`relative aspect-square cursor-pointer overflow-hidden bg-card group transition-all duration-200 ${
+                isEditing ? "cursor-grab active:cursor-grabbing" : ""
+              } ${draggedIndex === i ? "opacity-50 scale-95" : ""} ${
+                dragOverIndex === i ? "ring-2 ring-primary" : ""
+              }`}
+              data-testid={`img-portfolio-${i}`}
+            >
+              <img 
+                src={getImageUrl(img)} 
+                className="w-full h-full object-cover transition-transform duration-200 hover:scale-105" 
+                alt={`Portfolio ${i + 1}`}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://via.placeholder.com/200?text=Image";
+                }}
+              />
+              {isEditing && (
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                  <div className="absolute top-2 left-2">
+                    <GripVertical className="w-5 h-5 text-white/80" />
+                  </div>
                   <button 
                     onClick={(e) => handleDeletePhoto(img, e)}
                     disabled={deletePhotoMutation.isPending}
@@ -451,8 +469,11 @@ export default function PhotographerProfilePage() {
                     <Trash2 className="w-4 h-4 text-white" />
                   </button>
                 </div>
-              </Reorder.Item>
-            ))}
+              )}
+            </div>
+          ))}
+          
+          {isEditing && (
             <div 
               onClick={handleAddPhoto}
               className="aspect-square bg-card border-2 border-dashed border-white/20 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
@@ -465,29 +486,10 @@ export default function PhotographerProfilePage() {
                 )}
               </div>
             </div>
-          </Reorder.Group>
-        ) : (
-          <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
-            {displayImages.map((img: string, i: number) => (
-              <div 
-                key={i} 
-                className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
-                onClick={() => setSelectedImage(getImageUrl(img))}
-                data-testid={`img-portfolio-${i}`}
-              >
-                <img 
-                  src={getImageUrl(img)} 
-                  className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
-                  alt={`Portfolio ${i + 1}`}
-                />
-                <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
-              </div>
-            ))}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* Lightbox */}
       <AnimatePresence>
         {selectedImage && (
           <motion.div
@@ -517,7 +519,6 @@ export default function PhotographerProfilePage() {
         )}
       </AnimatePresence>
 
-      {/* Bottom Bar - Pricing */}
       <div className="fixed bottom-16 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-40">
         <div className="flex gap-4 items-center">
           <div className="flex-1">

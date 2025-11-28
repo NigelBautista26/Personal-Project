@@ -153,24 +153,32 @@ export class ObjectStorageService {
   }
 
   normalizeObjectEntityPath(rawPath: string): string {
-    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
-      return rawPath;
+    let rawObjectPath = rawPath;
+    
+    // Handle full Google Storage URLs
+    if (rawPath.startsWith("https://storage.googleapis.com/")) {
+      const url = new URL(rawPath);
+      rawObjectPath = url.pathname;
     }
-  
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
   
     let objectEntityDir = this.getPrivateObjectDir();
     if (!objectEntityDir.endsWith("/")) {
       objectEntityDir = `${objectEntityDir}/`;
     }
   
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
+    // Handle paths that start with the full bucket path
+    if (rawObjectPath.startsWith(objectEntityDir)) {
+      const entityId = rawObjectPath.slice(objectEntityDir.length);
+      return `/objects/${entityId}`;
+    }
+    
+    // Handle paths like /replit-objstore-.../.../.private/uploads/...
+    const privateMatch = rawObjectPath.match(/\/replit-objstore-[^/]+\/\.private\/(.+)/);
+    if (privateMatch) {
+      return `/objects/${privateMatch[1]}`;
     }
 
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    return `/objects/${entityId}`;
+    return rawObjectPath;
   }
 
   async trySetObjectEntityAclPolicy(
