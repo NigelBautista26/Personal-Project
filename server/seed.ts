@@ -9,6 +9,18 @@ async function seed() {
   // Clear existing data
   await db.delete(photographers);
   await db.delete(users).where(eq(users.role, 'photographer'));
+  
+  // Delete test customer if exists
+  await db.delete(users).where(eq(users.email, 'customer@test.com'));
+  
+  // Create test customer account
+  const [testCustomer] = await db.insert(users).values({
+    email: "customer@test.com",
+    password: await bcrypt.hash("password123", 10),
+    fullName: "Test Customer",
+    role: "customer",
+  }).returning();
+  console.log(`✅ Created test customer: ${testCustomer.fullName}`);
 
   // Create photographer users with original names
   const photographerData = [

@@ -7,9 +7,10 @@ import Welcome from "@/pages/welcome";
 import Home from "@/pages/home";
 import PhotographerProfile from "@/pages/photographer";
 import Booking from "@/pages/booking";
-
 import PhotographerDashboard from "@/pages/photographer-dashboard";
+import PhotographerHome from "@/pages/photographer-home";
 import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import BusinessCase from "@/pages/business-case";
 
 function Router() {
@@ -17,7 +18,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Welcome} />
       <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/home" component={Home} />
+      <Route path="/photographer-home" component={PhotographerHome} />
       <Route path="/dashboard" component={PhotographerDashboard} />
       <Route path="/business-case" component={BusinessCase} />
       <Route path="/photographer/:id" component={PhotographerProfile} />
