@@ -3,6 +3,8 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import session from "express-session";
+import pgSession from "connect-pg-simple";
+import pg from "pg";
 
 const app = express();
 const httpServer = createServer(app);
@@ -34,15 +36,28 @@ if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
   throw new Error("SESSION_SECRET must be set in production");
 }
 
+// PostgreSQL session store for persistent sessions
+const PgStore = pgSession(session);
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+app.set("trust proxy", 1); // Trust first proxy for secure cookies
+
 app.use(
   session({
+    store: new PgStore({
+      pool,
+      tableName: "session",
+      createTableIfMissing: true,
+    }),
     secret: process.env.SESSION_SECRET || "snapnow-dev-secret-not-for-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
-      sameSite: "lax", // CSRF protection
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     },
   })
