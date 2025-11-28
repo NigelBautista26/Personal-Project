@@ -4,42 +4,26 @@ import { PhotographerCard } from "@/components/photographer-card";
 import { Search, SlidersHorizontal, MapPin } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-import annaImg from "@assets/generated_images/portrait_of_a_professional_female_photographer_named_anna.png";
-import joseImg from "@assets/generated_images/portrait_of_a_professional_male_photographer_named_jose.png";
+import { useQuery } from "@tanstack/react-query";
+import { getPhotographers } from "@/lib/api";
 
 export default function Home() {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const photographers = [
-    {
-      id: "anna",
-      name: "Anna L.",
-      location: "London, UK",
-      price: "£40",
-      rating: 4.9,
-      reviews: 128,
-      image: annaImg
-    },
-    {
-      id: "jose",
-      name: "Jose V.",
-      location: "Shoreditch, London",
-      price: "£35",
-      rating: 4.7,
-      reviews: 84,
-      image: joseImg
-    },
-    {
-      id: "sophie",
-      name: "Sophie M.",
-      location: "Notting Hill, London",
-      price: "£50",
-      rating: 5.0,
-      reviews: 42,
-      image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100" // Fallback/Stock
-    }
-  ];
+  const { data: photographers = [], isLoading } = useQuery({
+    queryKey: ["photographers"],
+    queryFn: getPhotographers,
+  });
+
+  const photographerCards = photographers.map((p) => ({
+    id: p.id,
+    name: p.userId.split("-")[0], // Use first part of UUID as display name for now
+    location: p.location,
+    price: `£${parseFloat(p.hourlyRate)}`,
+    rating: parseFloat(p.rating || "5.0"),
+    reviews: p.reviewCount || 0,
+    image: p.profileImageUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
+  }));
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -81,9 +65,15 @@ export default function Home() {
         </div>
 
         <div className="space-y-3 overflow-y-auto h-full pb-20">
-          {photographers.map(p => (
-            <PhotographerCard key={p.id} {...p} />
-          ))}
+          {isLoading ? (
+            <div className="text-center text-muted-foreground py-8">Loading photographers...</div>
+          ) : photographerCards.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">No photographers found</div>
+          ) : (
+            photographerCards.map(p => (
+              <PhotographerCard key={p.id} {...p} />
+            ))
+          )}
         </div>
       </motion.div>
 
