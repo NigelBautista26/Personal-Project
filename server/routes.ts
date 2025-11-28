@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertPhotographerSchema, insertBookingSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import { z } from "zod";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -40,7 +41,13 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { email, password } = req.body;
+      // Validate login payload
+      const loginSchema = z.object({
+        email: z.string().email(),
+        password: z.string().min(6),
+      });
+      
+      const { email, password } = loginSchema.parse(req.body);
       
       const user = await storage.getUserByEmail(email);
       if (!user) {
@@ -58,6 +65,7 @@ export async function registerRoutes(
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
+      console.error("Login error:", error);
       res.status(400).json({ error: "Invalid request" });
     }
   });
@@ -110,10 +118,16 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const photographerData = insertPhotographerSchema.parse(req.body);
+      // Force userId to be the logged-in user (prevent spoofing)
+      const photographerData = insertPhotographerSchema.parse({
+        ...req.body,
+        userId: req.session.userId, // Override any client-provided userId
+      });
+      
       const photographer = await storage.createPhotographer(photographerData);
       res.json(photographer);
     } catch (error) {
+      console.error("Photographer creation error:", error);
       res.status(400).json({ error: "Invalid request" });
     }
   });
@@ -124,10 +138,17 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const photographer = await storage.updatePhotographer(req.params.id, req.body);
-      if (!photographer) {
+      // Verify the photographer belongs to the logged-in user
+      const existingPhotographer = await storage.getPhotographer(req.params.id);
+      if (!existingPhotographer) {
         return res.status(404).json({ error: "Photographer not found" });
       }
+      
+      if (existingPhotographer.userId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot update another photographer's profile" });
+      }
+      
+      const photographer = await storage.updatePhotographer(req.params.id, req.body);
       res.json(photographer);
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
@@ -141,15 +162,42 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      const bookingData = insertBookingSchema.parse(req.body);
+      // Validate input with Zod
+      const bookingInputSchema = z.object({
+        photographerId: z.string(),
+        duration: z.number().positive().int(),
+        location: z.string().min(1),
+        scheduledDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}T/)),
+        scheduledTime: z.string(),
+      });
       
-      // Calculate commission (20%)
-      const totalAmount = parseFloat(bookingData.totalAmount);
-      const platformFee = totalAmount * 0.20;
-      const photographerEarnings = totalAmount - platformFee;
+      const { photographerId, duration, location, scheduledDate, scheduledTime } = bookingInputSchema.parse(req.body);
       
+      // Verify photographer exists and is available
+      const photographer = await storage.getPhotographer(photographerId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer not found" });
+      }
+      
+      if (!photographer.isAvailable) {
+        return res.status(400).json({ error: "Photographer is not available" });
+      }
+      
+      // SERVER-SIDE calculation based on photographer's hourly rate (never trust client)
+      const hourlyRate = parseFloat(photographer.hourlyRate);
+      const grossAmount = hourlyRate * duration;
+      const platformFee = Math.round(grossAmount * 0.20 * 100) / 100; // 20% commission
+      const photographerEarnings = Math.round((grossAmount - platformFee) * 100) / 100;
+      
+      // Force customerId to be the logged-in user
       const booking = await storage.createBooking({
-        ...bookingData,
+        customerId: req.session.userId, // Always use session userId
+        photographerId,
+        duration,
+        location,
+        scheduledDate: new Date(scheduledDate),
+        scheduledTime,
+        totalAmount: grossAmount.toFixed(2),
         platformFee: platformFee.toFixed(2),
         photographerEarnings: photographerEarnings.toFixed(2),
       });
@@ -158,13 +206,17 @@ export async function registerRoutes(
       await storage.createEarning({
         photographerId: booking.photographerId,
         bookingId: booking.id,
-        grossAmount: totalAmount.toFixed(2),
+        grossAmount: grossAmount.toFixed(2),
         platformFee: platformFee.toFixed(2),
         netAmount: photographerEarnings.toFixed(2),
       });
       
       res.json(booking);
     } catch (error) {
+      console.error("Booking creation error:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid booking data", details: error.errors });
+      }
       res.status(400).json({ error: "Invalid request" });
     }
   });
@@ -173,6 +225,11 @@ export async function registerRoutes(
     try {
       if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // Only allow users to see their own bookings
+      if (req.params.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot view another user's bookings" });
       }
       
       const bookings = await storage.getBookingsByCustomer(req.params.customerId);
@@ -186,6 +243,12 @@ export async function registerRoutes(
     try {
       if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // Verify photographer belongs to the logged-in user
+      const photographer = await storage.getPhotographer(req.params.photographerId);
+      if (!photographer || photographer.userId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot view another photographer's bookings" });
       }
       
       const bookings = await storage.getBookingsByPhotographer(req.params.photographerId);
@@ -202,6 +265,12 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Not authenticated" });
       }
       
+      // Verify photographer belongs to the logged-in user
+      const photographer = await storage.getPhotographer(req.params.photographerId);
+      if (!photographer || photographer.userId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot view another photographer's earnings" });
+      }
+      
       const earnings = await storage.getEarningsByPhotographer(req.params.photographerId);
       res.json(earnings);
     } catch (error) {
@@ -213,6 +282,12 @@ export async function registerRoutes(
     try {
       if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // Verify photographer belongs to the logged-in user
+      const photographer = await storage.getPhotographer(req.params.photographerId);
+      if (!photographer || photographer.userId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot view another photographer's earnings" });
       }
       
       const summary = await storage.getTotalEarnings(req.params.photographerId);

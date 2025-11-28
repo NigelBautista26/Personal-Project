@@ -29,14 +29,20 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Ensure session secret is set
+if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "snapnow-secret-change-in-production",
+    secret: process.env.SESSION_SECRET || "snapnow-dev-secret-not-for-production",
     resave: false,
     saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
+      sameSite: "lax", // CSRF protection
       maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
     },
   })
