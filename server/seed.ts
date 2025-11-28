@@ -24,7 +24,7 @@ async function seed() {
       longitude: "-0.1278",
       rating: "4.9",
       reviewCount: 128,
-      profileImageUrl: "/generated_images/portrait_of_a_professional_female_photographer_named_anna.png",
+      profileImageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=400&h=400",
       portfolioImages: [
         "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400",
         "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400",
@@ -46,7 +46,7 @@ async function seed() {
       longitude: "-0.0793",
       rating: "4.7",
       reviewCount: 84,
-      profileImageUrl: "/generated_images/portrait_of_a_professional_male_photographer_named_jose.png",
+      profileImageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&h=400",
       portfolioImages: [
         "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400",
         "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",

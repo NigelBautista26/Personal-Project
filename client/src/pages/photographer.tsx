@@ -36,9 +36,7 @@ export default function PhotographerProfile() {
     );
   }
 
-  const profileImage = photographer.profileImageUrl?.startsWith('/')
-    ? `/public-objects${photographer.profileImageUrl}`
-    : photographer.profileImageUrl;
+  const profileImage = photographer.profileImageUrl;
 
   const portfolioImages = photographer.portfolioImages || [];
 
