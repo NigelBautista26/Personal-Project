@@ -36,12 +36,24 @@ export const bookings = pgTable("bookings", {
   location: text("location").notNull(),
   scheduledDate: timestamp("scheduled_date").notNull(),
   scheduledTime: text("scheduled_time").notNull(),
-  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
-  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(),
-  photographerEarnings: decimal("photographer_earnings", { precision: 10, scale: 2 }).notNull(),
+  baseAmount: decimal("base_amount", { precision: 10, scale: 2 }).notNull(), // photographer rate x duration
+  customerServiceFee: decimal("customer_service_fee", { precision: 10, scale: 2 }).notNull(), // 10% fee charged to customer
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // baseAmount + customerServiceFee
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // 20% taken from photographer
+  photographerEarnings: decimal("photographer_earnings", { precision: 10, scale: 2 }).notNull(), // baseAmount - platformFee
   status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled
   stripePaymentId: text("stripe_payment_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const photoDeliveries = pgTable("photo_deliveries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull().references(() => bookings.id),
+  photographerId: varchar("photographer_id").notNull().references(() => photographers.id),
+  photos: text("photos").array().default(sql`ARRAY[]::text[]`), // array of photo URLs
+  message: text("message"), // optional message from photographer
+  deliveredAt: timestamp("delivered_at").defaultNow().notNull(),
+  downloadedAt: timestamp("downloaded_at"), // track when customer downloads
 });
 
 export const earnings = pgTable("earnings", {
@@ -100,6 +112,12 @@ export const insertPhotoSpotSchema = createInsertSchema(photoSpots).omit({
   id: true,
 });
 
+export const insertPhotoDeliverySchema = createInsertSchema(photoDeliveries).omit({
+  id: true,
+  deliveredAt: true,
+  downloadedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -115,3 +133,6 @@ export type Earning = typeof earnings.$inferSelect;
 
 export type InsertPhotoSpot = z.infer<typeof insertPhotoSpotSchema>;
 export type PhotoSpot = typeof photoSpots.$inferSelect;
+
+export type InsertPhotoDelivery = z.infer<typeof insertPhotoDeliverySchema>;
+export type PhotoDelivery = typeof photoDeliveries.$inferSelect;
