@@ -56,6 +56,20 @@ export const earnings = pgTable("earnings", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const photoSpots = pgTable("photo_spots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  city: text("city").notNull(),
+  description: text("description").notNull(),
+  category: text("category").notNull(), // landmark, park, street, waterfront, architecture, etc.
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  imageUrl: text("image_url").notNull(),
+  galleryImages: text("gallery_images").array().default(sql`ARRAY[]::text[]`),
+  bestTimeToVisit: text("best_time_to_visit"),
+  tips: text("tips"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -82,6 +96,10 @@ export const insertEarningSchema = createInsertSchema(earnings).omit({
   paidAt: true,
 });
 
+export const insertPhotoSpotSchema = createInsertSchema(photoSpots).omit({
+  id: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -94,3 +112,6 @@ export type Booking = typeof bookings.$inferSelect;
 
 export type InsertEarning = z.infer<typeof insertEarningSchema>;
 export type Earning = typeof earnings.$inferSelect;
+
+export type InsertPhotoSpot = z.infer<typeof insertPhotoSpotSchema>;
+export type PhotoSpot = typeof photoSpots.$inferSelect;
