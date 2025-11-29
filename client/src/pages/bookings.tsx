@@ -239,7 +239,7 @@ export default function Bookings() {
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
         <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-start justify-between p-4 border-b border-white/10 shrink-0">
+          <div className="flex items-start justify-between p-4 pr-12 border-b border-white/10 shrink-0">
             <div className="flex-1 min-w-0 pr-4">
               <h2 className="text-white font-bold">Your Photos</h2>
               {selectedBookingPhotos?.message && (
