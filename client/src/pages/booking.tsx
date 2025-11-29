@@ -1,12 +1,22 @@
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPhotographer, getCurrentUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+interface PhotoSpot {
+  id: string;
+  name: string;
+  city: string;
+  description: string;
+  category: string;
+  imageUrl: string;
+}
 
 export default function Booking() {
   const [match, params] = useRoute("/book/:id");
@@ -17,8 +27,19 @@ export default function Booking() {
   const [meetingLocation, setMeetingLocation] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState("14:00");
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [locationMode, setLocationMode] = useState<'spot' | 'current' | 'manual'>('manual');
   
   const id = params?.id;
+
+  useEffect(() => {
+    const savedLocation = localStorage.getItem("bookingLocation");
+    if (savedLocation) {
+      setMeetingLocation(savedLocation);
+      setLocationMode('spot');
+      localStorage.removeItem("bookingLocation");
+    }
+  }, []);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
@@ -29,6 +50,28 @@ export default function Booking() {
     queryKey: ["photographer", id],
     queryFn: () => getPhotographer(id!),
     enabled: !!id,
+  });
+
+  const getPhotographerCity = () => {
+    if (!photographer?.location) return "";
+    const parts = photographer.location.split(',').map((p: string) => p.trim());
+    const knownCities = ['London', 'Paris', 'New York', 'Tokyo'];
+    for (const city of knownCities) {
+      if (parts.some((part: string) => part.includes(city))) return city;
+    }
+    return parts[parts.length - 1] || parts[0] || "";
+  };
+  const photographerCity = getPhotographerCity();
+
+  const { data: photoSpots = [] } = useQuery<PhotoSpot[]>({
+    queryKey: ["photo-spots", photographerCity],
+    queryFn: async () => {
+      if (!photographerCity) return [];
+      const res = await fetch(`/api/photo-spots?city=${encodeURIComponent(photographerCity)}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!photographerCity,
   });
 
   const hourlyRate = parseFloat(photographer?.hourlyRate || "0");
@@ -179,17 +222,41 @@ export default function Booking() {
 
             <section>
               <h3 className="text-white font-bold mb-4">Where should we meet?</h3>
-              <div className="bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-primary" />
-                <Input 
-                  type="text" 
-                  placeholder="e.g. Central Park, Times Square..." 
-                  value={meetingLocation}
-                  onChange={(e) => setMeetingLocation(e.target.value)}
-                  className="bg-transparent border-none text-white placeholder:text-muted-foreground focus-visible:ring-0"
-                  data-testid="input-location"
-                />
-              </div>
+              
+              <button
+                onClick={() => setShowLocationPicker(true)}
+                className="w-full bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
+                data-testid="button-select-location"
+              >
+                <div className={cn(
+                  "w-10 h-10 rounded-full flex items-center justify-center",
+                  meetingLocation ? "bg-primary/20" : "bg-white/10"
+                )}>
+                  {locationMode === 'spot' ? (
+                    <Camera className="w-5 h-5 text-primary" />
+                  ) : locationMode === 'current' ? (
+                    <Navigation className="w-5 h-5 text-primary" />
+                  ) : (
+                    <MapPin className="w-5 h-5 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  {meetingLocation ? (
+                    <>
+                      <p className="text-white font-medium">{meetingLocation}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {locationMode === 'spot' ? 'Photo Spot' : locationMode === 'current' ? 'Current Location' : 'Custom Location'}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground">Select a location</p>
+                      <p className="text-xs text-muted-foreground">Choose a photo spot or enter manually</p>
+                    </>
+                  )}
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
             </section>
 
             <section>
@@ -281,6 +348,117 @@ export default function Booking() {
           )}
         </Button>
       </div>
+
+      <Dialog open={showLocationPicker} onOpenChange={setShowLocationPicker}>
+        <DialogContent className="max-w-md bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-white">Choose Location</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+            <button
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  toast({ title: "Location not available", description: "Your browser doesn't support geolocation", variant: "destructive" });
+                  return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                  (position) => {
+                    setMeetingLocation(`My Current Location (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
+                    setLocationMode('current');
+                    setShowLocationPicker(false);
+                  },
+                  () => {
+                    toast({ title: "Location error", description: "Could not get your location", variant: "destructive" });
+                  }
+                );
+              }}
+              className="w-full flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20"
+              data-testid="button-use-current-location"
+            >
+              <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                <Navigation className="w-5 h-5 text-primary" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-white">Use Current Location</p>
+                <p className="text-xs text-muted-foreground">Share your GPS location</p>
+              </div>
+            </button>
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">Enter Manually</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Type a location..."
+                  className="flex-1 bg-card border-white/10"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && (e.target as HTMLInputElement).value.trim()) {
+                      setMeetingLocation((e.target as HTMLInputElement).value.trim());
+                      setLocationMode('manual');
+                      setShowLocationPicker(false);
+                    }
+                  }}
+                  data-testid="input-manual-location"
+                />
+                <Button
+                  variant="outline"
+                  className="border-white/20"
+                  onClick={(e) => {
+                    const input = (e.currentTarget.previousSibling as HTMLInputElement);
+                    if (input.value.trim()) {
+                      setMeetingLocation(input.value.trim());
+                      setLocationMode('manual');
+                      setShowLocationPicker(false);
+                    }
+                  }}
+                >
+                  Set
+                </Button>
+              </div>
+            </div>
+
+            {photoSpots.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Camera className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground uppercase tracking-wider">Popular Photo Spots in {photographerCity}</span>
+                </div>
+                <div className="space-y-2">
+                  {photoSpots.map((spot) => (
+                    <button
+                      key={spot.id}
+                      onClick={() => {
+                        setMeetingLocation(spot.name);
+                        setLocationMode('spot');
+                        setShowLocationPicker(false);
+                      }}
+                      className={cn(
+                        "w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left",
+                        meetingLocation === spot.name && "bg-white/5 border border-primary/30"
+                      )}
+                      data-testid={`button-spot-${spot.id}`}
+                    >
+                      <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                        <img src={spot.imageUrl} alt={spot.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-white truncate">{spot.name}</p>
+                        <p className="text-xs text-muted-foreground capitalize">{spot.category}</p>
+                      </div>
+                      {meetingLocation === spot.name && (
+                        <Check className="w-5 h-5 text-primary flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

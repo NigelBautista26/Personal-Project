@@ -16,6 +16,8 @@ import Profile from "@/pages/profile";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import BusinessCase from "@/pages/business-case";
+import PhotoSpots from "@/pages/photo-spots";
+import PhotoSpotDetail from "@/pages/photo-spot-detail";
 
 function Router() {
   return (
@@ -31,6 +33,8 @@ function Router() {
       <Route path="/photographer-bookings" component={PhotographerBookings} />
       <Route path="/dashboard" component={PhotographerDashboard} />
       <Route path="/business-case" component={BusinessCase} />
+      <Route path="/photo-spots" component={PhotoSpots} />
+      <Route path="/photo-spots/:id" component={PhotoSpotDetail} />
       <Route path="/photographer/:id" component={PhotographerProfile} />
       <Route path="/book/:id" component={Booking} />
       <Route component={NotFound} />
