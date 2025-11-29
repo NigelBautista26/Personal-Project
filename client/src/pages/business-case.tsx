@@ -33,14 +33,16 @@ export default function BusinessCase() {
 
       <div ref={contentRef} className="max-w-4xl mx-auto p-8 text-gray-900 bg-white">
         {/* Cover Page */}
-        <div className="text-center py-16 mb-8 border-b-4 border-blue-600">
-          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center">
-            <span className="text-white text-3xl font-bold">S</span>
+        <div className="text-center py-12 mb-8 border-b-4 border-blue-600">
+          <div className="bg-gray-900 rounded-3xl p-8 mb-8 mx-auto max-w-md">
+            <img 
+              src="/attached_assets/Screenshot 2025-11-29 at 2.56.32 am_1764385014615.png" 
+              alt="SnapNow Logo" 
+              className="w-full h-auto"
+            />
           </div>
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">SnapNow</h1>
-          <p className="text-2xl text-gray-600 mb-2">Business Case</p>
-          <p className="text-lg text-blue-600 font-medium">On-Demand Photography at Your Fingertips</p>
-          <p className="text-sm text-gray-500 mt-8">Investor Presentation | 2025</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Business Case</h1>
+          <p className="text-lg text-blue-600 font-medium">Investor Presentation | 2025</p>
         </div>
 
         {/* Executive Summary */}
