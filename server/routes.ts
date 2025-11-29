@@ -397,10 +397,15 @@ export async function registerRoutes(
       }
       
       // SERVER-SIDE calculation based on photographer's hourly rate (never trust client)
+      // Two-sided revenue model:
+      // - Customer pays: baseAmount + 10% service fee
+      // - Platform takes: 20% from photographer's base earnings
       const hourlyRate = parseFloat(photographer.hourlyRate);
-      const grossAmount = hourlyRate * duration;
-      const platformFee = Math.round(grossAmount * 0.20 * 100) / 100; // 20% commission
-      const photographerEarnings = Math.round((grossAmount - platformFee) * 100) / 100;
+      const baseAmount = hourlyRate * duration; // What photographer charges
+      const customerServiceFee = Math.round(baseAmount * 0.10 * 100) / 100; // 10% customer fee
+      const totalAmount = Math.round((baseAmount + customerServiceFee) * 100) / 100; // Customer pays this
+      const platformFee = Math.round(baseAmount * 0.20 * 100) / 100; // 20% from photographer
+      const photographerEarnings = Math.round((baseAmount - platformFee) * 100) / 100;
       
       // Force customerId to be the logged-in user
       const booking = await storage.createBooking({
@@ -410,7 +415,9 @@ export async function registerRoutes(
         location,
         scheduledDate: new Date(scheduledDate),
         scheduledTime,
-        totalAmount: grossAmount.toFixed(2),
+        baseAmount: baseAmount.toFixed(2),
+        customerServiceFee: customerServiceFee.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
         platformFee: platformFee.toFixed(2),
         photographerEarnings: photographerEarnings.toFixed(2),
       });
@@ -419,7 +426,7 @@ export async function registerRoutes(
       await storage.createEarning({
         photographerId: booking.photographerId,
         bookingId: booking.id,
-        grossAmount: grossAmount.toFixed(2),
+        grossAmount: baseAmount.toFixed(2),
         platformFee: platformFee.toFixed(2),
         netAmount: photographerEarnings.toFixed(2),
       });
