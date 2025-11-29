@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import NotFound from "@/pages/not-found";
 import Welcome from "@/pages/welcome";
 import Home from "@/pages/home";
+import Photographers from "@/pages/photographers";
 import PhotographerProfile from "@/pages/photographer";
 import Booking from "@/pages/booking";
 import Bookings from "@/pages/bookings";
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/home" component={Home} />
+      <Route path="/photographers" component={Photographers} />
       <Route path="/bookings" component={Bookings} />
       <Route path="/profile" component={Profile} />
       <Route path="/photographer-home" component={PhotographerHome} />

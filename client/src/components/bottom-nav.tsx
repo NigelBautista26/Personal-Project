@@ -1,4 +1,4 @@
-import { Home, Calendar, User, Camera, DollarSign, Settings } from "lucide-react";
+import { Map, Calendar, User, Camera, DollarSign, Settings, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -13,7 +13,8 @@ export function BottomNav() {
 
   // Different navigation for photographers vs customers
   const customerItems = [
-    { icon: Home, label: "Explore", href: "/home" },
+    { icon: Map, label: "Map", href: "/home" },
+    { icon: Users, label: "Photographers", href: "/photographers" },
     { icon: Camera, label: "Spots", href: "/photo-spots" },
     { icon: Calendar, label: "Bookings", href: "/bookings" },
     { icon: User, label: "Profile", href: "/profile" },
