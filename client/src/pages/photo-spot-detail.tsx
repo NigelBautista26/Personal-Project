@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, MapPin, Clock, Lightbulb, Navigation } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Lightbulb, Navigation, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 interface PhotoSpot {
   id: string;
@@ -21,6 +23,7 @@ interface PhotoSpot {
 export default function PhotoSpotDetail() {
   const [, navigate] = useLocation();
   const [match, params] = useRoute("/photo-spots/:id");
+  const [enlargedImageIndex, setEnlargedImageIndex] = useState<number | null>(null);
 
   const { data: spot, isLoading, error } = useQuery<PhotoSpot>({
     queryKey: ["photo-spot", params?.id],
@@ -148,13 +151,18 @@ export default function PhotoSpotDetail() {
             <h2 className="text-lg font-semibold text-white">Gallery</h2>
             <div className="grid grid-cols-2 gap-2">
               {allImages.slice(1).map((img, index) => (
-                <div key={index} className="aspect-square rounded-xl overflow-hidden">
+                <button 
+                  key={index} 
+                  className="aspect-square rounded-xl overflow-hidden cursor-pointer"
+                  onClick={() => setEnlargedImageIndex(index + 1)}
+                  data-testid={`gallery-image-${index}`}
+                >
                   <img
                     src={img}
                     alt={`${spot.name} ${index + 1}`}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                   />
-                </div>
+                </button>
               ))}
             </div>
           </motion.div>
@@ -182,6 +190,52 @@ export default function PhotoSpotDetail() {
           </Button>
         </motion.div>
       </div>
+
+      {/* Image Enlargement Dialog */}
+      <Dialog open={enlargedImageIndex !== null} onOpenChange={(open) => !open && setEnlargedImageIndex(null)}>
+        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+          <div className="flex-1 flex items-center justify-center relative p-4 pr-12" style={{ minHeight: 0 }}>
+            {enlargedImageIndex !== null && (
+              <img
+                src={allImages[enlargedImageIndex]}
+                alt={`${spot.name} enlarged`}
+                className="object-contain rounded-lg"
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '100%',
+                  width: 'auto',
+                  height: 'auto'
+                }}
+              />
+            )}
+            
+            {allImages.length > 1 && enlargedImageIndex !== null && (
+              <>
+                <button
+                  onClick={() => setEnlargedImageIndex(i => i !== null ? (i > 0 ? i - 1 : allImages.length - 1) : null)}
+                  className="absolute left-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                  data-testid="button-prev-image"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={() => setEnlargedImageIndex(i => i !== null ? (i < allImages.length - 1 ? i + 1 : 0) : null)}
+                  className="absolute right-14 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                  data-testid="button-next-image"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {enlargedImageIndex !== null && (
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                {enlargedImageIndex + 1} / {allImages.length}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
