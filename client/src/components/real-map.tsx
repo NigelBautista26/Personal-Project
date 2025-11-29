@@ -67,7 +67,7 @@ function MapController({ center, shouldFollowUser, userPosition }: { center: [nu
     if (shouldFollowUser && userPosition) {
       map.setView(userPosition, 14);
     } else {
-      map.setView(center, 13);
+      map.setView(center, 11);
     }
   }, [center, shouldFollowUser, userPosition, map]);
 
@@ -363,7 +363,7 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
       `}</style>
       <MapContainer
         center={mapCenter}
-        zoom={13}
+        zoom={11}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
         key={mapStyle}
