@@ -256,13 +256,6 @@ export default function Bookings() {
                 <Download className="w-4 h-4 mr-2" />
                 Download All
               </Button>
-              <button
-                onClick={() => setSelectedBookingPhotos(null)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
-                data-testid="button-close-gallery"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
           </div>
 
