@@ -1,6 +1,6 @@
 import { RealMap } from "@/components/real-map";
 import { BottomNav } from "@/components/bottom-nav";
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, Camera } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +10,16 @@ import { useLocation } from "wouter";
 
 const DEFAULT_CITY: City = { name: "London", country: "United Kingdom", lat: 51.5074, lng: -0.1278 };
 const SEARCH_RADIUS_KM = 50;
+
+interface PhotoSpot {
+  id: string;
+  name: string;
+  city: string;
+  latitude: string;
+  longitude: string;
+  category: string;
+  imageUrl: string;
+}
 
 function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -51,6 +61,15 @@ export default function Home() {
     queryFn: getPhotographers,
   });
 
+  const { data: photoSpots = [] } = useQuery<PhotoSpot[]>({
+    queryKey: ["photo-spots", selectedCity.name],
+    queryFn: async () => {
+      const res = await fetch(`/api/photo-spots?city=${encodeURIComponent(selectedCity.name)}`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+
   const filteredPhotographers = useMemo(() => {
     return photographers.filter((p: any) => {
       const pLat = parseFloat(p.latitude);
@@ -80,6 +99,7 @@ export default function Home() {
       <RealMap 
         selectedCity={selectedCity}
         photographers={filteredPhotographers}
+        photoSpots={photoSpots}
       />
 
       <motion.div
