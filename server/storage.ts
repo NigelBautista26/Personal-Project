@@ -7,10 +7,13 @@ import {
   type InsertBooking,
   type Earning,
   type InsertEarning,
+  type PhotoSpot,
+  type InsertPhotoSpot,
   users,
   photographers,
   bookings,
-  earnings
+  earnings,
+  photoSpots
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc } from "drizzle-orm";
@@ -43,6 +46,12 @@ export interface IStorage {
   getEarningsByPhotographer(photographerId: string): Promise<Earning[]>;
   createEarning(earning: InsertEarning): Promise<Earning>;
   getTotalEarnings(photographerId: string): Promise<{ total: number; pending: number; paid: number }>;
+  
+  // Photo Spots methods
+  getPhotoSpot(id: string): Promise<PhotoSpot | undefined>;
+  getPhotoSpotsByCity(city: string): Promise<PhotoSpot[]>;
+  getAllPhotoSpots(): Promise<PhotoSpot[]>;
+  createPhotoSpot(spot: InsertPhotoSpot): Promise<PhotoSpot>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -177,6 +186,25 @@ export class DatabaseStorage implements IStorage {
     const paid = allEarnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
     
     return { total, pending, paid };
+  }
+
+  // Photo Spots methods
+  async getPhotoSpot(id: string): Promise<PhotoSpot | undefined> {
+    const result = await db.select().from(photoSpots).where(eq(photoSpots.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPhotoSpotsByCity(city: string): Promise<PhotoSpot[]> {
+    return await db.select().from(photoSpots).where(eq(photoSpots.city, city));
+  }
+
+  async getAllPhotoSpots(): Promise<PhotoSpot[]> {
+    return await db.select().from(photoSpots);
+  }
+
+  async createPhotoSpot(spot: InsertPhotoSpot): Promise<PhotoSpot> {
+    const result = await db.insert(photoSpots).values(spot).returning();
+    return result[0];
   }
 }
 

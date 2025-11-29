@@ -541,6 +541,33 @@ export async function registerRoutes(
     }
   });
 
+  // Photo Spots Routes
+  app.get("/api/photo-spots", async (req, res) => {
+    try {
+      const { city } = req.query;
+      if (city && typeof city === 'string') {
+        const spots = await storage.getPhotoSpotsByCity(city);
+        return res.json(spots);
+      }
+      const spots = await storage.getAllPhotoSpots();
+      res.json(spots);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch photo spots" });
+    }
+  });
+
+  app.get("/api/photo-spots/:id", async (req, res) => {
+    try {
+      const spot = await storage.getPhotoSpot(req.params.id);
+      if (!spot) {
+        return res.status(404).json({ error: "Photo spot not found" });
+      }
+      res.json(spot);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch photo spot" });
+    }
+  });
+
   // Object Storage Routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
