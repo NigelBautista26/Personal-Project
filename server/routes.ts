@@ -780,8 +780,8 @@ export async function registerRoutes(
     }
 
     const objectStorageService = new ObjectStorageService();
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    res.json({ uploadURL });
+    const { uploadURL, objectPath } = await objectStorageService.getObjectEntityUploadURL();
+    res.json({ uploadURL, objectPath });
   });
 
   app.put("/api/photographer-images", async (req, res) => {

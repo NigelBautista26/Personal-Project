@@ -115,18 +115,17 @@ export default function PhotographerBookings() {
         });
         
         if (!uploadRes.ok) throw new Error("Failed to get upload URL");
-        const { uploadURL } = await uploadRes.json();
+        const { uploadURL, objectPath } = await uploadRes.json();
 
-        const formData = new FormData();
-        formData.append("file", file);
-        
         const putRes = await fetch(uploadURL, {
-          method: "POST",
-          body: formData,
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "image/jpeg",
+          },
+          body: file,
         });
         
         if (!putRes.ok) throw new Error("Failed to upload file");
-        const { objectPath } = await putRes.json();
 
         const addPhotoRes = await fetch(`/api/bookings/${uploadBookingId}/photos/upload`, {
           method: "POST",
