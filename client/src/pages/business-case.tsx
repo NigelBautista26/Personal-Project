@@ -64,8 +64,8 @@ export default function BusinessCase() {
               <p className="text-sm text-gray-600">Shoott Revenue (Comparable)*</p>
             </div>
             <div className="bg-orange-50 rounded-xl p-4 text-center border border-orange-100">
-              <p className="text-3xl font-bold text-orange-600">20%</p>
-              <p className="text-sm text-gray-600">Commission Model</p>
+              <p className="text-3xl font-bold text-orange-600">~27%</p>
+              <p className="text-sm text-gray-600">Effective Take Rate</p>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2 italic">*Shoott scaled to $10M revenue with just $2.7M in funding</p>
@@ -188,27 +188,51 @@ export default function BusinessCase() {
           <h2 className="text-3xl font-bold text-gray-900 mb-6 pb-2 border-b-2 border-blue-600">Business Model</h2>
           
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-8 mb-6 border border-blue-100">
-            <h3 className="font-bold text-xl text-center text-gray-900 mb-6">Commission Structure</h3>
-            <div className="flex justify-center items-center gap-4 flex-wrap">
-              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-200">
-                <p className="text-sm text-gray-600">Customer Pays</p>
-                <p className="text-3xl font-bold text-gray-900">£100</p>
+            <h3 className="font-bold text-xl text-center text-gray-900 mb-6">Two-Sided Revenue Model</h3>
+            <div className="grid grid-cols-1 gap-4 max-w-2xl mx-auto">
+              <div className="bg-white rounded-xl p-4 border border-gray-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-700">Photographer's hourly rate</span>
+                  <span className="font-bold text-gray-900">£100</span>
+                </div>
               </div>
-              <span className="text-2xl text-gray-400">→</span>
-              <div className="bg-white rounded-xl p-4 text-center shadow-sm border border-gray-200">
-                <p className="text-sm text-gray-600">Photographer Gets (80%)</p>
-                <p className="text-3xl font-bold text-green-600">£80</p>
+              <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-orange-800">+ Customer Service Fee (10%)</span>
+                  <span className="font-bold text-orange-600">£10</span>
+                </div>
               </div>
-              <span className="text-2xl text-gray-400">+</span>
-              <div className="bg-white rounded-xl p-4 text-center shadow-sm border-2 border-blue-600">
-                <p className="text-sm text-gray-600">SnapNow Earns (20%)</p>
-                <p className="text-3xl font-bold text-blue-600">£20</p>
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-blue-800 font-medium">Customer Pays Total</span>
+                  <span className="font-bold text-blue-600 text-xl">£110</span>
+                </div>
+              </div>
+              <div className="border-t-2 border-gray-300 my-2"></div>
+              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-green-800">Photographer Receives (80%)</span>
+                  <span className="font-bold text-green-600">£80</span>
+                </div>
+              </div>
+              <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                <div className="flex justify-between items-center">
+                  <span className="text-purple-800">Photographer Commission (20%)</span>
+                  <span className="font-bold text-purple-600">£20</span>
+                </div>
+              </div>
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 text-white">
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">SnapNow Total Revenue</span>
+                  <span className="font-bold text-2xl">£30</span>
+                </div>
+                <p className="text-xs opacity-80 mt-1">£10 service fee + £20 commission = 27% effective take rate</p>
               </div>
             </div>
           </div>
 
           <div className="bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
-            <h4 className="font-bold text-gray-900 mb-4">Proven Marketplace Take Rates</h4>
+            <h4 className="font-bold text-gray-900 mb-4">Competitive Take Rate Comparison</h4>
             <div className="grid grid-cols-4 gap-4 text-center">
               <div>
                 <p className="text-2xl font-bold text-gray-700">12-15%</p>
@@ -223,7 +247,7 @@ export default function BusinessCase() {
                 <p className="text-xs text-gray-500">Etsy</p>
               </div>
               <div>
-                <p className="text-2xl font-bold text-blue-600">20%</p>
+                <p className="text-2xl font-bold text-blue-600">~27%</p>
                 <p className="text-xs text-gray-500">SnapNow</p>
               </div>
             </div>
@@ -242,10 +266,16 @@ export default function BusinessCase() {
               </thead>
               <tbody>
                 <tr className="border-b border-gray-200">
-                  <td className="py-2">Booking Commissions (20%)</td>
+                  <td className="py-2">Customer Service Fees (10%)</td>
+                  <td className="text-right">£15K</td>
+                  <td className="text-right">£85K</td>
+                  <td className="text-right">£333K</td>
+                </tr>
+                <tr className="border-b border-gray-200">
+                  <td className="py-2">Photographer Commission (20%)</td>
                   <td className="text-right">£30K</td>
-                  <td className="text-right">£150K</td>
-                  <td className="text-right">£500K</td>
+                  <td className="text-right">£170K</td>
+                  <td className="text-right">£665K</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-2">Premium Photographer Features</td>
@@ -265,11 +295,11 @@ export default function BusinessCase() {
                   <td className="text-right">£5K</td>
                   <td className="text-right">£30K</td>
                 </tr>
-                <tr className="font-bold bg-gray-50">
-                  <td className="py-2">Total Revenue</td>
-                  <td className="text-right text-blue-600">£30K</td>
-                  <td className="text-right text-blue-600">£180K</td>
-                  <td className="text-right text-blue-600">£620K</td>
+                <tr className="font-bold bg-blue-50">
+                  <td className="py-2">Total Platform Revenue</td>
+                  <td className="text-right text-blue-600">£45K</td>
+                  <td className="text-right text-blue-600">£285K</td>
+                  <td className="text-right text-blue-600">£1.1M</td>
                 </tr>
               </tbody>
             </table>
@@ -420,10 +450,10 @@ export default function BusinessCase() {
                   <td className="text-right font-medium">£3,325,000</td>
                 </tr>
                 <tr className="border-b border-gray-200 bg-green-50">
-                  <td className="py-2 font-medium">Revenue (20% Take Rate)</td>
-                  <td className="text-right font-medium text-green-600">£30,000</td>
-                  <td className="text-right font-medium text-green-600">£170,000</td>
-                  <td className="text-right font-medium text-green-600">£665,000</td>
+                  <td className="py-2 font-medium">Platform Revenue (~27% Take Rate)</td>
+                  <td className="text-right font-medium text-green-600">£45,000</td>
+                  <td className="text-right font-medium text-green-600">£255,000</td>
+                  <td className="text-right font-medium text-green-600">£998,000</td>
                 </tr>
                 <tr className="border-b border-gray-200">
                   <td className="py-2">Gross Margin</td>
@@ -439,9 +469,9 @@ export default function BusinessCase() {
                 </tr>
                 <tr className="font-bold">
                   <td className="py-2">Net Income</td>
-                  <td className="text-right text-red-600">-£90,000</td>
-                  <td className="text-right text-red-600">-£17,000</td>
-                  <td className="text-right text-green-600">+£248,500</td>
+                  <td className="text-right text-red-600">-£75,000</td>
+                  <td className="text-right text-green-600">+£68,000</td>
+                  <td className="text-right text-green-600">+£548,000</td>
                 </tr>
               </tbody>
             </table>
@@ -463,8 +493,8 @@ export default function BusinessCase() {
                 <p className="text-sm text-gray-600">LTV/CAC Ratio</p>
               </div>
               <div className="text-center bg-white rounded-lg p-3 border border-gray-200">
-                <p className="text-2xl font-bold text-blue-600">20%</p>
-                <p className="text-sm text-gray-600">Take Rate</p>
+                <p className="text-2xl font-bold text-blue-600">~27%</p>
+                <p className="text-sm text-gray-600">Effective Take Rate</p>
               </div>
               <div className="text-center bg-white rounded-lg p-3 border border-gray-200">
                 <p className="text-2xl font-bold text-gray-900">70%+</p>
