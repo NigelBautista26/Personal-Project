@@ -1,34 +1,13 @@
-import { useState, useRef } from "react";
-import { Download, ArrowLeft, Loader2 } from "lucide-react";
+import { useRef } from "react";
+import { Download, ArrowLeft, Printer } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function BusinessCase() {
   const [, navigate] = useLocation();
-  const [generating, setGenerating] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const handleDownloadPDF = async () => {
-    setGenerating(true);
-    try {
-      const html2pdf = (await import("html2pdf.js")).default;
-      const element = contentRef.current;
-      if (!element) return;
-      
-      const opt = {
-        margin: [10, 10, 10, 10] as [number, number, number, number],
-        filename: "SnapNow_Business_Case_Investor_Ready.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
-        pagebreak: { mode: ["avoid-all", "css", "legacy"] }
-      };
-
-      await html2pdf().set(opt).from(element).save();
-    } catch (error) {
-      console.error("PDF generation failed:", error);
-    } finally {
-      setGenerating(false);
-    }
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
@@ -43,22 +22,12 @@ export default function BusinessCase() {
           Back
         </button>
         <button
-          onClick={handleDownloadPDF}
-          disabled={generating}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           data-testid="button-download-pdf"
         >
-          {generating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Generating PDF...
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4" />
-              Download PDF
-            </>
-          )}
+          <Printer className="w-4 h-4" />
+          Print / Save PDF
         </button>
       </div>
 
