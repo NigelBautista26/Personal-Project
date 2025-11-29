@@ -36,7 +36,7 @@ export default function BusinessCase() {
         <div className="text-center py-12 mb-8 border-b-4 border-blue-600">
           <div className="bg-gray-900 rounded-3xl p-8 mb-8 mx-auto max-w-md">
             <img 
-              src="/attached_assets/Screenshot 2025-11-29 at 2.56.32 am_1764385014615.png" 
+              src="/snapnow-banner.png" 
               alt="SnapNow Logo" 
               className="w-full h-auto"
             />
