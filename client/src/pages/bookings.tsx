@@ -223,92 +223,91 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-4xl w-full h-[90vh] p-0 bg-black/95 border-white/10">
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <div>
-                <h2 className="text-white font-bold">Your Photos</h2>
-                {selectedBookingPhotos?.message && (
-                  <p className="text-sm text-muted-foreground">{selectedBookingPhotos.message}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleDownloadAll}
-                  size="sm"
-                  className="bg-primary hover:bg-primary/90"
-                  data-testid="button-download-all"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download All
-                </Button>
-                <button
-                  onClick={() => setSelectedBookingPhotos(null)}
-                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
-                  data-testid="button-close-gallery"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="flex items-start justify-between p-4 border-b border-white/10 shrink-0">
+            <div className="flex-1 min-w-0 pr-4">
+              <h2 className="text-white font-bold">Your Photos</h2>
+              {selectedBookingPhotos?.message && (
+                <p className="text-sm text-muted-foreground line-clamp-2">{selectedBookingPhotos.message}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                onClick={handleDownloadAll}
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+                data-testid="button-download-all"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download All
+              </Button>
+              <button
+                onClick={() => setSelectedBookingPhotos(null)}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
+                data-testid="button-close-gallery"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Photo View */}
+          {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
+            <div className="flex-1 min-h-0 flex items-center justify-center relative p-4 overflow-hidden">
+              <img
+                src={selectedBookingPhotos.photos[viewingPhotoIndex]}
+                alt={`Photo ${viewingPhotoIndex + 1}`}
+                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
+                style={{ maxHeight: 'calc(100% - 2rem)' }}
+              />
+              
+              {/* Navigation Arrows */}
+              {selectedBookingPhotos.photos.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setViewingPhotoIndex(i => i > 0 ? i - 1 : selectedBookingPhotos!.photos.length - 1)}
+                    className="absolute left-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                    data-testid="button-prev-photo"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+                  <button
+                    onClick={() => setViewingPhotoIndex(i => i < selectedBookingPhotos!.photos.length - 1 ? i + 1 : 0)}
+                    className="absolute right-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                    data-testid="button-next-photo"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Photo Counter */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                {viewingPhotoIndex + 1} / {selectedBookingPhotos.photos.length}
               </div>
             </div>
+          )}
 
-            {/* Main Photo View */}
-            {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
-              <div className="flex-1 flex items-center justify-center relative p-4">
-                <img
-                  src={selectedBookingPhotos.photos[viewingPhotoIndex]}
-                  alt={`Photo ${viewingPhotoIndex + 1}`}
-                  className="max-w-full max-h-full object-contain rounded-lg"
-                />
-                
-                {/* Navigation Arrows */}
-                {selectedBookingPhotos.photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setViewingPhotoIndex(i => i > 0 ? i - 1 : selectedBookingPhotos!.photos.length - 1)}
-                      className="absolute left-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
-                      data-testid="button-prev-photo"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                    <button
-                      onClick={() => setViewingPhotoIndex(i => i < selectedBookingPhotos!.photos.length - 1 ? i + 1 : 0)}
-                      className="absolute right-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
-                      data-testid="button-next-photo"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  </>
-                )}
-
-                {/* Photo Counter */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
-                  {viewingPhotoIndex + 1} / {selectedBookingPhotos.photos.length}
-                </div>
+          {/* Thumbnails */}
+          {selectedBookingPhotos && selectedBookingPhotos.photos.length > 1 && (
+            <div className="p-4 border-t border-white/10 shrink-0">
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {selectedBookingPhotos.photos.map((photo, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setViewingPhotoIndex(idx)}
+                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                      idx === viewingPhotoIndex ? 'border-primary' : 'border-transparent hover:border-white/30'
+                    }`}
+                    data-testid={`thumbnail-${idx}`}
+                  >
+                    <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
               </div>
-            )}
-
-            {/* Thumbnails */}
-            {selectedBookingPhotos && selectedBookingPhotos.photos.length > 1 && (
-              <div className="p-4 border-t border-white/10">
-                <div className="flex gap-2 overflow-x-auto pb-2">
-                  {selectedBookingPhotos.photos.map((photo, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setViewingPhotoIndex(idx)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                        idx === viewingPhotoIndex ? 'border-primary' : 'border-transparent hover:border-white/30'
-                      }`}
-                      data-testid={`thumbnail-${idx}`}
-                    >
-                      <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
