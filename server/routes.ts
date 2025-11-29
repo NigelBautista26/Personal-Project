@@ -471,6 +471,37 @@ export async function registerRoutes(
     }
   });
 
+  // Update booking status (for photographers to accept/decline)
+  app.patch("/api/bookings/:bookingId/status", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const { status } = req.body;
+      if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the photographer owns this booking
+      const photographer = await storage.getPhotographer(booking.photographerId);
+      if (!photographer || photographer.userId !== req.session.userId) {
+        return res.status(403).json({ error: "Not authorized to update this booking" });
+      }
+      
+      const updatedBooking = await storage.updateBookingStatus(req.params.bookingId, status);
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Booking status update error:", error);
+      res.status(500).json({ error: "Failed to update booking status" });
+    }
+  });
+
   // Earnings Routes
   app.get("/api/earnings/photographer/:photographerId", async (req, res) => {
     try {

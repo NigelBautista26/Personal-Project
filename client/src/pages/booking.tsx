@@ -1,22 +1,109 @@
-import { useRoute, Link, useLocation } from "wouter";
-import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check } from "lucide-react";
+import { useRoute, useLocation } from "wouter";
+import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getPhotographer, getCurrentUser } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Booking() {
   const [match, params] = useRoute("/book/:id");
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState(1); // 1: Details, 2: Payment, 3: Success
+  const { toast } = useToast();
+  const [step, setStep] = useState(1);
+  const [selectedDuration, setSelectedDuration] = useState(1);
+  const [meetingLocation, setMeetingLocation] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedTime, setSelectedTime] = useState("14:00");
   
   const id = params?.id;
 
+  const { data: user } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+  });
+
+  const { data: photographer, isLoading: photographerLoading } = useQuery<any>({
+    queryKey: ["photographer", id],
+    queryFn: () => getPhotographer(id!),
+    enabled: !!id,
+  });
+
+  const hourlyRate = parseFloat(photographer?.hourlyRate || "0");
   const durations = [
-    { label: "60 min", price: "£40" },
-    { label: "90 min", price: "£60" },
-    { label: "120 min", price: "£80" },
+    { hours: 1, label: "1 hour" },
+    { hours: 2, label: "2 hours" },
+    { hours: 3, label: "3 hours" },
   ];
-  const [selectedDuration, setSelectedDuration] = useState(0);
+
+  const totalAmount = hourlyRate * selectedDuration;
+  const serviceFee = Math.round(totalAmount * 0.20 * 100) / 100;
+  const grandTotal = totalAmount;
+
+  const bookingMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          photographerId: id,
+          duration: selectedDuration,
+          location: meetingLocation,
+          scheduledDate: new Date(`${selectedDate}T${selectedTime}`).toISOString(),
+          scheduledTime: selectedTime,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Booking failed");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setStep(3);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Booking Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleConfirmBooking = () => {
+    if (!meetingLocation.trim()) {
+      toast({
+        title: "Location Required",
+        description: "Please enter a meeting location.",
+        variant: "destructive",
+      });
+      return;
+    }
+    bookingMutation.mutate();
+  };
+
+  if (photographerLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+        <h1 className="text-xl font-bold text-white mb-4">Please log in to book</h1>
+        <Button onClick={() => setLocation("/login")}>Log In</Button>
+      </div>
+    );
+  }
 
   if (step === 3) {
     return (
@@ -26,24 +113,43 @@ export default function Booking() {
         </div>
         <h1 className="text-3xl font-bold text-white mb-2">Booking Confirmed!</h1>
         <p className="text-muted-foreground mb-8">
-          Your session with Anna L. has been confirmed. We've sent a confirmation email.
+          Your session with {photographer?.fullName} has been confirmed for {selectedDate} at {selectedTime}.
         </p>
-        <Button onClick={() => setLocation("/home")} className="w-full h-14 rounded-xl bg-white text-black hover:bg-white/90 font-bold">
-          Back to Home
+        <Button onClick={() => setLocation("/bookings")} className="w-full h-14 rounded-xl bg-white text-black hover:bg-white/90 font-bold" data-testid="button-view-bookings">
+          View My Bookings
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-32">
       <div className="p-6 pt-12 flex items-center gap-4">
-        <button onClick={() => step === 1 ? window.history.back() : setStep(step - 1)} className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10">
+        <button 
+          onClick={() => step === 1 ? window.history.back() : setStep(step - 1)} 
+          className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10"
+          data-testid="button-back"
+        >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-xl font-bold text-white">
-          {step === 1 ? "Book Session" : "Secure Payment"}
+          {step === 1 ? "Book Session" : "Confirm Booking"}
         </h1>
+      </div>
+
+      <div className="px-6">
+        <div className="glass-panel rounded-2xl p-4 mb-6 flex items-center gap-4">
+          <img 
+            src={photographer?.profileImageUrl || "https://via.placeholder.com/60"} 
+            alt={photographer?.fullName} 
+            className="w-14 h-14 rounded-full object-cover"
+          />
+          <div>
+            <h2 className="text-white font-bold">{photographer?.fullName}</h2>
+            <p className="text-sm text-muted-foreground">{photographer?.location}</p>
+            <p className="text-sm text-primary font-medium">£{hourlyRate}/hour</p>
+          </div>
+        </div>
       </div>
 
       <div className="px-6 space-y-8">
@@ -52,19 +158,20 @@ export default function Booking() {
             <section>
               <h3 className="text-white font-bold mb-4">Duration</h3>
               <div className="flex gap-3">
-                {durations.map((d, i) => (
+                {durations.map((d) => (
                   <button
-                    key={i}
-                    onClick={() => setSelectedDuration(i)}
+                    key={d.hours}
+                    onClick={() => setSelectedDuration(d.hours)}
                     className={cn(
                       "flex-1 py-3 px-4 rounded-xl border text-center transition-all",
-                      selectedDuration === i 
+                      selectedDuration === d.hours 
                         ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
                         : "bg-card border-white/10 text-muted-foreground hover:bg-white/5"
                     )}
+                    data-testid={`button-duration-${d.hours}`}
                   >
                     <span className="block font-bold text-sm">{d.label}</span>
-                    <span className="text-xs opacity-80">{d.price}</span>
+                    <span className="text-xs opacity-80">£{hourlyRate * d.hours}</span>
                   </button>
                 ))}
               </div>
@@ -74,10 +181,13 @@ export default function Booking() {
               <h3 className="text-white font-bold mb-4">Where should we meet?</h3>
               <div className="bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-primary" />
-                <input 
+                <Input 
                   type="text" 
-                  placeholder="Tower Bridge, London" 
-                  className="bg-transparent border-none text-white placeholder:text-muted-foreground focus:outline-none flex-1"
+                  placeholder="e.g. Central Park, Times Square..." 
+                  value={meetingLocation}
+                  onChange={(e) => setMeetingLocation(e.target.value)}
+                  className="bg-transparent border-none text-white placeholder:text-muted-foreground focus-visible:ring-0"
+                  data-testid="input-location"
                 />
               </div>
             </section>
@@ -87,11 +197,24 @@ export default function Booking() {
               <div className="flex gap-3">
                 <div className="flex-1 bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
                   <Calendar className="w-5 h-5 text-primary" />
-                  <span className="text-white">Today</span>
+                  <Input 
+                    type="date" 
+                    value={selectedDate}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-transparent border-none text-white focus-visible:ring-0 p-0"
+                    data-testid="input-date"
+                  />
                 </div>
                 <div className="flex-1 bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
                   <Clock className="w-5 h-5 text-primary" />
-                  <span className="text-white">4:00 PM</span>
+                  <Input 
+                    type="time" 
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="bg-transparent border-none text-white focus-visible:ring-0 p-0"
+                    data-testid="input-time"
+                  />
                 </div>
               </div>
             </section>
@@ -101,51 +224,62 @@ export default function Booking() {
         {step === 2 && (
           <div className="space-y-6">
             <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-4">
+              <h3 className="text-white font-bold mb-2">Booking Summary</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Session (60 min)</span>
-                <span className="text-white font-medium">£40.00</span>
+                <span className="text-muted-foreground">Session ({selectedDuration} hour{selectedDuration > 1 ? 's' : ''})</span>
+                <span className="text-white font-medium">£{totalAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Service Fee</span>
-                <span className="text-white font-medium">£5.00</span>
+                <span className="text-muted-foreground">Location</span>
+                <span className="text-white font-medium">{meetingLocation}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Date & Time</span>
+                <span className="text-white font-medium">{selectedDate} at {selectedTime}</span>
               </div>
               <div className="h-px bg-white/10 my-2" />
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Platform fee (included)</span>
+                <span>£{serviceFee.toFixed(2)}</span>
+              </div>
               <div className="flex justify-between text-lg font-bold">
                 <span className="text-white">Total</span>
-                <span className="text-primary">£45.00</span>
+                <span className="text-primary">£{grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="space-y-4">
-               <h3 className="text-white font-bold">Payment Method</h3>
-               <div className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/10">
-                 <div className="flex items-center gap-3">
-                   <CreditCard className="w-5 h-5 text-primary" />
-                   <span className="text-white font-medium">Apple Pay</span>
-                 </div>
-                 <div className="w-4 h-4 rounded-full bg-primary border-2 border-primary" />
-               </div>
-               <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 bg-card">
-                 <div className="flex items-center gap-3">
-                   <CreditCard className="w-5 h-5 text-muted-foreground" />
-                   <span className="text-muted-foreground font-medium">Credit Card ending 4242</span>
-                 </div>
-                 <div className="w-4 h-4 rounded-full border-2 border-muted-foreground" />
-               </div>
+              <h3 className="text-white font-bold">Payment Method</h3>
+              <div className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/10">
+                <div className="flex items-center gap-3">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <span className="text-white font-medium">Demo Payment</span>
+                </div>
+                <div className="w-4 h-4 rounded-full bg-primary border-2 border-primary" />
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                This is a demo - no actual payment will be processed
+              </p>
             </div>
           </div>
         )}
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
-        <div className="">
-          <Button 
-            onClick={() => step === 1 ? setStep(2) : setStep(3)}
-            className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-          >
-            {step === 1 ? "Continue to Payment" : "Pay £45.00"}
-          </Button>
-        </div>
+        <Button 
+          onClick={() => step === 1 ? setStep(2) : handleConfirmBooking()}
+          disabled={bookingMutation.isPending}
+          className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+          data-testid={step === 1 ? "button-continue" : "button-confirm"}
+        >
+          {bookingMutation.isPending ? (
+            <Loader2 className="w-5 h-5 animate-spin" />
+          ) : step === 1 ? (
+            "Continue to Payment"
+          ) : (
+            `Confirm Booking - £${grandTotal.toFixed(2)}`
+          )}
+        </Button>
       </div>
     </div>
   );
