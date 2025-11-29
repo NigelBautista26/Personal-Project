@@ -9,11 +9,14 @@ import {
   type InsertEarning,
   type PhotoSpot,
   type InsertPhotoSpot,
+  type PhotoDelivery,
+  type InsertPhotoDelivery,
   users,
   photographers,
   bookings,
   earnings,
-  photoSpots
+  photoSpots,
+  photoDeliveries
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc } from "drizzle-orm";
@@ -52,6 +55,14 @@ export interface IStorage {
   getPhotoSpotsByCity(city: string): Promise<PhotoSpot[]>;
   getAllPhotoSpots(): Promise<PhotoSpot[]>;
   createPhotoSpot(spot: InsertPhotoSpot): Promise<PhotoSpot>;
+  
+  // Photo Delivery methods
+  getPhotoDelivery(id: string): Promise<PhotoDelivery | undefined>;
+  getPhotoDeliveryByBooking(bookingId: string): Promise<PhotoDelivery | undefined>;
+  createPhotoDelivery(delivery: InsertPhotoDelivery): Promise<PhotoDelivery>;
+  updatePhotoDelivery(id: string, updates: Partial<InsertPhotoDelivery>): Promise<PhotoDelivery | undefined>;
+  addPhotoToDelivery(id: string, photoUrl: string): Promise<PhotoDelivery | undefined>;
+  markPhotoDeliveryDownloaded(id: string): Promise<PhotoDelivery | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -204,6 +215,43 @@ export class DatabaseStorage implements IStorage {
 
   async createPhotoSpot(spot: InsertPhotoSpot): Promise<PhotoSpot> {
     const result = await db.insert(photoSpots).values(spot).returning();
+    return result[0];
+  }
+
+  // Photo Delivery methods
+  async getPhotoDelivery(id: string): Promise<PhotoDelivery | undefined> {
+    const result = await db.select().from(photoDeliveries).where(eq(photoDeliveries.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getPhotoDeliveryByBooking(bookingId: string): Promise<PhotoDelivery | undefined> {
+    const result = await db.select().from(photoDeliveries).where(eq(photoDeliveries.bookingId, bookingId)).limit(1);
+    return result[0];
+  }
+
+  async createPhotoDelivery(delivery: InsertPhotoDelivery): Promise<PhotoDelivery> {
+    const result = await db.insert(photoDeliveries).values(delivery).returning();
+    return result[0];
+  }
+
+  async updatePhotoDelivery(id: string, updates: Partial<InsertPhotoDelivery>): Promise<PhotoDelivery | undefined> {
+    const result = await db.update(photoDeliveries).set(updates).where(eq(photoDeliveries.id, id)).returning();
+    return result[0];
+  }
+
+  async addPhotoToDelivery(id: string, photoUrl: string): Promise<PhotoDelivery | undefined> {
+    const delivery = await this.getPhotoDelivery(id);
+    if (!delivery) return undefined;
+    
+    const currentPhotos = delivery.photos || [];
+    const updatedPhotos = [...currentPhotos, photoUrl];
+    
+    const result = await db.update(photoDeliveries).set({ photos: updatedPhotos }).where(eq(photoDeliveries.id, id)).returning();
+    return result[0];
+  }
+
+  async markPhotoDeliveryDownloaded(id: string): Promise<PhotoDelivery | undefined> {
+    const result = await db.update(photoDeliveries).set({ downloadedAt: new Date() }).where(eq(photoDeliveries.id, id)).returning();
     return result[0];
   }
 }

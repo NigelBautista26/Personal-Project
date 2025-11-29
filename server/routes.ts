@@ -575,6 +575,163 @@ export async function registerRoutes(
     }
   });
 
+  // Photo Delivery Routes
+  
+  // Get photo delivery for a booking (customer view)
+  app.get("/api/bookings/:bookingId/photos", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the customer owns this booking
+      if (booking.customerId !== req.session.userId) {
+        // Also check if user is the photographer
+        const photographer = await storage.getPhotographerByUserId(req.session.userId);
+        if (!photographer || photographer.id !== booking.photographerId) {
+          return res.status(403).json({ error: "Not authorized to view these photos" });
+        }
+      }
+      
+      const delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      res.json(delivery || null);
+    } catch (error) {
+      console.error("Error fetching photo delivery:", error);
+      res.status(500).json({ error: "Failed to fetch photos" });
+    }
+  });
+
+  // Create or update photo delivery (photographer only)
+  app.post("/api/bookings/:bookingId/photos", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the photographer owns this booking
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== booking.photographerId) {
+        return res.status(403).json({ error: "Not authorized to upload photos" });
+      }
+      
+      // Check if delivery already exists
+      let delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      
+      if (delivery) {
+        // Update existing delivery
+        delivery = await storage.updatePhotoDelivery(delivery.id, {
+          message: req.body.message,
+        });
+      } else {
+        // Create new delivery
+        delivery = await storage.createPhotoDelivery({
+          bookingId: req.params.bookingId,
+          photographerId: photographer.id,
+          photos: [],
+          message: req.body.message,
+        });
+      }
+      
+      res.json(delivery);
+    } catch (error) {
+      console.error("Error creating photo delivery:", error);
+      res.status(500).json({ error: "Failed to create photo delivery" });
+    }
+  });
+
+  // Add photo to delivery (photographer only)
+  app.post("/api/bookings/:bookingId/photos/upload", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the photographer owns this booking
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== booking.photographerId) {
+        return res.status(403).json({ error: "Not authorized to upload photos" });
+      }
+      
+      const { imageUrl } = req.body;
+      if (!imageUrl) {
+        return res.status(400).json({ error: "Image URL required" });
+      }
+      
+      // Make the photo accessible (public for now, could be private with access control)
+      const objectStorageService = new ObjectStorageService();
+      const normalizedUrl = await objectStorageService.trySetObjectEntityAclPolicy(
+        imageUrl,
+        {
+          owner: req.session.userId,
+          visibility: "public",
+        }
+      );
+      
+      // Get or create delivery
+      let delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      
+      if (!delivery) {
+        delivery = await storage.createPhotoDelivery({
+          bookingId: req.params.bookingId,
+          photographerId: photographer.id,
+          photos: [normalizedUrl],
+        });
+      } else {
+        delivery = await storage.addPhotoToDelivery(delivery.id, normalizedUrl);
+      }
+      
+      res.json(delivery);
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      res.status(500).json({ error: "Failed to upload photo" });
+    }
+  });
+
+  // Mark photos as downloaded (customer action)
+  app.post("/api/bookings/:bookingId/photos/downloaded", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the customer owns this booking
+      if (booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      
+      const delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      if (!delivery) {
+        return res.status(404).json({ error: "No photos found for this booking" });
+      }
+      
+      const updatedDelivery = await storage.markPhotoDeliveryDownloaded(delivery.id);
+      res.json(updatedDelivery);
+    } catch (error) {
+      console.error("Error marking photos as downloaded:", error);
+      res.status(500).json({ error: "Failed to update download status" });
+    }
+  });
+
   // Object Storage Routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;

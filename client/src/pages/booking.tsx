@@ -72,9 +72,10 @@ export default function Booking() {
     { hours: 3, label: "3 hours" },
   ];
 
-  const totalAmount = hourlyRate * selectedDuration;
-  const serviceFee = Math.round(totalAmount * 0.20 * 100) / 100;
-  const grandTotal = totalAmount;
+  // Two-sided pricing: base amount + 10% customer service fee
+  const baseAmount = hourlyRate * selectedDuration;
+  const customerServiceFee = Math.round(baseAmount * 0.10 * 100) / 100;
+  const grandTotal = Math.round((baseAmount + customerServiceFee) * 100) / 100;
 
   const bookingMutation = useMutation({
     mutationFn: async () => {
@@ -284,8 +285,8 @@ export default function Booking() {
             <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-4">
               <h3 className="text-white font-bold mb-2">Booking Summary</h3>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Session ({selectedDuration} hour{selectedDuration > 1 ? 's' : ''})</span>
-                <span className="text-white font-medium">£{totalAmount.toFixed(2)}</span>
+                <span className="text-muted-foreground">Photography Session ({selectedDuration} hour{selectedDuration > 1 ? 's' : ''})</span>
+                <span className="text-white font-medium">£{baseAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Location</span>
@@ -297,8 +298,8 @@ export default function Booking() {
               </div>
               <div className="h-px bg-white/10 my-2" />
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Platform fee (included)</span>
-                <span>£{serviceFee.toFixed(2)}</span>
+                <span>Service Fee (10%)</span>
+                <span>£{customerServiceFee.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-lg font-bold">
                 <span className="text-white">Total</span>

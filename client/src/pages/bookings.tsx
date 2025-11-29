@@ -1,12 +1,26 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+interface PhotoDelivery {
+  id: string;
+  bookingId: string;
+  photos: string[];
+  message?: string;
+  deliveredAt: string;
+  downloadedAt?: string;
+}
 
 export default function Bookings() {
   const [, setLocation] = useLocation();
+  const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery | null>(null);
+  const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -48,6 +62,46 @@ export default function Bookings() {
   const pastBookings = bookings.filter((b: any) => 
     new Date(b.scheduledDate) < new Date() || b.status === 'completed'
   );
+
+  const fetchBookingPhotos = async (bookingId: string) => {
+    const res = await fetch(`/api/bookings/${bookingId}/photos`, {
+      credentials: "include",
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data as PhotoDelivery | null;
+  };
+
+  const handleViewPhotos = async (bookingId: string) => {
+    const photos = await fetchBookingPhotos(bookingId);
+    if (photos && photos.photos && photos.photos.length > 0) {
+      setSelectedBookingPhotos(photos);
+      setViewingPhotoIndex(0);
+    }
+  };
+
+  const handleDownloadPhoto = (url: string, index: number) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `photo-${index + 1}.jpg`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadAll = async () => {
+    if (!selectedBookingPhotos) return;
+    
+    selectedBookingPhotos.photos.forEach((url, index) => {
+      setTimeout(() => handleDownloadPhoto(url, index), index * 500);
+    });
+    
+    await fetch(`/api/bookings/${selectedBookingPhotos.bookingId}/photos/downloaded`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -136,7 +190,7 @@ export default function Bookings() {
             <h2 className="text-lg font-bold text-white mb-4">Past Sessions</h2>
             <div className="space-y-4">
               {pastBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 opacity-60">
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`past-booking-${booking.id}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-medium text-white">Photo Session</h3>
@@ -146,6 +200,18 @@ export default function Bookings() {
                     </div>
                     <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                   </div>
+                  
+                  {booking.status === 'completed' && (
+                    <Button
+                      onClick={() => handleViewPhotos(booking.id)}
+                      variant="outline"
+                      className="w-full mt-2 border-primary/50 text-primary hover:bg-primary/10"
+                      data-testid={`button-view-photos-${booking.id}`}
+                    >
+                      <Images className="w-4 h-4 mr-2" />
+                      View Photos
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -154,6 +220,97 @@ export default function Bookings() {
       </div>
 
       <BottomNav />
+
+      {/* Photo Gallery Dialog */}
+      <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
+        <DialogContent className="max-w-4xl w-full h-[90vh] p-0 bg-black/95 border-white/10">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div>
+                <h2 className="text-white font-bold">Your Photos</h2>
+                {selectedBookingPhotos?.message && (
+                  <p className="text-sm text-muted-foreground">{selectedBookingPhotos.message}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleDownloadAll}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90"
+                  data-testid="button-download-all"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download All
+                </Button>
+                <button
+                  onClick={() => setSelectedBookingPhotos(null)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20"
+                  data-testid="button-close-gallery"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Main Photo View */}
+            {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
+              <div className="flex-1 flex items-center justify-center relative p-4">
+                <img
+                  src={selectedBookingPhotos.photos[viewingPhotoIndex]}
+                  alt={`Photo ${viewingPhotoIndex + 1}`}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                />
+                
+                {/* Navigation Arrows */}
+                {selectedBookingPhotos.photos.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setViewingPhotoIndex(i => i > 0 ? i - 1 : selectedBookingPhotos!.photos.length - 1)}
+                      className="absolute left-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                      data-testid="button-prev-photo"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => setViewingPhotoIndex(i => i < selectedBookingPhotos!.photos.length - 1 ? i + 1 : 0)}
+                      className="absolute right-4 w-10 h-10 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70"
+                      data-testid="button-next-photo"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+
+                {/* Photo Counter */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                  {viewingPhotoIndex + 1} / {selectedBookingPhotos.photos.length}
+                </div>
+              </div>
+            )}
+
+            {/* Thumbnails */}
+            {selectedBookingPhotos && selectedBookingPhotos.photos.length > 1 && (
+              <div className="p-4 border-t border-white/10">
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {selectedBookingPhotos.photos.map((photo, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setViewingPhotoIndex(idx)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                        idx === viewingPhotoIndex ? 'border-primary' : 'border-transparent hover:border-white/30'
+                      }`}
+                      data-testid={`thumbnail-${idx}`}
+                    >
+                      <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

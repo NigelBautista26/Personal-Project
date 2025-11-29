@@ -1,16 +1,33 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Check, X } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useRef } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+
+interface PhotoDelivery {
+  id: string;
+  bookingId: string;
+  photos: string[];
+  message?: string;
+  deliveredAt: string;
+}
 
 export default function PhotographerBookings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [uploadBookingId, setUploadBookingId] = useState<string | null>(null);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -65,6 +82,108 @@ export default function PhotographerBookings() {
       });
     },
   });
+
+  const fetchExistingDelivery = async (bookingId: string): Promise<PhotoDelivery | null> => {
+    const res = await fetch(`/api/bookings/${bookingId}/photos`, { credentials: "include" });
+    if (!res.ok) return null;
+    return res.json();
+  };
+
+  const handleOpenUploadDialog = async (bookingId: string) => {
+    setUploadBookingId(bookingId);
+    setUploadMessage("");
+    setUploadingPhotos([]);
+    
+    const existing = await fetchExistingDelivery(bookingId);
+    if (existing && existing.photos) {
+      setUploadingPhotos(existing.photos);
+      setUploadMessage(existing.message || "");
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || !uploadBookingId) return;
+
+    setIsUploading(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        const uploadRes = await fetch("/api/objects/upload", {
+          method: "POST",
+          credentials: "include",
+        });
+        
+        if (!uploadRes.ok) throw new Error("Failed to get upload URL");
+        const { uploadURL } = await uploadRes.json();
+
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const putRes = await fetch(uploadURL, {
+          method: "POST",
+          body: formData,
+        });
+        
+        if (!putRes.ok) throw new Error("Failed to upload file");
+        const { objectPath } = await putRes.json();
+
+        const addPhotoRes = await fetch(`/api/bookings/${uploadBookingId}/photos/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ imageUrl: objectPath }),
+        });
+        
+        if (!addPhotoRes.ok) throw new Error("Failed to add photo to delivery");
+        const delivery = await addPhotoRes.json();
+        setUploadingPhotos(delivery.photos || []);
+      }
+      
+      toast({
+        title: "Photos Uploaded",
+        description: `${files.length} photo(s) uploaded successfully.`,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Could not upload photos. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleSaveDelivery = async () => {
+    if (!uploadBookingId) return;
+    
+    try {
+      await fetch(`/api/bookings/${uploadBookingId}/photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ message: uploadMessage }),
+      });
+      
+      toast({
+        title: "Photos Delivered",
+        description: "Your photos have been sent to the customer.",
+      });
+      
+      setUploadBookingId(null);
+    } catch (error) {
+      toast({
+        title: "Delivery Failed",
+        description: "Could not save photo delivery.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (userLoading) {
     return (
@@ -234,7 +353,7 @@ export default function PhotographerBookings() {
             <h2 className="text-lg font-bold text-white mb-4">Past Sessions</h2>
             <div className="space-y-4">
               {pastBookings.slice(0, 5).map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 opacity-60">
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-past-${booking.id}`}>
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="font-medium text-white">Photo Session</h3>
@@ -249,6 +368,18 @@ export default function PhotographerBookings() {
                       <p className="text-white font-bold mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
                     </div>
                   </div>
+                  
+                  {(booking.status === 'completed' || booking.status === 'confirmed') && (
+                    <Button
+                      onClick={() => handleOpenUploadDialog(booking.id)}
+                      variant="outline"
+                      className="w-full border-primary/50 text-primary hover:bg-primary/10"
+                      data-testid={`button-upload-photos-${booking.id}`}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Photos
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -257,6 +388,90 @@ export default function PhotographerBookings() {
       </div>
 
       <BottomNav />
+
+      {/* Photo Upload Dialog */}
+      <Dialog open={!!uploadBookingId} onOpenChange={(open) => !open && setUploadBookingId(null)}>
+        <DialogContent className="max-w-lg bg-background border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Images className="w-5 h-5" />
+              Deliver Photos
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Photo Grid */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Photos ({uploadingPhotos.length})</label>
+              <div className="grid grid-cols-3 gap-2">
+                {uploadingPhotos.map((photo, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group">
+                    <img src={photo} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+                
+                {/* Add Photo Button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  className="aspect-square rounded-lg border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
+                  data-testid="button-add-photo"
+                >
+                  {isUploading ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-6 h-6" />
+                      <span className="text-xs mt-1">Add</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+
+            {/* Message */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Message to Customer (optional)</label>
+              <Textarea
+                value={uploadMessage}
+                onChange={(e) => setUploadMessage(e.target.value)}
+                placeholder="Add a personal note..."
+                className="bg-card border-white/10"
+                data-testid="input-delivery-message"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setUploadBookingId(null)}
+                className="flex-1 border-white/20"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveDelivery}
+                disabled={uploadingPhotos.length === 0}
+                className="flex-1 bg-primary hover:bg-primary/90"
+                data-testid="button-deliver-photos"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Deliver Photos
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
