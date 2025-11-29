@@ -80,22 +80,36 @@ export default function Bookings() {
     }
   };
 
-  const handleDownloadPhoto = (url: string, index: number) => {
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `photo-${index + 1}.jpg`;
-    link.target = '_blank';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadPhoto = async (url: string, index: number) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `photo-${index + 1}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `photo-${index + 1}.jpg`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   const handleDownloadAll = async () => {
     if (!selectedBookingPhotos) return;
     
-    selectedBookingPhotos.photos.forEach((url, index) => {
-      setTimeout(() => handleDownloadPhoto(url, index), index * 500);
-    });
+    for (let i = 0; i < selectedBookingPhotos.photos.length; i++) {
+      await handleDownloadPhoto(selectedBookingPhotos.photos[i], i);
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
     
     await fetch(`/api/bookings/${selectedBookingPhotos.bookingId}/photos/downloaded`, {
       method: 'POST',
@@ -223,7 +237,7 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex items-start justify-between p-4 border-b border-white/10 shrink-0">
             <div className="flex-1 min-w-0 pr-4">
@@ -254,12 +268,17 @@ export default function Bookings() {
 
           {/* Main Photo View */}
           {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
-            <div className="flex-1 min-h-0 flex items-center justify-center relative p-4 overflow-hidden">
+            <div className="flex-1 flex items-center justify-center relative p-4 overflow-hidden" style={{ minHeight: 0 }}>
               <img
                 src={selectedBookingPhotos.photos[viewingPhotoIndex]}
                 alt={`Photo ${viewingPhotoIndex + 1}`}
-                className="max-w-full max-h-full w-auto h-auto object-contain rounded-lg"
-                style={{ maxHeight: 'calc(100% - 2rem)' }}
+                className="object-contain rounded-lg"
+                style={{ 
+                  maxWidth: '100%', 
+                  maxHeight: '100%',
+                  width: 'auto',
+                  height: 'auto'
+                }}
               />
               
               {/* Navigation Arrows */}
