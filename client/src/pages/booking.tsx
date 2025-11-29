@@ -2,7 +2,7 @@ import { useRoute, useLocation } from "wouter";
 import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPhotographer, getCurrentUser } from "@/lib/api";
@@ -31,15 +31,6 @@ export default function Booking() {
   const [locationMode, setLocationMode] = useState<'spot' | 'current' | 'manual'>('manual');
   
   const id = params?.id;
-
-  useEffect(() => {
-    const savedLocation = localStorage.getItem("bookingLocation");
-    if (savedLocation) {
-      setMeetingLocation(savedLocation);
-      setLocationMode('spot');
-      localStorage.removeItem("bookingLocation");
-    }
-  }, []);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, MapPin, Clock, Lightbulb, Camera, Navigation } from "lucide-react";
+import { ArrowLeft, MapPin, Clock, Lightbulb, Navigation } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
@@ -58,11 +58,6 @@ export default function PhotoSpotDetail() {
   }
 
   const allImages = [spot.imageUrl, ...(spot.galleryImages || [])].filter(Boolean);
-
-  const handleBookHere = () => {
-    localStorage.setItem("bookingLocation", spot.name);
-    navigate("/home");
-  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -169,17 +164,8 @@ export default function PhotoSpotDetail() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="space-y-3 pt-4"
+          className="pt-4"
         >
-          <Button
-            onClick={handleBookHere}
-            className="w-full h-14 rounded-full text-lg font-semibold"
-            data-testid="button-book-here"
-          >
-            <Camera className="w-5 h-5 mr-2" />
-            Book a Photographer Here
-          </Button>
-          
           <Button
             variant="outline"
             onClick={() => {
