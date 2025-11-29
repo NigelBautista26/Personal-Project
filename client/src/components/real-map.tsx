@@ -2,20 +2,45 @@ import { useEffect, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-leaflet";
 import L from "leaflet";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { getPhotographers } from "@/lib/api";
 import { Navigation } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 
-function LocationMarker({ userPosition }: { userPosition: [number, number] | null }) {
+interface City {
+  name: string;
+  country: string;
+  lat: number;
+  lng: number;
+}
+
+interface Photographer {
+  id: string;
+  fullName?: string | null;
+  latitude: string;
+  longitude: string;
+  hourlyRate: string;
+  profileImageUrl?: string | null;
+}
+
+interface RealMapProps {
+  selectedCity: City;
+  photographers: Photographer[];
+}
+
+function MapController({ center, shouldFollowUser, userPosition }: { center: [number, number]; shouldFollowUser: boolean; userPosition: [number, number] | null }) {
   const map = useMap();
 
   useEffect(() => {
-    if (userPosition) {
+    if (shouldFollowUser && userPosition) {
       map.setView(userPosition, 14);
+    } else {
+      map.setView(center, 13);
     }
-  }, [userPosition, map]);
+  }, [center, shouldFollowUser, userPosition, map]);
 
+  return null;
+}
+
+function UserLocationMarker({ userPosition }: { userPosition: [number, number] | null }) {
   const userIcon = L.divIcon({
     className: "user-location-marker",
     html: `
@@ -49,7 +74,13 @@ function LocationMarker({ userPosition }: { userPosition: [number, number] | nul
 
   return userPosition ? (
     <>
-      <Marker position={userPosition} icon={userIcon} />
+      <Marker position={userPosition} icon={userIcon}>
+        <Popup className="photographer-popup">
+          <div className="text-center p-1">
+            <div className="font-bold text-sm">You are here</div>
+          </div>
+        </Popup>
+      </Marker>
       <Circle 
         center={userPosition} 
         radius={100} 
@@ -92,7 +123,7 @@ function PhotographerMarker({ id, name, lat, lng, price, image }: PhotographerMa
           background: #1f2937;
           box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         ">
-          <img src="${image}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;" />
+          <img src="${image}" alt="${name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://via.placeholder.com/48?text=P'" />
         </div>
         <div style="
           background: white;
@@ -123,7 +154,7 @@ function PhotographerMarker({ id, name, lat, lng, price, image }: PhotographerMa
       <Popup className="photographer-popup">
         <Link href={`/photographer/${id}`}>
           <div className="flex items-center gap-2 cursor-pointer p-1">
-            <img src={image} alt={name} className="w-10 h-10 rounded-full object-cover" />
+            <img src={image} alt={name} className="w-10 h-10 rounded-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/40?text=P'; }} />
             <div>
               <div className="font-bold text-sm">{name}</div>
               <div className="text-xs text-gray-500">{price}/hour</div>
@@ -135,17 +166,11 @@ function PhotographerMarker({ id, name, lat, lng, price, image }: PhotographerMa
   );
 }
 
-export function RealMap() {
+export function RealMap({ selectedCity, photographers }: RealMapProps) {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
-
-  const { data: photographers = [] } = useQuery({
-    queryKey: ["photographers"],
-    queryFn: getPhotographers,
-  });
-
-  const defaultCenter: [number, number] = [51.5074, -0.1278];
+  const [shouldFollowUser, setShouldFollowUser] = useState(false);
 
   const handleLocateMe = useCallback(() => {
     if (!navigator.geolocation) {
@@ -159,6 +184,7 @@ export function RealMap() {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setUserPosition([position.coords.latitude, position.coords.longitude]);
+        setShouldFollowUser(true);
         setIsLocating(false);
       },
       (error) => {
@@ -171,8 +197,20 @@ export function RealMap() {
   }, []);
 
   useEffect(() => {
-    handleLocateMe();
-  }, [handleLocateMe]);
+    navigator.geolocation?.getCurrentPosition(
+      (position) => {
+        setUserPosition([position.coords.latitude, position.coords.longitude]);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
+
+  useEffect(() => {
+    setShouldFollowUser(false);
+  }, [selectedCity]);
+
+  const mapCenter: [number, number] = [selectedCity.lat, selectedCity.lng];
 
   return (
     <div className="absolute inset-0 w-full h-full z-0">
@@ -212,7 +250,7 @@ export function RealMap() {
         }
       `}</style>
       <MapContainer
-        center={userPosition || defaultCenter}
+        center={mapCenter}
         zoom={13}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
@@ -221,8 +259,9 @@ export function RealMap() {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
         />
-        <LocationMarker userPosition={userPosition} />
-        {photographers.map((p: any) => (
+        <MapController center={mapCenter} shouldFollowUser={shouldFollowUser} userPosition={userPosition} />
+        <UserLocationMarker userPosition={userPosition} />
+        {photographers.map((p: Photographer) => (
           <PhotographerMarker
             key={p.id}
             id={p.id}
@@ -230,20 +269,19 @@ export function RealMap() {
             lat={parseFloat(p.latitude)}
             lng={parseFloat(p.longitude)}
             price={`£${parseFloat(p.hourlyRate)}`}
-            image={p.profileImageUrl}
+            image={p.profileImageUrl || "https://via.placeholder.com/48?text=P"}
           />
         ))}
       </MapContainer>
       
-      {/* Gradient overlay */}
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-[1000]" />
       
-      {/* Locate me button */}
       <button
         onClick={handleLocateMe}
         disabled={isLocating}
         className="absolute bottom-[45%] right-4 z-[1000] w-12 h-12 bg-black/80 hover:bg-black rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 transition-all"
         data-testid="button-locate-me"
+        title="Find my location"
       >
         {isLocating ? (
           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -252,7 +290,6 @@ export function RealMap() {
         )}
       </button>
       
-      {/* Location error only */}
       {locationError && (
         <div className="absolute bottom-[52%] right-4 z-[1000] bg-red-500/90 text-white text-xs px-3 py-1.5 rounded-full">
           {locationError}
