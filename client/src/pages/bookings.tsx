@@ -35,6 +35,7 @@ export default function Bookings() {
   const [, setLocation] = useLocation();
   const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery & { booking?: any } | null>(null);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
+  const [selectedPhotosForEditing, setSelectedPhotosForEditing] = useState<Set<number>>(new Set());
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -332,7 +333,20 @@ export default function Bookings() {
     if (photos && photos.photos && photos.photos.length > 0) {
       setSelectedBookingPhotos({ ...photos, booking });
       setViewingPhotoIndex(0);
+      setSelectedPhotosForEditing(new Set());
     }
+  };
+
+  const togglePhotoSelection = (index: number) => {
+    setSelectedPhotosForEditing(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
   };
 
   const handleDownloadPhoto = async (url: string, index: number) => {
@@ -607,30 +621,6 @@ export default function Bookings() {
                       ) : null}
                     </div>
 
-                    {/* Editing Service Option */}
-                    {editingService?.isEnabled && !editingRequest && (
-                      <button
-                        onClick={() => setEditingDialogBooking({ id: booking.id, photographerId: booking.photographerId })}
-                        className="w-full mt-2 p-3 rounded-xl border-2 border-dashed border-violet-500/30 hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors flex items-center justify-between"
-                        data-testid={`button-request-editing-${booking.id}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                            <Palette className="w-4 h-4 text-violet-400" />
-                          </div>
-                          <div className="text-left">
-                            <p className="text-sm font-medium text-white">Photo Editing Available</p>
-                            <p className="text-xs text-muted-foreground">
-                              {editingService.pricingModel === "flat" 
-                                ? `From £${parseFloat(editingService.flatRate || "0").toFixed(0)}`
-                                : `£${parseFloat(editingService.perPhotoRate || "0").toFixed(0)}/photo`
-                              }
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-violet-400" />
-                      </button>
-                    )}
 
                     {/* Editing Request Status */}
                     {editingRequest && (
@@ -732,7 +722,10 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-md w-[92vw] max-h-[75vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-md w-[92vw] max-h-[75vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col" aria-describedby={undefined}>
+          <DialogHeader className="sr-only">
+            <DialogTitle>Photo Gallery</DialogTitle>
+          </DialogHeader>
           {/* Header */}
           <div className="flex flex-col gap-2 p-4 pr-12 border-b border-white/10 shrink-0">
             <div className="flex items-start justify-between">
@@ -755,19 +748,41 @@ export default function Bookings() {
               const service = editingServicesMap[selectedBookingPhotos.booking.photographerId];
               const existingRequest = editingRequestsMap[selectedBookingPhotos.booking.id];
               if (service?.isEnabled && !existingRequest) {
+                const selectedCount = selectedPhotosForEditing.size;
+                const perPhotoRate = parseFloat(service.perPhotoRate || "0");
+                const estimatedCost = service.pricingModel === "flat" 
+                  ? parseFloat(service.flatRate || "0")
+                  : perPhotoRate * (selectedCount || 1);
                 return (
-                  <Button
-                    onClick={() => {
-                      setSelectedBookingPhotos(null);
-                      setEditingDialogBooking(selectedBookingPhotos.booking);
-                    }}
-                    size="sm"
-                    className="bg-violet-600 hover:bg-violet-700 text-white w-full"
-                    data-testid="button-request-editing-gallery"
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    Request Photo Editing
-                  </Button>
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      {service.pricingModel === "per_photo" 
+                        ? "Tap photos below to select which ones you want edited"
+                        : "Flat rate for all photos"
+                      }
+                    </p>
+                    <Button
+                      onClick={() => {
+                        if (service.pricingModel === "per_photo") {
+                          setEditingPhotoCount(selectedCount || 1);
+                        }
+                        setSelectedBookingPhotos(null);
+                        setEditingDialogBooking(selectedBookingPhotos.booking);
+                      }}
+                      size="sm"
+                      className="bg-violet-600 hover:bg-violet-700 text-white w-full"
+                      data-testid="button-request-editing-gallery"
+                      disabled={service.pricingModel === "per_photo" && selectedCount === 0}
+                    >
+                      <Palette className="w-4 h-4 mr-2" />
+                      {service.pricingModel === "per_photo" 
+                        ? selectedCount > 0 
+                          ? `Request Editing (${selectedCount} photo${selectedCount > 1 ? 's' : ''} - £${estimatedCost.toFixed(0)}+)`
+                          : "Select photos to edit"
+                        : `Request Editing (£${estimatedCost.toFixed(0)})`
+                      }
+                    </Button>
+                  </div>
                 );
               }
               return null;
@@ -816,22 +831,42 @@ export default function Bookings() {
             </div>
           )}
 
-          {/* Thumbnails */}
-          {selectedBookingPhotos && selectedBookingPhotos.photos.length > 1 && (
+          {/* Thumbnails with selection */}
+          {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
             <div className="p-4 border-t border-white/10 shrink-0">
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {selectedBookingPhotos.photos.map((photo, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setViewingPhotoIndex(idx)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
-                      idx === viewingPhotoIndex ? 'border-primary' : 'border-transparent hover:border-white/30'
-                    }`}
-                    data-testid={`thumbnail-${idx}`}
-                  >
-                    <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
-                  </button>
-                ))}
+                {selectedBookingPhotos.photos.map((photo, idx) => {
+                  const isSelected = selectedPhotosForEditing.has(idx);
+                  const service = selectedBookingPhotos.booking ? editingServicesMap[selectedBookingPhotos.booking.photographerId] : null;
+                  const showSelectionUI = service?.isEnabled && service?.pricingModel === "per_photo" && !editingRequestsMap[selectedBookingPhotos.booking?.id];
+                  
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        if (showSelectionUI) {
+                          togglePhotoSelection(idx);
+                        }
+                        setViewingPhotoIndex(idx);
+                      }}
+                      className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                        isSelected && showSelectionUI 
+                          ? 'border-violet-500 ring-2 ring-violet-500/50' 
+                          : idx === viewingPhotoIndex 
+                            ? 'border-primary' 
+                            : 'border-transparent hover:border-white/30'
+                      }`}
+                      data-testid={`thumbnail-${idx}`}
+                    >
+                      <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      {showSelectionUI && isSelected && (
+                        <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
+                          <Check className="w-3 h-3 text-white" />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
