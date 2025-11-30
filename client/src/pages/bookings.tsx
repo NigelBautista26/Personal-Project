@@ -114,7 +114,7 @@ export default function Bookings() {
           </div>
         </div>
       ),
-      { duration: 10000 }
+      { duration: 4000 }
     );
   }, [expiredBookings, setLocation]);
 
