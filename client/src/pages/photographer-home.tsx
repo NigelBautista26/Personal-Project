@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Camera, Calendar, DollarSign, Star, TrendingUp, MapPin, Settings as SettingsIcon } from "lucide-react";
+import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
@@ -199,21 +199,6 @@ export default function PhotographerHome() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link href="/dashboard">
-            <Button className="w-full h-14 bg-primary hover:bg-primary/90 rounded-xl flex items-center gap-2" data-testid="button-earnings">
-              <TrendingUp className="w-5 h-5" />
-              View Earnings
-            </Button>
-          </Link>
-          <Link href="/photographer-profile">
-            <Button variant="outline" className="w-full h-14 border-white/20 text-white hover:bg-white/10 rounded-xl flex items-center gap-2" data-testid="button-edit-profile">
-              <Camera className="w-5 h-5" />
-              Edit Profile
-            </Button>
-          </Link>
-        </div>
       </div>
 
       {/* Bottom Navigation for Photographers */}
