@@ -398,15 +398,22 @@ export default function Bookings() {
                       <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                     </div>
                     
-                    {/* Photo placeholder grid */}
+                    {/* Photo placeholder grid - blurred preview */}
                     <div className="grid grid-cols-4 gap-2 mb-4">
-                      {[...Array(4)].map((_, i) => (
+                      {[
+                        'from-blue-600/30 via-purple-500/20 to-pink-500/30',
+                        'from-amber-500/30 via-orange-400/20 to-red-500/30',
+                        'from-emerald-500/30 via-teal-400/20 to-cyan-500/30',
+                        'from-indigo-500/30 via-blue-400/20 to-sky-500/30'
+                      ].map((gradient, i) => (
                         <div 
                           key={i} 
-                          className="aspect-square rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center"
-                          style={{ animationDelay: `${i * 150}ms` }}
+                          className={`aspect-square rounded-lg bg-gradient-to-br ${gradient} backdrop-blur-sm overflow-hidden relative`}
                         >
-                          <ImageIcon className="w-5 h-5 text-blue-500/40" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="w-6 h-6 rounded-full bg-white/10 backdrop-blur animate-pulse" />
+                          </div>
                         </div>
                       ))}
                     </div>
