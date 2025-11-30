@@ -109,3 +109,12 @@ Preferred communication style: Simple, everyday language.
 5. **Location-based Discovery**: Latitude/longitude stored as decimals in PostgreSQL for proximity queries and map rendering
 
 6. **Platform Fee Model**: Three-way split calculation (total, platform fee, photographer earnings) stored per booking for financial transparency and audit trails
+
+7. **Dynamic Booking Expiration**: Response windows calculated based on session urgency (30min for same-day, up to 24h for future sessions)
+
+## Feature Backlog
+
+**Planned Features:**
+- Push notifications for booking updates when app is closed (requires Firebase Cloud Messaging or similar service)
+- Email notifications for booking confirmations, expirations, and photo deliveries
+- In-app messaging between customers and photographers
