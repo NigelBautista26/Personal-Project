@@ -1532,6 +1532,32 @@ export async function registerRoutes(
     res.json({ uploadURL, objectPath });
   });
 
+  app.post("/api/objects/set-acl", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const { objectPath } = req.body;
+    if (!objectPath) {
+      return res.status(400).json({ error: "objectPath is required" });
+    }
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        objectPath,
+        {
+          owner: req.session.userId,
+          visibility: "public",
+        }
+      );
+      res.json({ objectPath: normalizedPath });
+    } catch (error) {
+      console.error("Error setting object ACL:", error);
+      res.status(500).json({ error: "Failed to set object access" });
+    }
+  });
+
   app.put("/api/photographer-images", async (req, res) => {
     if (!req.session.userId) {
       return res.status(401).json({ error: "Not authenticated" });

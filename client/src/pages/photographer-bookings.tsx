@@ -194,6 +194,15 @@ export default function PhotographerBookings() {
 
         if (!putRes.ok) throw new Error("Failed to upload file");
         
+        const aclRes = await fetch("/api/objects/set-acl", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ objectPath }),
+        });
+        
+        if (!aclRes.ok) throw new Error("Failed to set file access");
+        
         setEditedPhotos(prev => [...prev, objectPath]);
       }
       toast({
