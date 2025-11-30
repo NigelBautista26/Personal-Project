@@ -46,6 +46,18 @@ export const bookings = pgTable("bookings", {
   status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled, expired
   stripePaymentId: text("stripe_payment_id"),
   expiresAt: timestamp("expires_at"), // 24 hours from creation for pending bookings
+  meetingLatitude: decimal("meeting_latitude", { precision: 10, scale: 7 }),
+  meetingLongitude: decimal("meeting_longitude", { precision: 10, scale: 7 }),
+  meetingNotes: text("meeting_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull().references(() => bookings.id),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  body: text("body").notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -192,6 +204,12 @@ export const insertEditingRequestSchema = createInsertSchema(editingRequests).om
   editedPhotos: true,
 });
 
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+  isRead: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -255,5 +273,15 @@ export type EditingRequestWithDetails = EditingRequest & {
   booking: {
     location: string;
     scheduledDate: Date;
+  };
+};
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
+export type MessageWithSender = Message & {
+  sender: {
+    fullName: string;
+    profileImageUrl: string | null;
   };
 };
