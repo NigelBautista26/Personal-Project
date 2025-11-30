@@ -13,12 +13,16 @@ import {
   type InsertPhotoSpot,
   type PhotoDelivery,
   type InsertPhotoDelivery,
+  type Review,
+  type InsertReview,
+  type ReviewWithCustomer,
   users,
   photographers,
   bookings,
   earnings,
   photoSpots,
-  photoDeliveries
+  photoDeliveries,
+  reviews
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
@@ -69,6 +73,14 @@ export interface IStorage {
   updatePhotoDelivery(id: string, updates: Partial<InsertPhotoDelivery>): Promise<PhotoDelivery | undefined>;
   addPhotoToDelivery(id: string, photoUrl: string): Promise<PhotoDelivery | undefined>;
   markPhotoDeliveryDownloaded(id: string): Promise<PhotoDelivery | undefined>;
+  
+  // Review methods
+  getReview(id: string): Promise<Review | undefined>;
+  getReviewByBooking(bookingId: string): Promise<Review | undefined>;
+  getReviewsByPhotographer(photographerId: string): Promise<ReviewWithCustomer[]>;
+  createReview(review: InsertReview): Promise<Review>;
+  addPhotographerResponse(reviewId: string, response: string): Promise<Review | undefined>;
+  getPhotographerAverageRating(photographerId: string): Promise<{ averageRating: number; reviewCount: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -413,6 +425,87 @@ export class DatabaseStorage implements IStorage {
   async markPhotoDeliveryDownloaded(id: string): Promise<PhotoDelivery | undefined> {
     const result = await db.update(photoDeliveries).set({ downloadedAt: new Date() }).where(eq(photoDeliveries.id, id)).returning();
     return result[0];
+  }
+
+  // Review methods
+  async getReview(id: string): Promise<Review | undefined> {
+    const result = await db.select().from(reviews).where(eq(reviews.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getReviewByBooking(bookingId: string): Promise<Review | undefined> {
+    const result = await db.select().from(reviews).where(eq(reviews.bookingId, bookingId)).limit(1);
+    return result[0];
+  }
+
+  async getReviewsByPhotographer(photographerId: string): Promise<ReviewWithCustomer[]> {
+    const results = await db
+      .select({
+        id: reviews.id,
+        bookingId: reviews.bookingId,
+        photographerId: reviews.photographerId,
+        customerId: reviews.customerId,
+        rating: reviews.rating,
+        comment: reviews.comment,
+        photographerResponse: reviews.photographerResponse,
+        respondedAt: reviews.respondedAt,
+        createdAt: reviews.createdAt,
+        customerFullName: users.fullName,
+        customerProfileImageUrl: users.profileImageUrl,
+      })
+      .from(reviews)
+      .innerJoin(users, eq(reviews.customerId, users.id))
+      .where(eq(reviews.photographerId, photographerId))
+      .orderBy(desc(reviews.createdAt));
+
+    return results.map((row) => ({
+      id: row.id,
+      bookingId: row.bookingId,
+      photographerId: row.photographerId,
+      customerId: row.customerId,
+      rating: row.rating,
+      comment: row.comment,
+      photographerResponse: row.photographerResponse,
+      respondedAt: row.respondedAt,
+      createdAt: row.createdAt,
+      customer: {
+        fullName: row.customerFullName,
+        profileImageUrl: row.customerProfileImageUrl,
+      },
+    }));
+  }
+
+  async createReview(review: InsertReview): Promise<Review> {
+    const result = await db.insert(reviews).values(review).returning();
+    return result[0];
+  }
+
+  async addPhotographerResponse(reviewId: string, response: string): Promise<Review | undefined> {
+    const result = await db
+      .update(reviews)
+      .set({ photographerResponse: response, respondedAt: new Date() })
+      .where(eq(reviews.id, reviewId))
+      .returning();
+    return result[0];
+  }
+
+  async getPhotographerAverageRating(photographerId: string): Promise<{ averageRating: number; reviewCount: number }> {
+    const photographerReviews = await db
+      .select({ rating: reviews.rating })
+      .from(reviews)
+      .where(eq(reviews.photographerId, photographerId));
+
+    if (photographerReviews.length === 0) {
+      return { averageRating: 0, reviewCount: 0 };
+    }
+
+    const totalRating = photographerReviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = totalRating / photographerReviews.length;
+
+    return {
+      averageRating: Math.round(averageRating * 10) / 10,
+      reviewCount: photographerReviews.length,
+    };
   }
 }
 
