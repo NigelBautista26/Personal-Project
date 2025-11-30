@@ -1,12 +1,13 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, AlertCircle, XCircle } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface PhotoDelivery {
   id: string;
@@ -39,6 +40,27 @@ export default function Bookings() {
     enabled: !!user?.id,
   });
 
+  // Calculate filtered bookings
+  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
+
+  // Show toast notification for expired bookings (must be before early returns)
+  useEffect(() => {
+    if (expiredBookings.length > 0) {
+      const photographerNames = expiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
+      toast.error(
+        `Booking request expired`,
+        {
+          description: `${photographerNames} didn't respond in time. Try finding another photographer!`,
+          duration: 6000,
+          action: {
+            label: "Find photographers",
+            onClick: () => setLocation("/photographers")
+          }
+        }
+      );
+    }
+  }, [expiredBookings.length, setLocation]);
+
   if (userLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -60,7 +82,6 @@ export default function Bookings() {
     (b.status === 'pending' || b.status === 'confirmed') && 
     new Date(b.scheduledDate) >= new Date()
   );
-  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
   const awaitingPhotosBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
   );
@@ -211,47 +232,6 @@ export default function Bookings() {
             </div>
           )}
         </section>
-
-        {expiredBookings.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-orange-400" />
-              Expired Requests
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">These requests expired because the photographer didn't respond within 24 hours.</p>
-            <div className="space-y-4">
-              {expiredBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-orange-500/30" data-testid={`expired-booking-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center overflow-hidden">
-                        {booking.photographer?.profileImageUrl ? (
-                          <img 
-                            src={booking.photographer.profileImageUrl} 
-                            alt={booking.photographer.fullName} 
-                            className="w-full h-full object-cover opacity-70"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-orange-400" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">expired</span>
-                      <p className="text-sm text-muted-foreground mt-1">£{parseFloat(booking.totalAmount).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {awaitingPhotosBookings.length > 0 && (
           <section>
