@@ -1,19 +1,51 @@
 import { useRoute, Link } from "wouter";
-import { ArrowLeft, Heart, Share, Star, MapPin, Clock, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Heart, Share, Star, MapPin, Clock, ChevronRight, X, User, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { getPhotographer } from "@/lib/api";
+import { format } from "date-fns";
+
+interface ReviewWithCustomer {
+  id: string;
+  bookingId: string;
+  photographerId: string;
+  customerId: string;
+  rating: number;
+  comment: string | null;
+  photographerResponse: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  customer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+}
 
 export default function PhotographerProfile() {
   const [match, params] = useRoute("/photographer/:id");
   const id = params?.id || "";
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showAllReviews, setShowAllReviews] = useState(false);
 
   const { data: photographer, isLoading, error } = useQuery({
     queryKey: ["photographer", id],
     queryFn: () => getPhotographer(id),
+    enabled: !!id,
+  });
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ["photographerReviews", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/photographers/${id}/reviews`);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json() as Promise<{
+        reviews: ReviewWithCustomer[];
+        averageRating: number;
+        reviewCount: number;
+      }>;
+    },
     enabled: !!id,
   });
 
@@ -83,9 +115,15 @@ export default function PhotographerProfile() {
             <div className="text-right">
               <div className="flex items-center justify-end gap-1 text-yellow-500 mb-1">
                 <Star className="w-4 h-4 fill-current" />
-                <span className="font-bold text-white" data-testid="text-rating">{parseFloat(photographer.rating || "5.0")}</span>
+                <span className="font-bold text-white" data-testid="text-rating">
+                  {reviewsData && reviewsData.reviewCount > 0 
+                    ? reviewsData.averageRating.toFixed(1) 
+                    : parseFloat(photographer.rating || "5.0")}
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground underline" data-testid="text-reviews">{photographer.reviewCount || 0} reviews</span>
+              <span className="text-xs text-muted-foreground underline" data-testid="text-reviews">
+                {reviewsData?.reviewCount || photographer.reviewCount || 0} reviews
+              </span>
             </div>
           </div>
           
@@ -118,6 +156,82 @@ export default function PhotographerProfile() {
           ))}
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {reviewsData && reviewsData.reviews.length > 0 && (
+        <div className="px-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              Reviews
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-amber-400">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-bold text-white">{reviewsData.averageRating.toFixed(1)}</span>
+              </div>
+              <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {(showAllReviews ? reviewsData.reviews : reviewsData.reviews.slice(0, 3)).map((review) => (
+              <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`review-${review.id}`}>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {review.customer.profileImageUrl ? (
+                      <img 
+                        src={review.customer.profileImageUrl} 
+                        alt={review.customer.fullName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-white truncate">{review.customer.fullName}</span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {review.comment && (
+                  <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>
+                )}
+                
+                {review.photographerResponse && (
+                  <div className="mt-3 pl-4 border-l-2 border-primary/30">
+                    <p className="text-xs text-primary font-medium mb-1">Photographer's response</p>
+                    <p className="text-muted-foreground text-sm">{review.photographerResponse}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          {reviewsData.reviews.length > 3 && (
+            <button
+              onClick={() => setShowAllReviews(!showAllReviews)}
+              className="w-full mt-4 py-2 text-primary text-sm font-medium hover:underline"
+              data-testid="button-toggle-reviews"
+            >
+              {showAllReviews ? 'Show less' : `View all ${reviewsData.reviews.length} reviews`}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Lightbox */}
       <AnimatePresence>

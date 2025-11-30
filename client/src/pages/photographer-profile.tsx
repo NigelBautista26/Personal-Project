@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, Settings, ChevronRight } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, Settings, ChevronRight, MessageSquare, User, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/bottom-nav";
+import { format } from "date-fns";
+
+interface ReviewWithCustomer {
+  id: string;
+  bookingId: string;
+  photographerId: string;
+  customerId: string;
+  rating: number;
+  comment: string | null;
+  photographerResponse: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  customer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+}
 
 const getImageUrl = (url: string) => {
   if (!url) return "";
@@ -37,6 +54,8 @@ export default function PhotographerProfilePage() {
   const [portfolioOrder, setPortfolioOrder] = useState<string[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [respondingToReviewId, setRespondingToReviewId] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState("");
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -57,6 +76,52 @@ export default function PhotographerProfilePage() {
       return res.json();
     },
     enabled: !!user,
+  });
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ["myPhotographerReviews", photographer?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/photographers/${photographer.id}/reviews`);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json() as Promise<{
+        reviews: ReviewWithCustomer[];
+        averageRating: number;
+        reviewCount: number;
+      }>;
+    },
+    enabled: !!photographer?.id,
+  });
+
+  const respondToReviewMutation = useMutation({
+    mutationFn: async ({ reviewId, response }: { reviewId: string; response: string }) => {
+      const res = await fetch(`/api/reviews/${reviewId}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ response }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to respond");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerReviews"] });
+      setRespondingToReviewId(null);
+      setResponseText("");
+      toast({
+        title: "Response added!",
+        description: "Your response has been posted.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to respond",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const [formData, setFormData] = useState({
@@ -375,8 +440,12 @@ export default function PhotographerProfilePage() {
           <div className="flex items-center gap-2 mb-2">
             <div className="flex items-center gap-1 bg-card/80 backdrop-blur px-3 py-1.5 rounded-full border border-white/10">
               <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-              <span className="font-bold text-white" data-testid="text-rating">{parseFloat(photographer?.rating || "5.0")}</span>
-              <span className="text-xs text-muted-foreground">({photographer?.reviewCount || 0})</span>
+              <span className="font-bold text-white" data-testid="text-rating">
+                {reviewsData && reviewsData.reviewCount > 0 
+                  ? reviewsData.averageRating.toFixed(1) 
+                  : parseFloat(photographer?.rating || "5.0")}
+              </span>
+              <span className="text-xs text-muted-foreground">({reviewsData?.reviewCount || photographer?.reviewCount || 0})</span>
             </div>
           </div>
         </div>
@@ -501,6 +570,127 @@ export default function PhotographerProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Reviews Section */}
+      {reviewsData && reviewsData.reviews.length > 0 && (
+        <div className="px-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              Customer Reviews
+            </h3>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 text-amber-400">
+                <Star className="w-4 h-4 fill-current" />
+                <span className="font-bold text-white">{reviewsData.averageRating.toFixed(1)}</span>
+              </div>
+              <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {reviewsData.reviews.map((review) => (
+              <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`my-review-${review.id}`}>
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {review.customer.profileImageUrl ? (
+                      <img 
+                        src={review.customer.profileImageUrl} 
+                        alt={review.customer.fullName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-white truncate">{review.customer.fullName}</span>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">
+                        {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1">
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {review.comment && (
+                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">{review.comment}</p>
+                )}
+                
+                {review.photographerResponse ? (
+                  <div className="pl-4 border-l-2 border-primary/30">
+                    <p className="text-xs text-primary font-medium mb-1">Your response</p>
+                    <p className="text-muted-foreground text-sm">{review.photographerResponse}</p>
+                  </div>
+                ) : respondingToReviewId === review.id ? (
+                  <div className="mt-3 space-y-2">
+                    <Textarea
+                      value={responseText}
+                      onChange={(e) => setResponseText(e.target.value)}
+                      placeholder="Write your response..."
+                      className="bg-zinc-800 border-white/10 text-white text-sm min-h-[60px]"
+                      data-testid={`input-response-${review.id}`}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setRespondingToReviewId(null);
+                          setResponseText("");
+                        }}
+                        className="border-white/10"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          if (responseText.trim()) {
+                            respondToReviewMutation.mutate({
+                              reviewId: review.id,
+                              response: responseText,
+                            });
+                          }
+                        }}
+                        disabled={!responseText.trim() || respondToReviewMutation.isPending}
+                        className="bg-primary hover:bg-primary/90"
+                        data-testid={`button-send-response-${review.id}`}
+                      >
+                        {respondToReviewMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4 mr-1" />
+                            Send
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setRespondingToReviewId(review.id)}
+                    className="mt-2 text-primary text-sm font-medium hover:underline flex items-center gap-1"
+                    data-testid={`button-respond-${review.id}`}
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Respond to review
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Settings Section */}
       <div className="px-6 py-8 space-y-4">
