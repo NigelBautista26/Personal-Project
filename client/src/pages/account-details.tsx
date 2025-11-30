@@ -148,7 +148,7 @@ export default function AccountDetails() {
         throw new Error("Failed to upload photo");
       }
 
-      const publicUrl = `/api${uploadUrl.objectPath}`;
+      const publicUrl = uploadUrl.objectPath;
       setProfileImage(publicUrl);
       
       await updateUserProfile({ profileImageUrl: publicUrl });
