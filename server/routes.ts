@@ -203,7 +203,7 @@ export async function registerRoutes(
 
   // Photographer Routes
   
-  // Get current photographer's own profile
+  // Get current photographer's own profile with session state
   app.get("/api/photographers/me", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -215,7 +215,50 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Photographer profile not found" });
       }
       
-      res.json(photographer);
+      // Calculate session state based on current bookings
+      const bookings = await storage.getBookingsByPhotographerWithCustomer(photographer.id);
+      const now = new Date();
+      
+      // Check if photographer is currently in an active session
+      const activeSession = bookings.find((b: any) => {
+        if (b.status !== 'confirmed' && b.status !== 'in_progress') return false;
+        
+        const sessionDate = new Date(b.scheduledDate);
+        const [hours, minutes] = b.scheduledTime.split(':').map(Number);
+        sessionDate.setHours(hours, minutes, 0, 0);
+        
+        const sessionEnd = new Date(sessionDate);
+        sessionEnd.setHours(sessionEnd.getHours() + b.duration);
+        
+        return now >= sessionDate && now <= sessionEnd;
+      });
+      
+      // Find next available time (next booking start or end of current session)
+      let nextAvailableAt: string | null = null;
+      if (activeSession) {
+        const sessionDate = new Date(activeSession.scheduledDate);
+        const [hours, minutes] = activeSession.scheduledTime.split(':').map(Number);
+        sessionDate.setHours(hours, minutes, 0, 0);
+        const sessionEnd = new Date(sessionDate);
+        sessionEnd.setHours(sessionEnd.getHours() + activeSession.duration);
+        nextAvailableAt = sessionEnd.toISOString();
+      }
+      
+      // Determine session state
+      let sessionState: 'available' | 'in_session' | 'offline' = 'offline';
+      if (!photographer.isAvailable) {
+        sessionState = 'offline';
+      } else if (activeSession) {
+        sessionState = 'in_session';
+      } else {
+        sessionState = 'available';
+      }
+      
+      res.json({
+        ...photographer,
+        sessionState,
+        nextAvailableAt,
+      });
     } catch (error) {
       console.error("Error fetching own photographer profile:", error);
       res.status(500).json({ error: "Failed to fetch profile" });
@@ -429,7 +472,51 @@ export async function registerRoutes(
       if (!photographer) {
         return res.status(404).json({ error: "Photographer not found" });
       }
-      res.json(photographer);
+      
+      // Calculate session state based on current bookings
+      const bookings = await storage.getBookingsByPhotographerWithCustomer(req.params.id);
+      const now = new Date();
+      
+      // Check if photographer is currently in an active session
+      const activeSession = bookings.find((b: any) => {
+        if (b.status !== 'confirmed' && b.status !== 'in_progress') return false;
+        
+        const sessionDate = new Date(b.scheduledDate);
+        const [hours, minutes] = b.scheduledTime.split(':').map(Number);
+        sessionDate.setHours(hours, minutes, 0, 0);
+        
+        const sessionEnd = new Date(sessionDate);
+        sessionEnd.setHours(sessionEnd.getHours() + b.duration);
+        
+        return now >= sessionDate && now <= sessionEnd;
+      });
+      
+      // Find next available time
+      let nextAvailableAt: string | null = null;
+      if (activeSession) {
+        const sessionDate = new Date(activeSession.scheduledDate);
+        const [hours, minutes] = activeSession.scheduledTime.split(':').map(Number);
+        sessionDate.setHours(hours, minutes, 0, 0);
+        const sessionEnd = new Date(sessionDate);
+        sessionEnd.setHours(sessionEnd.getHours() + activeSession.duration);
+        nextAvailableAt = sessionEnd.toISOString();
+      }
+      
+      // Determine session state
+      let sessionState: 'available' | 'in_session' | 'offline' = 'offline';
+      if (!photographer.isAvailable) {
+        sessionState = 'offline';
+      } else if (activeSession) {
+        sessionState = 'in_session';
+      } else {
+        sessionState = 'available';
+      }
+      
+      res.json({
+        ...photographer,
+        sessionState,
+        nextAvailableAt,
+      });
     } catch (error) {
       console.error("Error fetching photographer:", error);
       res.status(500).json({ error: "Failed to fetch photographer" });
