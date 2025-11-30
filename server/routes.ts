@@ -813,6 +813,11 @@ export async function registerRoutes(
         delivery = await storage.addPhotoToDelivery(delivery.id, normalizedUrl);
       }
       
+      // Automatically mark booking as completed when photos are delivered
+      if (booking.status === 'confirmed') {
+        await storage.updateBookingStatus(booking.id, 'completed');
+      }
+      
       res.json(delivery);
     } catch (error) {
       console.error("Error uploading photo:", error);
