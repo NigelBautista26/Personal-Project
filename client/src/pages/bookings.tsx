@@ -421,7 +421,7 @@ export default function Bookings() {
                     {/* Status message */}
                     <div className="flex items-center gap-2 text-blue-400 text-sm">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Your photographer is editing your photos...</span>
+                      <span>Your photographer is uploading your photos...</span>
                     </div>
                   </div>
                 </div>
