@@ -235,7 +235,7 @@ export async function registerRoutes(
       }
       
       // Only allow updating certain fields
-      const allowedFields = ["bio", "hourlyRate", "location", "profileImageUrl", "portfolioImages"];
+      const allowedFields = ["bio", "hourlyRate", "location", "profileImageUrl", "portfolioImages", "isAvailable"];
       const updateData: Record<string, any> = {};
       for (const field of allowedFields) {
         if (req.body[field] !== undefined) {

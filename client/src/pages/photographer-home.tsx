@@ -1,27 +1,92 @@
 import { Link } from "wouter";
-import { Settings, Bell, Camera, Calendar, DollarSign, Star, Clock, MapPin, TrendingUp, ChevronRight } from "lucide-react";
+import { Settings, Bell, Camera, Calendar, DollarSign, Star, Clock, MapPin, TrendingUp, ChevronRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
+import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 
 export default function PhotographerHome() {
+  const queryClient = useQueryClient();
+
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
     queryFn: getCurrentUser,
   });
 
-  // Mock stats for now - would come from API
+  const { data: photographer } = useQuery({
+    queryKey: ["myPhotographerProfile"],
+    queryFn: async () => {
+      const res = await fetch("/api/photographers/me", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch profile");
+      return res.json();
+    },
+    enabled: !!user,
+  });
+
+  const { data: bookings = [] } = useQuery({
+    queryKey: ["photographerBookings", photographer?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/bookings/photographer/${photographer?.id}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch bookings");
+      return res.json();
+    },
+    enabled: !!photographer?.id,
+  });
+
+  const toggleAvailabilityMutation = useMutation({
+    mutationFn: async (isAvailable: boolean) => {
+      const res = await fetch("/api/photographers/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isAvailable }),
+      });
+      if (!res.ok) throw new Error("Failed to update availability");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+    },
+  });
+
+  // Calculate real stats from bookings
+  const now = new Date();
+  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+  const todaysBookings = bookings.filter((b: any) => 
+    isToday(new Date(b.scheduledDate)) && 
+    (b.status === 'confirmed' || b.status === 'pending')
+  );
+
+  const thisWeekEarnings = bookings
+    .filter((b: any) => 
+      b.status === 'completed' && 
+      isWithinInterval(new Date(b.scheduledDate), { start: weekStart, end: weekEnd })
+    )
+    .reduce((sum: number, b: any) => sum + parseFloat(b.photographerEarnings || 0), 0);
+
+  const completedJobsCount = bookings.filter((b: any) => b.status === 'completed').length;
+
   const stats = {
-    todayBookings: 2,
-    weekEarnings: 280,
-    rating: 4.9,
-    totalJobs: 47,
+    todayBookings: todaysBookings.length,
+    weekEarnings: thisWeekEarnings,
+    rating: photographer?.rating ? parseFloat(photographer.rating) : 5.0,
+    totalJobs: completedJobsCount,
   };
 
-  const upcomingBookings = [
-    { id: 1, client: "Emma T.", time: "2:00 PM", location: "Tower Bridge", duration: "1 hour", amount: "£40" },
-    { id: 2, client: "David L.", time: "5:30 PM", location: "Big Ben", duration: "2 hours", amount: "£80" },
-  ];
+  // Get today's upcoming bookings (confirmed or pending, scheduled today)
+  const upcomingBookings = todaysBookings.map((b: any) => ({
+    id: b.id,
+    client: b.customer?.fullName || "Customer",
+    time: b.scheduledTime,
+    location: b.location,
+    duration: `${b.duration} hour${b.duration > 1 ? 's' : ''}`,
+    amount: `£${parseFloat(b.photographerEarnings).toFixed(0)}`,
+    profileImageUrl: b.customer?.profileImageUrl,
+  }));
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -81,14 +146,24 @@ export default function PhotographerHome() {
         {/* Availability Toggle */}
         <div className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+            <div className={`w-3 h-3 rounded-full ${photographer?.isAvailable ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
             <div>
-              <p className="text-white font-medium">You're Available</p>
-              <p className="text-xs text-muted-foreground">Customers can book you now</p>
+              <p className="text-white font-medium">
+                {photographer?.isAvailable ? "You're Available" : "You're Offline"}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {photographer?.isAvailable ? "Customers can book you now" : "Customers cannot book you"}
+              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
-            Go Offline
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={() => toggleAvailabilityMutation.mutate(!photographer?.isAvailable)}
+            disabled={toggleAvailabilityMutation.isPending}
+          >
+            {photographer?.isAvailable ? "Go Offline" : "Go Online"}
           </Button>
         </div>
 
@@ -105,27 +180,44 @@ export default function PhotographerHome() {
           </div>
           
           <div className="space-y-3">
-            {upcomingBookings.map((booking) => (
-              <div key={booking.id} className="bg-card border border-white/5 rounded-2xl p-4" data-testid={`booking-${booking.id}`}>
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h3 className="font-bold text-white">{booking.client}</h3>
-                    <div className="flex items-center text-muted-foreground text-xs mt-1">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {booking.location}
-                    </div>
-                  </div>
-                  <span className="text-lg font-bold text-primary">{booking.amount}</span>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center text-white bg-white/10 px-2 py-1 rounded-full">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {booking.time}
-                  </span>
-                  <span className="text-muted-foreground">{booking.duration}</span>
-                </div>
+            {upcomingBookings.length === 0 ? (
+              <div className="bg-card border border-white/5 rounded-2xl p-6 text-center">
+                <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground text-sm">No bookings scheduled for today</p>
+                <p className="text-xs text-muted-foreground mt-1">Your upcoming sessions will appear here</p>
               </div>
-            ))}
+            ) : (
+              upcomingBookings.map((booking: any) => (
+                <div key={booking.id} className="bg-card border border-white/5 rounded-2xl p-4" data-testid={`booking-${booking.id}`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex items-center gap-3">
+                      {booking.profileImageUrl ? (
+                        <img src={booking.profileImageUrl} alt={booking.client} className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                          <Camera className="w-5 h-5 text-primary" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-bold text-white">{booking.client}</h3>
+                        <div className="flex items-center text-muted-foreground text-xs mt-1">
+                          <MapPin className="w-3 h-3 mr-1" />
+                          {booking.location}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-primary">{booking.amount}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs">
+                    <span className="flex items-center text-white bg-white/10 px-2 py-1 rounded-full">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {booking.time}
+                    </span>
+                    <span className="text-muted-foreground">{booking.duration}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
