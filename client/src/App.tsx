@@ -24,6 +24,7 @@ import Signup from "@/pages/signup";
 import BusinessCase from "@/pages/business-case";
 import PhotoSpots from "@/pages/photo-spots";
 import PhotoSpotDetail from "@/pages/photo-spot-detail";
+import PitchDeck from "@/pages/pitch-deck";
 
 function Router() {
   return (
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/photo-spots/:id" component={PhotoSpotDetail} />
       <Route path="/photographer/:id" component={PhotographerProfile} />
       <Route path="/book/:id" component={Booking} />
+      <Route path="/pitch-deck" component={PitchDeck} />
       <Route component={NotFound} />
     </Switch>
   );
