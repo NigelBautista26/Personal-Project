@@ -40,7 +40,7 @@ export default function Bookings() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
-  const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string} | null>(null);
+  const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string; returnToPhotos?: any} | null>(null);
   const [editingPhotoCount, setEditingPhotoCount] = useState(1);
   const [editingNotes, setEditingNotes] = useState("");
   const queryClient = useQueryClient();
@@ -766,8 +766,7 @@ export default function Bookings() {
                         if (service.pricingModel === "per_photo") {
                           setEditingPhotoCount(selectedCount || 1);
                         }
-                        setSelectedBookingPhotos(null);
-                        setEditingDialogBooking(selectedBookingPhotos.booking);
+                        setEditingDialogBooking({ ...selectedBookingPhotos.booking, returnToPhotos: selectedBookingPhotos });
                       }}
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white w-full"
@@ -874,7 +873,14 @@ export default function Bookings() {
       </Dialog>
 
       {/* Editing Request Modal */}
-      <Dialog open={!!editingDialogBooking} onOpenChange={(open) => !open && setEditingDialogBooking(null)}>
+      <Dialog open={!!editingDialogBooking} onOpenChange={(open) => {
+        if (!open) {
+          if (editingDialogBooking?.returnToPhotos) {
+            setSelectedBookingPhotos(editingDialogBooking.returnToPhotos);
+          }
+          setEditingDialogBooking(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
@@ -963,7 +969,12 @@ export default function Bookings() {
                 <div className="flex gap-3">
                   <Button
                     variant="outline"
-                    onClick={() => setEditingDialogBooking(null)}
+                    onClick={() => {
+                      if (editingDialogBooking?.returnToPhotos) {
+                        setSelectedBookingPhotos(editingDialogBooking.returnToPhotos);
+                      }
+                      setEditingDialogBooking(null);
+                    }}
                     className="flex-1 border-white/10"
                     data-testid="button-cancel-editing"
                   >
