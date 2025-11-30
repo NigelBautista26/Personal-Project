@@ -117,6 +117,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Mobile-Optimized Modal System** (Nov 2025): All dialogs and modals now use consistent mobile-friendly widths (88vw, max-w-sm) with rounded corners. Base Dialog component updated to ensure future modals inherit these defaults automatically.
+
+- **Enhanced Photographer Home Page** (Nov 2025): Redesigned photographer dashboard with:
+  - Action item alerts for pending requests, photos awaiting upload, and editing requests
+  - Upcoming sessions preview with customer details
+  - Active editing work section
+  - Recent reviews display
+  - Helpful tips and "all set" status when no actions needed
+  - Badge notifications on navigation for pending items
+
+- **Profile Picture Editing** (Nov 2025): Photographers can now change their profile picture anytime with image cropping functionality. Camera button always visible on profile (no need to enter edit mode first).
+
+- **Improved Booking Cards** (Nov 2025): Cleaner layout for "Ready for Photos" and "Completed Sessions" sections with better visual hierarchy, larger avatars, and prominent earnings display.
+
+- **Toast Notifications for Expired Bookings** (Nov 2025): Both customers and photographers now receive toast alerts for expired booking requests instead of dedicated sections, providing a consistent experience.
+
 - **Photo Editing Add-on Service** (Nov 2025): Complete editing services feature allowing photographers to offer post-delivery photo editing. Includes:
   - Photographer settings UI for enabling editing services with flat fee or per-photo pricing models
   - Customer UI to request editing on completed bookings with cost breakdown
