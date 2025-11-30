@@ -11,13 +11,23 @@ export default function PitchDeck() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 print:bg-white">
+    <div className="min-h-screen bg-gray-900 print:bg-gray-900">
       <style>{`
         @media print {
+          @page { size: A4; margin: 0.5in; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          section { page-break-inside: avoid; page-break-after: always; }
-          section:last-of-type { page-break-after: auto; }
-          .print-section { break-inside: avoid; page-break-inside: avoid; }
+          .pitch-slide { 
+            page-break-after: always; 
+            page-break-inside: avoid;
+            min-height: 0;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+            margin-bottom: 0 !important;
+          }
+          .pitch-slide:last-of-type { page-break-after: auto; }
+          .pitch-slide h2 { font-size: 1.5rem !important; margin-bottom: 0.75rem !important; }
+          .pitch-slide .grid { gap: 0.5rem !important; }
+          .pitch-slide p, .pitch-slide li { font-size: 0.85rem !important; }
         }
       `}</style>
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
@@ -56,7 +66,7 @@ export default function PitchDeck() {
         </div>
 
         {/* Slide 2: The Problem */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-red-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-2xl font-bold">!</span>
             The Problem
@@ -117,7 +127,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 3: The Solution */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-emerald-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">💡</span>
             The Solution: SnapNow
@@ -157,7 +167,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 4: Market Opportunity */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-blue-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-2xl">📊</span>
             Market Opportunity
@@ -206,7 +216,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 5: Business Model */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-amber-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl">💰</span>
             Business Model
@@ -264,7 +274,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 6: Platform Features */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-violet-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-2xl">⚡</span>
             Platform Features
@@ -310,7 +320,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 7: Competitive Advantage */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-indigo-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl">🏆</span>
             Why SnapNow Wins
@@ -347,7 +357,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 8: Roadmap */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-green-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-2xl">🚀</span>
             Roadmap
@@ -407,7 +417,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 9: The Ask */}
-        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+        <section className="pitch-slide mb-12 py-8">
           <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-violet-500 flex items-center gap-4">
             <span className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-2xl">🤝</span>
             The Ask
@@ -450,7 +460,7 @@ export default function PitchDeck() {
         </section>
 
         {/* Slide 10: Contact / Thank You */}
-        <section className="py-16 text-center">
+        <section className="pitch-slide py-16 text-center">
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-8">
             <Camera className="w-10 h-10 text-white" />
           </div>
