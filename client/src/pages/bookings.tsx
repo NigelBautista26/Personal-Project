@@ -33,7 +33,7 @@ interface ReviewInfo {
 
 export default function Bookings() {
   const [, setLocation] = useLocation();
-  const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery | null>(null);
+  const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery & { booking?: any } | null>(null);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
@@ -137,11 +137,11 @@ export default function Bookings() {
     queryKey: ["editingServices", bookings.map((b: any) => b.photographerId)],
     queryFn: async () => {
       const completedBookings = bookings.filter((b: any) => b.status === 'completed');
-      const photographerIds = Array.from(new Set(completedBookings.map((b: any) => b.photographerId)));
+      const photographerIds = Array.from(new Set(completedBookings.map((b: any) => b.photographerId))) as string[];
       const results: Record<string, EditingServiceInfo | null> = {};
       
       await Promise.all(
-        photographerIds.map(async (photographerId: string) => {
+        photographerIds.map(async (photographerId) => {
           try {
             const res = await fetch(`/api/editing-services/${photographerId}`, { credentials: "include" });
             if (res.ok) {
@@ -327,10 +327,10 @@ export default function Bookings() {
     return data as PhotoDelivery | null;
   };
 
-  const handleViewPhotos = async (bookingId: string) => {
+  const handleViewPhotos = async (bookingId: string, booking?: any) => {
     const photos = await fetchBookingPhotos(bookingId);
     if (photos && photos.photos && photos.photos.length > 0) {
-      setSelectedBookingPhotos(photos);
+      setSelectedBookingPhotos({ ...photos, booking });
       setViewingPhotoIndex(0);
     }
   };
@@ -569,7 +569,7 @@ export default function Bookings() {
                     
                     <div className="flex gap-2">
                       <Button
-                        onClick={() => handleViewPhotos(booking.id)}
+                        onClick={() => handleViewPhotos(booking.id, booking)}
                         variant="outline"
                         className="flex-1 border-primary/50 text-primary hover:bg-primary/10"
                         data-testid={`button-view-photos-${booking.id}`}
@@ -671,7 +671,7 @@ export default function Bookings() {
                             <Button
                               size="sm"
                               className="bg-violet-500 hover:bg-violet-600 text-white text-xs"
-                              onClick={() => handleViewPhotos(booking.id)}
+                              onClick={() => handleViewPhotos(booking.id, booking)}
                               data-testid={`button-view-edited-${booking.id}`}
                             >
                               <Images className="w-3 h-3 mr-1" />
@@ -732,16 +732,11 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-lg w-[95vw] max-h-[80vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
           {/* Header */}
-          <div className="flex items-start justify-between p-4 pr-12 border-b border-white/10 shrink-0">
-            <div className="flex-1 min-w-0 pr-4">
+          <div className="flex flex-col gap-2 p-4 pr-12 border-b border-white/10 shrink-0">
+            <div className="flex items-start justify-between">
               <h2 className="text-white font-bold">Your Photos</h2>
-              {selectedBookingPhotos?.message && (
-                <p className="text-sm text-muted-foreground line-clamp-2">{selectedBookingPhotos.message}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
               <Button
                 onClick={handleDownloadAll}
                 size="sm"
@@ -752,6 +747,31 @@ export default function Bookings() {
                 Download All
               </Button>
             </div>
+            {selectedBookingPhotos?.message && (
+              <p className="text-sm text-muted-foreground line-clamp-2">{selectedBookingPhotos.message}</p>
+            )}
+            {/* Request Editing Button - only show if photographer offers editing and no request exists */}
+            {selectedBookingPhotos?.booking && (() => {
+              const service = editingServicesMap[selectedBookingPhotos.booking.photographerId];
+              const existingRequest = editingRequestsMap[selectedBookingPhotos.booking.id];
+              if (service?.isEnabled && !existingRequest) {
+                return (
+                  <Button
+                    onClick={() => {
+                      setSelectedBookingPhotos(null);
+                      setEditingDialogBooking(selectedBookingPhotos.booking);
+                    }}
+                    size="sm"
+                    className="bg-violet-600 hover:bg-violet-700 text-white w-full"
+                    data-testid="button-request-editing-gallery"
+                  >
+                    <Palette className="w-4 h-4 mr-2" />
+                    Request Photo Editing
+                  </Button>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* Main Photo View */}
