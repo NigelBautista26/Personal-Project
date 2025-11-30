@@ -201,9 +201,11 @@ export default function PhotographerBookings() {
   const confirmedBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
   );
-  const pastBookings = bookings.filter((b: any) => 
-    new Date(b.scheduledDate) < new Date() || b.status === 'completed' || b.status === 'cancelled' || b.status === 'expired'
+  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
+  const completedBookings = bookings.filter((b: any) => 
+    b.status === 'completed' || (new Date(b.scheduledDate) < new Date() && b.status === 'confirmed')
   );
+  const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -388,12 +390,53 @@ export default function PhotographerBookings() {
           )}
         </section>
 
-        {pastBookings.length > 0 && (
+        {expiredBookings.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-white mb-4">Past Sessions</h2>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-400" />
+              Missed Requests ({expiredBookings.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">These booking requests expired because they weren't responded to within 24 hours.</p>
             <div className="space-y-4">
-              {pastBookings.slice(0, 5).map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-past-${booking.id}`}>
+              {expiredBookings.map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-orange-500/30 opacity-75" data-testid={`booking-expired-${booking.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover opacity-70"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-orange-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">missed</span>
+                      <p className="text-muted-foreground text-sm mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {completedBookings.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4">Completed Sessions</h2>
+            <div className="space-y-4">
+              {completedBookings.slice(0, 5).map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-completed-${booking.id}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center overflow-hidden">
@@ -408,31 +451,64 @@ export default function PhotographerBookings() {
                         )}
                       </div>
                       <div>
-                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Photo Session'}</h3>
+                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
-                        {booking.status}
-                      </span>
+                      <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">completed</span>
                       <p className="text-white font-bold mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
                     </div>
                   </div>
                   
-                  {(booking.status === 'completed' || booking.status === 'confirmed') && (
-                    <Button
-                      onClick={() => handleOpenUploadDialog(booking.id)}
-                      variant="outline"
-                      className="w-full border-primary/50 text-primary hover:bg-primary/10"
-                      data-testid={`button-upload-photos-${booking.id}`}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload Photos
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleOpenUploadDialog(booking.id)}
+                    variant="outline"
+                    className="w-full border-primary/50 text-primary hover:bg-primary/10"
+                    data-testid={`button-upload-photos-${booking.id}`}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photos
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {cancelledBookings.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <X className="w-5 h-5 text-red-400" />
+              Declined
+            </h2>
+            <div className="space-y-4">
+              {cancelledBookings.map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 opacity-60" data-testid={`booking-cancelled-${booking.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover opacity-50"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-red-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">declined</span>
+                  </div>
                 </div>
               ))}
             </div>
