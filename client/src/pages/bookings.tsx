@@ -47,11 +47,25 @@ export default function Bookings() {
   useEffect(() => {
     if (expiredBookings.length > 0) {
       const photographerNames = expiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
+      
+      // Play notification sound
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 440;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+      
       toast.error(
         `Booking request expired`,
         {
           description: `${photographerNames} didn't respond in time. Try finding another photographer!`,
-          duration: 6000,
+          duration: 8000,
           action: {
             label: "Find photographers",
             onClick: () => setLocation("/photographers")
