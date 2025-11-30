@@ -1,10 +1,44 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Printer, ArrowLeft, Camera, MapPin, Calendar, CreditCard, Star, Image, Sparkles } from "lucide-react";
 import { useLocation } from "wouter";
 
 export default function PitchDeck() {
   const [, navigate] = useLocation();
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scaleSlides = () => {
+      const slides = document.querySelectorAll('.pitch-slide') as NodeListOf<HTMLElement>;
+      const printableHeight = 9.5 * 96; // ~9.5 inches in pixels at 96 DPI (A4 minus margins)
+      
+      slides.forEach((slide) => {
+        const actualHeight = slide.scrollHeight;
+        if (actualHeight > printableHeight) {
+          const scale = printableHeight / actualHeight;
+          slide.style.transform = `scale(${scale})`;
+          slide.style.transformOrigin = 'top left';
+          slide.style.width = `${100 / scale}%`;
+        }
+      });
+    };
+
+    const resetSlides = () => {
+      const slides = document.querySelectorAll('.pitch-slide') as NodeListOf<HTMLElement>;
+      slides.forEach((slide) => {
+        slide.style.transform = '';
+        slide.style.transformOrigin = '';
+        slide.style.width = '';
+      });
+    };
+
+    window.addEventListener('beforeprint', scaleSlides);
+    window.addEventListener('afterprint', resetSlides);
+
+    return () => {
+      window.removeEventListener('beforeprint', scaleSlides);
+      window.removeEventListener('afterprint', resetSlides);
+    };
+  }, []);
 
   const handlePrint = () => {
     window.print();
