@@ -8,9 +8,10 @@ interface LiveLocationSharingProps {
   bookingId: string;
   scheduledDate: string;
   scheduledTime: string;
+  onLocationUpdate?: (location: { lat: number; lng: number } | null) => void;
 }
 
-export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime }: LiveLocationSharingProps) {
+export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, onLocationUpdate }: LiveLocationSharingProps) {
   const [isSharing, setIsSharing] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -94,7 +95,9 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime }:
     const id = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
-        setCurrentLocation({ lat: latitude, lng: longitude });
+        const newLocation = { lat: latitude, lng: longitude };
+        setCurrentLocation(newLocation);
+        onLocationUpdate?.(newLocation);
         updateLocationMutation.mutate({ latitude, longitude, accuracy });
       },
       (err) => {
@@ -122,7 +125,7 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime }:
       title: "Location Sharing Started",
       description: "Your photographer can now see your location",
     });
-  }, [bookingId, toast, updateLocationMutation]);
+  }, [bookingId, toast, updateLocationMutation, onLocationUpdate]);
 
   const stopSharing = useCallback(() => {
     if (watchId !== null) {
@@ -131,12 +134,13 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime }:
     }
     setIsSharing(false);
     setCurrentLocation(null);
+    onLocationUpdate?.(null);
     stopLocationMutation.mutate();
     toast({
       title: "Location Sharing Stopped",
       description: "Your location is no longer visible to the photographer",
     });
-  }, [watchId, stopLocationMutation, toast]);
+  }, [watchId, stopLocationMutation, toast, onLocationUpdate]);
 
   useEffect(() => {
     return () => {

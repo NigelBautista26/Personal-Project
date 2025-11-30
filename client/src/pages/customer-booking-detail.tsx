@@ -40,10 +40,24 @@ interface BookingWithPhotographer {
   };
 }
 
+const customerLocationIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#3b82f6" stroke="white" stroke-width="3"/>
+      <circle cx="20" cy="20" r="8" fill="white"/>
+      <circle cx="20" cy="20" r="4" fill="#3b82f6"/>
+    </svg>
+  `),
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
+});
+
 export default function CustomerBookingDetail() {
   const [match, params] = useRoute("/booking/:id");
   const [, setLocation] = useLocation();
   const [showChat, setShowChat] = useState(false);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
   const bookingId = params?.id;
 
   const { data: currentUser } = useQuery({
@@ -200,14 +214,14 @@ export default function CustomerBookingDetail() {
 
             {hasMeetingLocation ? (
               <div className="space-y-3">
-                <div className="h-[150px] rounded-xl overflow-hidden border border-white/10">
+                <div className="h-[180px] rounded-xl overflow-hidden border border-white/10">
                   <MapContainer
                     center={[parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
                     zoom={15}
                     style={{ height: "100%", width: "100%" }}
                     zoomControl={false}
-                    dragging={false}
-                    scrollWheelZoom={false}
+                    dragging={true}
+                    scrollWheelZoom={true}
                   >
                     <TileLayer
                       attribution='&copy; CARTO'
@@ -217,8 +231,20 @@ export default function CustomerBookingDetail() {
                       position={[parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
                       icon={markerIcon}
                     />
+                    {myLocation && (
+                      <Marker
+                        position={[myLocation.lat, myLocation.lng]}
+                        icon={customerLocationIcon}
+                      />
+                    )}
                   </MapContainer>
                 </div>
+                {myLocation && (
+                  <div className="flex items-center gap-2 text-xs text-blue-400">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                    <span>Your live location is visible on the map</span>
+                  </div>
+                )}
                 
                 {booking.meetingNotes && (
                   <div className="bg-card rounded-lg p-3 border border-white/10">
@@ -256,6 +282,7 @@ export default function CustomerBookingDetail() {
             bookingId={booking.id}
             scheduledDate={booking.scheduledDate}
             scheduledTime={booking.scheduledTime}
+            onLocationUpdate={setMyLocation}
           />
         )}
 
