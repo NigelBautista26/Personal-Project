@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import { Settings, Bell, Camera, Calendar, DollarSign, Star, Clock, MapPin, TrendingUp, ChevronRight, Loader2 } from "lucide-react";
+import { Settings, Bell, Camera, Calendar, DollarSign, Star, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { format, isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
 
 export default function PhotographerHome() {
   const queryClient = useQueryClient();
@@ -76,17 +76,6 @@ export default function PhotographerHome() {
     rating: photographer?.rating ? parseFloat(photographer.rating) : 5.0,
     totalJobs: completedJobsCount,
   };
-
-  // Get today's upcoming bookings (confirmed or pending, scheduled today)
-  const upcomingBookings = todaysBookings.map((b: any) => ({
-    id: b.id,
-    client: b.customer?.fullName || "Customer",
-    time: b.scheduledTime,
-    location: b.location,
-    duration: `${b.duration} hour${b.duration > 1 ? 's' : ''}`,
-    amount: `£${parseFloat(b.photographerEarnings).toFixed(0)}`,
-    profileImageUrl: b.customer?.profileImageUrl,
-  }));
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -165,60 +154,6 @@ export default function PhotographerHome() {
           >
             {photographer?.isAvailable ? "Go Offline" : "Go Online"}
           </Button>
-        </div>
-
-        {/* Today's Bookings */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              Today's Bookings
-            </h2>
-            <Link href="/photographer-bookings" className="text-sm text-primary">
-              View All
-            </Link>
-          </div>
-          
-          <div className="space-y-3">
-            {upcomingBookings.length === 0 ? (
-              <div className="bg-card border border-white/5 rounded-2xl p-6 text-center">
-                <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground text-sm">No bookings scheduled for today</p>
-                <p className="text-xs text-muted-foreground mt-1">Your upcoming sessions will appear here</p>
-              </div>
-            ) : (
-              upcomingBookings.map((booking: any) => (
-                <div key={booking.id} className="bg-card border border-white/5 rounded-2xl p-4" data-testid={`booking-${booking.id}`}>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      {booking.profileImageUrl ? (
-                        <img src={booking.profileImageUrl} alt={booking.client} className="w-10 h-10 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                          <Camera className="w-5 h-5 text-primary" />
-                        </div>
-                      )}
-                      <div>
-                        <h3 className="font-bold text-white">{booking.client}</h3>
-                        <div className="flex items-center text-muted-foreground text-xs mt-1">
-                          <MapPin className="w-3 h-3 mr-1" />
-                          {booking.location}
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-lg font-bold text-primary">{booking.amount}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="flex items-center text-white bg-white/10 px-2 py-1 rounded-full">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {booking.time}
-                    </span>
-                    <span className="text-muted-foreground">{booking.duration}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
         </div>
 
         {/* Quick Actions */}
