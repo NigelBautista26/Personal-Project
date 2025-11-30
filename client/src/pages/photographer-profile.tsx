@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, Settings, ChevronRight, MessageSquare, User, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -572,13 +572,13 @@ export default function PhotographerProfilePage() {
       </div>
 
       {/* Reviews Section */}
-      {reviewsData && reviewsData.reviews.length > 0 && (
-        <div className="px-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-primary" />
-              Customer Reviews
-            </h3>
+      <div className="px-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold text-white flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-primary" />
+            Customer Reviews
+          </h3>
+          {reviewsData && reviewsData.reviewCount > 0 && (
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-amber-400">
                 <Star className="w-4 h-4 fill-current" />
@@ -586,8 +586,10 @@ export default function PhotographerProfilePage() {
               </div>
               <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
             </div>
-          </div>
-          
+          )}
+        </div>
+        
+        {reviewsData && reviewsData.reviews.length > 0 ? (
           <div className="space-y-4">
             {reviewsData.reviews.map((review) => (
               <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`my-review-${review.id}`}>
@@ -689,25 +691,25 @@ export default function PhotographerProfilePage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="glass-panel rounded-xl p-6 text-center">
+            <Star className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground text-sm">No reviews yet</p>
+            <p className="text-muted-foreground/60 text-xs mt-1">Reviews will appear here after completed sessions</p>
+          </div>
+        )}
+      </div>
 
-      {/* Settings Section */}
-      <div className="px-6 py-8 space-y-4">
-        <h3 className="font-bold text-white mb-4">Settings</h3>
-        <div className="glass-panel rounded-2xl overflow-hidden">
-          <button
-            onClick={() => logoutMutation.mutate()}
-            className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left"
-            data-testid="button-logout"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="w-5 h-5 text-destructive" />
-              <span className="font-medium text-destructive">Log Out</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-muted-foreground/50" />
-          </button>
-        </div>
+      {/* Logout Button */}
+      <div className="px-6 pb-8">
+        <button
+          onClick={() => logoutMutation.mutate()}
+          className="w-full flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-destructive transition-colors text-sm"
+          data-testid="button-logout"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Log Out</span>
+        </button>
       </div>
 
       <AnimatePresence>
