@@ -3,9 +3,10 @@ import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Camera, MessageCircle, Navigation, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isToday, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookingChat } from "@/components/booking-chat";
+import { LiveLocationSharing } from "@/components/live-location-sharing";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -248,6 +249,14 @@ export default function CustomerBookingDetail() {
               </div>
             )}
           </div>
+        )}
+
+        {booking.status === "confirmed" && (isToday(parseISO(booking.scheduledDate)) || isFuture(parseISO(booking.scheduledDate))) && (
+          <LiveLocationSharing
+            bookingId={booking.id}
+            scheduledDate={booking.scheduledDate}
+            scheduledTime={booking.scheduledTime}
+          />
         )}
 
         <div className="glass-panel rounded-2xl overflow-hidden">

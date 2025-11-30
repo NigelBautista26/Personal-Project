@@ -1792,5 +1792,127 @@ export async function registerRoutes(
     }
   });
 
+  // Live Location Routes
+  app.post("/api/bookings/:bookingId/live-location", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const { latitude, longitude, accuracy } = req.body;
+
+      if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+        return res.status(400).json({ error: "Latitude and longitude are required" });
+      }
+
+      const booking = await storage.getBooking(bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Only customer can share their location
+      if (booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Only the customer can share their location" });
+      }
+
+      // Booking must be confirmed
+      if (booking.status !== "confirmed") {
+        return res.status(400).json({ error: "Can only share location for confirmed bookings" });
+      }
+
+      // Check if within 10 minutes before session
+      const sessionDateTime = new Date(booking.scheduledDate);
+      const [hours, minutes] = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':').map(Number);
+      const isPM = booking.scheduledTime.toLowerCase().includes('pm');
+      sessionDateTime.setHours(isPM && hours !== 12 ? hours + 12 : hours, minutes || 0);
+      
+      const now = new Date();
+      const minutesUntilSession = (sessionDateTime.getTime() - now.getTime()) / (1000 * 60);
+      
+      // Allow sharing up to 10 minutes before and during session
+      if (minutesUntilSession > 10) {
+        return res.status(400).json({ 
+          error: "Location sharing is only available 10 minutes before your session",
+          minutesUntilAvailable: Math.ceil(minutesUntilSession - 10)
+        });
+      }
+
+      const liveLocation = await storage.updateLiveLocation(
+        bookingId,
+        req.session.userId,
+        latitude.toString(),
+        longitude.toString(),
+        accuracy?.toString()
+      );
+
+      res.json(liveLocation);
+    } catch (error) {
+      console.error("Error updating live location:", error);
+      res.status(500).json({ error: "Failed to update live location" });
+    }
+  });
+
+  app.delete("/api/bookings/:bookingId/live-location", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      await storage.stopLiveLocation(bookingId, req.session.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error stopping live location:", error);
+      res.status(500).json({ error: "Failed to stop live location" });
+    }
+  });
+
+  app.get("/api/bookings/:bookingId/live-location", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Only photographer can view customer's live location
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || booking.photographerId !== photographer.id) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      const location = await storage.getLiveLocation(bookingId, booking.customerId);
+      res.json(location || null);
+    } catch (error) {
+      console.error("Error fetching live location:", error);
+      res.status(500).json({ error: "Failed to fetch live location" });
+    }
+  });
+
+  app.get("/api/photographer/live-locations", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+
+      const locations = await storage.getAllActiveLiveLocationsForPhotographer(photographer.id);
+      res.json(locations);
+    } catch (error) {
+      console.error("Error fetching live locations:", error);
+      res.status(500).json({ error: "Failed to fetch live locations" });
+    }
+  });
+
   return httpServer;
 }

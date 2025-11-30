@@ -24,6 +24,7 @@ import {
   type Message,
   type InsertMessage,
   type MessageWithSender,
+  type LiveLocation,
   users,
   photographers,
   bookings,
@@ -33,7 +34,8 @@ import {
   reviews,
   editingServices,
   editingRequests,
-  messages
+  messages,
+  liveLocations
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
@@ -909,6 +911,114 @@ export class DatabaseStorage implements IStorage {
       .where(eq(bookings.id, bookingId))
       .returning();
     return result[0];
+  }
+
+  // Live location methods
+  async updateLiveLocation(bookingId: string, userId: string, latitude: string, longitude: string, accuracy?: string): Promise<LiveLocation> {
+    // First try to update existing record
+    const existing = await db
+      .select()
+      .from(liveLocations)
+      .where(and(
+        eq(liveLocations.bookingId, bookingId),
+        eq(liveLocations.userId, userId)
+      ))
+      .limit(1);
+
+    if (existing.length > 0) {
+      const result = await db
+        .update(liveLocations)
+        .set({
+          latitude,
+          longitude,
+          accuracy: accuracy || null,
+          isActive: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(liveLocations.id, existing[0].id))
+        .returning();
+      return result[0];
+    } else {
+      const result = await db
+        .insert(liveLocations)
+        .values({
+          bookingId,
+          userId,
+          latitude,
+          longitude,
+          accuracy: accuracy || null,
+        })
+        .returning();
+      return result[0];
+    }
+  }
+
+  async getLiveLocation(bookingId: string, userId: string): Promise<LiveLocation | undefined> {
+    const result = await db
+      .select()
+      .from(liveLocations)
+      .where(and(
+        eq(liveLocations.bookingId, bookingId),
+        eq(liveLocations.userId, userId),
+        eq(liveLocations.isActive, true)
+      ))
+      .limit(1);
+    return result[0];
+  }
+
+  async stopLiveLocation(bookingId: string, userId: string): Promise<void> {
+    await db
+      .update(liveLocations)
+      .set({ isActive: false })
+      .where(and(
+        eq(liveLocations.bookingId, bookingId),
+        eq(liveLocations.userId, userId)
+      ));
+  }
+
+  async getAllActiveLiveLocationsForPhotographer(photographerId: string): Promise<(LiveLocation & { customerName: string })[]> {
+    // Get all confirmed bookings for this photographer
+    const photographerBookings = await db
+      .select({
+        id: bookings.id,
+        customerId: bookings.customerId,
+        scheduledDate: bookings.scheduledDate,
+        scheduledTime: bookings.scheduledTime,
+      })
+      .from(bookings)
+      .where(and(
+        eq(bookings.photographerId, photographerId),
+        eq(bookings.status, 'confirmed')
+      ));
+
+    const results: (LiveLocation & { customerName: string })[] = [];
+
+    for (const booking of photographerBookings) {
+      const location = await db
+        .select()
+        .from(liveLocations)
+        .where(and(
+          eq(liveLocations.bookingId, booking.id),
+          eq(liveLocations.userId, booking.customerId),
+          eq(liveLocations.isActive, true)
+        ))
+        .limit(1);
+
+      if (location.length > 0) {
+        const customer = await db
+          .select({ fullName: users.fullName })
+          .from(users)
+          .where(eq(users.id, booking.customerId))
+          .limit(1);
+
+        results.push({
+          ...location[0],
+          customerName: customer[0]?.fullName || 'Customer',
+        });
+      }
+    }
+
+    return results;
   }
 }
 

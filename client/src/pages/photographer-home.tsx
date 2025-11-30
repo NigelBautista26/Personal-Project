@@ -33,6 +33,19 @@ const todayMarkerIcon = new L.Icon({
   popupAnchor: [1, -34],
 });
 
+const customerLiveIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#3b82f6" stroke="white" stroke-width="3"/>
+      <circle cx="20" cy="20" r="8" fill="white"/>
+      <circle cx="20" cy="20" r="4" fill="#3b82f6"/>
+    </svg>
+  `),
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
+});
+
 export default function PhotographerHome() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -86,6 +99,19 @@ export default function PhotographerHome() {
       return res.json();
     },
     enabled: !!photographer?.id,
+  });
+
+  const { data: liveLocations = [] } = useQuery({
+    queryKey: ["photographerLiveLocations"],
+    queryFn: async () => {
+      const res = await fetch("/api/photographer/live-locations", {
+        credentials: "include",
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!photographer?.id,
+    refetchInterval: 5000,
   });
 
   const toggleAvailabilityMutation = useMutation({
@@ -298,68 +324,89 @@ export default function PhotographerHome() {
           </div>
         </div>
 
-        {/* Live Map */}
-        {confirmedUpcoming.length > 0 && (
-          <section>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <MapPin className="w-5 h-5 text-primary" />
-                Session Locations
-              </h2>
-              <button 
-                onClick={() => setLocation("/photographer-map")}
-                className="text-sm text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
-              >
-                <Maximize2 className="w-4 h-4" />
-                Full Map
-              </button>
-            </div>
-            <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 h-[200px]">
-              <MapContainer
-                center={
-                  confirmedUpcoming.find((b: any) => b.meetingLatitude && b.meetingLongitude)
-                    ? [
-                        parseFloat(confirmedUpcoming.find((b: any) => b.meetingLatitude)?.meetingLatitude || "51.5074"),
-                        parseFloat(confirmedUpcoming.find((b: any) => b.meetingLongitude)?.meetingLongitude || "-0.1278")
-                      ]
-                    : [51.5074, -0.1278]
-                }
-                zoom={12}
-                style={{ height: "100%", width: "100%" }}
-                zoomControl={false}
-                attributionControl={false}
-              >
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {confirmedUpcoming
-                  .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
-                  .map((booking: any) => (
-                    <Marker
-                      key={booking.id}
-                      position={[parseFloat(booking.meetingLatitude), parseFloat(booking.meetingLongitude)]}
-                      icon={isToday(new Date(booking.scheduledDate)) ? todayMarkerIcon : bookingMarkerIcon}
-                      eventHandlers={{
-                        click: () => setLocation(`/photographer/booking/${booking.id}`)
-                      }}
-                    >
-                      <Popup>
-                        <div className="text-sm">
-                          <p className="font-medium">{booking.customer?.fullName}</p>
-                          <p className="text-muted-foreground">{format(new Date(booking.scheduledDate), 'MMM d')} at {booking.scheduledTime}</p>
-                          <p className="text-xs text-muted-foreground">{booking.location}</p>
-                        </div>
-                      </Popup>
-                    </Marker>
-                  ))}
-              </MapContainer>
-            </div>
-            {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 0 && (
-              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+        {/* Live Map - Always show for photographers */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              Live Map
+            </h2>
+            <button 
+              onClick={() => setLocation("/photographer-map")}
+              className="text-sm text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
+            >
+              <Maximize2 className="w-4 h-4" />
+              Full Map
+            </button>
+          </div>
+          <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 h-[200px]">
+            <MapContainer
+              center={
+                photographer?.latitude && photographer?.longitude
+                  ? [parseFloat(photographer.latitude), parseFloat(photographer.longitude)]
+                  : [51.5074, -0.1278]
+              }
+              zoom={12}
+              style={{ height: "100%", width: "100%" }}
+              zoomControl={false}
+              attributionControl={false}
+            >
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              {confirmedUpcoming
+                .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
+                .map((booking: any) => (
+                  <Marker
+                    key={booking.id}
+                    position={[parseFloat(booking.meetingLatitude), parseFloat(booking.meetingLongitude)]}
+                    icon={isToday(new Date(booking.scheduledDate)) ? todayMarkerIcon : bookingMarkerIcon}
+                    eventHandlers={{
+                      click: () => setLocation(`/photographer/booking/${booking.id}`)
+                    }}
+                  >
+                    <Popup>
+                      <div className="text-sm">
+                        <p className="font-medium">{booking.customer?.fullName}</p>
+                        <p className="text-muted-foreground">{format(new Date(booking.scheduledDate), 'MMM d')} at {booking.scheduledTime}</p>
+                        <p className="text-xs text-muted-foreground">{booking.location}</p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                ))}
+              {liveLocations.map((location: any) => (
+                <Marker
+                  key={`live-${location.id}`}
+                  position={[parseFloat(location.latitude), parseFloat(location.longitude)]}
+                  icon={customerLiveIcon}
+                >
+                  <Popup>
+                    <div className="text-sm">
+                      <p className="font-medium text-blue-600">{location.customerName}</p>
+                      <p className="text-xs text-green-600">Live Location</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              ))}
+            </MapContainer>
+          </div>
+          <div className="mt-2 space-y-1">
+            {liveLocations.length > 0 && (
+              <p className="text-xs text-blue-400 flex items-center gap-1">
+                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                {liveLocations.length} customer{liveLocations.length > 1 ? 's' : ''} sharing live location
+              </p>
+            )}
+            {confirmedUpcoming.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center">
+                No upcoming sessions to display
+              </p>
+            ) : confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <AlertCircle className="w-3 h-3" />
                 {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length} session{confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 1 ? 's need' : ' needs'} a meeting location set
               </p>
             )}
-          </section>
-        )}
+          </div>
+        </section>
 
         {/* Upcoming Sessions */}
         {confirmedUpcoming.length > 0 && (

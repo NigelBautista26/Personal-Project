@@ -61,6 +61,17 @@ export const messages = pgTable("messages", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const liveLocations = pgTable("live_locations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull().references(() => bookings.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  accuracy: decimal("accuracy", { precision: 10, scale: 2 }),
+  isActive: boolean("is_active").default(true).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const photoDeliveries = pgTable("photo_deliveries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   bookingId: varchar("booking_id").notNull().references(() => bookings.id),
@@ -210,6 +221,12 @@ export const insertMessageSchema = createInsertSchema(messages).omit({
   isRead: true,
 });
 
+export const insertLiveLocationSchema = createInsertSchema(liveLocations).omit({
+  id: true,
+  updatedAt: true,
+  isActive: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -278,6 +295,9 @@ export type EditingRequestWithDetails = EditingRequest & {
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
 export type Message = typeof messages.$inferSelect;
+
+export type InsertLiveLocation = z.infer<typeof insertLiveLocationSchema>;
+export type LiveLocation = typeof liveLocations.$inferSelect;
 
 export type MessageWithSender = Message & {
   sender: {

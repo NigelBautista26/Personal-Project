@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, User, MessageCircle, Navigation, Check, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, User, MessageCircle, Navigation, Check, ChevronDown, ChevronUp, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isToday, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookingChat } from "@/components/booking-chat";
 import { MeetingLocationPicker } from "@/components/meeting-location-picker";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -19,6 +19,19 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
+});
+
+const customerLiveIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#3b82f6" stroke="white" stroke-width="3"/>
+      <circle cx="20" cy="20" r="8" fill="white"/>
+      <circle cx="20" cy="20" r="4" fill="#3b82f6"/>
+    </svg>
+  `),
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
 });
 
 interface BookingWithCustomer {
@@ -66,6 +79,20 @@ export default function PhotographerBookingDetail() {
       return bookings.find((b: BookingWithCustomer) => b.id === bookingId);
     },
     enabled: !!bookingId,
+  });
+
+  const isUpcoming = booking && booking.status === "confirmed" && 
+    (isToday(parseISO(booking.scheduledDate)) || isFuture(parseISO(booking.scheduledDate)));
+
+  const { data: liveLocation } = useQuery<{ latitude: string; longitude: string; updatedAt: string } | null>({
+    queryKey: ["booking-live-location", bookingId],
+    queryFn: async () => {
+      const res = await fetch(`/api/bookings/${bookingId}/live-location`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!bookingId && isUpcoming,
+    refetchInterval: 5000,
   });
 
   if (isLoading) {
@@ -205,7 +232,7 @@ export default function PhotographerBookingDetail() {
               <div className="space-y-3">
                 <div className="h-[150px] rounded-xl overflow-hidden border border-white/10">
                   <MapContainer
-                    center={[parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
+                    center={liveLocation ? [parseFloat(liveLocation.latitude), parseFloat(liveLocation.longitude)] : [parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
                     zoom={15}
                     style={{ height: "100%", width: "100%" }}
                     zoomControl={false}
@@ -219,9 +246,30 @@ export default function PhotographerBookingDetail() {
                     <Marker
                       position={[parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
                       icon={markerIcon}
-                    />
+                    >
+                      <Popup>Meeting Point</Popup>
+                    </Marker>
+                    {liveLocation && (
+                      <Marker
+                        position={[parseFloat(liveLocation.latitude), parseFloat(liveLocation.longitude)]}
+                        icon={customerLiveIcon}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <p className="font-medium text-blue-600">{booking.customer.fullName}</p>
+                            <p className="text-xs text-green-600">Live Location</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
                   </MapContainer>
                 </div>
+                {liveLocation && (
+                  <div className="flex items-center gap-2 text-sm bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                    <span className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
+                    <span className="text-blue-400 font-medium">{booking.customer.fullName} is sharing their live location</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2 text-sm">
                   <Check className="w-4 h-4 text-green-500" />
                   <span className="text-muted-foreground">
