@@ -136,3 +136,45 @@ export async function getPhotographerEarningsSummary(photographerId: string): Pr
   
   return response.json();
 }
+
+// User Profile API
+export async function updateUserProfile(data: { fullName?: string; phone?: string; profileImageUrl?: string }): Promise<User> {
+  const response = await fetch(`${API_BASE}/users/me`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to update profile");
+  }
+  
+  return response.json();
+}
+
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/users/me/change-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to change password");
+  }
+}
+
+export async function getUserUploadUrl(): Promise<{ uploadUrl: { uploadURL: string; objectPath: string } }> {
+  const response = await fetch(`${API_BASE}/users/me/upload-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  
+  if (!response.ok) {
+    throw new Error("Failed to get upload URL");
+  }
+  
+  return response.json();
+}

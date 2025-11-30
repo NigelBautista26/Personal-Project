@@ -14,6 +14,10 @@ import PhotographerDashboard from "@/pages/photographer-dashboard";
 import PhotographerHome from "@/pages/photographer-home";
 import PhotographerProfilePage from "@/pages/photographer-profile";
 import Profile from "@/pages/profile";
+import AccountDetails from "@/pages/account-details";
+import Security from "@/pages/security";
+import Preferences from "@/pages/preferences";
+import Support from "@/pages/support";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import BusinessCase from "@/pages/business-case";
@@ -30,6 +34,10 @@ function Router() {
       <Route path="/photographers" component={Photographers} />
       <Route path="/bookings" component={Bookings} />
       <Route path="/profile" component={Profile} />
+      <Route path="/account-details" component={AccountDetails} />
+      <Route path="/security" component={Security} />
+      <Route path="/preferences" component={Preferences} />
+      <Route path="/support" component={Support} />
       <Route path="/photographer-home" component={PhotographerHome} />
       <Route path="/photographer-profile" component={PhotographerProfilePage} />
       <Route path="/photographer-bookings" component={PhotographerBookings} />

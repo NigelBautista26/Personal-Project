@@ -90,6 +90,85 @@ export async function registerRoutes(
     res.json(userWithoutPassword);
   });
 
+  // Update current user profile
+  app.patch("/api/users/me", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const allowedFields = ["fullName", "phone", "profileImageUrl"];
+      const updateData: Record<string, any> = {};
+      for (const field of allowedFields) {
+        if (req.body[field] !== undefined) {
+          updateData[field] = req.body[field];
+        }
+      }
+      
+      const updatedUser = await storage.updateUser(req.session.userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Error updating user profile:", error);
+      res.status(400).json({ error: "Failed to update profile" });
+    }
+  });
+
+  // Change password
+  app.post("/api/users/me/change-password", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const passwordSchema = z.object({
+        currentPassword: z.string().min(6),
+        newPassword: z.string().min(6),
+      });
+      
+      const { currentPassword, newPassword } = passwordSchema.parse(req.body);
+      
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const validPassword = await bcrypt.compare(currentPassword, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ error: "Current password is incorrect" });
+      }
+      
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUser(req.session.userId, { password: hashedPassword });
+      
+      res.json({ success: true, message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(400).json({ error: "Failed to change password" });
+    }
+  });
+
+  // Get upload URL for user profile photo
+  app.post("/api/users/me/upload-url", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const objectStorageService = new ObjectStorageService();
+      const uploadUrl = await objectStorageService.getObjectEntityUploadURL();
+      
+      res.json({ uploadUrl });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
   // Photographer Routes
   
   // Get current photographer's own profile

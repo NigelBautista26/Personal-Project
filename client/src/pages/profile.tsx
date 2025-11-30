@@ -38,17 +38,19 @@ export default function Profile() {
     },
   });
 
-  const handleMenuClick = (label: string) => {
+  const handleMenuClick = (label: string, path?: string) => {
     if (label === "Log Out") {
       logoutMutation.mutate();
+    } else if (path) {
+      setLocation(path);
     }
   };
 
   const menuItems = [
-    { icon: UserIcon, label: "Account Details" },
-    { icon: Shield, label: "Security" },
-    { icon: Settings, label: "Preferences" },
-    { icon: CircleHelp, label: "Support" },
+    { icon: UserIcon, label: "Account Details", path: "/account-details" },
+    { icon: Shield, label: "Security", path: "/security" },
+    { icon: Settings, label: "Preferences", path: "/preferences" },
+    { icon: CircleHelp, label: "Support", path: "/support" },
     { icon: LogOut, label: "Log Out", className: "text-destructive" },
   ];
 
@@ -56,7 +58,7 @@ export default function Profile() {
     <div className="min-h-screen bg-background pb-24">
       <div className="relative h-48 bg-gradient-to-b from-primary/20 to-background">
         <div className="absolute -bottom-12 left-0 right-0 flex flex-col items-center">
-           <Avatar src={undefined} /> 
+           <Avatar src={(user as any)?.profileImageUrl} /> 
            <h1 className="text-xl font-bold text-white" data-testid="text-username">{user?.fullName || "Guest"}</h1>
            <p className="text-sm text-muted-foreground" data-testid="text-email">{user?.email || ""}</p>
         </div>
@@ -67,7 +69,7 @@ export default function Profile() {
           {menuItems.map((item, i) => (
             <button 
               key={item.label}
-              onClick={() => handleMenuClick(item.label)}
+              onClick={() => handleMenuClick(item.label, item.path)}
               className={cn(
                 "w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors text-left",
                 i !== menuItems.length - 1 && "border-b border-white/5"
