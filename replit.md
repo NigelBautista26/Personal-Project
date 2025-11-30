@@ -60,6 +60,8 @@ Preferred communication style: Simple, everyday language.
 - `bookings` table: Session reservations with status tracking and payment references
 - `earnings` table: Payment tracking for photographers with platform fee calculations
 - `reviews` table: Customer reviews with 1-5 star ratings, comments, and photographer responses (unique constraint per booking)
+- `editing_service_settings` table: Photographer editing service configuration (enabled status, pricing model, rates, turnaround time)
+- `editing_requests` table: Customer editing requests with lifecycle tracking (requested → accepted → in_progress → delivered → completed)
 
 **Key Architectural Patterns:**
 - Repository pattern via `IStorage` interface (DatabaseStorage implementation)
@@ -114,6 +116,13 @@ Preferred communication style: Simple, everyday language.
 7. **Dynamic Booking Expiration**: Response windows calculated based on session urgency (30min for same-day, up to 24h for future sessions)
 
 ## Recent Changes
+
+- **Photo Editing Add-on Service** (Nov 2025): Complete editing services feature allowing photographers to offer post-delivery photo editing. Includes:
+  - Photographer settings UI for enabling editing services with flat fee or per-photo pricing models
+  - Customer UI to request editing on completed bookings with cost breakdown
+  - Photographer workflow for accepting/declining requests and delivering edited photos
+  - Revenue model: 20% platform commission applies to editing services (same as photography sessions)
+  - Full request lifecycle tracking: requested → accepted → in_progress → delivered → completed
 
 - **Customer Reviews System** (Nov 2025): Full review system with 1-5 star ratings, comments, and photographer response capability. Reviews display in a sliding bottom sheet for clean profile layout. Rating aggregates calculated from real review data.
 
