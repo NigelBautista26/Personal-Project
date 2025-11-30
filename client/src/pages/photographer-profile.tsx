@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2, ChevronRight } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2, ChevronRight, Palette, DollarSign, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
@@ -58,6 +60,15 @@ export default function PhotographerProfilePage() {
   const [respondingToReviewId, setRespondingToReviewId] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [reviewsSheetOpen, setReviewsSheetOpen] = useState(false);
+  const [editingSheetOpen, setEditingSheetOpen] = useState(false);
+  const [editingSettings, setEditingSettings] = useState({
+    isEnabled: false,
+    pricingModel: "flat" as "flat" | "per_photo",
+    flatRate: "",
+    perPhotoRate: "",
+    turnaroundDays: 3,
+    description: "",
+  });
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -92,6 +103,68 @@ export default function PhotographerProfilePage() {
       }>;
     },
     enabled: !!photographer?.id,
+  });
+
+  interface EditingServiceData {
+    id: string;
+    photographerId: string;
+    isEnabled: boolean;
+    pricingModel: "flat" | "per_photo";
+    flatRate: string | null;
+    perPhotoRate: string | null;
+    turnaroundDays: number;
+    description: string | null;
+  }
+
+  const { data: editingServiceData } = useQuery({
+    queryKey: ["myEditingService"],
+    queryFn: async () => {
+      const res = await fetch("/api/editing-services/me/settings", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch editing service");
+      return res.json() as Promise<EditingServiceData | null>;
+    },
+    enabled: !!photographer?.id,
+  });
+
+  useEffect(() => {
+    if (editingServiceData) {
+      setEditingSettings({
+        isEnabled: editingServiceData.isEnabled,
+        pricingModel: editingServiceData.pricingModel,
+        flatRate: editingServiceData.flatRate || "",
+        perPhotoRate: editingServiceData.perPhotoRate || "",
+        turnaroundDays: editingServiceData.turnaroundDays || 3,
+        description: editingServiceData.description || "",
+      });
+    }
+  }, [editingServiceData]);
+
+  const updateEditingServiceMutation = useMutation({
+    mutationFn: async (settings: typeof editingSettings) => {
+      const res = await fetch("/api/editing-services/me/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(settings),
+      });
+      if (!res.ok) throw new Error("Failed to update editing service");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myEditingService"] });
+      setEditingSheetOpen(false);
+      toast({
+        title: "Settings saved!",
+        description: "Your editing service settings have been updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const respondToReviewMutation = useMutation({
@@ -747,6 +820,193 @@ export default function PhotographerProfilePage() {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Editing Services Card */}
+      <div className="px-6 mb-6">
+        <button
+          onClick={() => setEditingSheetOpen(true)}
+          className="w-full glass-panel rounded-xl p-4 hover:bg-white/5 transition-colors text-left"
+          data-testid="button-editing-services"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <Palette className="w-5 h-5 text-violet-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Photo Editing Service</h3>
+                {editingServiceData?.isEnabled ? (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs">
+                      <Check className="w-3 h-3" />
+                      Active
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {editingServiceData.pricingModel === "flat" 
+                        ? `$${parseFloat(editingServiceData.flatRate || "0").toFixed(0)} flat`
+                        : `$${parseFloat(editingServiceData.perPhotoRate || "0").toFixed(0)}/photo`
+                      }
+                    </span>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Not configured</p>
+                )}
+              </div>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </div>
+        </button>
+      </div>
+
+      {/* Editing Services Sheet */}
+      <Sheet open={editingSheetOpen} onOpenChange={setEditingSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl bg-background border-white/10 p-0 max-w-md mx-auto">
+          <div className="flex flex-col h-full">
+            <SheetHeader className="px-6 py-4 border-b border-white/10">
+              <SheetTitle className="text-white flex items-center gap-2">
+                <Palette className="w-5 h-5 text-violet-400" />
+                Photo Editing Service
+              </SheetTitle>
+            </SheetHeader>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-6">
+                {/* Enable toggle */}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="editing-enabled" className="text-white font-medium">Enable Editing Service</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Offer photo editing to your clients
+                    </p>
+                  </div>
+                  <Switch
+                    id="editing-enabled"
+                    checked={editingSettings.isEnabled}
+                    onCheckedChange={(checked) => setEditingSettings(s => ({ ...s, isEnabled: checked }))}
+                    data-testid="switch-editing-enabled"
+                  />
+                </div>
+
+                {editingSettings.isEnabled && (
+                  <>
+                    {/* Pricing Model */}
+                    <div className="space-y-3">
+                      <Label className="text-white font-medium">Pricing Model</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          onClick={() => setEditingSettings(s => ({ ...s, pricingModel: "flat" }))}
+                          className={`p-4 rounded-xl border-2 transition-colors text-left ${
+                            editingSettings.pricingModel === "flat"
+                              ? "border-violet-500 bg-violet-500/10"
+                              : "border-white/10 bg-white/5 hover:border-white/20"
+                          }`}
+                          data-testid="button-pricing-flat"
+                        >
+                          <DollarSign className="w-5 h-5 text-violet-400 mb-2" />
+                          <p className="font-medium text-white text-sm">Flat Rate</p>
+                          <p className="text-xs text-muted-foreground mt-1">One price for all photos</p>
+                        </button>
+                        <button
+                          onClick={() => setEditingSettings(s => ({ ...s, pricingModel: "per_photo" }))}
+                          className={`p-4 rounded-xl border-2 transition-colors text-left ${
+                            editingSettings.pricingModel === "per_photo"
+                              ? "border-violet-500 bg-violet-500/10"
+                              : "border-white/10 bg-white/5 hover:border-white/20"
+                          }`}
+                          data-testid="button-pricing-per-photo"
+                        >
+                          <DollarSign className="w-5 h-5 text-violet-400 mb-2" />
+                          <p className="font-medium text-white text-sm">Per Photo</p>
+                          <p className="text-xs text-muted-foreground mt-1">Price per photo edited</p>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Price Input */}
+                    <div className="space-y-2">
+                      <Label className="text-white font-medium">
+                        {editingSettings.pricingModel === "flat" ? "Flat Rate" : "Rate Per Photo"}
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={editingSettings.pricingModel === "flat" ? editingSettings.flatRate : editingSettings.perPhotoRate}
+                          onChange={(e) => {
+                            if (editingSettings.pricingModel === "flat") {
+                              setEditingSettings(s => ({ ...s, flatRate: e.target.value }));
+                            } else {
+                              setEditingSettings(s => ({ ...s, perPhotoRate: e.target.value }));
+                            }
+                          }}
+                          className="pl-7 bg-white/5 border-white/10"
+                          data-testid="input-editing-rate"
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Platform takes 20% commission on editing services
+                      </p>
+                    </div>
+
+                    {/* Turnaround Days */}
+                    <div className="space-y-2">
+                      <Label className="text-white font-medium">Estimated Turnaround</Label>
+                      <div className="relative">
+                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <select
+                          value={editingSettings.turnaroundDays}
+                          onChange={(e) => setEditingSettings(s => ({ ...s, turnaroundDays: parseInt(e.target.value) }))}
+                          className="w-full pl-10 pr-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white appearance-none cursor-pointer"
+                          data-testid="select-turnaround"
+                        >
+                          {[1, 2, 3, 5, 7, 14, 21, 30].map(days => (
+                            <option key={days} value={days} className="bg-zinc-900">
+                              {days} {days === 1 ? "day" : "days"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div className="space-y-2">
+                      <Label className="text-white font-medium">Service Description</Label>
+                      <Textarea
+                        placeholder="Describe what's included in your editing service (e.g., color correction, retouching, cropping...)"
+                        value={editingSettings.description}
+                        onChange={(e) => setEditingSettings(s => ({ ...s, description: e.target.value }))}
+                        className="bg-white/5 border-white/10 min-h-[100px]"
+                        data-testid="textarea-editing-description"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Save Button */}
+                <Button
+                  onClick={() => updateEditingServiceMutation.mutate(editingSettings)}
+                  disabled={updateEditingServiceMutation.isPending}
+                  className="w-full bg-violet-600 hover:bg-violet-700"
+                  data-testid="button-save-editing-settings"
+                >
+                  {updateEditingServiceMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Settings
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>
