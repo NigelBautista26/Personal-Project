@@ -571,14 +571,49 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
 
-      {/* Reviews Section */}
+      {/* Earnings Card - Inline */}
       <div className="px-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-white flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-primary" />
-            Customer Reviews
-          </h3>
-          {reviewsData && reviewsData.reviewCount > 0 && (
+        <div className="glass-panel rounded-xl p-4">
+          <div className="flex gap-4 items-center">
+            <div className="flex-1">
+              <span className="text-muted-foreground text-xs uppercase tracking-wider">Your rate</span>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <span className="text-2xl font-bold text-white">£</span>
+                  <Input
+                    type="number"
+                    value={formData.hourlyRate}
+                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                    className="bg-transparent border-none text-2xl font-bold text-white w-20 h-8 p-0 focus-visible:ring-0"
+                    data-testid="input-rate"
+                  />
+                  <span className="text-sm text-muted-foreground">/ hour</span>
+                </div>
+              ) : (
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-white" data-testid="text-price">£{parseFloat(photographer?.hourlyRate || "0")}</span>
+                  <span className="text-sm text-muted-foreground">/ hour</span>
+                </div>
+              )}
+            </div>
+            <div className="text-right">
+              <span className="text-muted-foreground text-xs">You earn (80%)</span>
+              <p className="text-lg font-bold text-primary">
+                £{(parseFloat(isEditing ? formData.hourlyRate : photographer?.hourlyRate || "0") * 0.8).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Reviews Section */}
+      {reviewsData && reviewsData.reviews.length > 0 && (
+        <div className="px-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-primary" />
+              Customer Reviews
+            </h3>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-amber-400">
                 <Star className="w-4 h-4 fill-current" />
@@ -586,10 +621,8 @@ export default function PhotographerProfilePage() {
               </div>
               <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
             </div>
-          )}
-        </div>
-        
-        {reviewsData && reviewsData.reviews.length > 0 ? (
+          </div>
+          
           <div className="space-y-4">
             {reviewsData.reviews.map((review) => (
               <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`my-review-${review.id}`}>
@@ -691,17 +724,11 @@ export default function PhotographerProfilePage() {
               </div>
             ))}
           </div>
-        ) : (
-          <div className="glass-panel rounded-xl p-6 text-center">
-            <Star className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground text-sm">No reviews yet</p>
-            <p className="text-muted-foreground/60 text-xs mt-1">Reviews will appear here after completed sessions</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Logout Button */}
-      <div className="px-6 pb-8">
+      <div className="px-6 pb-24">
         <button
           onClick={() => logoutMutation.mutate()}
           className="w-full flex items-center justify-center gap-2 py-3 text-muted-foreground hover:text-destructive transition-colors text-sm"
@@ -740,38 +767,6 @@ export default function PhotographerProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <div className="fixed bottom-16 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-40">
-        <div className="flex gap-4 items-center">
-          <div className="flex-1">
-            <span className="text-muted-foreground text-xs uppercase tracking-wider">Your rate</span>
-            {isEditing ? (
-              <div className="flex items-center gap-1">
-                <span className="text-2xl font-bold text-white">£</span>
-                <Input
-                  type="number"
-                  value={formData.hourlyRate}
-                  onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                  className="bg-transparent border-none text-2xl font-bold text-white w-20 h-8 p-0 focus-visible:ring-0"
-                  data-testid="input-rate"
-                />
-                <span className="text-sm text-muted-foreground">/ hour</span>
-              </div>
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-white" data-testid="text-price">£{parseFloat(photographer?.hourlyRate || "0")}</span>
-                <span className="text-sm text-muted-foreground">/ hour</span>
-              </div>
-            )}
-          </div>
-          <div className="text-right">
-            <span className="text-muted-foreground text-xs">You earn (80%)</span>
-            <p className="text-lg font-bold text-primary">
-              £{(parseFloat(isEditing ? formData.hourlyRate : photographer?.hourlyRate || "0") * 0.8).toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </div>
 
       <BottomNav />
     </div>
