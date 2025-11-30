@@ -11,7 +11,15 @@ export default function PitchDeck() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900 print:bg-white">
+      <style>{`
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          section { page-break-inside: avoid; page-break-after: always; }
+          section:last-of-type { page-break-after: auto; }
+          .print-section { break-inside: avoid; page-break-inside: avoid; }
+        }
+      `}</style>
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
         <button
           onClick={() => navigate("/")}
