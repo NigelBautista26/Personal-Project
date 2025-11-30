@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Settings, Bell, Camera, Calendar, DollarSign, Star, TrendingUp, MapPin } from "lucide-react";
+import { Camera, Calendar, DollarSign, Star, TrendingUp, MapPin, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
@@ -139,14 +139,6 @@ export default function PhotographerHome() {
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-notifications">
-              <Bell className="w-5 h-5" />
-            </button>
-            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-settings">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
         </div>
 
         {/* Status Pill */}
@@ -247,7 +239,7 @@ export default function PhotographerHome() {
           </Link>
           <Link href="/photographer-profile">
             <button className="flex flex-col items-center gap-1 text-muted-foreground hover:text-white transition-colors" data-testid="nav-profile">
-              <Settings className="w-5 h-5" />
+              <SettingsIcon className="w-5 h-5" />
               <span className="text-[10px] font-medium">Profile</span>
             </button>
           </Link>
