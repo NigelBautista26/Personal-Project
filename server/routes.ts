@@ -992,6 +992,181 @@ export async function registerRoutes(
     }
   });
 
+  // Review Routes
+  
+  // Get reviews for a photographer
+  app.get("/api/photographers/:id/reviews", async (req, res) => {
+    try {
+      const photographerId = req.params.id;
+      const reviews = await storage.getReviewsByPhotographer(photographerId);
+      const { averageRating, reviewCount } = await storage.getPhotographerAverageRating(photographerId);
+      
+      res.json({
+        reviews,
+        averageRating,
+        reviewCount,
+      });
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ error: "Failed to fetch reviews" });
+    }
+  });
+  
+  // Check if a booking can be reviewed
+  app.get("/api/bookings/:bookingId/can-review", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Only the customer who made the booking can review
+      if (booking.customerId !== req.session.userId) {
+        return res.json({ canReview: false, reason: "Not your booking" });
+      }
+      
+      // Only completed bookings can be reviewed
+      if (booking.status !== 'completed') {
+        return res.json({ canReview: false, reason: "Booking not completed" });
+      }
+      
+      // Check if review already exists
+      const existingReview = await storage.getReviewByBooking(req.params.bookingId);
+      if (existingReview) {
+        return res.json({ canReview: false, reason: "Already reviewed", review: existingReview });
+      }
+      
+      res.json({ canReview: true });
+    } catch (error) {
+      console.error("Error checking review eligibility:", error);
+      res.status(500).json({ error: "Failed to check review eligibility" });
+    }
+  });
+  
+  // Submit a review for a booking
+  app.post("/api/bookings/:bookingId/reviews", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the customer owns this booking
+      if (booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Cannot review another customer's booking" });
+      }
+      
+      // Verify booking is completed
+      if (booking.status !== 'completed') {
+        return res.status(400).json({ error: "Can only review completed bookings" });
+      }
+      
+      // Check if review already exists
+      const existingReview = await storage.getReviewByBooking(req.params.bookingId);
+      if (existingReview) {
+        return res.status(400).json({ error: "Booking already reviewed" });
+      }
+      
+      // Validate review data
+      const reviewSchema = z.object({
+        rating: z.number().int().min(1).max(5),
+        comment: z.string().optional(),
+      });
+      
+      const { rating, comment } = reviewSchema.parse(req.body);
+      
+      const review = await storage.createReview({
+        bookingId: req.params.bookingId,
+        photographerId: booking.photographerId,
+        customerId: req.session.userId,
+        rating,
+        comment: comment || null,
+      });
+      
+      res.json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      res.status(400).json({ error: "Failed to create review" });
+    }
+  });
+  
+  // Get review for a specific booking
+  app.get("/api/bookings/:bookingId/reviews", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Allow the customer or the photographer to view the review
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      const isPhotographer = photographer && photographer.id === booking.photographerId;
+      
+      if (booking.customerId !== req.session.userId && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+      
+      const review = await storage.getReviewByBooking(req.params.bookingId);
+      if (!review) {
+        return res.status(404).json({ error: "No review found for this booking" });
+      }
+      
+      res.json(review);
+    } catch (error) {
+      console.error("Error fetching review:", error);
+      res.status(500).json({ error: "Failed to fetch review" });
+    }
+  });
+  
+  // Photographer responds to a review
+  app.post("/api/reviews/:reviewId/respond", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const review = await storage.getReview(req.params.reviewId);
+      if (!review) {
+        return res.status(404).json({ error: "Review not found" });
+      }
+      
+      // Verify the photographer owns this review
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== review.photographerId) {
+        return res.status(403).json({ error: "Only the photographer can respond to this review" });
+      }
+      
+      // Check if already responded
+      if (review.photographerResponse) {
+        return res.status(400).json({ error: "Already responded to this review" });
+      }
+      
+      const responseSchema = z.object({
+        response: z.string().min(1).max(500),
+      });
+      
+      const { response } = responseSchema.parse(req.body);
+      
+      const updatedReview = await storage.addPhotographerResponse(req.params.reviewId, response);
+      res.json(updatedReview);
+    } catch (error) {
+      console.error("Error responding to review:", error);
+      res.status(400).json({ error: "Failed to respond to review" });
+    }
+  });
+
   // Object Storage Routes
   app.get("/public-objects/:filePath(*)", async (req, res) => {
     const filePath = req.params.filePath;
