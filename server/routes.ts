@@ -582,7 +582,11 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Cannot view another photographer's bookings" });
       }
       
-      const bookings = await storage.getBookingsByPhotographer(req.params.photographerId);
+      // Expire any old pending bookings for this photographer before fetching
+      await storage.expireOldPendingBookings(req.params.photographerId);
+      
+      // Return bookings with customer info for photographer view
+      const bookings = await storage.getBookingsByPhotographerWithCustomer(req.params.photographerId);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });

@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2 } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -202,7 +202,7 @@ export default function PhotographerBookings() {
     b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
   );
   const pastBookings = bookings.filter((b: any) => 
-    new Date(b.scheduledDate) < new Date() || b.status === 'completed' || b.status === 'cancelled'
+    new Date(b.scheduledDate) < new Date() || b.status === 'completed' || b.status === 'cancelled' || b.status === 'expired'
   );
 
   const getStatusColor = (status: string) => {
@@ -210,9 +210,27 @@ export default function PhotographerBookings() {
       case 'confirmed': return 'bg-green-500/20 text-green-400';
       case 'pending': return 'bg-yellow-500/20 text-yellow-400';
       case 'cancelled': return 'bg-red-500/20 text-red-400';
+      case 'expired': return 'bg-orange-500/20 text-orange-400';
       case 'completed': return 'bg-blue-500/20 text-blue-400';
       default: return 'bg-gray-500/20 text-gray-400';
     }
+  };
+
+  const getTimeRemaining = (expiresAt: string | null) => {
+    if (!expiresAt) return null;
+    const now = new Date();
+    const expires = new Date(expiresAt);
+    const diff = expires.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Expired';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m left to respond`;
+    }
+    return `${minutes}m left to respond`;
   };
 
   return (
@@ -235,11 +253,19 @@ export default function PhotographerBookings() {
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-yellow-500/30" data-testid={`booking-pending-${booking.id}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-yellow-400" />
+                      <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-yellow-400" />
+                        )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-white">New Booking Request</h3>
+                        <h3 className="font-bold text-white">{booking.customer?.fullName || 'New Booking Request'}</h3>
                         <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
                       </div>
                     </div>
@@ -260,6 +286,13 @@ export default function PhotographerBookings() {
                     <MapPin className="w-4 h-4" />
                     <span>{booking.location}</span>
                   </div>
+                  
+                  {booking.expiresAt && (
+                    <div className="flex items-center gap-2 text-sm text-orange-400 bg-orange-500/10 px-3 py-2 rounded-lg">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span>{getTimeRemaining(booking.expiresAt)}</span>
+                    </div>
+                  )}
                   
                   <div className="flex gap-3 pt-2">
                     <Button
@@ -309,11 +342,19 @@ export default function PhotographerBookings() {
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-confirmed-${booking.id}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-primary" />
+                        )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-white">Photo Session</h3>
+                        <h3 className="font-bold text-white">{booking.customer?.fullName || 'Photo Session'}</h3>
                         <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
                       </div>
                     </div>
@@ -354,11 +395,24 @@ export default function PhotographerBookings() {
               {pastBookings.slice(0, 5).map((booking: any) => (
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-past-${booking.id}`}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-white">Photo Session</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Photo Session'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
                     </div>
                     <div className="text-right">
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>

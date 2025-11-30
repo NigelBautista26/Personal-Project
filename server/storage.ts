@@ -5,6 +5,7 @@ import {
   type InsertPhotographer,
   type Booking,
   type InsertBooking,
+  type BookingWithCustomer,
   type Earning,
   type InsertEarning,
   type PhotoSpot,
@@ -19,7 +20,7 @@ import {
   photoDeliveries
 } from "@shared/schema";
 import { db } from "@db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, lt } from "drizzle-orm";
 
 export type PhotographerWithUser = Photographer & { fullName: string };
 
@@ -43,8 +44,10 @@ export interface IStorage {
   getBooking(id: string): Promise<Booking | undefined>;
   getBookingsByCustomer(customerId: string): Promise<Booking[]>;
   getBookingsByPhotographer(photographerId: string): Promise<Booking[]>;
+  getBookingsByPhotographerWithCustomer(photographerId: string): Promise<BookingWithCustomer[]>;
   createBooking(booking: InsertBooking): Promise<Booking>;
   updateBookingStatus(id: string, status: string): Promise<Booking | undefined>;
+  expireOldPendingBookings(photographerId?: string): Promise<number>;
   
   // Earnings methods
   getEarningsByPhotographer(photographerId: string): Promise<Earning[]>;
@@ -175,14 +178,85 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(bookings).where(eq(bookings.photographerId, photographerId)).orderBy(desc(bookings.createdAt));
   }
 
+  async getBookingsByPhotographerWithCustomer(photographerId: string): Promise<BookingWithCustomer[]> {
+    const results = await db
+      .select({
+        id: bookings.id,
+        customerId: bookings.customerId,
+        photographerId: bookings.photographerId,
+        duration: bookings.duration,
+        location: bookings.location,
+        scheduledDate: bookings.scheduledDate,
+        scheduledTime: bookings.scheduledTime,
+        baseAmount: bookings.baseAmount,
+        customerServiceFee: bookings.customerServiceFee,
+        totalAmount: bookings.totalAmount,
+        platformFee: bookings.platformFee,
+        photographerEarnings: bookings.photographerEarnings,
+        status: bookings.status,
+        stripePaymentId: bookings.stripePaymentId,
+        expiresAt: bookings.expiresAt,
+        createdAt: bookings.createdAt,
+        customerFullName: users.fullName,
+        customerProfileImageUrl: users.profileImageUrl,
+      })
+      .from(bookings)
+      .innerJoin(users, eq(bookings.customerId, users.id))
+      .where(eq(bookings.photographerId, photographerId))
+      .orderBy(desc(bookings.createdAt));
+
+    return results.map((row) => ({
+      id: row.id,
+      customerId: row.customerId,
+      photographerId: row.photographerId,
+      duration: row.duration,
+      location: row.location,
+      scheduledDate: row.scheduledDate,
+      scheduledTime: row.scheduledTime,
+      baseAmount: row.baseAmount,
+      customerServiceFee: row.customerServiceFee,
+      totalAmount: row.totalAmount,
+      platformFee: row.platformFee,
+      photographerEarnings: row.photographerEarnings,
+      status: row.status,
+      stripePaymentId: row.stripePaymentId,
+      expiresAt: row.expiresAt,
+      createdAt: row.createdAt,
+      customer: {
+        fullName: row.customerFullName,
+        profileImageUrl: row.customerProfileImageUrl,
+      },
+    }));
+  }
+
   async createBooking(booking: InsertBooking): Promise<Booking> {
-    const result = await db.insert(bookings).values(booking).returning();
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const result = await db.insert(bookings).values({ ...booking, expiresAt }).returning();
     return result[0];
   }
 
   async updateBookingStatus(id: string, status: string): Promise<Booking | undefined> {
     const result = await db.update(bookings).set({ status }).where(eq(bookings.id, id)).returning();
     return result[0];
+  }
+
+  async expireOldPendingBookings(photographerId?: string): Promise<number> {
+    const now = new Date();
+    const conditions = [
+      eq(bookings.status, 'pending'),
+      lt(bookings.expiresAt, now)
+    ];
+    
+    if (photographerId) {
+      conditions.push(eq(bookings.photographerId, photographerId));
+    }
+    
+    const result = await db
+      .update(bookings)
+      .set({ status: 'expired' })
+      .where(and(...conditions))
+      .returning();
+    return result.length;
   }
 
   // Earnings methods

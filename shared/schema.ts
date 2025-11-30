@@ -43,8 +43,9 @@ export const bookings = pgTable("bookings", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(), // baseAmount + customerServiceFee
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // 20% taken from photographer
   photographerEarnings: decimal("photographer_earnings", { precision: 10, scale: 2 }).notNull(), // baseAmount - platformFee
-  status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled
+  status: text("status").notNull().default("pending"), // pending, confirmed, completed, cancelled, expired
   stripePaymentId: text("stripe_payment_id"),
+  expiresAt: timestamp("expires_at"), // 24 hours from creation for pending bookings
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -129,6 +130,14 @@ export type Photographer = typeof photographers.$inferSelect;
 
 export type InsertBooking = z.infer<typeof insertBookingSchema>;
 export type Booking = typeof bookings.$inferSelect;
+
+// Extended booking type with customer info for photographer view
+export type BookingWithCustomer = Booking & {
+  customer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+};
 
 export type InsertEarning = z.infer<typeof insertEarningSchema>;
 export type Earning = typeof earnings.$inferSelect;
