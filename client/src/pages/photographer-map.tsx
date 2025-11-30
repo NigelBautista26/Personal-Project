@@ -147,9 +147,9 @@ export default function PhotographerMap() {
             zoom={13}
             style={{ height: "100%", width: "100%" }}
             zoomControl={false}
+            attributionControl={false}
           >
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
               url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             />
             {bookingsWithLocation.length > 1 && <FitBounds bookings={bookingsWithLocation} />}

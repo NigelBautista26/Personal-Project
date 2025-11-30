@@ -366,10 +366,10 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
         zoom={12}
         style={{ height: "100%", width: "100%" }}
         zoomControl={false}
+        attributionControl={false}
         key={mapStyle}
       >
         <TileLayer
-          attribution={currentStyle.attribution}
           url={currentStyle.url}
         />
         <MapController center={mapCenter} shouldFollowUser={shouldFollowUser} userPosition={userPosition} />

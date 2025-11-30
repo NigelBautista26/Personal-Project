@@ -230,17 +230,17 @@ export default function PhotographerBookingDetail() {
 
             {hasMeetingLocation ? (
               <div className="space-y-3">
-                <div className="h-[150px] rounded-xl overflow-hidden border border-white/10">
+                <div className="h-[180px] rounded-xl overflow-hidden border border-white/10">
                   <MapContainer
                     center={liveLocation ? [parseFloat(liveLocation.latitude), parseFloat(liveLocation.longitude)] : [parseFloat(booking.meetingLatitude!), parseFloat(booking.meetingLongitude!)]}
                     zoom={15}
                     style={{ height: "100%", width: "100%" }}
                     zoomControl={false}
-                    dragging={false}
-                    scrollWheelZoom={false}
+                    attributionControl={false}
+                    dragging={true}
+                    scrollWheelZoom={true}
                   >
                     <TileLayer
-                      attribution='&copy; CARTO'
                       url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     />
                     <Marker

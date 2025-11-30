@@ -128,7 +128,7 @@ export function MeetingLocationPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-lg w-[90vw] bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[88vw] max-w-sm bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col rounded-2xl">
         <DialogHeader>
           <DialogTitle className="text-white">Set Meeting Location</DialogTitle>
         </DialogHeader>
@@ -148,15 +148,15 @@ export function MeetingLocationPicker({
             Use My Current Location
           </Button>
 
-          <div className="h-[250px] rounded-xl overflow-hidden border border-white/10">
+          <div className="h-[200px] rounded-xl overflow-hidden border border-white/10">
             <MapContainer
               center={mapCenter}
               zoom={15}
               style={{ height: "100%", width: "100%" }}
               zoomControl={false}
+              attributionControl={false}
             >
               <TileLayer
-                attribution='&copy; CARTO'
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
               />
               <MapClickHandler onLocationSelect={handleLocationSelect} />
