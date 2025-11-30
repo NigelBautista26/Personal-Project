@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRoute, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, User, MessageCircle, Navigation, Check, ChevronDown, ChevronUp, Radio } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, User, MessageCircle, Navigation, Check, ChevronDown, ChevronUp, Radio, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { format, parseISO, isToday, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookingChat } from "@/components/booking-chat";
-import { MeetingLocationPicker } from "@/components/meeting-location-picker";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { useToast } from "@/hooks/use-toast";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -34,6 +35,23 @@ const customerLiveIcon = new L.Icon({
   popupAnchor: [0, -20],
 });
 
+function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
+function MapCenterUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, map.getZoom());
+  }, [center, map]);
+  return null;
+}
+
 interface BookingWithCustomer {
   id: string;
   customerId: string;
@@ -58,8 +76,14 @@ export default function PhotographerBookingDetail() {
   const [match, params] = useRoute("/photographer/booking/:id");
   const [, setLocation] = useLocation();
   const [showChat, setShowChat] = useState(false);
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [editLatitude, setEditLatitude] = useState<number | null>(null);
+  const [editLongitude, setEditLongitude] = useState<number | null>(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [mapCenter, setMapCenter] = useState<[number, number]>([51.5074, -0.1278]);
   const bookingId = params?.id;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: currentUser } = useQuery({
     queryKey: ["currentUser"],
@@ -94,6 +118,59 @@ export default function PhotographerBookingDetail() {
     enabled: !!bookingId && isUpcoming,
     refetchInterval: 5000,
   });
+
+  useEffect(() => {
+    if (booking) {
+      if (booking.meetingLatitude && booking.meetingLongitude) {
+        const lat = parseFloat(booking.meetingLatitude);
+        const lng = parseFloat(booking.meetingLongitude);
+        setEditLatitude(lat);
+        setEditLongitude(lng);
+        setMapCenter([lat, lng]);
+      }
+      setEditNotes(booking.meetingNotes || "");
+    }
+  }, [booking]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (editLatitude === null || editLongitude === null) throw new Error("Location required");
+      const res = await fetch(`/api/bookings/${bookingId}/meeting-location`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ latitude: editLatitude, longitude: editLongitude, notes: editNotes }),
+      });
+      if (!res.ok) throw new Error("Failed to save location");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["booking-detail"] });
+      toast({ title: "Meeting location saved" });
+      setIsEditingLocation(false);
+      refetch();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setEditLatitude(lat);
+    setEditLongitude(lng);
+    setMapCenter([lat, lng]);
+  };
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Not supported", description: "Geolocation is not supported", variant: "destructive" });
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (position) => handleLocationSelect(position.coords.latitude, position.coords.longitude),
+      () => toast({ title: "Error", description: "Could not get your location", variant: "destructive" })
+    );
+  };
 
   if (isLoading) {
     return (
@@ -217,18 +294,114 @@ export default function PhotographerBookingDetail() {
           <div className="glass-panel rounded-2xl p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-white font-bold">Meeting Point</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowLocationPicker(true)}
-                className="text-xs"
-                data-testid="button-set-meeting-location"
-              >
-                {hasMeetingLocation ? "Update" : "Set Location"}
-              </Button>
+              {hasMeetingLocation && !isEditingLocation && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsEditingLocation(true)}
+                  className="text-xs"
+                  data-testid="button-edit-meeting-location"
+                >
+                  Edit
+                </Button>
+              )}
             </div>
 
-            {hasMeetingLocation ? (
+            {isEditingLocation || !hasMeetingLocation ? (
+              <div className="space-y-3">
+                <Button
+                  variant="outline"
+                  onClick={handleUseCurrentLocation}
+                  className="w-full flex items-center gap-2"
+                  data-testid="button-use-my-location"
+                >
+                  <Navigation className="w-4 h-4" />
+                  Use My Current Location
+                </Button>
+
+                <div className="h-[200px] rounded-xl overflow-hidden border border-white/10">
+                  <MapContainer
+                    center={mapCenter}
+                    zoom={15}
+                    style={{ height: "100%", width: "100%" }}
+                    zoomControl={false}
+                    attributionControl={false}
+                  >
+                    <TileLayer
+                      url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    />
+                    <MapClickHandler onLocationSelect={handleLocationSelect} />
+                    <MapCenterUpdater center={mapCenter} />
+                    {editLatitude && editLongitude && (
+                      <Marker position={[editLatitude, editLongitude]} icon={markerIcon} />
+                    )}
+                    {liveLocation && (
+                      <Marker
+                        position={[parseFloat(liveLocation.latitude), parseFloat(liveLocation.longitude)]}
+                        icon={customerLiveIcon}
+                      />
+                    )}
+                  </MapContainer>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Tap on the map to set the meeting point
+                </p>
+
+                {editLatitude && editLongitude && (
+                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-white">
+                      {editLatitude.toFixed(6)}, {editLongitude.toFixed(6)}
+                    </span>
+                    <Check className="w-4 h-4 text-primary ml-auto" />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-sm text-muted-foreground">Meeting Notes (optional)</label>
+                  <Input
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="e.g., Meet at the main entrance, near the fountain..."
+                    className="bg-card border-white/10"
+                    data-testid="input-meeting-notes"
+                  />
+                </div>
+
+                <div className="flex gap-3">
+                  {hasMeetingLocation && (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsEditingLocation(false);
+                        if (booking.meetingLatitude && booking.meetingLongitude) {
+                          setEditLatitude(parseFloat(booking.meetingLatitude));
+                          setEditLongitude(parseFloat(booking.meetingLongitude));
+                        }
+                        setEditNotes(booking.meetingNotes || "");
+                      }}
+                      className="flex-1"
+                      data-testid="button-cancel-edit"
+                    >
+                      Cancel
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => saveMutation.mutate()}
+                    disabled={!editLatitude || !editLongitude || saveMutation.isPending}
+                    className="flex-1 bg-primary hover:bg-primary/90"
+                    data-testid="button-save-location"
+                  >
+                    {saveMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save Location"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
               <div className="space-y-3">
                 <div className="h-[180px] rounded-xl overflow-hidden border border-white/10">
                   <MapContainer
@@ -282,14 +455,6 @@ export default function PhotographerBookingDetail() {
                   </p>
                 )}
               </div>
-            ) : (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center gap-3">
-                <Navigation className="w-5 h-5 text-amber-500" />
-                <div>
-                  <p className="text-amber-500 font-medium text-sm">Set a meeting point</p>
-                  <p className="text-xs text-muted-foreground">Help your customer find you at the shoot location</p>
-                </div>
-              </div>
             )}
           </div>
         )}
@@ -328,16 +493,6 @@ export default function PhotographerBookingDetail() {
         </div>
       </div>
 
-      <MeetingLocationPicker
-        bookingId={booking.id}
-        bookingLocation={booking.location}
-        currentLatitude={booking.meetingLatitude}
-        currentLongitude={booking.meetingLongitude}
-        currentNotes={booking.meetingNotes}
-        isOpen={showLocationPicker}
-        onClose={() => setShowLocationPicker(false)}
-        onSuccess={() => refetch()}
-      />
     </div>
   );
 }
