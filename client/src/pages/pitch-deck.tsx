@@ -11,7 +11,7 @@ export default function PitchDeck() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900" style={{ minWidth: '900px' }}>
+    <div className="min-h-screen bg-gray-900">
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
         <button
           onClick={() => navigate("/")}
@@ -31,7 +31,7 @@ export default function PitchDeck() {
         </button>
       </div>
 
-      <div ref={contentRef} className="p-8 text-white bg-gray-900" style={{ width: '850px', margin: '0 auto' }}>
+      <div ref={contentRef} className="max-w-4xl mx-auto p-4 md:p-8 text-white bg-gray-900">
         
         {/* Slide 1: Cover */}
         <div className="text-center py-16 mb-12 border-b-2 border-violet-500" style={{ pageBreakAfter: "always" }}>
@@ -54,7 +54,7 @@ export default function PitchDeck() {
             The Problem
           </h2>
           
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-red-900/30 rounded-xl p-6 border border-red-800/50">
               <h3 className="font-bold text-xl text-red-400 mb-4">For Travelers</h3>
               <ul className="space-y-3 text-gray-300">
@@ -115,7 +115,7 @@ export default function PitchDeck() {
             The Solution: SnapNow
           </h2>
 
-          <div className="grid grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-emerald-900/30 rounded-xl p-6 border border-emerald-800/50 text-center">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                 <MapPin className="w-8 h-8 text-emerald-400" />
@@ -155,7 +155,7 @@ export default function PitchDeck() {
             Market Opportunity
           </h2>
 
-          <div className="grid grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-blue-900/30 rounded-xl p-6 border border-blue-800/50 text-center">
               <p className="text-5xl font-bold text-blue-400 mb-2">$44B</p>
               <p className="text-lg text-gray-300 font-medium">Global Photography Services Market</p>
@@ -175,7 +175,7 @@ export default function PitchDeck() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
               <h4 className="font-bold text-lg text-white mb-4">Target Users</h4>
               <ul className="space-y-2 text-gray-300">
@@ -204,7 +204,7 @@ export default function PitchDeck() {
             Business Model
           </h2>
 
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-amber-900/30 rounded-xl p-6 border border-amber-800/50">
               <h3 className="font-bold text-xl text-amber-400 mb-6 flex items-center gap-2">
                 <CreditCard className="w-6 h-6" />
@@ -262,7 +262,7 @@ export default function PitchDeck() {
             Platform Features
           </h2>
 
-          <div className="grid grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
               <MapPin className="w-10 h-10 text-violet-400 mb-4" />
               <h3 className="font-bold text-lg text-white mb-2">Location-Based Discovery</h3>
@@ -308,7 +308,7 @@ export default function PitchDeck() {
             Why SnapNow Wins
           </h2>
 
-          <div className="grid grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="bg-indigo-900/30 rounded-xl p-6 border border-indigo-800/50">
               <h3 className="font-bold text-xl text-indigo-400 mb-4">vs. Traditional Booking</h3>
               <ul className="space-y-3 text-gray-300">
@@ -345,7 +345,7 @@ export default function PitchDeck() {
             Roadmap
           </h2>
 
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-green-900/30 rounded-xl p-5 border-2 border-green-600 relative">
               <div className="absolute -top-3 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">Complete</div>
               <h3 className="font-bold text-lg text-white mt-4 mb-3">Phase 1: MVP</h3>
@@ -410,7 +410,7 @@ export default function PitchDeck() {
               <p className="text-6xl font-bold text-white mb-4">$500K</p>
               <p className="text-2xl text-violet-400 mb-8">Seed Round</p>
               
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-violet-900/50 rounded-xl p-4">
                   <p className="text-3xl font-bold text-white mb-1">40%</p>
                   <p className="text-sm text-gray-300">Product Development</p>
