@@ -874,7 +874,7 @@ export default function PhotographerBookings() {
 
       {/* Photo Upload Dialog */}
       <Dialog open={!!uploadBookingId} onOpenChange={(open) => !open && setUploadBookingId(null)}>
-        <DialogContent className="max-w-md w-[92vw] bg-background border-white/10">
+        <DialogContent className="max-w-sm w-[88vw] bg-background border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Images className="w-5 h-5" />
@@ -963,7 +963,7 @@ export default function PhotographerBookings() {
           setEditingAction(null);
         }
       }}>
-        <DialogContent className="max-w-sm w-[92vw] bg-background border-white/10">
+        <DialogContent className="max-w-sm w-[88vw] bg-background border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Palette className="w-5 h-5 text-violet-400" />

@@ -94,7 +94,7 @@ export function CitySelector({ isOpen, onClose, onSelect, currentCity }: CitySel
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-md w-[92vw] bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-sm w-[88vw] bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Choose Destination</DialogTitle>
         </DialogHeader>
