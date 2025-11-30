@@ -351,7 +351,7 @@ export default function PhotographerHome() {
               zoomControl={false}
               attributionControl={false}
             >
-              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
               {confirmedUpcoming
                 .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
                 .map((booking: any) => (
