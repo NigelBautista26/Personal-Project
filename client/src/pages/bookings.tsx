@@ -907,45 +907,17 @@ export default function Bookings() {
                   {service.pricingModel === "flat" ? (
                     <p className="text-white">
                       <span className="text-2xl font-bold">£{parseFloat(service.flatRate || "0").toFixed(2)}</span>
-                      <span className="text-muted-foreground text-sm ml-2">flat rate</span>
+                      <span className="text-muted-foreground text-sm ml-2">flat rate for all photos</span>
                     </p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <p className="text-white">
                         <span className="text-lg font-bold">£{parseFloat(service.perPhotoRate || "0").toFixed(2)}</span>
                         <span className="text-muted-foreground text-sm ml-2">per photo</span>
                       </p>
-                      <div>
-                        <label className="text-sm text-muted-foreground mb-1 block">Number of photos</label>
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingPhotoCount(Math.max(1, editingPhotoCount - 1))}
-                            className="border-white/20"
-                            data-testid="button-decrease-count"
-                          >
-                            -
-                          </Button>
-                          <Input
-                            type="number"
-                            min={1}
-                            value={editingPhotoCount}
-                            onChange={(e) => setEditingPhotoCount(Math.max(1, parseInt(e.target.value) || 1))}
-                            className="w-20 text-center bg-zinc-800 border-white/10"
-                            data-testid="input-photo-count"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingPhotoCount(editingPhotoCount + 1)}
-                            className="border-white/20"
-                            data-testid="button-increase-count"
-                          >
-                            +
-                          </Button>
-                        </div>
-                      </div>
+                      <p className="text-white text-sm">
+                        <span className="text-violet-400 font-medium">{editingPhotoCount} photo{editingPhotoCount > 1 ? 's' : ''}</span> selected for editing
+                      </p>
                     </div>
                   )}
                   {service.description && (
