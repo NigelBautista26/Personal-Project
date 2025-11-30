@@ -113,6 +113,10 @@ Preferred communication style: Simple, everyday language.
 
 7. **Dynamic Booking Expiration**: Response windows calculated based on session urgency (30min for same-day, up to 24h for future sessions)
 
+## Recent Changes
+
+- **Customer Reviews System** (Nov 2025): Full review system with 1-5 star ratings, comments, and photographer response capability. Reviews display in a sliding bottom sheet for clean profile layout. Rating aggregates calculated from real review data.
+
 ## Feature Backlog
 
 **Planned Features:**
