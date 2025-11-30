@@ -459,7 +459,57 @@ export async function registerRoutes(
   app.get("/api/photographers", async (req, res) => {
     try {
       const photographers = await storage.getAllPhotographersWithUsers();
-      res.json(photographers);
+      const now = new Date();
+      
+      // Add session state to each photographer
+      const photographersWithState = await Promise.all(
+        photographers.map(async (photographer: any) => {
+          const bookings = await storage.getBookingsByPhotographerWithCustomer(photographer.id);
+          
+          // Check if photographer is currently in an active session
+          const activeSession = bookings.find((b: any) => {
+            if (b.status !== 'confirmed' && b.status !== 'in_progress') return false;
+            
+            const sessionDate = new Date(b.scheduledDate);
+            const [hours, minutes] = b.scheduledTime.split(':').map(Number);
+            sessionDate.setHours(hours, minutes, 0, 0);
+            
+            const sessionEnd = new Date(sessionDate);
+            sessionEnd.setHours(sessionEnd.getHours() + b.duration);
+            
+            return now >= sessionDate && now <= sessionEnd;
+          });
+          
+          // Find next available time
+          let nextAvailableAt: string | null = null;
+          if (activeSession) {
+            const sessionDate = new Date(activeSession.scheduledDate);
+            const [hours, minutes] = activeSession.scheduledTime.split(':').map(Number);
+            sessionDate.setHours(hours, minutes, 0, 0);
+            const sessionEnd = new Date(sessionDate);
+            sessionEnd.setHours(sessionEnd.getHours() + activeSession.duration);
+            nextAvailableAt = sessionEnd.toISOString();
+          }
+          
+          // Determine session state
+          let sessionState: 'available' | 'in_session' | 'offline' = 'offline';
+          if (!photographer.isAvailable) {
+            sessionState = 'offline';
+          } else if (activeSession) {
+            sessionState = 'in_session';
+          } else {
+            sessionState = 'available';
+          }
+          
+          return {
+            ...photographer,
+            sessionState,
+            nextAvailableAt,
+          };
+        })
+      );
+      
+      res.json(photographersWithState);
     } catch (error) {
       console.error("Error fetching photographers:", error);
       res.status(500).json({ error: "Failed to fetch photographers" });

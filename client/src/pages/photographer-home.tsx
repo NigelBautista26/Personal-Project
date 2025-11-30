@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import { Settings, Bell, Camera, Calendar, DollarSign, Star, TrendingUp } from "lucide-react";
+import { Settings, Bell, Camera, Calendar, DollarSign, Star, TrendingUp, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { isToday, startOfWeek, endOfWeek, isWithinInterval } from "date-fns";
+import { isToday, startOfWeek, endOfWeek, isWithinInterval, format } from "date-fns";
 
 export default function PhotographerHome() {
   const queryClient = useQueryClient();
@@ -77,21 +77,96 @@ export default function PhotographerHome() {
     totalJobs: completedJobsCount,
   };
 
+  // Get status display info
+  const getStatusInfo = () => {
+    if (photographer?.sessionState === 'in_session') {
+      const nextTime = photographer.nextAvailableAt 
+        ? format(new Date(photographer.nextAvailableAt), 'h:mm a')
+        : '';
+      return {
+        color: 'bg-yellow-500',
+        text: 'In Session',
+        subtext: nextTime ? `Free at ${nextTime}` : 'Currently shooting',
+        animate: true,
+      };
+    } else if (photographer?.sessionState === 'available') {
+      return {
+        color: 'bg-green-500',
+        text: 'Available',
+        subtext: 'Ready for bookings',
+        animate: true,
+      };
+    } else {
+      return {
+        color: 'bg-gray-500',
+        text: 'Offline',
+        subtext: 'Not accepting bookings',
+        animate: false,
+      };
+    }
+  };
+
+  const statusInfo = getStatusInfo();
+
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
-      <div className="p-6 pt-12 flex items-center justify-between">
-        <div>
-          <p className="text-muted-foreground text-sm">Welcome back,</p>
-          <h1 className="text-2xl font-bold text-white">{user?.fullName || "Photographer"}</h1>
+      {/* Hero Header with Profile */}
+      <div className="p-6 pt-12">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            {/* Profile Picture */}
+            <div className="relative">
+              {photographer?.profileImageUrl ? (
+                <img 
+                  src={photographer.profileImageUrl} 
+                  alt={user?.fullName || "Profile"} 
+                  className="w-16 h-16 rounded-full object-cover border-2 border-primary/50"
+                  data-testid="profile-avatar"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary/50">
+                  <Camera className="w-8 h-8 text-primary" />
+                </div>
+              )}
+              {/* Status indicator on avatar */}
+              <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${statusInfo.color} border-2 border-background ${statusInfo.animate ? 'animate-pulse' : ''}`} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-white">{user?.fullName || "Photographer"}</h1>
+              <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1">
+                <MapPin className="w-3 h-3" />
+                <span>{photographer?.location || "No location set"}</span>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-notifications">
+              <Bell className="w-5 h-5" />
+            </button>
+            <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-settings">
+              <Settings className="w-5 h-5" />
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-notifications">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-settings">
-            <Settings className="w-5 h-5" />
-          </button>
+
+        {/* Status Pill */}
+        <div className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`w-3 h-3 rounded-full ${statusInfo.color} ${statusInfo.animate ? 'animate-pulse' : ''}`} />
+            <div>
+              <p className="text-white font-medium">{statusInfo.text}</p>
+              <p className="text-xs text-muted-foreground">{statusInfo.subtext}</p>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-white/20 text-white hover:bg-white/10"
+            onClick={() => toggleAvailabilityMutation.mutate(!photographer?.isAvailable)}
+            disabled={toggleAvailabilityMutation.isPending || photographer?.sessionState === 'in_session'}
+          >
+            {photographer?.isAvailable ? "Go Offline" : "Go Online"}
+          </Button>
         </div>
       </div>
 
@@ -130,30 +205,6 @@ export default function PhotographerHome() {
             <p className="text-2xl font-bold text-white">{stats.totalJobs}</p>
             <p className="text-xs text-muted-foreground">Jobs Done</p>
           </div>
-        </div>
-
-        {/* Availability Toggle */}
-        <div className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 rounded-full ${photographer?.isAvailable ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
-            <div>
-              <p className="text-white font-medium">
-                {photographer?.isAvailable ? "You're Available" : "You're Offline"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {photographer?.isAvailable ? "Customers can book you now" : "Customers cannot book you"}
-              </p>
-            </div>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-white/20 text-white hover:bg-white/10"
-            onClick={() => toggleAvailabilityMutation.mutate(!photographer?.isAvailable)}
-            disabled={toggleAvailabilityMutation.isPending}
-          >
-            {photographer?.isAvailable ? "Go Offline" : "Go Online"}
-          </Button>
         </div>
 
         {/* Quick Actions */}
