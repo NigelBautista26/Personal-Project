@@ -139,6 +139,14 @@ export type BookingWithCustomer = Booking & {
   };
 };
 
+// Extended booking type with photographer info for customer view
+export type BookingWithPhotographer = Booking & {
+  photographer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+};
+
 export type InsertEarning = z.infer<typeof insertEarningSchema>;
 export type Earning = typeof earnings.$inferSelect;
 

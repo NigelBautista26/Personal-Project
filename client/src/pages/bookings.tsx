@@ -122,6 +122,7 @@ export default function Bookings() {
       case 'confirmed': return 'bg-green-500/20 text-green-400';
       case 'pending': return 'bg-yellow-500/20 text-yellow-400';
       case 'cancelled': return 'bg-red-500/20 text-red-400';
+      case 'expired': return 'bg-orange-500/20 text-orange-400';
       case 'completed': return 'bg-blue-500/20 text-blue-400';
       default: return 'bg-gray-500/20 text-gray-400';
     }
@@ -161,11 +162,19 @@ export default function Bookings() {
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-card-${booking.id}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                        <User className="w-6 h-6 text-primary" />
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                        {booking.photographer?.profileImageUrl ? (
+                          <img 
+                            src={booking.photographer.profileImageUrl} 
+                            alt={booking.photographer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-primary" />
+                        )}
                       </div>
                       <div>
-                        <h3 className="font-bold text-white">Photo Session</h3>
+                        <h3 className="font-bold text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
                         <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
                       </div>
                     </div>
@@ -206,11 +215,24 @@ export default function Bookings() {
               {pastBookings.map((booking: any) => (
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`past-booking-${booking.id}`}>
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium text-white">Photo Session</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                        {booking.photographer?.profileImageUrl ? (
+                          <img 
+                            src={booking.photographer.profileImageUrl} 
+                            alt={booking.photographer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
                     </div>
                     <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                   </div>

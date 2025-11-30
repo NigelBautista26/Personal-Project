@@ -6,6 +6,7 @@ import {
   type Booking,
   type InsertBooking,
   type BookingWithCustomer,
+  type BookingWithPhotographer,
   type Earning,
   type InsertEarning,
   type PhotoSpot,
@@ -43,6 +44,7 @@ export interface IStorage {
   // Booking methods
   getBooking(id: string): Promise<Booking | undefined>;
   getBookingsByCustomer(customerId: string): Promise<Booking[]>;
+  getBookingsByCustomerWithPhotographer(customerId: string): Promise<BookingWithPhotographer[]>;
   getBookingsByPhotographer(photographerId: string): Promise<Booking[]>;
   getBookingsByPhotographerWithCustomer(photographerId: string): Promise<BookingWithCustomer[]>;
   createBooking(booking: InsertBooking): Promise<Booking>;
@@ -172,6 +174,58 @@ export class DatabaseStorage implements IStorage {
 
   async getBookingsByCustomer(customerId: string): Promise<Booking[]> {
     return await db.select().from(bookings).where(eq(bookings.customerId, customerId)).orderBy(desc(bookings.createdAt));
+  }
+
+  async getBookingsByCustomerWithPhotographer(customerId: string): Promise<BookingWithPhotographer[]> {
+    const results = await db
+      .select({
+        id: bookings.id,
+        customerId: bookings.customerId,
+        photographerId: bookings.photographerId,
+        duration: bookings.duration,
+        location: bookings.location,
+        scheduledDate: bookings.scheduledDate,
+        scheduledTime: bookings.scheduledTime,
+        baseAmount: bookings.baseAmount,
+        customerServiceFee: bookings.customerServiceFee,
+        totalAmount: bookings.totalAmount,
+        platformFee: bookings.platformFee,
+        photographerEarnings: bookings.photographerEarnings,
+        status: bookings.status,
+        stripePaymentId: bookings.stripePaymentId,
+        expiresAt: bookings.expiresAt,
+        createdAt: bookings.createdAt,
+        photographerFullName: users.fullName,
+        photographerProfileImageUrl: users.profileImageUrl,
+      })
+      .from(bookings)
+      .innerJoin(photographers, eq(bookings.photographerId, photographers.id))
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .where(eq(bookings.customerId, customerId))
+      .orderBy(desc(bookings.createdAt));
+
+    return results.map((row) => ({
+      id: row.id,
+      customerId: row.customerId,
+      photographerId: row.photographerId,
+      duration: row.duration,
+      location: row.location,
+      scheduledDate: row.scheduledDate,
+      scheduledTime: row.scheduledTime,
+      baseAmount: row.baseAmount,
+      customerServiceFee: row.customerServiceFee,
+      totalAmount: row.totalAmount,
+      platformFee: row.platformFee,
+      photographerEarnings: row.photographerEarnings,
+      status: row.status,
+      stripePaymentId: row.stripePaymentId,
+      expiresAt: row.expiresAt,
+      createdAt: row.createdAt,
+      photographer: {
+        fullName: row.photographerFullName,
+        profileImageUrl: row.photographerProfileImageUrl,
+      },
+    }));
   }
 
   async getBookingsByPhotographer(photographerId: string): Promise<Booking[]> {

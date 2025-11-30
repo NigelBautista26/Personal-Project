@@ -563,7 +563,7 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Cannot view another user's bookings" });
       }
       
-      const bookings = await storage.getBookingsByCustomer(req.params.customerId);
+      const bookings = await storage.getBookingsByCustomerWithPhotographer(req.params.customerId);
       res.json(bookings);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
