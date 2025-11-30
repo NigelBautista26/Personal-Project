@@ -85,6 +85,18 @@ export const photoSpots = pgTable("photo_spots", {
   tips: text("tips"),
 });
 
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull().references(() => bookings.id).unique(),
+  photographerId: varchar("photographer_id").notNull().references(() => photographers.id),
+  customerId: varchar("customer_id").notNull().references(() => users.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  comment: text("comment"),
+  photographerResponse: text("photographer_response"),
+  respondedAt: timestamp("responded_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -121,6 +133,13 @@ export const insertPhotoDeliverySchema = createInsertSchema(photoDeliveries).omi
   downloadedAt: true,
 });
 
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  photographerResponse: true,
+  respondedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -155,3 +174,13 @@ export type PhotoSpot = typeof photoSpots.$inferSelect;
 
 export type InsertPhotoDelivery = z.infer<typeof insertPhotoDeliverySchema>;
 export type PhotoDelivery = typeof photoDeliveries.$inferSelect;
+
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
+
+export type ReviewWithCustomer = Review & {
+  customer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+};
