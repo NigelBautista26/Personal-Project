@@ -1,13 +1,41 @@
-import { Link } from "wouter";
-import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { isToday, startOfWeek, endOfWeek, isWithinInterval, format, formatDistanceToNow } from "date-fns";
+import { isToday, startOfWeek, endOfWeek, isWithinInterval, format, formatDistanceToNow, isFuture, parseISO } from "date-fns";
 import { motion } from "framer-motion";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+const bookingMarkerIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41">
+      <path fill="#8b5cf6" d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z"/>
+      <circle cx="12.5" cy="12.5" r="6" fill="white"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
+
+const todayMarkerIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 41">
+      <path fill="#22c55e" d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z"/>
+      <circle cx="12.5" cy="12.5" r="6" fill="white"/>
+    </svg>
+  `),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
 
 export default function PhotographerHome() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
@@ -269,6 +297,69 @@ export default function PhotographerHome() {
             <p className="text-xs text-muted-foreground">Jobs Done</p>
           </div>
         </div>
+
+        {/* Live Map */}
+        {confirmedUpcoming.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                Session Locations
+              </h2>
+              <button 
+                onClick={() => setLocation("/photographer-map")}
+                className="text-sm text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
+              >
+                <Maximize2 className="w-4 h-4" />
+                Full Map
+              </button>
+            </div>
+            <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 h-[200px]">
+              <MapContainer
+                center={
+                  confirmedUpcoming.find((b: any) => b.meetingLatitude && b.meetingLongitude)
+                    ? [
+                        parseFloat(confirmedUpcoming.find((b: any) => b.meetingLatitude)?.meetingLatitude || "51.5074"),
+                        parseFloat(confirmedUpcoming.find((b: any) => b.meetingLongitude)?.meetingLongitude || "-0.1278")
+                      ]
+                    : [51.5074, -0.1278]
+                }
+                zoom={12}
+                style={{ height: "100%", width: "100%" }}
+                zoomControl={false}
+                attributionControl={false}
+              >
+                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                {confirmedUpcoming
+                  .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
+                  .map((booking: any) => (
+                    <Marker
+                      key={booking.id}
+                      position={[parseFloat(booking.meetingLatitude), parseFloat(booking.meetingLongitude)]}
+                      icon={isToday(new Date(booking.scheduledDate)) ? todayMarkerIcon : bookingMarkerIcon}
+                      eventHandlers={{
+                        click: () => setLocation(`/photographer/booking/${booking.id}`)
+                      }}
+                    >
+                      <Popup>
+                        <div className="text-sm">
+                          <p className="font-medium">{booking.customer?.fullName}</p>
+                          <p className="text-muted-foreground">{format(new Date(booking.scheduledDate), 'MMM d')} at {booking.scheduledTime}</p>
+                          <p className="text-xs text-muted-foreground">{booking.location}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+              </MapContainer>
+            </div>
+            {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" />
+                {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length} session{confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 1 ? 's need' : ' needs'} a meeting location set
+              </p>
+            )}
+          </section>
+        )}
 
         {/* Upcoming Sessions */}
         {confirmedUpcoming.length > 0 && (
