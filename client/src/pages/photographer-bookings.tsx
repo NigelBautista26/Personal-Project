@@ -174,6 +174,9 @@ export default function PhotographerBookings() {
         description: "Your photos have been sent to the customer.",
       });
       
+      // Refresh bookings list to show updated status
+      queryClient.invalidateQueries({ queryKey: ["photographerBookings"] });
+      
       setUploadBookingId(null);
     } catch (error) {
       toast({
