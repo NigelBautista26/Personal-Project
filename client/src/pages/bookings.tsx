@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
@@ -363,16 +363,22 @@ export default function Bookings() {
         {awaitingPhotosBookings.length > 0 && (
           <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-400" />
+              <div className="relative">
+                <Camera className="w-5 h-5 text-blue-400" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+              </div>
               Awaiting Photos
             </h2>
-            <p className="text-sm text-muted-foreground mb-4">Your session is complete! The photographer will upload your photos soon.</p>
             <div className="space-y-4">
               {awaitingPhotosBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-blue-500/30" data-testid={`awaiting-booking-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                <div key={booking.id} className="glass-panel rounded-2xl overflow-hidden" data-testid={`awaiting-booking-${booking.id}`}>
+                  {/* Progress indicator bar */}
+                  <div className="h-1 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-500 animate-pulse" />
+                  
+                  <div className="p-4">
+                    {/* Header with photographer info */}
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden ring-2 ring-blue-500/30">
                         {booking.photographer?.profileImageUrl ? (
                           <img 
                             src={booking.photographer.profileImageUrl} 
@@ -380,19 +386,35 @@ export default function Bookings() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <User className="w-5 h-5 text-blue-400" />
+                          <User className="w-6 h-6 text-blue-400" />
                         )}
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
                         <p className="text-sm text-muted-foreground">
                           {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
                         </p>
                       </div>
+                      <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">awaiting photos</span>
-                      <p className="text-white font-bold mt-1">£{parseFloat(booking.totalAmount).toFixed(2)}</p>
+                    
+                    {/* Photo placeholder grid */}
+                    <div className="grid grid-cols-4 gap-2 mb-4">
+                      {[...Array(4)].map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="aspect-square rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center"
+                          style={{ animationDelay: `${i * 150}ms` }}
+                        >
+                          <ImageIcon className="w-5 h-5 text-blue-500/40" />
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {/* Status message */}
+                    <div className="flex items-center gap-2 text-blue-400 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Your photographer is editing your photos...</span>
                     </div>
                   </div>
                 </div>
