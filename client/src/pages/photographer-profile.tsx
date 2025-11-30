@@ -571,41 +571,6 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
 
-      {/* Earnings Card - Inline */}
-      <div className="px-6 mb-6">
-        <div className="glass-panel rounded-xl p-4">
-          <div className="flex gap-4 items-center">
-            <div className="flex-1">
-              <span className="text-muted-foreground text-xs uppercase tracking-wider">Your rate</span>
-              {isEditing ? (
-                <div className="flex items-center gap-1">
-                  <span className="text-2xl font-bold text-white">£</span>
-                  <Input
-                    type="number"
-                    value={formData.hourlyRate}
-                    onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
-                    className="bg-transparent border-none text-2xl font-bold text-white w-20 h-8 p-0 focus-visible:ring-0"
-                    data-testid="input-rate"
-                  />
-                  <span className="text-sm text-muted-foreground">/ hour</span>
-                </div>
-              ) : (
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-bold text-white" data-testid="text-price">£{parseFloat(photographer?.hourlyRate || "0")}</span>
-                  <span className="text-sm text-muted-foreground">/ hour</span>
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <span className="text-muted-foreground text-xs">You earn (80%)</span>
-              <p className="text-lg font-bold text-primary">
-                £{(parseFloat(isEditing ? formData.hourlyRate : photographer?.hourlyRate || "0") * 0.8).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Reviews Section */}
       {reviewsData && reviewsData.reviews.length > 0 && (
         <div className="px-6 mb-6">
