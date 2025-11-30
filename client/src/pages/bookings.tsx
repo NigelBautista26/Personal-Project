@@ -49,28 +49,50 @@ export default function Bookings() {
       const photographerNames = expiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
       
       // Play notification sound
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      oscillator.frequency.value = 440;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      try {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.frequency.value = 440;
+        oscillator.type = 'sine';
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } catch (e) {}
       
-      toast.error(
-        `Booking request expired`,
-        {
-          description: `${photographerNames} didn't respond in time. Try finding another photographer!`,
-          duration: 8000,
-          action: {
-            label: "Find photographers",
-            onClick: () => setLocation("/photographers")
-          }
-        }
+      toast.custom(
+        (t) => (
+          <div className="bg-zinc-900/95 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-4 shadow-2xl max-w-sm">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-4 h-4 text-orange-400" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-white text-sm">Booking request expired</p>
+                <p className="text-zinc-400 text-xs mt-1">{photographerNames} didn't respond in time.</p>
+                <button 
+                  onClick={() => {
+                    toast.dismiss(t);
+                    setLocation("/photographers");
+                  }}
+                  className="mt-3 px-4 py-2 bg-primary text-white text-xs font-medium rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Find another photographer
+                </button>
+              </div>
+              <button 
+                onClick={() => toast.dismiss(t)}
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        ),
+        { duration: 10000 }
       );
     }
   }, [expiredBookings.length, setLocation]);
