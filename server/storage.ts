@@ -101,7 +101,7 @@ export interface IStorage {
   getEditingRequestsByCustomer(customerId: string): Promise<EditingRequestWithDetails[]>;
   createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest>;
   updateEditingRequestStatus(id: string, status: string, photographerNotes?: string): Promise<EditingRequest | undefined>;
-  deliverEditedPhotos(id: string, photoUrls: string[]): Promise<EditingRequest | undefined>;
+  deliverEditedPhotos(id: string, photoUrls: string[], photographerNotes?: string): Promise<EditingRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -743,13 +743,19 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async deliverEditedPhotos(id: string, photoUrls: string[]): Promise<EditingRequest | undefined> {
+  async deliverEditedPhotos(id: string, photoUrls: string[], photographerNotes?: string): Promise<EditingRequest | undefined> {
+    const updates: Record<string, unknown> = { 
+      editedPhotos: photoUrls, 
+      status: "delivered",
+      deliveredAt: new Date() 
+    };
+    
+    if (photographerNotes) {
+      updates.photographerNotes = photographerNotes;
+    }
+    
     const result = await db.update(editingRequests)
-      .set({ 
-        editedPhotos: photoUrls, 
-        status: "delivered",
-        deliveredAt: new Date() 
-      })
+      .set(updates)
       .where(eq(editingRequests.id, id))
       .returning();
     return result[0];

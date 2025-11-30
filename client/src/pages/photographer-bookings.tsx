@@ -1,13 +1,13 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle, Palette, DollarSign, ChevronRight } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -19,6 +19,30 @@ interface PhotoDelivery {
   deliveredAt: string;
 }
 
+interface EditingRequest {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  photographerId: string;
+  status: string;
+  totalAmount: string;
+  platformFee: string;
+  photographerEarnings: string;
+  photoCount: number | null;
+  customerNotes: string | null;
+  photographerNotes: string | null;
+  editedPhotos: string[] | null;
+  createdAt: string;
+  booking?: {
+    scheduledDate: string;
+    location: string;
+    customer?: {
+      fullName: string;
+      profileImageUrl: string | null;
+    };
+  };
+}
+
 export default function PhotographerBookings() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -28,6 +52,12 @@ export default function PhotographerBookings() {
   const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [editingDialogRequest, setEditingDialogRequest] = useState<EditingRequest | null>(null);
+  const [editingAction, setEditingAction] = useState<"accept" | "decline" | "deliver" | null>(null);
+  const [editedPhotos, setEditedPhotos] = useState<string[]>([]);
+  const [photographerNotes, setPhotographerNotes] = useState("");
+  const [isUploadingEdited, setIsUploadingEdited] = useState(false);
+  const editedFileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -55,6 +85,132 @@ export default function PhotographerBookings() {
     },
     enabled: !!photographer?.id,
   });
+
+  const { data: editingRequests = [], isLoading: editingRequestsLoading } = useQuery({
+    queryKey: ["photographerEditingRequests", photographer?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/editing-requests/photographer/${photographer?.id}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch editing requests");
+      return res.json();
+    },
+    enabled: !!photographer?.id,
+  });
+
+  const updateEditingStatusMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      const res = await fetch(`/api/editing-requests/${requestId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) throw new Error("Failed to update editing status");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photographerEditingRequests"] });
+      toast({
+        title: "Status Updated",
+        description: "Editing request status has been updated.",
+      });
+      setEditingDialogRequest(null);
+      setEditingAction(null);
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Could not update editing request status.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deliverEditedPhotosMutation = useMutation({
+    mutationFn: async ({ requestId, editedPhotos, photographerNotes }: { 
+      requestId: string; 
+      editedPhotos: string[]; 
+      photographerNotes?: string 
+    }) => {
+      const res = await fetch(`/api/editing-requests/${requestId}/deliver`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ editedPhotos, photographerNotes }),
+      });
+      if (!res.ok) throw new Error("Failed to deliver edited photos");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photographerEditingRequests"] });
+      toast({
+        title: "Photos Delivered",
+        description: "Your edited photos have been sent to the customer.",
+      });
+      setEditingDialogRequest(null);
+      setEditingAction(null);
+      setEditedPhotos([]);
+      setPhotographerNotes("");
+    },
+    onError: () => {
+      toast({
+        title: "Delivery Failed",
+        description: "Could not deliver edited photos.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEditedFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    setIsUploadingEdited(true);
+    
+    try {
+      for (const file of Array.from(files)) {
+        const uploadRes = await fetch("/api/objects/upload", {
+          method: "POST",
+          credentials: "include",
+        });
+        
+        if (!uploadRes.ok) throw new Error("Failed to get upload URL");
+        const { uploadURL, objectPath } = await uploadRes.json();
+
+        const putRes = await fetch(uploadURL, {
+          method: "PUT",
+          headers: {
+            "Content-Type": file.type || "image/jpeg",
+          },
+          body: file,
+        });
+
+        if (!putRes.ok) throw new Error("Failed to upload file");
+        
+        const readRes = await fetch(`/api/objects/read?path=${encodeURIComponent(objectPath)}`, {
+          credentials: "include",
+        });
+        
+        if (readRes.ok) {
+          const { publicUrl } = await readRes.json();
+          setEditedPhotos(prev => [...prev, publicUrl]);
+        }
+      }
+      toast({
+        title: "Photos Uploaded",
+        description: `Uploaded ${files.length} edited photo(s).`,
+      });
+    } catch (error) {
+      toast({
+        title: "Upload Failed",
+        description: "Could not upload photos. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingEdited(false);
+    }
+  };
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: string }) => {
@@ -211,6 +367,14 @@ export default function PhotographerBookings() {
   const completedBookings = bookings.filter((b: any) => b.status === 'completed');
   const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
+  const pendingEditingRequests = editingRequests.filter((r: EditingRequest) => r.status === 'requested');
+  const activeEditingRequests = editingRequests.filter((r: EditingRequest) => 
+    r.status === 'accepted' || r.status === 'in_progress'
+  );
+  const completedEditingRequests = editingRequests.filter((r: EditingRequest) => 
+    r.status === 'delivered' || r.status === 'completed'
+  );
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-500/20 text-green-400';
@@ -321,6 +485,142 @@ export default function PhotographerBookings() {
                       Decline
                     </Button>
                   </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pending Editing Requests */}
+        {pendingEditingRequests.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Palette className="w-5 h-5 text-violet-400" />
+              Editing Requests ({pendingEditingRequests.length})
+            </h2>
+            
+            <div className="space-y-4">
+              {pendingEditingRequests.map((request: EditingRequest) => (
+                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-violet-500/30" data-testid={`editing-pending-${request.id}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-violet-500/20 flex items-center justify-center overflow-hidden">
+                        {request.booking?.customer?.profileImageUrl ? (
+                          <img 
+                            src={request.booking.customer.profileImageUrl} 
+                            alt={request.booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-violet-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{request.booking?.customer?.fullName || 'Editing Request'}</h3>
+                        {request.photoCount && <p className="text-sm text-muted-foreground">{request.photoCount} photos</p>}
+                      </div>
+                    </div>
+                    <span className="text-lg font-bold text-violet-400">£{parseFloat(request.photographerEarnings).toFixed(2)}</span>
+                  </div>
+                  
+                  {request.booking?.scheduledDate && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="w-4 h-4" />
+                      <span>Session: {format(new Date(request.booking.scheduledDate), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
+                  
+                  {request.customerNotes && (
+                    <div className="bg-violet-500/10 rounded-lg p-3">
+                      <p className="text-sm text-muted-foreground">Customer notes:</p>
+                      <p className="text-sm text-white">{request.customerNotes}</p>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      onClick={() => updateEditingStatusMutation.mutate({ requestId: request.id, status: 'accepted' })}
+                      disabled={updateEditingStatusMutation.isPending}
+                      className="flex-1 bg-violet-600 hover:bg-violet-700"
+                      data-testid={`button-accept-editing-${request.id}`}
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Accept
+                    </Button>
+                    <Button
+                      onClick={() => updateEditingStatusMutation.mutate({ requestId: request.id, status: 'declined' })}
+                      disabled={updateEditingStatusMutation.isPending}
+                      variant="outline"
+                      className="flex-1 border-red-500/50 text-red-400 hover:bg-red-500/10"
+                      data-testid={`button-decline-editing-${request.id}`}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Decline
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Active Editing Work */}
+        {activeEditingRequests.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Palette className="w-5 h-5 text-blue-400" />
+              Editing In Progress ({activeEditingRequests.length})
+            </h2>
+            
+            <div className="space-y-4">
+              {activeEditingRequests.map((request: EditingRequest) => (
+                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-blue-500/30" data-testid={`editing-active-${request.id}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                        {request.booking?.customer?.profileImageUrl ? (
+                          <img 
+                            src={request.booking.customer.profileImageUrl} 
+                            alt={request.booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-blue-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{request.booking?.customer?.fullName || 'Editing Work'}</h3>
+                        {request.photoCount && <p className="text-sm text-muted-foreground">{request.photoCount} photos</p>}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
+                        {request.status === 'accepted' ? 'accepted' : 'in progress'}
+                      </span>
+                      <p className="text-lg font-bold text-blue-400 mt-1">£{parseFloat(request.photographerEarnings).toFixed(2)}</p>
+                    </div>
+                  </div>
+                  
+                  {request.customerNotes && (
+                    <div className="bg-blue-500/10 rounded-lg p-3">
+                      <p className="text-sm text-muted-foreground">Customer notes:</p>
+                      <p className="text-sm text-white">{request.customerNotes}</p>
+                    </div>
+                  )}
+                  
+                  <Button
+                    onClick={() => {
+                      setEditingDialogRequest(request);
+                      setEditingAction("deliver");
+                      setEditedPhotos([]);
+                      setPhotographerNotes("");
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    data-testid={`button-deliver-editing-${request.id}`}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Deliver Edited Photos
+                  </Button>
                 </div>
               ))}
             </div>
@@ -650,6 +950,133 @@ export default function PhotographerBookings() {
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Deliver Photos
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edited Photos Delivery Dialog */}
+      <Dialog open={!!editingDialogRequest && editingAction === "deliver"} onOpenChange={(open) => {
+        if (!open) {
+          setEditingDialogRequest(null);
+          setEditingAction(null);
+        }
+      }}>
+        <DialogContent className="max-w-lg bg-background border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Palette className="w-5 h-5 text-violet-400" />
+              Deliver Edited Photos
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Upload the edited photos for {editingDialogRequest?.booking?.customer?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Edited Photo Grid */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                Edited Photos ({editedPhotos.length})
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                {editedPhotos.map((photo, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group">
+                    <img src={photo} alt={`Edited ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => setEditedPhotos(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                {/* Add Edited Photo Button */}
+                <button
+                  onClick={() => editedFileInputRef.current?.click()}
+                  disabled={isUploadingEdited}
+                  className="aspect-square rounded-lg border-2 border-dashed border-violet-500/30 flex flex-col items-center justify-center text-violet-400 hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors"
+                  data-testid="button-add-edited-photo"
+                >
+                  {isUploadingEdited ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="w-6 h-6" />
+                      <span className="text-xs mt-1">Add</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              <input
+                ref={editedFileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleEditedFileSelect}
+                className="hidden"
+              />
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">Notes for Customer (optional)</label>
+              <Textarea
+                value={photographerNotes}
+                onChange={(e) => setPhotographerNotes(e.target.value)}
+                placeholder="Describe what edits you made..."
+                className="bg-card border-white/10"
+                data-testid="input-editing-notes"
+              />
+            </div>
+
+            {/* Earnings Info */}
+            {editingDialogRequest && (
+              <div className="bg-violet-500/10 rounded-lg p-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">You'll earn</span>
+                  <span className="text-lg font-bold text-violet-400">
+                    £{parseFloat(editingDialogRequest.photographerEarnings).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setEditingDialogRequest(null);
+                  setEditingAction(null);
+                }}
+                className="flex-1 border-white/20"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingDialogRequest) {
+                    deliverEditedPhotosMutation.mutate({
+                      requestId: editingDialogRequest.id,
+                      editedPhotos,
+                      photographerNotes: photographerNotes || undefined,
+                    });
+                  }
+                }}
+                disabled={editedPhotos.length === 0 || deliverEditedPhotosMutation.isPending}
+                className="flex-1 bg-violet-600 hover:bg-violet-700"
+                data-testid="button-submit-edited-photos"
+              >
+                {deliverEditedPhotosMutation.isPending ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4 mr-2" />
+                )}
+                Deliver Edited Photos
               </Button>
             </div>
           </div>

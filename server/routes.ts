@@ -1319,7 +1319,7 @@ export async function registerRoutes(
     }
   });
 
-  // Get all editing requests for photographer
+  // Get all editing requests for photographer (using session)
   app.get("/api/editing-requests/photographer", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -1332,6 +1332,27 @@ export async function registerRoutes(
       }
 
       const requests = await storage.getEditingRequestsByPhotographer(photographer.id);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching editing requests:", error);
+      res.status(500).json({ error: "Failed to fetch editing requests" });
+    }
+  });
+
+  // Get all editing requests for photographer by ID
+  app.get("/api/editing-requests/photographer/:photographerId", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      // Verify the logged-in user is the photographer
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== req.params.photographerId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const requests = await storage.getEditingRequestsByPhotographer(req.params.photographerId);
       res.json(requests);
     } catch (error) {
       console.error("Error fetching editing requests:", error);
@@ -1399,10 +1420,11 @@ export async function registerRoutes(
       }
 
       const deliverSchema = z.object({
-        photoUrls: z.array(z.string()).min(1),
+        editedPhotos: z.array(z.string()).min(1),
+        photographerNotes: z.string().max(500).optional(),
       });
 
-      const { photoUrls } = deliverSchema.parse(req.body);
+      const { editedPhotos, photographerNotes } = deliverSchema.parse(req.body);
 
       const editingRequest = await storage.getEditingRequest(req.params.requestId);
       if (!editingRequest) {
@@ -1415,7 +1437,7 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied" });
       }
 
-      const updatedRequest = await storage.deliverEditedPhotos(req.params.requestId, photoUrls);
+      const updatedRequest = await storage.deliverEditedPhotos(req.params.requestId, editedPhotos, photographerNotes);
       res.json(updatedRequest);
     } catch (error) {
       console.error("Error delivering edited photos:", error);
