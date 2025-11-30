@@ -11,7 +11,7 @@ export default function PitchDeck() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-gray-900" style={{ minWidth: '900px' }}>
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
         <button
           onClick={() => navigate("/")}
@@ -31,7 +31,7 @@ export default function PitchDeck() {
         </button>
       </div>
 
-      <div ref={contentRef} className="max-w-4xl mx-auto p-8 text-white bg-gray-900">
+      <div ref={contentRef} className="p-8 text-white bg-gray-900" style={{ width: '850px', margin: '0 auto' }}>
         
         {/* Slide 1: Cover */}
         <div className="text-center py-16 mb-12 border-b-2 border-violet-500" style={{ pageBreakAfter: "always" }}>
