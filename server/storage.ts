@@ -16,13 +16,20 @@ import {
   type Review,
   type InsertReview,
   type ReviewWithCustomer,
+  type EditingService,
+  type InsertEditingService,
+  type EditingRequest,
+  type InsertEditingRequest,
+  type EditingRequestWithDetails,
   users,
   photographers,
   bookings,
   earnings,
   photoSpots,
   photoDeliveries,
-  reviews
+  reviews,
+  editingServices,
+  editingRequests
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
@@ -81,6 +88,20 @@ export interface IStorage {
   createReview(review: InsertReview): Promise<Review>;
   addPhotographerResponse(reviewId: string, response: string): Promise<Review | undefined>;
   getPhotographerAverageRating(photographerId: string): Promise<{ averageRating: number; reviewCount: number }>;
+  
+  // Editing Service methods
+  getEditingService(photographerId: string): Promise<EditingService | undefined>;
+  createEditingService(service: InsertEditingService): Promise<EditingService>;
+  updateEditingService(photographerId: string, updates: Partial<InsertEditingService>): Promise<EditingService | undefined>;
+  
+  // Editing Request methods
+  getEditingRequest(id: string): Promise<EditingRequest | undefined>;
+  getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined>;
+  getEditingRequestsByPhotographer(photographerId: string): Promise<EditingRequestWithDetails[]>;
+  getEditingRequestsByCustomer(customerId: string): Promise<EditingRequestWithDetails[]>;
+  createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest>;
+  updateEditingRequestStatus(id: string, status: string, photographerNotes?: string): Promise<EditingRequest | undefined>;
+  deliverEditedPhotos(id: string, photoUrls: string[]): Promise<EditingRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -506,6 +527,232 @@ export class DatabaseStorage implements IStorage {
       averageRating: Math.round(averageRating * 10) / 10,
       reviewCount: photographerReviews.length,
     };
+  }
+
+  // Editing Service methods
+  async getEditingService(photographerId: string): Promise<EditingService | undefined> {
+    const result = await db.select().from(editingServices).where(eq(editingServices.photographerId, photographerId)).limit(1);
+    return result[0];
+  }
+
+  async createEditingService(service: InsertEditingService): Promise<EditingService> {
+    const result = await db.insert(editingServices).values(service).returning();
+    return result[0];
+  }
+
+  async updateEditingService(photographerId: string, updates: Partial<InsertEditingService>): Promise<EditingService | undefined> {
+    const existing = await this.getEditingService(photographerId);
+    if (existing) {
+      const result = await db.update(editingServices)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(editingServices.photographerId, photographerId))
+        .returning();
+      return result[0];
+    } else {
+      return await this.createEditingService({
+        photographerId,
+        ...updates,
+        isEnabled: updates.isEnabled ?? false,
+        pricingModel: updates.pricingModel ?? "flat",
+      } as InsertEditingService);
+    }
+  }
+
+  // Editing Request methods
+  async getEditingRequest(id: string): Promise<EditingRequest | undefined> {
+    const result = await db.select().from(editingRequests).where(eq(editingRequests.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined> {
+    const result = await db.select().from(editingRequests).where(eq(editingRequests.bookingId, bookingId)).limit(1);
+    return result[0];
+  }
+
+  async getEditingRequestsByPhotographer(photographerId: string): Promise<EditingRequestWithDetails[]> {
+    const results = await db
+      .select({
+        id: editingRequests.id,
+        bookingId: editingRequests.bookingId,
+        customerId: editingRequests.customerId,
+        photographerId: editingRequests.photographerId,
+        photoCount: editingRequests.photoCount,
+        pricingModel: editingRequests.pricingModel,
+        baseAmount: editingRequests.baseAmount,
+        customerServiceFee: editingRequests.customerServiceFee,
+        totalAmount: editingRequests.totalAmount,
+        platformFee: editingRequests.platformFee,
+        photographerEarnings: editingRequests.photographerEarnings,
+        status: editingRequests.status,
+        customerNotes: editingRequests.customerNotes,
+        photographerNotes: editingRequests.photographerNotes,
+        editedPhotos: editingRequests.editedPhotos,
+        requestedAt: editingRequests.requestedAt,
+        acceptedAt: editingRequests.acceptedAt,
+        deliveredAt: editingRequests.deliveredAt,
+        completedAt: editingRequests.completedAt,
+        declinedAt: editingRequests.declinedAt,
+        customerFullName: users.fullName,
+        customerProfileImageUrl: users.profileImageUrl,
+        bookingLocation: bookings.location,
+        bookingScheduledDate: bookings.scheduledDate,
+      })
+      .from(editingRequests)
+      .innerJoin(users, eq(editingRequests.customerId, users.id))
+      .innerJoin(bookings, eq(editingRequests.bookingId, bookings.id))
+      .innerJoin(photographers, eq(editingRequests.photographerId, photographers.id))
+      .where(eq(editingRequests.photographerId, photographerId))
+      .orderBy(desc(editingRequests.requestedAt));
+
+    const photographerData = await db.select({
+      fullName: users.fullName,
+      profileImageUrl: users.profileImageUrl,
+    }).from(users).innerJoin(photographers, eq(photographers.userId, users.id)).where(eq(photographers.id, photographerId)).limit(1);
+
+    const photographerInfo = photographerData[0] || { fullName: "", profileImageUrl: null };
+
+    return results.map((row) => ({
+      id: row.id,
+      bookingId: row.bookingId,
+      customerId: row.customerId,
+      photographerId: row.photographerId,
+      photoCount: row.photoCount,
+      pricingModel: row.pricingModel,
+      baseAmount: row.baseAmount,
+      customerServiceFee: row.customerServiceFee,
+      totalAmount: row.totalAmount,
+      platformFee: row.platformFee,
+      photographerEarnings: row.photographerEarnings,
+      status: row.status,
+      customerNotes: row.customerNotes,
+      photographerNotes: row.photographerNotes,
+      editedPhotos: row.editedPhotos,
+      requestedAt: row.requestedAt,
+      acceptedAt: row.acceptedAt,
+      deliveredAt: row.deliveredAt,
+      completedAt: row.completedAt,
+      declinedAt: row.declinedAt,
+      customer: {
+        fullName: row.customerFullName,
+        profileImageUrl: row.customerProfileImageUrl,
+      },
+      photographer: photographerInfo,
+      booking: {
+        location: row.bookingLocation,
+        scheduledDate: row.bookingScheduledDate,
+      },
+    }));
+  }
+
+  async getEditingRequestsByCustomer(customerId: string): Promise<EditingRequestWithDetails[]> {
+    const results = await db
+      .select({
+        id: editingRequests.id,
+        bookingId: editingRequests.bookingId,
+        customerId: editingRequests.customerId,
+        photographerId: editingRequests.photographerId,
+        photoCount: editingRequests.photoCount,
+        pricingModel: editingRequests.pricingModel,
+        baseAmount: editingRequests.baseAmount,
+        customerServiceFee: editingRequests.customerServiceFee,
+        totalAmount: editingRequests.totalAmount,
+        platformFee: editingRequests.platformFee,
+        photographerEarnings: editingRequests.photographerEarnings,
+        status: editingRequests.status,
+        customerNotes: editingRequests.customerNotes,
+        photographerNotes: editingRequests.photographerNotes,
+        editedPhotos: editingRequests.editedPhotos,
+        requestedAt: editingRequests.requestedAt,
+        acceptedAt: editingRequests.acceptedAt,
+        deliveredAt: editingRequests.deliveredAt,
+        completedAt: editingRequests.completedAt,
+        declinedAt: editingRequests.declinedAt,
+        photographerFullName: users.fullName,
+        photographerProfileImageUrl: users.profileImageUrl,
+        bookingLocation: bookings.location,
+        bookingScheduledDate: bookings.scheduledDate,
+      })
+      .from(editingRequests)
+      .innerJoin(photographers, eq(editingRequests.photographerId, photographers.id))
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .innerJoin(bookings, eq(editingRequests.bookingId, bookings.id))
+      .where(eq(editingRequests.customerId, customerId))
+      .orderBy(desc(editingRequests.requestedAt));
+
+    const customerData = await db.select({
+      fullName: users.fullName,
+      profileImageUrl: users.profileImageUrl,
+    }).from(users).where(eq(users.id, customerId)).limit(1);
+
+    const customerInfo = customerData[0] || { fullName: "", profileImageUrl: null };
+
+    return results.map((row) => ({
+      id: row.id,
+      bookingId: row.bookingId,
+      customerId: row.customerId,
+      photographerId: row.photographerId,
+      photoCount: row.photoCount,
+      pricingModel: row.pricingModel,
+      baseAmount: row.baseAmount,
+      customerServiceFee: row.customerServiceFee,
+      totalAmount: row.totalAmount,
+      platformFee: row.platformFee,
+      photographerEarnings: row.photographerEarnings,
+      status: row.status,
+      customerNotes: row.customerNotes,
+      photographerNotes: row.photographerNotes,
+      editedPhotos: row.editedPhotos,
+      requestedAt: row.requestedAt,
+      acceptedAt: row.acceptedAt,
+      deliveredAt: row.deliveredAt,
+      completedAt: row.completedAt,
+      declinedAt: row.declinedAt,
+      customer: customerInfo,
+      photographer: {
+        fullName: row.photographerFullName,
+        profileImageUrl: row.photographerProfileImageUrl,
+      },
+      booking: {
+        location: row.bookingLocation,
+        scheduledDate: row.bookingScheduledDate,
+      },
+    }));
+  }
+
+  async createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest> {
+    const result = await db.insert(editingRequests).values(request).returning();
+    return result[0];
+  }
+
+  async updateEditingRequestStatus(id: string, status: string, photographerNotes?: string): Promise<EditingRequest | undefined> {
+    const updates: Record<string, unknown> = { status };
+    
+    if (photographerNotes) {
+      updates.photographerNotes = photographerNotes;
+    }
+    
+    if (status === "accepted") {
+      updates.acceptedAt = new Date();
+    } else if (status === "declined") {
+      updates.declinedAt = new Date();
+    } else if (status === "completed") {
+      updates.completedAt = new Date();
+    }
+    
+    const result = await db.update(editingRequests).set(updates).where(eq(editingRequests.id, id)).returning();
+    return result[0];
+  }
+
+  async deliverEditedPhotos(id: string, photoUrls: string[]): Promise<EditingRequest | undefined> {
+    const result = await db.update(editingRequests)
+      .set({ 
+        editedPhotos: photoUrls, 
+        status: "delivered",
+        deliveredAt: new Date() 
+      })
+      .where(eq(editingRequests.id, id))
+      .returning();
+    return result[0];
   }
 }
 
