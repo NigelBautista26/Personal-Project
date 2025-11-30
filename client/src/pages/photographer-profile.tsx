@@ -1,18 +1,64 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2, ChevronRight, Palette, DollarSign, Clock, Check } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2, ChevronRight, Palette, DollarSign, Clock, Check, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { BottomNav } from "@/components/bottom-nav";
 import { format } from "date-fns";
+import Cropper from "react-easy-crop";
+import type { Area } from "react-easy-crop";
+
+async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
+  const image = new Image();
+  image.crossOrigin = "anonymous";
+  
+  await new Promise((resolve, reject) => {
+    image.onload = resolve;
+    image.onerror = reject;
+    image.src = imageSrc;
+  });
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  
+  if (!ctx) {
+    throw new Error("No 2d context");
+  }
+
+  canvas.width = pixelCrop.width;
+  canvas.height = pixelCrop.height;
+
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    pixelCrop.width,
+    pixelCrop.height
+  );
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Canvas is empty"));
+      }
+    }, "image/jpeg", 0.9);
+  });
+}
 
 interface ReviewWithCustomer {
   id: string;
@@ -69,6 +115,15 @@ export default function PhotographerProfilePage() {
     turnaroundDays: 3,
     description: "",
   });
+  
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+
+  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -313,6 +368,23 @@ export default function PhotographerProfilePage() {
         description: "Please select an image file.",
         variant: "destructive",
       });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    if (uploadType === "profile") {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImageToCrop(reader.result as string);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+      };
+      reader.readAsDataURL(file);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
       return;
     }
 
@@ -340,11 +412,7 @@ export default function PhotographerProfilePage() {
       const url = new URL(uploadUrl);
       const objectPath = url.pathname;
       
-      const endpoint = uploadType === "profile" 
-        ? "/api/photographers/me/profile-picture"
-        : "/api/photographers/me/portfolio";
-      
-      const addRes = await fetch(endpoint, {
+      const addRes = await fetch("/api/photographers/me/portfolio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -356,10 +424,8 @@ export default function PhotographerProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
       
       toast({
-        title: uploadType === "profile" ? "Profile picture updated!" : "Photo added!",
-        description: uploadType === "profile" 
-          ? "Your profile picture has been updated."
-          : "Your new photo has been added to your portfolio.",
+        title: "Photo added!",
+        description: "Your new photo has been added to your portfolio.",
       });
     } catch (error) {
       console.error("Upload error:", error);
@@ -374,6 +440,76 @@ export default function PhotographerProfilePage() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+    }
+  };
+
+  const handleCropCancel = () => {
+    setImageToCrop(null);
+    setCroppedAreaPixels(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setUploadType("portfolio");
+  };
+
+  const handleCropConfirm = async () => {
+    if (!imageToCrop || !croppedAreaPixels) return;
+
+    try {
+      setIsUploading(true);
+      
+      const croppedBlob = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      
+      const urlRes = await fetch("/api/photographers/me/upload-url", {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (!urlRes.ok) throw new Error("Failed to get upload URL");
+      const { uploadUrl } = await urlRes.json();
+
+      const uploadRes = await fetch(uploadUrl, {
+        method: "PUT",
+        body: croppedBlob,
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      });
+
+      if (!uploadRes.ok) throw new Error("Failed to upload cropped image");
+
+      const url = new URL(uploadUrl);
+      const objectPath = url.pathname;
+      
+      const addRes = await fetch("/api/photographers/me/profile-picture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ imageUrl: objectPath }),
+      });
+
+      if (!addRes.ok) throw new Error("Failed to save profile picture");
+
+      queryClient.invalidateQueries({ queryKey: ["myPhotographerProfile"] });
+      
+      toast({
+        title: "Profile picture updated!",
+        description: "Your profile picture has been updated.",
+      });
+
+      setImageToCrop(null);
+      setCroppedAreaPixels(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast({
+        title: "Upload failed",
+        description: "Could not upload the photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadType("portfolio");
     }
   };
 
@@ -1052,6 +1188,72 @@ export default function PhotographerProfilePage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {imageToCrop && (
+        <div className="fixed inset-0 z-[70] bg-black flex flex-col">
+          <div className="relative flex-1">
+            <Cropper
+              image={imageToCrop}
+              crop={crop}
+              zoom={zoom}
+              aspect={1}
+              cropShape="round"
+              showGrid={false}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              onZoomChange={setZoom}
+            />
+          </div>
+          
+          <div className="bg-zinc-900 p-6 space-y-6">
+            <div className="flex items-center gap-4 px-2">
+              <ZoomOut className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+              <Slider
+                value={[zoom]}
+                min={1}
+                max={3}
+                step={0.1}
+                onValueChange={(value) => setZoom(value[0])}
+                className="flex-1"
+              />
+              <ZoomIn className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+            </div>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              Pinch or use slider to zoom, drag to reposition
+            </p>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={handleCropCancel}
+                className="flex-1 border-white/20"
+                disabled={isUploading}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCropConfirm}
+                className="flex-1 bg-primary hover:bg-primary/90"
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Apply
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>
