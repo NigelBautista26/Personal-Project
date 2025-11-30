@@ -1,14 +1,15 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 interface PhotoDelivery {
   id: string;
@@ -38,6 +39,9 @@ export default function Bookings() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
+  const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string} | null>(null);
+  const [editingPhotoCount, setEditingPhotoCount] = useState(1);
+  const [editingNotes, setEditingNotes] = useState("");
   const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -104,6 +108,105 @@ export default function Bookings() {
       setReviewComment("");
       queryClient.invalidateQueries({ queryKey: ["bookingReviewInfo"] });
       queryClient.invalidateQueries({ queryKey: ["customerBookings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  interface EditingServiceInfo {
+    id: string;
+    photographerId: string;
+    isEnabled: boolean;
+    pricingModel: "flat" | "per_photo";
+    flatRate: string | null;
+    perPhotoRate: string | null;
+    turnaroundDays: number;
+    description: string | null;
+  }
+
+  interface EditingRequestInfo {
+    id: string;
+    status: string;
+    totalAmount: string;
+    photoCount: number | null;
+    editedPhotos: string[] | null;
+  }
+
+  const { data: editingServicesMap = {} } = useQuery({
+    queryKey: ["editingServices", bookings.map((b: any) => b.photographerId)],
+    queryFn: async () => {
+      const completedBookings = bookings.filter((b: any) => b.status === 'completed');
+      const photographerIds = Array.from(new Set(completedBookings.map((b: any) => b.photographerId)));
+      const results: Record<string, EditingServiceInfo | null> = {};
+      
+      await Promise.all(
+        photographerIds.map(async (photographerId: string) => {
+          try {
+            const res = await fetch(`/api/editing-services/${photographerId}`, { credentials: "include" });
+            if (res.ok) {
+              results[photographerId] = await res.json();
+            }
+          } catch (e) {
+            results[photographerId] = null;
+          }
+        })
+      );
+      
+      return results;
+    },
+    enabled: bookings.length > 0,
+  });
+
+  const { data: editingRequestsMap = {} } = useQuery({
+    queryKey: ["editingRequests", bookings.map((b: any) => b.id)],
+    queryFn: async () => {
+      const completedBookings = bookings.filter((b: any) => b.status === 'completed');
+      const results: Record<string, EditingRequestInfo | null> = {};
+      
+      await Promise.all(
+        completedBookings.map(async (booking: any) => {
+          try {
+            const res = await fetch(`/api/editing-requests/booking/${booking.id}`, { credentials: "include" });
+            if (res.ok) {
+              results[booking.id] = await res.json();
+            }
+          } catch (e) {
+            results[booking.id] = null;
+          }
+        })
+      );
+      
+      return results;
+    },
+    enabled: bookings.length > 0,
+  });
+
+  const createEditingRequestMutation = useMutation({
+    mutationFn: async ({ bookingId, photographerId, photoCount, customerNotes }: { 
+      bookingId: string; 
+      photographerId: string; 
+      photoCount?: number; 
+      customerNotes?: string 
+    }) => {
+      const res = await fetch("/api/editing-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ bookingId, photographerId, photoCount, customerNotes }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to request editing");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Editing request sent! The photographer will respond soon.");
+      setEditingDialogBooking(null);
+      setEditingPhotoCount(1);
+      setEditingNotes("");
+      queryClient.invalidateQueries({ queryKey: ["editingRequests"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -436,6 +539,8 @@ export default function Bookings() {
             <div className="space-y-4">
               {completedBookings.map((booking: any) => {
                 const reviewInfo = reviewInfoMap[booking.id];
+                const editingService = editingServicesMap[booking.photographerId];
+                const editingRequest = editingRequestsMap[booking.id];
                 
                 return (
                   <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`completed-booking-${booking.id}`}>
@@ -501,6 +606,81 @@ export default function Bookings() {
                         </div>
                       ) : null}
                     </div>
+
+                    {/* Editing Service Option */}
+                    {editingService?.isEnabled && !editingRequest && (
+                      <button
+                        onClick={() => setEditingDialogBooking({ id: booking.id, photographerId: booking.photographerId })}
+                        className="w-full mt-2 p-3 rounded-xl border-2 border-dashed border-violet-500/30 hover:border-violet-500/50 hover:bg-violet-500/5 transition-colors flex items-center justify-between"
+                        data-testid={`button-request-editing-${booking.id}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
+                            <Palette className="w-4 h-4 text-violet-400" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-medium text-white">Photo Editing Available</p>
+                            <p className="text-xs text-muted-foreground">
+                              {editingService.pricingModel === "flat" 
+                                ? `From £${parseFloat(editingService.flatRate || "0").toFixed(0)}`
+                                : `£${parseFloat(editingService.perPhotoRate || "0").toFixed(0)}/photo`
+                              }
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-violet-400" />
+                      </button>
+                    )}
+
+                    {/* Editing Request Status */}
+                    {editingRequest && (
+                      <div className={`w-full mt-2 p-3 rounded-xl border ${
+                        editingRequest.status === 'completed' ? 'border-green-500/30 bg-green-500/10' :
+                        editingRequest.status === 'delivered' ? 'border-violet-500/30 bg-violet-500/10' :
+                        editingRequest.status === 'declined' ? 'border-red-500/30 bg-red-500/10' :
+                        'border-yellow-500/30 bg-yellow-500/10'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            editingRequest.status === 'completed' ? 'bg-green-500/20' :
+                            editingRequest.status === 'delivered' ? 'bg-violet-500/20' :
+                            editingRequest.status === 'declined' ? 'bg-red-500/20' :
+                            'bg-yellow-500/20'
+                          }`}>
+                            <Palette className={`w-4 h-4 ${
+                              editingRequest.status === 'completed' ? 'text-green-400' :
+                              editingRequest.status === 'delivered' ? 'text-violet-400' :
+                              editingRequest.status === 'declined' ? 'text-red-400' :
+                              'text-yellow-400'
+                            }`} />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-white">
+                              {editingRequest.status === 'requested' && 'Editing Requested'}
+                              {editingRequest.status === 'accepted' && 'Editing Accepted'}
+                              {editingRequest.status === 'in_progress' && 'Editing In Progress'}
+                              {editingRequest.status === 'delivered' && 'Edited Photos Ready'}
+                              {editingRequest.status === 'completed' && 'Editing Complete'}
+                              {editingRequest.status === 'declined' && 'Editing Declined'}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              £{parseFloat(editingRequest.totalAmount).toFixed(2)}
+                            </p>
+                          </div>
+                          {editingRequest.status === 'delivered' && (
+                            <Button
+                              size="sm"
+                              className="bg-violet-500 hover:bg-violet-600 text-white text-xs"
+                              onClick={() => handleViewPhotos(booking.id)}
+                              data-testid={`button-view-edited-${booking.id}`}
+                            >
+                              <Images className="w-3 h-3 mr-1" />
+                              View
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -635,6 +815,164 @@ export default function Bookings() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Editing Request Modal */}
+      <Dialog open={!!editingDialogBooking} onOpenChange={(open) => !open && setEditingDialogBooking(null)}>
+        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Palette className="w-5 h-5 text-violet-400" />
+              Request Photo Editing
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              Professional editing for your photos
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingDialogBooking && (() => {
+            const service = editingServicesMap[editingDialogBooking.photographerId];
+            if (!service) return null;
+            
+            const baseAmount = service.pricingModel === "flat" 
+              ? parseFloat(service.flatRate || "0")
+              : parseFloat(service.perPhotoRate || "0") * editingPhotoCount;
+            const serviceFee = baseAmount * 0.10;
+            const total = baseAmount + serviceFee;
+            
+            return (
+              <div className="space-y-6 py-4">
+                {/* Service Info */}
+                <div className="glass-panel rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-violet-400 text-sm font-medium">
+                    <DollarSign className="w-4 h-4" />
+                    Pricing
+                  </div>
+                  {service.pricingModel === "flat" ? (
+                    <p className="text-white">
+                      <span className="text-2xl font-bold">£{parseFloat(service.flatRate || "0").toFixed(2)}</span>
+                      <span className="text-muted-foreground text-sm ml-2">flat rate</span>
+                    </p>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-white">
+                        <span className="text-lg font-bold">£{parseFloat(service.perPhotoRate || "0").toFixed(2)}</span>
+                        <span className="text-muted-foreground text-sm ml-2">per photo</span>
+                      </p>
+                      <div>
+                        <label className="text-sm text-muted-foreground mb-1 block">Number of photos</label>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingPhotoCount(Math.max(1, editingPhotoCount - 1))}
+                            className="border-white/20"
+                            data-testid="button-decrease-count"
+                          >
+                            -
+                          </Button>
+                          <Input
+                            type="number"
+                            min={1}
+                            value={editingPhotoCount}
+                            onChange={(e) => setEditingPhotoCount(Math.max(1, parseInt(e.target.value) || 1))}
+                            className="w-20 text-center bg-zinc-800 border-white/10"
+                            data-testid="input-photo-count"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingPhotoCount(editingPhotoCount + 1)}
+                            className="border-white/20"
+                            data-testid="button-increase-count"
+                          >
+                            +
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {service.description && (
+                    <p className="text-muted-foreground text-sm mt-2">{service.description}</p>
+                  )}
+                  <p className="text-muted-foreground text-xs">
+                    Estimated delivery: {service.turnaroundDays} {service.turnaroundDays === 1 ? 'day' : 'days'}
+                  </p>
+                </div>
+                
+                {/* Special Notes */}
+                <div>
+                  <label className="text-sm text-muted-foreground mb-2 block">
+                    Special requests (optional)
+                  </label>
+                  <Textarea
+                    value={editingNotes}
+                    onChange={(e) => setEditingNotes(e.target.value)}
+                    placeholder="Any specific editing style or requests..."
+                    className="bg-zinc-800 border-white/10 text-white placeholder:text-zinc-500 resize-none"
+                    rows={3}
+                    data-testid="input-editing-notes"
+                  />
+                </div>
+                
+                {/* Price Summary */}
+                <div className="border-t border-white/10 pt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Editing {service.pricingModel === "per_photo" ? `(${editingPhotoCount} photos)` : ""}</span>
+                    <span className="text-white">£{baseAmount.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Service fee (10%)</span>
+                    <span className="text-white">£{serviceFee.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold">
+                    <span className="text-white">Total</span>
+                    <span className="text-violet-400">£{total.toFixed(2)}</span>
+                  </div>
+                </div>
+                
+                {/* Submit Button */}
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEditingDialogBooking(null)}
+                    className="flex-1 border-white/10"
+                    data-testid="button-cancel-editing"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (editingDialogBooking) {
+                        createEditingRequestMutation.mutate({
+                          bookingId: editingDialogBooking.id,
+                          photographerId: editingDialogBooking.photographerId,
+                          photoCount: service.pricingModel === "per_photo" ? editingPhotoCount : undefined,
+                          customerNotes: editingNotes || undefined,
+                        });
+                      }
+                    }}
+                    disabled={createEditingRequestMutation.isPending}
+                    className="flex-1 bg-violet-500 hover:bg-violet-600 text-white"
+                    data-testid="button-submit-editing"
+                  >
+                    {createEditingRequestMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Palette className="w-4 h-4 mr-2" />
+                        Request Editing
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
