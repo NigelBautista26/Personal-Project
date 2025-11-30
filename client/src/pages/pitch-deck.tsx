@@ -12,30 +12,26 @@ export default function PitchDeck() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      {/* Scrollable container */}
-      <div className="overflow-x-auto">
-        <div className="min-w-[900px]">
-          {/* Header - Hidden when printing */}
-          <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              Back
-            </button>
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition-colors"
-              data-testid="button-download-pdf"
-            >
-              <Printer className="w-4 h-4" />
-              Print / Save PDF
-            </button>
-          </div>
+      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
+        </button>
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition-colors"
+          data-testid="button-download-pdf"
+        >
+          <Printer className="w-4 h-4" />
+          Print / Save PDF
+        </button>
+      </div>
 
-          <div ref={contentRef} className="max-w-[900px] mx-auto p-8 text-white bg-gray-900">
+      <div ref={contentRef} className="max-w-4xl mx-auto p-8 text-white bg-gray-900">
         
         {/* Slide 1: Cover */}
         <div className="text-center py-16 mb-12 border-b-2 border-violet-500" style={{ pageBreakAfter: "always" }}>
@@ -473,8 +469,6 @@ export default function PitchDeck() {
           <p className="mt-12 text-gray-600">© 2025 SnapNow. All rights reserved.</p>
         </section>
 
-          </div>
-        </div>
       </div>
     </div>
   );
