@@ -54,34 +54,34 @@ export default function PitchDeck() {
             page-break-after: always; 
             page-break-inside: avoid;
             min-height: 0;
-            padding: 0.75rem 0 !important;
+            padding: 1rem 0 !important;
             margin-bottom: 0 !important;
           }
           .pitch-slide:last-of-type { page-break-after: auto; }
-          .pitch-slide h2 { font-size: 1.5rem !important; margin-bottom: 0.5rem !important; padding-bottom: 0.25rem !important; }
-          .pitch-slide h3 { font-size: 1rem !important; margin-bottom: 0.3rem !important; }
-          .pitch-slide h4 { font-size: 0.95rem !important; margin-bottom: 0.3rem !important; }
-          .pitch-slide .grid { gap: 0.4rem !important; }
-          .pitch-slide p { font-size: 0.8rem !important; line-height: 1.35 !important; }
-          .pitch-slide li { font-size: 0.8rem !important; line-height: 1.35 !important; }
-          .pitch-slide .rounded-xl, .pitch-slide .rounded-2xl { padding: 0.6rem !important; }
-          .pitch-slide .rounded-lg { padding: 0.4rem !important; }
-          .pitch-slide .text-5xl { font-size: 1.75rem !important; }
-          .pitch-slide .text-4xl { font-size: 1.5rem !important; }
-          .pitch-slide .text-3xl { font-size: 1.25rem !important; }
-          .pitch-slide .text-2xl { font-size: 1rem !important; }
-          .pitch-slide .text-xl { font-size: 0.9rem !important; }
-          .pitch-slide .text-lg { font-size: 0.85rem !important; }
-          .pitch-slide .w-12 { width: 2.25rem !important; height: 2.25rem !important; }
-          .pitch-slide .w-16 { width: 3rem !important; height: 3rem !important; }
-          .pitch-slide .w-10 { width: 1.75rem !important; height: 1.75rem !important; }
-          .pitch-slide .mb-8 { margin-bottom: 0.5rem !important; }
-          .pitch-slide .mb-6 { margin-bottom: 0.4rem !important; }
-          .pitch-slide .mb-4 { margin-bottom: 0.3rem !important; }
-          .pitch-slide .py-8 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
-          .pitch-slide .space-y-4 > * + * { margin-top: 0.3rem !important; }
-          .pitch-slide .space-y-3 > * + * { margin-top: 0.25rem !important; }
-          .pitch-slide .space-y-2 > * + * { margin-top: 0.2rem !important; }
+          .pitch-slide h2 { font-size: 1.75rem !important; margin-bottom: 0.75rem !important; padding-bottom: 0.4rem !important; }
+          .pitch-slide h3 { font-size: 1.1rem !important; margin-bottom: 0.4rem !important; }
+          .pitch-slide h4 { font-size: 1.05rem !important; margin-bottom: 0.4rem !important; }
+          .pitch-slide .grid { gap: 0.5rem !important; }
+          .pitch-slide p { font-size: 0.9rem !important; line-height: 1.4 !important; }
+          .pitch-slide li { font-size: 0.9rem !important; line-height: 1.4 !important; }
+          .pitch-slide .rounded-xl, .pitch-slide .rounded-2xl { padding: 0.75rem !important; }
+          .pitch-slide .rounded-lg { padding: 0.5rem !important; }
+          .pitch-slide .text-5xl { font-size: 2rem !important; }
+          .pitch-slide .text-4xl { font-size: 1.75rem !important; }
+          .pitch-slide .text-3xl { font-size: 1.5rem !important; }
+          .pitch-slide .text-2xl { font-size: 1.15rem !important; }
+          .pitch-slide .text-xl { font-size: 1rem !important; }
+          .pitch-slide .text-lg { font-size: 0.95rem !important; }
+          .pitch-slide .w-12 { width: 2.5rem !important; height: 2.5rem !important; }
+          .pitch-slide .w-16 { width: 3.5rem !important; height: 3.5rem !important; }
+          .pitch-slide .w-10 { width: 2rem !important; height: 2rem !important; }
+          .pitch-slide .mb-8 { margin-bottom: 0.6rem !important; }
+          .pitch-slide .mb-6 { margin-bottom: 0.5rem !important; }
+          .pitch-slide .mb-4 { margin-bottom: 0.4rem !important; }
+          .pitch-slide .py-8 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+          .pitch-slide .space-y-4 > * + * { margin-top: 0.4rem !important; }
+          .pitch-slide .space-y-3 > * + * { margin-top: 0.35rem !important; }
+          .pitch-slide .space-y-2 > * + * { margin-top: 0.25rem !important; }
         }
       `}</style>
       <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
