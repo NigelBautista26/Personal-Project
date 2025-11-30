@@ -316,21 +316,36 @@ export class DatabaseStorage implements IStorage {
 
   async expireOldPendingBookings(photographerId?: string): Promise<number> {
     const now = new Date();
-    const conditions = [
-      eq(bookings.status, 'pending'),
-      lt(bookings.expiresAt, now)
-    ];
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    const conditions = [eq(bookings.status, 'pending')];
     
     if (photographerId) {
       conditions.push(eq(bookings.photographerId, photographerId));
     }
     
-    const result = await db
-      .update(bookings)
-      .set({ status: 'expired' })
-      .where(and(...conditions))
-      .returning();
-    return result.length;
+    const pendingBookings = await db
+      .select()
+      .from(bookings)
+      .where(and(...conditions));
+    
+    let expiredCount = 0;
+    for (const booking of pendingBookings) {
+      let shouldExpire = false;
+      
+      if (booking.expiresAt) {
+        shouldExpire = new Date(booking.expiresAt) < now;
+      } else {
+        shouldExpire = new Date(booking.createdAt) < twentyFourHoursAgo;
+      }
+      
+      if (shouldExpire) {
+        await db.update(bookings).set({ status: 'expired' }).where(eq(bookings.id, booking.id));
+        expiredCount++;
+      }
+    }
+    
+    return expiredCount;
   }
 
   // Earnings methods
