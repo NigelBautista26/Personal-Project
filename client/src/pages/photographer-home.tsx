@@ -58,7 +58,7 @@ export default function PhotographerHome() {
 
   const todaysBookings = bookings.filter((b: any) => 
     isToday(new Date(b.scheduledDate)) && 
-    (b.status === 'confirmed' || b.status === 'pending')
+    (b.status === 'confirmed' || b.status === 'pending' || b.status === 'completed')
   );
 
   const thisWeekEarnings = bookings
