@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Star, MapPin, X, Edit2, Plus, Camera, Save, Trash2, GripVertical, LogOut, MessageSquare, User, Send, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser, logout } from "@/lib/api";
@@ -56,6 +57,7 @@ export default function PhotographerProfilePage() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [respondingToReviewId, setRespondingToReviewId] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
+  const [reviewsSheetOpen, setReviewsSheetOpen] = useState(false);
   
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -571,126 +573,184 @@ export default function PhotographerProfilePage() {
         </div>
       </div>
 
-      {/* Reviews Section */}
-      {reviewsData && reviewsData.reviews.length > 0 && (
-        <div className="px-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-primary" />
-              Customer Reviews
-            </h3>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-amber-400">
-                <Star className="w-4 h-4 fill-current" />
-                <span className="font-bold text-white">{reviewsData.averageRating.toFixed(1)}</span>
+      {/* Reviews Summary Card */}
+      <div className="px-6 mb-6">
+        <button
+          onClick={() => setReviewsSheetOpen(true)}
+          className="w-full glass-panel rounded-xl p-4 hover:bg-white/5 transition-colors text-left"
+          data-testid="button-view-reviews"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            {reviewsData.reviews.map((review) => (
-              <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`my-review-${review.id}`}>
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {review.customer.profileImageUrl ? (
-                      <img 
-                        src={review.customer.profileImageUrl} 
-                        alt={review.customer.fullName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-5 h-5 text-primary" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-medium text-white truncate">{review.customer.fullName}</span>
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {format(new Date(review.createdAt), 'MMM d, yyyy')}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-1">
+              <div>
+                <h3 className="font-semibold text-white">Customer Reviews</h3>
+                {reviewsData && reviewsData.reviewCount > 0 ? (
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="flex items-center gap-1">
                       {[...Array(5)].map((_, i) => (
                         <Star
                           key={i}
-                          className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
+                          className={`w-3 h-3 ${i < Math.round(reviewsData.averageRating) ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
                         />
                       ))}
                     </div>
-                  </div>
-                </div>
-                
-                {review.comment && (
-                  <p className="text-muted-foreground text-sm leading-relaxed mb-3">{review.comment}</p>
-                )}
-                
-                {review.photographerResponse ? (
-                  <div className="pl-4 border-l-2 border-primary/30">
-                    <p className="text-xs text-primary font-medium mb-1">Your response</p>
-                    <p className="text-muted-foreground text-sm">{review.photographerResponse}</p>
-                  </div>
-                ) : respondingToReviewId === review.id ? (
-                  <div className="mt-3 space-y-2">
-                    <Textarea
-                      value={responseText}
-                      onChange={(e) => setResponseText(e.target.value)}
-                      placeholder="Write your response..."
-                      className="bg-zinc-800 border-white/10 text-white text-sm min-h-[60px]"
-                      data-testid={`input-response-${review.id}`}
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setRespondingToReviewId(null);
-                          setResponseText("");
-                        }}
-                        className="border-white/10"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          if (responseText.trim()) {
-                            respondToReviewMutation.mutate({
-                              reviewId: review.id,
-                              response: responseText,
-                            });
-                          }
-                        }}
-                        disabled={!responseText.trim() || respondToReviewMutation.isPending}
-                        className="bg-primary hover:bg-primary/90"
-                        data-testid={`button-send-response-${review.id}`}
-                      >
-                        {respondToReviewMutation.isPending ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <>
-                            <Send className="w-4 h-4 mr-1" />
-                            Send
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {reviewsData.averageRating.toFixed(1)} ({reviewsData.reviewCount})
+                    </span>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setRespondingToReviewId(review.id)}
-                    className="mt-2 text-primary text-sm font-medium hover:underline flex items-center gap-1"
-                    data-testid={`button-respond-${review.id}`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    Respond to review
-                  </button>
+                  <p className="text-sm text-muted-foreground">No reviews yet</p>
                 )}
               </div>
-            ))}
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </div>
-        </div>
-      )}
+        </button>
+      </div>
+
+      {/* Reviews Bottom Sheet */}
+      <Sheet open={reviewsSheetOpen} onOpenChange={setReviewsSheetOpen}>
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl bg-background border-white/10 p-0">
+          <div className="flex flex-col h-full">
+            <SheetHeader className="px-6 py-4 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <SheetTitle className="text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  Customer Reviews
+                </SheetTitle>
+                {reviewsData && reviewsData.reviewCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-amber-400">
+                      <Star className="w-4 h-4 fill-current" />
+                      <span className="font-bold text-white">{reviewsData.averageRating.toFixed(1)}</span>
+                    </div>
+                    <span className="text-muted-foreground text-sm">({reviewsData.reviewCount})</span>
+                  </div>
+                )}
+              </div>
+            </SheetHeader>
+            
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              {reviewsData && reviewsData.reviews.length > 0 ? (
+                <div className="space-y-4">
+                  {reviewsData.reviews.map((review) => (
+                    <div key={review.id} className="glass-panel rounded-xl p-4" data-testid={`my-review-${review.id}`}>
+                      <div className="flex items-start gap-3 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                          {review.customer.profileImageUrl ? (
+                            <img 
+                              src={review.customer.profileImageUrl} 
+                              alt={review.customer.fullName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-medium text-white truncate">{review.customer.fullName}</span>
+                            <span className="text-xs text-muted-foreground flex-shrink-0">
+                              {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3 h-3 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {review.comment && (
+                        <p className="text-muted-foreground text-sm leading-relaxed mb-3">{review.comment}</p>
+                      )}
+                      
+                      {review.photographerResponse ? (
+                        <div className="pl-4 border-l-2 border-primary/30">
+                          <p className="text-xs text-primary font-medium mb-1">Your response</p>
+                          <p className="text-muted-foreground text-sm">{review.photographerResponse}</p>
+                        </div>
+                      ) : respondingToReviewId === review.id ? (
+                        <div className="mt-3 space-y-2">
+                          <Textarea
+                            value={responseText}
+                            onChange={(e) => setResponseText(e.target.value)}
+                            placeholder="Write your response..."
+                            className="bg-zinc-800 border-white/10 text-white text-sm min-h-[60px]"
+                            data-testid={`input-response-${review.id}`}
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setRespondingToReviewId(null);
+                                setResponseText("");
+                              }}
+                              className="border-white/10"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                if (responseText.trim()) {
+                                  respondToReviewMutation.mutate({
+                                    reviewId: review.id,
+                                    response: responseText,
+                                  });
+                                }
+                              }}
+                              disabled={!responseText.trim() || respondToReviewMutation.isPending}
+                              className="bg-primary hover:bg-primary/90"
+                              data-testid={`button-send-response-${review.id}`}
+                            >
+                              {respondToReviewMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Send className="w-4 h-4 mr-1" />
+                                  Send
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setRespondingToReviewId(review.id)}
+                          className="mt-2 text-primary text-sm font-medium hover:underline flex items-center gap-1"
+                          data-testid={`button-respond-${review.id}`}
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                          Respond to review
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <Star className="w-8 h-8 text-primary/50" />
+                  </div>
+                  <h3 className="font-semibold text-white mb-2">No reviews yet</h3>
+                  <p className="text-muted-foreground text-sm max-w-[250px]">
+                    Reviews from your customers will appear here after they complete their photo sessions
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Logout Button */}
       <div className="px-6 pb-24">
