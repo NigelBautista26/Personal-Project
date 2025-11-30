@@ -104,6 +104,36 @@ export default function PhotographerBookings() {
     }
   }, [user, userLoading, setLocation]);
 
+  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
+
+  useEffect(() => {
+    if (expiredBookings.length === 0) return;
+    
+    const STORAGE_KEY = 'snapnow_photographer_expired_notified';
+    let notifiedIds: string[] = [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      notifiedIds = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      notifiedIds = [];
+    }
+    
+    const newExpiredBookings = expiredBookings.filter((b: any) => !notifiedIds.includes(b.id));
+    
+    if (newExpiredBookings.length === 0) return;
+    
+    const updatedNotifiedIds = [...notifiedIds, ...newExpiredBookings.map((b: any) => b.id)];
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));
+    } catch (e) {}
+    
+    toast({
+      title: "Booking Request Expired",
+      description: `${newExpiredBookings.length} booking request(s) expired because they weren't responded to in time.`,
+      variant: "destructive",
+    });
+  }, [expiredBookings, toast]);
+
   const updateEditingStatusMutation = useMutation({
     mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
       const res = await fetch(`/api/editing-requests/${requestId}/status`, {
@@ -367,7 +397,6 @@ export default function PhotographerBookings() {
   const confirmedBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
   );
-  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
   const awaitingUploadBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
   );
@@ -700,47 +729,6 @@ export default function PhotographerBookings() {
             </div>
           )}
         </section>
-
-        {expiredBookings.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-orange-400" />
-              Missed Requests ({expiredBookings.length})
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">These booking requests expired because they weren't responded to within 24 hours.</p>
-            <div className="space-y-4">
-              {expiredBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-orange-500/30 opacity-75" data-testid={`booking-expired-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center overflow-hidden">
-                        {booking.customer?.profileImageUrl ? (
-                          <img 
-                            src={booking.customer.profileImageUrl} 
-                            alt={booking.customer.fullName} 
-                            className="w-full h-full object-cover opacity-70"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-orange-400" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">missed</span>
-                      <p className="text-muted-foreground text-sm mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {awaitingUploadBookings.length > 0 && (
           <section>
