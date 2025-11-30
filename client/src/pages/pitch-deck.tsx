@@ -1,732 +1,476 @@
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, ChevronLeft, ChevronRight, Camera, MapPin, Calendar, CreditCard, Star, Image, Sparkles, Monitor } from "lucide-react";
-import { toast } from "sonner";
+import { useRef } from "react";
+import { Printer, ArrowLeft, Camera, MapPin, Calendar, CreditCard, Star, Image, Sparkles } from "lucide-react";
+import { useLocation } from "wouter";
 
 export default function PitchDeck() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showPdfContent, setShowPdfContent] = useState(false);
-  const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const [, navigate] = useLocation();
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleDownloadPDF = async () => {
-    setIsGenerating(true);
-    toast.info("Generating PDF... This may take a moment.");
-    
-    try {
-      const { jsPDF } = await import('jspdf');
-      const html2canvas = (await import('html2canvas')).default;
-      
-      // Show the PDF content temporarily
-      setShowPdfContent(true);
-      
-      // Wait for React to render
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const container = pdfContainerRef.current;
-      if (!container) {
-        throw new Error('PDF content not found');
-      }
-
-      const slideElements = container.querySelectorAll('.pdf-slide');
-      if (slideElements.length === 0) {
-        throw new Error('No slides found');
-      }
-
-      // Create PDF with landscape letter size
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'pt',
-        format: 'letter'
-      });
-
-      const pdfWidth = 792; // Letter landscape width in points
-      const pdfHeight = 612; // Letter landscape height in points
-
-      for (let i = 0; i < slideElements.length; i++) {
-        const slideEl = slideElements[i] as HTMLElement;
-        
-        const canvas = await html2canvas(slideEl, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false
-        });
-
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-      }
-
-      // Hide the PDF content
-      setShowPdfContent(false);
-
-      pdf.save('SnapNow-Investor-Pitch.pdf');
-      toast.success("PDF downloaded successfully!");
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      setShowPdfContent(false);
-      toast.error("Failed to generate PDF. Please try again.");
-    } finally {
-      setIsGenerating(false);
-    }
+  const handlePrint = () => {
+    window.print();
   };
 
-  // PDF-optimized slides with fixed dimensions
-  const pdfSlides = [
-    // Slide 1: Cover
-    <div key="cover" className="pdf-slide w-[792px] h-[612px] flex flex-col items-center justify-center text-white p-12" style={{background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #4f46e5 100%)'}}>
-      <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-        <Camera className="w-10 h-10" />
-      </div>
-      <h1 className="text-6xl font-bold mb-4 text-center">SnapNow</h1>
-      <p className="text-2xl text-white/90 mb-8 text-center">The Uber for Professional Photography</p>
-      <div className="flex items-center gap-2 text-lg text-white/80">
-        <MapPin className="w-5 h-5" />
-        <span>Connecting Travelers with Local Photographers Worldwide</span>
-      </div>
-      <div className="mt-auto text-white/60 text-sm">Investor Presentation 2025</div>
-    </div>,
-
-    // Slide 2: Problem
-    <div key="problem" className="pdf-slide w-[792px] h-[612px] flex flex-col bg-white p-10">
-      <h2 className="text-4xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-2xl font-bold">!</span>
-        The Problem
-      </h2>
-      <div className="grid grid-cols-2 gap-6 flex-1">
-        <div className="p-5 bg-red-50 rounded-xl border border-red-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">For Travelers</h3>
-          <ul className="space-y-2 text-gray-700 text-sm">
-            <li className="flex items-start gap-2"><span className="text-red-500">✗</span><span>Selfies don't capture the magic of travel</span></li>
-            <li className="flex items-start gap-2"><span className="text-red-500">✗</span><span>Finding reliable local photographers is risky</span></li>
-            <li className="flex items-start gap-2"><span className="text-red-500">✗</span><span>No easy way to book, pay, or receive photos</span></li>
-          </ul>
-        </div>
-        <div className="p-5 bg-orange-50 rounded-xl border border-orange-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">For Photographers</h3>
-          <ul className="space-y-2 text-gray-700 text-sm">
-            <li className="flex items-start gap-2"><span className="text-orange-500">✗</span><span>Difficulty finding consistent clients</span></li>
-            <li className="flex items-start gap-2"><span className="text-orange-500">✗</span><span>No platform for on-demand photo sessions</span></li>
-            <li className="flex items-start gap-2"><span className="text-orange-500">✗</span><span>International payment collection is complicated</span></li>
-          </ul>
-        </div>
-      </div>
-      <div className="mt-4 p-4 bg-gray-100 rounded-xl text-center">
-        <p className="text-lg text-gray-800 font-medium">"78% of millennials prefer spending on experiences over things"</p>
-        <p className="text-sm text-gray-500">— Harris Poll</p>
-      </div>
-    </div>,
-
-    // Slide 3: Solution
-    <div key="solution" className="pdf-slide w-[792px] h-[612px] flex flex-col text-white p-10" style={{background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)'}}>
-      <h2 className="text-4xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">💡</span>
-        The Solution: SnapNow
-      </h2>
-      <div className="grid grid-cols-3 gap-4 flex-1">
-        <div className="bg-white/10 rounded-xl p-5 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-3">
-            <MapPin className="w-7 h-7" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Discover</h3>
-          <p className="text-white/80 text-sm">Find verified local photographers near any destination</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-5 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-3">
-            <Calendar className="w-7 h-7" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Book Instantly</h3>
-          <p className="text-white/80 text-sm">Request sessions in minutes with dynamic availability</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-5 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-3">
-            <Image className="w-7 h-7" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Receive & Share</h3>
-          <p className="text-white/80 text-sm">Get photos delivered to your in-app gallery</p>
-        </div>
-      </div>
-      <div className="mt-4 bg-white/10 rounded-xl p-4 text-center">
-        <p className="text-xl font-semibold">"Book a photographer as easily as you'd book an Uber"</p>
-      </div>
-    </div>,
-
-    // Slide 4: Market
-    <div key="market" className="pdf-slide w-[792px] h-[612px] flex flex-col bg-white p-10">
-      <h2 className="text-4xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-2xl">📊</span>
-        Market Opportunity
-      </h2>
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div className="text-center p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <p className="text-4xl font-bold text-blue-600 mb-1">$44B</p>
-          <p className="text-sm text-gray-600 font-medium">Photography Services Market</p>
-          <p className="text-xs text-gray-500">Growing 5.4% annually</p>
-        </div>
-        <div className="text-center p-4 bg-purple-50 rounded-xl border border-purple-100">
-          <p className="text-4xl font-bold text-purple-600 mb-1">1.5B</p>
-          <p className="text-sm text-gray-600 font-medium">International Tourists</p>
-          <p className="text-xs text-gray-500">Recovering fast post-pandemic</p>
-        </div>
-        <div className="text-center p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-          <p className="text-4xl font-bold text-emerald-600 mb-1">$200+</p>
-          <p className="text-sm text-gray-600 font-medium">Average Session Value</p>
-          <p className="text-xs text-gray-500">High willingness to pay</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-4 flex-1">
-        <div className="p-4 bg-gray-50 rounded-xl">
-          <h4 className="font-semibold text-gray-900 mb-2">Target Users</h4>
-          <ul className="text-gray-600 space-y-1 text-sm">
-            <li>• Couples on honeymoons & engagements</li>
-            <li>• Families on vacation</li>
-            <li>• Solo travelers & influencers</li>
-            <li>• Business travelers</li>
-          </ul>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl">
-          <h4 className="font-semibold text-gray-900 mb-2">Geographic Focus</h4>
-          <ul className="text-gray-600 space-y-1 text-sm">
-            <li>• Major tourist destinations</li>
-            <li>• Instagram-famous locations</li>
-            <li>• Wedding & honeymoon hotspots</li>
-            <li>• Urban centers with tourist traffic</li>
-          </ul>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 5: Business Model
-    <div key="business" className="pdf-slide w-[792px] h-[612px] flex flex-col text-white p-10" style={{background: 'linear-gradient(135deg, #f59e0b 0%, #ea580c 100%)'}}>
-      <h2 className="text-4xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">💰</span>
-        Business Model
-      </h2>
-      <div className="grid grid-cols-2 gap-6 flex-1">
-        <div className="bg-white/10 rounded-xl p-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Two-Sided Revenue
-          </h3>
-          <div className="space-y-4">
-            <div className="bg-white/10 rounded-lg p-3">
-              <p className="text-2xl font-bold mb-1">10%</p>
-              <p className="text-white/80 text-sm">Customer Service Fee</p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <p className="text-2xl font-bold mb-1">20%</p>
-              <p className="text-white/80 text-sm">Photographer Commission</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white/10 rounded-xl p-6">
-          <h3 className="text-xl font-semibold mb-4">Revenue Example</h3>
-          <div className="bg-white/10 rounded-lg p-4 space-y-2 text-sm">
-            <div className="flex justify-between border-b border-white/20 pb-2">
-              <span>Session Price</span>
-              <span className="font-semibold">$150.00</span>
-            </div>
-            <div className="flex justify-between text-white/80">
-              <span>Customer Pays (+10%)</span>
-              <span>$165.00</span>
-            </div>
-            <div className="flex justify-between text-white/80">
-              <span>Photographer Gets (80%)</span>
-              <span>$120.00</span>
-            </div>
-            <div className="flex justify-between pt-2 border-t border-white/20 font-bold">
-              <span>SnapNow Revenue</span>
-              <span>$45.00</span>
-            </div>
-            <p className="text-xs text-white/60 text-center pt-2">30% effective take rate</p>
-          </div>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 6: Features
-    <div key="features" className="pdf-slide w-[792px] h-[612px] flex flex-col bg-white p-10">
-      <h2 className="text-4xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-2xl">⚡</span>
-        Platform Features
-      </h2>
-      <div className="grid grid-cols-3 gap-4 flex-1">
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <MapPin className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Location Discovery</h3>
-          <p className="text-gray-600 text-xs">Interactive map with nearby photographers</p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <Calendar className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Smart Booking</h3>
-          <p className="text-gray-600 text-xs">Dynamic response windows (30min-24h)</p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <CreditCard className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Secure Payments</h3>
-          <p className="text-gray-600 text-xs">Stripe-powered with auto fee splitting</p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <Image className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Photo Gallery</h3>
-          <p className="text-gray-600 text-xs">Permanent galleries to view & download</p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <Star className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Reviews & Ratings</h3>
-          <p className="text-gray-600 text-xs">Verified reviews with responses</p>
-        </div>
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <Sparkles className="w-8 h-8 text-violet-600 mb-2" />
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Editing Add-on</h3>
-          <p className="text-gray-600 text-xs">Post-delivery editing services</p>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 7: Competitive Advantage
-    <div key="advantage" className="pdf-slide w-[792px] h-[612px] flex flex-col text-white p-10" style={{background: 'linear-gradient(135deg, #4f46e5 0%, #2563eb 100%)'}}>
-      <h2 className="text-4xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🏆</span>
-        Why SnapNow Wins
-      </h2>
-      <div className="grid grid-cols-2 gap-6 flex-1">
-        <div>
-          <h3 className="text-xl font-semibold mb-3">vs. Traditional Booking</h3>
-          <div className="bg-white/10 rounded-xl p-4 space-y-2 text-sm">
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Book in minutes, not days</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Verified portfolios and reviews</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Secure payment protection</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>In-app delivery with gallery</span></div>
-          </div>
-        </div>
-        <div>
-          <h3 className="text-xl font-semibold mb-3">vs. Stock Photography</h3>
-          <div className="bg-white/10 rounded-xl p-4 space-y-2 text-sm">
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>YOU are in the photos</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Authentic moments captured</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Local expertise on best spots</span></div>
-            <div className="flex items-center gap-2"><span className="text-green-400">✓</span><span>Memories that last forever</span></div>
-          </div>
-        </div>
-      </div>
-      <div className="mt-4 bg-white/10 rounded-xl p-4">
-        <h4 className="font-semibold mb-2">Network Effects</h4>
-        <p className="text-white/90 text-sm">More photographers → Better coverage → More customers → Higher earnings → More photographers</p>
-      </div>
-    </div>,
-
-    // Slide 8: Roadmap
-    <div key="roadmap" className="pdf-slide w-[792px] h-[612px] flex flex-col bg-white p-10">
-      <h2 className="text-4xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-2xl">🚀</span>
-        Roadmap
-      </h2>
-      <div className="grid grid-cols-4 gap-3 flex-1">
-        <div className="bg-green-50 rounded-xl p-4 border-2 border-green-200 relative">
-          <div className="absolute -top-2 left-3 bg-green-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">Complete</div>
-          <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">Phase 1: MVP</h3>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>✓ User auth</li>
-            <li>✓ Profiles</li>
-            <li>✓ Booking</li>
-            <li>✓ Payments</li>
-            <li>✓ Photo delivery</li>
-            <li>✓ Reviews</li>
-          </ul>
-        </div>
-        <div className="bg-blue-50 rounded-xl p-4 border-2 border-blue-200 relative">
-          <div className="absolute -top-2 left-3 bg-blue-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">Next</div>
-          <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">Phase 2: Mobile</h3>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>○ iOS launch</li>
-            <li>○ Android</li>
-            <li>○ Push notifs</li>
-            <li>○ Messaging</li>
-            <li>○ Camera</li>
-          </ul>
-        </div>
-        <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-200 relative">
-          <div className="absolute -top-2 left-3 bg-purple-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">Q3 2025</div>
-          <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">Phase 3: Scale</h3>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>○ 10 cities</li>
-            <li>○ Onboarding</li>
-            <li>○ Marketing</li>
-            <li>○ Partners</li>
-            <li>○ AI curation</li>
-          </ul>
-        </div>
-        <div className="bg-amber-50 rounded-xl p-4 border-2 border-amber-200 relative">
-          <div className="absolute -top-2 left-3 bg-amber-500 text-white px-2 py-0.5 rounded-full text-xs font-medium">2026</div>
-          <h3 className="text-sm font-semibold text-gray-900 mt-3 mb-2">Phase 4: Expand</h3>
-          <ul className="text-xs text-gray-600 space-y-1">
-            <li>○ 50+ cities</li>
-            <li>○ Video</li>
-            <li>○ Drones</li>
-            <li>○ Events</li>
-            <li>○ Enterprise</li>
-          </ul>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 9: The Ask
-    <div key="ask" className="pdf-slide w-[792px] h-[612px] flex flex-col text-white p-10" style={{background: 'linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #4f46e5 100%)'}}>
-      <h2 className="text-4xl font-bold mb-6 flex items-center gap-3">
-        <span className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">🤝</span>
-        The Ask
-      </h2>
-      <div className="flex-1 flex flex-col items-center justify-center">
-        <div className="bg-white/10 rounded-2xl p-8 text-center max-w-lg">
-          <p className="text-5xl font-bold mb-3">$500K</p>
-          <p className="text-2xl text-white/90 mb-6">Seed Round</p>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-white/10 rounded-lg p-3">
-              <p className="text-2xl font-bold mb-1">40%</p>
-              <p className="text-xs text-white/80">Product Dev</p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <p className="text-2xl font-bold mb-1">35%</p>
-              <p className="text-xs text-white/80">Growth</p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-3">
-              <p className="text-2xl font-bold mb-1">25%</p>
-              <p className="text-xs text-white/80">Operations</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="text-lg text-white/90 mb-3">Let's capture the world's memories, together.</p>
-        <div className="flex items-center justify-center gap-2">
-          <Camera className="w-6 h-6" />
-          <span className="text-2xl font-bold">SnapNow</span>
-        </div>
-      </div>
-    </div>,
-
-    // Slide 10: Contact
-    <div key="contact" className="pdf-slide w-[792px] h-[612px] flex flex-col items-center justify-center bg-gray-900 text-white p-10">
-      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mb-6">
-        <Camera className="w-8 h-8" />
-      </div>
-      <h1 className="text-5xl font-bold mb-3">Thank You</h1>
-      <p className="text-xl text-gray-400 mb-8">Let's discuss how we can work together</p>
-      <div className="bg-gray-800 rounded-xl p-6 w-80">
-        <div className="space-y-3 text-left">
-          <div>
-            <p className="text-gray-400 text-xs">Contact</p>
-            <p className="text-lg">your.email@example.com</p>
-          </div>
-          <div>
-            <p className="text-gray-400 text-xs">Website</p>
-            <p className="text-lg">www.snapnow.app</p>
-          </div>
-        </div>
-      </div>
-      <p className="mt-8 text-gray-500 text-sm">© 2025 SnapNow. All rights reserved.</p>
-    </div>
-  ];
-
-  // Interactive slides for the viewer (responsive)
-  const viewerSlides = [
-    // Slide 1: Cover
-    <div key="cover" className="min-h-[500px] flex flex-col items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 text-white p-8 md:p-12">
-      <div className="w-16 md:w-20 h-16 md:h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-        <Camera className="w-8 md:w-10 h-8 md:h-10" />
-      </div>
-      <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">SnapNow</h1>
-      <p className="text-xl md:text-2xl text-white/90 mb-6 text-center">The Uber for Professional Photography</p>
-      <div className="flex items-center gap-2 text-sm md:text-base text-white/80 text-center">
-        <MapPin className="w-4 h-4" />
-        <span>Connecting Travelers with Local Photographers Worldwide</span>
-      </div>
-      <div className="mt-8 text-white/60 text-sm">Investor Presentation 2025</div>
-    </div>,
-
-    // Slide 2-10: Simplified for viewer
-    <div key="problem" className="min-h-[500px] flex flex-col bg-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <span className="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-lg font-bold">!</span>
-        The Problem
-      </h2>
-      <div className="space-y-4 flex-1">
-        <div className="p-4 bg-red-50 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-2">For Travelers</h3>
-          <p className="text-gray-600 text-sm">Finding reliable photographers is risky and time-consuming</p>
-        </div>
-        <div className="p-4 bg-orange-50 rounded-xl">
-          <h3 className="font-semibold text-gray-900 mb-2">For Photographers</h3>
-          <p className="text-gray-600 text-sm">No platform for on-demand tourist photo sessions</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="solution" className="min-h-[500px] flex flex-col bg-gradient-to-br from-emerald-500 to-teal-600 text-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold mb-4">💡 The Solution</h2>
-      <div className="space-y-3 flex-1">
-        <div className="bg-white/10 rounded-xl p-4 text-center">
-          <MapPin className="w-6 h-6 mx-auto mb-2" />
-          <p className="font-semibold">Discover</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4 text-center">
-          <Calendar className="w-6 h-6 mx-auto mb-2" />
-          <p className="font-semibold">Book Instantly</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4 text-center">
-          <Image className="w-6 h-6 mx-auto mb-2" />
-          <p className="font-semibold">Receive & Share</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="market" className="min-h-[500px] flex flex-col bg-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">📊 Market</h2>
-      <div className="space-y-3 flex-1">
-        <div className="text-center p-4 bg-blue-50 rounded-xl">
-          <p className="text-3xl font-bold text-blue-600">$44B</p>
-          <p className="text-sm text-gray-600">Photography Market</p>
-        </div>
-        <div className="text-center p-4 bg-purple-50 rounded-xl">
-          <p className="text-3xl font-bold text-purple-600">1.5B</p>
-          <p className="text-sm text-gray-600">Tourists Annually</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="business" className="min-h-[500px] flex flex-col bg-gradient-to-br from-amber-500 to-orange-600 text-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold mb-4">💰 Business Model</h2>
-      <div className="space-y-3 flex-1">
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-2xl font-bold">10%</p>
-          <p className="text-sm text-white/80">Customer Fee</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-2xl font-bold">20%</p>
-          <p className="text-sm text-white/80">Photographer Commission</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-2xl font-bold">30%</p>
-          <p className="text-sm text-white/80">Effective Take Rate</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="features" className="min-h-[500px] flex flex-col bg-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">⚡ Features</h2>
-      <div className="grid grid-cols-2 gap-3 flex-1">
-        <div className="p-3 bg-gray-50 rounded-xl text-center">
-          <MapPin className="w-6 h-6 text-violet-600 mx-auto mb-1" />
-          <p className="text-xs font-medium">Discovery</p>
-        </div>
-        <div className="p-3 bg-gray-50 rounded-xl text-center">
-          <Calendar className="w-6 h-6 text-violet-600 mx-auto mb-1" />
-          <p className="text-xs font-medium">Booking</p>
-        </div>
-        <div className="p-3 bg-gray-50 rounded-xl text-center">
-          <CreditCard className="w-6 h-6 text-violet-600 mx-auto mb-1" />
-          <p className="text-xs font-medium">Payments</p>
-        </div>
-        <div className="p-3 bg-gray-50 rounded-xl text-center">
-          <Star className="w-6 h-6 text-violet-600 mx-auto mb-1" />
-          <p className="text-xs font-medium">Reviews</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="advantage" className="min-h-[500px] flex flex-col bg-gradient-to-br from-indigo-600 to-blue-700 text-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold mb-4">🏆 Why We Win</h2>
-      <div className="space-y-2 flex-1 text-sm">
-        <p className="flex items-center gap-2"><span className="text-green-400">✓</span> Book in minutes</p>
-        <p className="flex items-center gap-2"><span className="text-green-400">✓</span> Verified photographers</p>
-        <p className="flex items-center gap-2"><span className="text-green-400">✓</span> Secure payments</p>
-        <p className="flex items-center gap-2"><span className="text-green-400">✓</span> In-app delivery</p>
-        <p className="flex items-center gap-2"><span className="text-green-400">✓</span> Network effects</p>
-      </div>
-    </div>,
-
-    <div key="roadmap" className="min-h-[500px] flex flex-col bg-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">🚀 Roadmap</h2>
-      <div className="space-y-3 flex-1">
-        <div className="p-3 bg-green-50 rounded-xl border border-green-200">
-          <p className="font-semibold text-sm text-green-700">Phase 1: MVP ✓</p>
-        </div>
-        <div className="p-3 bg-blue-50 rounded-xl border border-blue-200">
-          <p className="font-semibold text-sm text-blue-700">Phase 2: Mobile Apps</p>
-        </div>
-        <div className="p-3 bg-purple-50 rounded-xl border border-purple-200">
-          <p className="font-semibold text-sm text-purple-700">Phase 3: Scale (10 cities)</p>
-        </div>
-        <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
-          <p className="font-semibold text-sm text-amber-700">Phase 4: 50+ cities</p>
-        </div>
-      </div>
-    </div>,
-
-    <div key="ask" className="min-h-[500px] flex flex-col items-center justify-center bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 text-white p-6 md:p-10">
-      <h2 className="text-2xl md:text-3xl font-bold mb-4">🤝 The Ask</h2>
-      <div className="bg-white/10 rounded-2xl p-6 text-center">
-        <p className="text-4xl font-bold mb-2">$500K</p>
-        <p className="text-lg text-white/90">Seed Round</p>
-      </div>
-      <div className="mt-6 flex items-center gap-2">
-        <Camera className="w-5 h-5" />
-        <span className="text-xl font-bold">SnapNow</span>
-      </div>
-    </div>,
-
-    <div key="contact" className="min-h-[500px] flex flex-col items-center justify-center bg-gray-900 text-white p-6 md:p-10">
-      <Camera className="w-12 h-12 mb-4" />
-      <h1 className="text-3xl font-bold mb-2">Thank You</h1>
-      <p className="text-gray-400 mb-6">Let's work together</p>
-      <div className="bg-gray-800 rounded-xl p-4 text-sm">
-        <p>your.email@example.com</p>
-      </div>
-    </div>
-  ];
-
-  const nextSlide = () => setCurrentSlide((prev) => Math.min(prev + 1, viewerSlides.length - 1));
-  const prevSlide = () => setCurrentSlide((prev) => Math.max(prev - 1, 0));
-
-  // Mobile view - simplified with prominent download button
-  if (isMobile) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 flex flex-col">
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-white font-semibold">SnapNow</span>
-          </div>
-          <span className="text-white/60 text-sm">Investor Pitch</span>
-        </div>
-
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="w-20 h-20 rounded-2xl bg-white/20 flex items-center justify-center mb-6">
-            <Camera className="w-10 h-10 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white mb-2">SnapNow</h1>
-          <p className="text-white/80 mb-8">Investor Pitch Deck</p>
-          
-          <Button
-            onClick={handleDownloadPDF}
-            disabled={isGenerating}
-            size="lg"
-            className="bg-white text-violet-600 hover:bg-white/90 font-semibold px-8 py-6 text-lg rounded-xl shadow-lg"
-            data-testid="button-download-pdf-mobile"
-          >
-            <Download className="w-5 h-5 mr-2" />
-            {isGenerating ? "Generating..." : "Download PDF"}
-          </Button>
-          
-          <p className="text-white/60 text-sm mt-4">10-slide investor presentation</p>
-
-          <div className="mt-8 p-4 bg-white/10 rounded-xl max-w-xs">
-            <div className="flex items-center gap-2 text-white/80 text-sm mb-2">
-              <Monitor className="w-4 h-4" />
-              <span>Preview slides on desktop</span>
-            </div>
-            <p className="text-white/60 text-xs">Open on a larger screen for the slide viewer.</p>
-          </div>
-        </div>
-
-        {/* PDF Content - Hidden until generating */}
-        {showPdfContent && (
-          <div ref={pdfContainerRef} className="fixed top-0 left-0 bg-white z-50">
-            {pdfSlides}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // Desktop view - full slide viewer
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-sm z-50 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={prevSlide}
-            disabled={currentSlide === 0}
-            data-testid="button-prev-slide"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </Button>
-          <span className="text-sm text-gray-600" data-testid="text-slide-count">
-            Slide {currentSlide + 1} of {viewerSlides.length}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={nextSlide}
-            disabled={currentSlide === viewerSlides.length - 1}
-            data-testid="button-next-slide"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-        <Button
-          onClick={handleDownloadPDF}
-          disabled={isGenerating}
-          className="bg-violet-600 hover:bg-violet-700"
+    <div className="min-h-screen bg-gray-900">
+      {/* Header - Hidden when printing */}
+      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
+        </button>
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition-colors"
           data-testid="button-download-pdf"
         >
-          <Download className="w-4 h-4 mr-2" />
-          {isGenerating ? "Generating..." : "Download PDF"}
-        </Button>
+          <Printer className="w-4 h-4" />
+          Print / Save PDF
+        </button>
       </div>
 
-      <div className="pt-20 pb-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-            {viewerSlides[currentSlide]}
+      <div ref={contentRef} className="max-w-4xl mx-auto p-8 text-white bg-gray-900">
+        
+        {/* Slide 1: Cover */}
+        <div className="text-center py-16 mb-12 border-b-2 border-violet-500" style={{ pageBreakAfter: "always" }}>
+          <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-8">
+            <Camera className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-6xl font-bold text-white mb-4">SnapNow</h1>
+          <p className="text-2xl text-violet-400 font-medium mb-6">The Uber for Professional Photography</p>
+          <div className="flex items-center justify-center gap-2 text-lg text-gray-400">
+            <MapPin className="w-5 h-5" />
+            <span>Connecting Travelers with Local Photographers Worldwide</span>
+          </div>
+          <p className="mt-12 text-gray-500">Investor Presentation | 2025</p>
+        </div>
+
+        {/* Slide 2: The Problem */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-red-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-2xl font-bold">!</span>
+            The Problem
+          </h2>
+          
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="bg-red-900/30 rounded-xl p-6 border border-red-800/50">
+              <h3 className="font-bold text-xl text-red-400 mb-4">For Travelers</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">✗</span>
+                  <span>Selfies and tourist photos don't capture the magic of travel</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">✗</span>
+                  <span>Finding reliable local photographers is time-consuming and risky</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">✗</span>
+                  <span>No easy way to book, pay, or receive photos while traveling</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">✗</span>
+                  <span>Language barriers and payment friction with international photographers</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-orange-900/30 rounded-xl p-6 border border-orange-800/50">
+              <h3 className="font-bold text-xl text-orange-400 mb-4">For Photographers</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">✗</span>
+                  <span>Difficulty finding consistent clients, especially tourists</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">✗</span>
+                  <span>No platform designed for short, on-demand photo sessions</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">✗</span>
+                  <span>Payment collection from international clients is complicated</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-orange-400 mt-1">✗</span>
+                  <span>High customer acquisition costs with limited geographic reach</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <div className="mt-6 flex gap-2 overflow-x-auto pb-4">
-            {['Cover', 'Problem', 'Solution', 'Market', 'Business', 'Features', 'Advantage', 'Roadmap', 'The Ask', 'Contact'].map((name, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentSlide(index)}
-                className={`flex-shrink-0 w-20 h-14 rounded-lg border-2 transition-all ${
-                  currentSlide === index
-                    ? "border-violet-600 ring-2 ring-violet-200"
-                    : "border-gray-200 hover:border-gray-300"
-                }`}
-                data-testid={`button-slide-thumbnail-${index}`}
-              >
-                <div className="w-full h-full bg-gray-100 rounded-md flex items-center justify-center text-xs text-gray-500 px-1 text-center">
-                  {name}
+          <div className="bg-gray-800/50 rounded-xl p-6 text-center border border-gray-700">
+            <p className="text-xl text-gray-300 italic">
+              "78% of millennials say they'd rather spend money on experiences than things"
+            </p>
+            <p className="text-sm text-gray-500 mt-2">— Harris Poll</p>
+          </div>
+        </section>
+
+        {/* Slide 3: The Solution */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-emerald-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">💡</span>
+            The Solution: SnapNow
+          </h2>
+
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="bg-emerald-900/30 rounded-xl p-6 border border-emerald-800/50 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="font-bold text-xl text-emerald-400 mb-2">Discover</h3>
+              <p className="text-gray-300">Find verified local photographers near any tourist destination with real portfolios and reviews</p>
+            </div>
+            
+            <div className="bg-emerald-900/30 rounded-xl p-6 border border-emerald-800/50 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="font-bold text-xl text-emerald-400 mb-2">Book Instantly</h3>
+              <p className="text-gray-300">Request sessions in minutes, not days. Photographers respond quickly with dynamic availability</p>
+            </div>
+            
+            <div className="bg-emerald-900/30 rounded-xl p-6 border border-emerald-800/50 text-center">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
+                <Image className="w-8 h-8 text-emerald-400" />
+              </div>
+              <h3 className="font-bold text-xl text-emerald-400 mb-2">Receive & Share</h3>
+              <p className="text-gray-300">Get professionally edited photos delivered to your permanent in-app gallery within hours</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-emerald-900/50 to-teal-900/50 rounded-xl p-6 text-center border border-emerald-700/50">
+            <p className="text-2xl font-semibold text-white">
+              "Book a photographer as easily as you'd book an Uber"
+            </p>
+          </div>
+        </section>
+
+        {/* Slide 4: Market Opportunity */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-blue-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center text-2xl">📊</span>
+            Market Opportunity
+          </h2>
+
+          <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="bg-blue-900/30 rounded-xl p-6 border border-blue-800/50 text-center">
+              <p className="text-5xl font-bold text-blue-400 mb-2">$44B</p>
+              <p className="text-lg text-gray-300 font-medium">Global Photography Services Market</p>
+              <p className="text-sm text-gray-500 mt-2">Growing 5.4% annually</p>
+            </div>
+            
+            <div className="bg-purple-900/30 rounded-xl p-6 border border-purple-800/50 text-center">
+              <p className="text-5xl font-bold text-purple-400 mb-2">1.5B</p>
+              <p className="text-lg text-gray-300 font-medium">International Tourist Arrivals</p>
+              <p className="text-sm text-gray-500 mt-2">Pre-pandemic peak, recovering fast</p>
+            </div>
+            
+            <div className="bg-green-900/30 rounded-xl p-6 border border-green-800/50 text-center">
+              <p className="text-5xl font-bold text-green-400 mb-2">$200+</p>
+              <p className="text-lg text-gray-300 font-medium">Average Session Value</p>
+              <p className="text-sm text-gray-500 mt-2">High willingness to pay for memories</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <h4 className="font-bold text-lg text-white mb-4">Target Users</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Couples on honeymoons & engagements</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Families on vacation</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Solo travelers & influencers</li>
+                <li className="flex items-center gap-2"><span className="text-blue-400">•</span> Business travelers capturing experiences</li>
+              </ul>
+            </div>
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <h4 className="font-bold text-lg text-white mb-4">Geographic Focus</h4>
+              <ul className="space-y-2 text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Major tourist destinations worldwide</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Instagram-famous locations</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Wedding & honeymoon hotspots</li>
+                <li className="flex items-center gap-2"><span className="text-purple-400">•</span> Urban centers with high tourist traffic</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Slide 5: Business Model */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-amber-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-2xl">💰</span>
+            Business Model
+          </h2>
+
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="bg-amber-900/30 rounded-xl p-6 border border-amber-800/50">
+              <h3 className="font-bold text-xl text-amber-400 mb-6 flex items-center gap-2">
+                <CreditCard className="w-6 h-6" />
+                Two-Sided Revenue
+              </h3>
+              <div className="space-y-4">
+                <div className="bg-amber-900/50 rounded-lg p-4">
+                  <p className="text-4xl font-bold text-amber-400 mb-1">10%</p>
+                  <p className="text-gray-300">Customer Service Fee</p>
+                  <p className="text-sm text-gray-500">Added to every booking</p>
                 </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+                <div className="bg-amber-900/50 rounded-lg p-4">
+                  <p className="text-4xl font-bold text-amber-400 mb-1">20%</p>
+                  <p className="text-gray-300">Photographer Commission</p>
+                  <p className="text-sm text-gray-500">Deducted from photographer earnings</p>
+                </div>
+              </div>
+            </div>
 
-      {/* PDF Content - Hidden until generating */}
-      {showPdfContent && (
-        <div ref={pdfContainerRef} className="fixed top-0 left-0 bg-white z-50">
-          {pdfSlides}
-        </div>
-      )}
+            <div className="bg-orange-900/30 rounded-xl p-6 border border-orange-800/50">
+              <h3 className="font-bold text-xl text-orange-400 mb-6">Revenue Example</h3>
+              <div className="bg-orange-900/50 rounded-lg p-6 space-y-3">
+                <div className="flex justify-between items-center pb-3 border-b border-orange-700/50">
+                  <span className="text-gray-300">Session Price</span>
+                  <span className="font-bold text-white text-xl">$150.00</span>
+                </div>
+                <div className="flex justify-between items-center text-gray-400">
+                  <span>Customer Pays (+10%)</span>
+                  <span>$165.00</span>
+                </div>
+                <div className="flex justify-between items-center text-gray-400">
+                  <span>Photographer Gets (80%)</span>
+                  <span>$120.00</span>
+                </div>
+                <div className="flex justify-between items-center pt-3 border-t border-orange-700/50">
+                  <span className="font-bold text-orange-400 text-lg">SnapNow Revenue</span>
+                  <span className="font-bold text-orange-400 text-2xl">$45.00</span>
+                </div>
+                <p className="text-center text-sm text-gray-500 pt-2">30% effective take rate per transaction</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gray-800/50 rounded-xl p-4 text-center border border-gray-700">
+            <p className="text-lg text-gray-300">
+              <strong className="text-amber-400">Additional Revenue Stream:</strong> Photo Editing Add-on Service (same fee structure applies)
+            </p>
+          </div>
+        </section>
+
+        {/* Slide 6: Platform Features */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-violet-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-2xl">⚡</span>
+            Platform Features
+          </h2>
+
+          <div className="grid grid-cols-3 gap-6">
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <MapPin className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">Location-Based Discovery</h3>
+              <p className="text-gray-400">Interactive map showing nearby photographers with real-time availability</p>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <Calendar className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">Smart Booking System</h3>
+              <p className="text-gray-400">Dynamic response windows based on session urgency (30 min to 24 hours)</p>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <CreditCard className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">Secure Payments</h3>
+              <p className="text-gray-400">Stripe-powered payments with automatic fee splitting and photographer payouts</p>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <Image className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">In-App Photo Gallery</h3>
+              <p className="text-gray-400">Permanent galleries for customers to view, download, and share their photos</p>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <Star className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">Reviews & Ratings</h3>
+              <p className="text-gray-400">Build trust with verified reviews and photographer response capability</p>
+            </div>
+            
+            <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+              <Sparkles className="w-10 h-10 text-violet-400 mb-4" />
+              <h3 className="font-bold text-lg text-white mb-2">Editing Add-on</h3>
+              <p className="text-gray-400">Photographers offer post-delivery editing services for additional revenue</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Slide 7: Competitive Advantage */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-indigo-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl">🏆</span>
+            Why SnapNow Wins
+          </h2>
+
+          <div className="grid grid-cols-2 gap-6 mb-8">
+            <div className="bg-indigo-900/30 rounded-xl p-6 border border-indigo-800/50">
+              <h3 className="font-bold text-xl text-indigo-400 mb-4">vs. Traditional Booking</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Book in minutes, not days of research</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Verified portfolios and real reviews</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Secure payment protection for both sides</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> In-app delivery with permanent gallery</li>
+              </ul>
+            </div>
+            
+            <div className="bg-indigo-900/30 rounded-xl p-6 border border-indigo-800/50">
+              <h3 className="font-bold text-xl text-indigo-400 mb-4">vs. Stock Photography</h3>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> YOU are in the photos, not models</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Authentic moments, not staged shots</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Local expertise on best photo spots</li>
+                <li className="flex items-center gap-2"><span className="text-green-400">✓</span> Memories that last a lifetime</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-indigo-900/50 to-blue-900/50 rounded-xl p-6 border border-indigo-700/50">
+            <h4 className="font-bold text-xl text-white mb-3">Network Effects</h4>
+            <p className="text-lg text-gray-300">
+              More photographers → Better coverage → More customers → Higher earnings → More photographers
+            </p>
+          </div>
+        </section>
+
+        {/* Slide 8: Roadmap */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-green-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-green-500/20 text-green-400 flex items-center justify-center text-2xl">🚀</span>
+            Roadmap
+          </h2>
+
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-green-900/30 rounded-xl p-5 border-2 border-green-600 relative">
+              <div className="absolute -top-3 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">Complete</div>
+              <h3 className="font-bold text-lg text-white mt-4 mb-3">Phase 1: MVP</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>✓ User authentication</li>
+                <li>✓ Photographer profiles</li>
+                <li>✓ Booking system</li>
+                <li>✓ Payment processing</li>
+                <li>✓ Photo delivery</li>
+                <li>✓ Reviews system</li>
+                <li>✓ Editing add-on</li>
+              </ul>
+            </div>
+            
+            <div className="bg-blue-900/30 rounded-xl p-5 border-2 border-blue-600 relative">
+              <div className="absolute -top-3 left-4 bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">Next</div>
+              <h3 className="font-bold text-lg text-white mt-4 mb-3">Phase 2: Mobile</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>○ iOS App Store launch</li>
+                <li>○ Android Play Store</li>
+                <li>○ Push notifications</li>
+                <li>○ In-app messaging</li>
+                <li>○ Camera integration</li>
+              </ul>
+            </div>
+            
+            <div className="bg-purple-900/30 rounded-xl p-5 border-2 border-purple-600 relative">
+              <div className="absolute -top-3 left-4 bg-purple-500 text-white px-3 py-1 rounded-full text-sm font-medium">Q3 2025</div>
+              <h3 className="font-bold text-lg text-white mt-4 mb-3">Phase 3: Scale</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>○ 10 major cities</li>
+                <li>○ Photographer onboarding</li>
+                <li>○ Marketing campaigns</li>
+                <li>○ Partner hotels/tours</li>
+                <li>○ AI photo curation</li>
+              </ul>
+            </div>
+            
+            <div className="bg-amber-900/30 rounded-xl p-5 border-2 border-amber-600 relative">
+              <div className="absolute -top-3 left-4 bg-amber-500 text-white px-3 py-1 rounded-full text-sm font-medium">2026</div>
+              <h3 className="font-bold text-lg text-white mt-4 mb-3">Phase 4: Expand</h3>
+              <ul className="space-y-2 text-sm text-gray-300">
+                <li>○ 50+ destinations</li>
+                <li>○ Video services</li>
+                <li>○ Drone photography</li>
+                <li>○ Event packages</li>
+                <li>○ Enterprise clients</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Slide 9: The Ask */}
+        <section className="mb-12 py-8" style={{ pageBreakAfter: "always", pageBreakInside: "avoid" }}>
+          <h2 className="text-4xl font-bold text-white mb-8 pb-3 border-b-2 border-violet-500 flex items-center gap-4">
+            <span className="w-12 h-12 rounded-full bg-violet-500/20 text-violet-400 flex items-center justify-center text-2xl">🤝</span>
+            The Ask
+          </h2>
+
+          <div className="flex justify-center mb-8">
+            <div className="bg-gradient-to-r from-violet-900/50 to-purple-900/50 rounded-2xl p-10 border border-violet-700/50 text-center max-w-xl">
+              <p className="text-6xl font-bold text-white mb-4">$500K</p>
+              <p className="text-2xl text-violet-400 mb-8">Seed Round</p>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-violet-900/50 rounded-xl p-4">
+                  <p className="text-3xl font-bold text-white mb-1">40%</p>
+                  <p className="text-sm text-gray-300">Product Development</p>
+                  <p className="text-xs text-gray-500">Mobile apps & features</p>
+                </div>
+                <div className="bg-violet-900/50 rounded-xl p-4">
+                  <p className="text-3xl font-bold text-white mb-1">35%</p>
+                  <p className="text-sm text-gray-300">Growth & Marketing</p>
+                  <p className="text-xs text-gray-500">User acquisition</p>
+                </div>
+                <div className="bg-violet-900/50 rounded-xl p-4">
+                  <p className="text-3xl font-bold text-white mb-1">25%</p>
+                  <p className="text-sm text-gray-300">Operations</p>
+                  <p className="text-xs text-gray-500">Team & infrastructure</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <p className="text-xl text-gray-300 mb-6">Let's capture the world's memories, together.</p>
+            <div className="flex items-center justify-center gap-3">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-3xl font-bold text-white">SnapNow</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Slide 10: Contact / Thank You */}
+        <section className="py-16 text-center">
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-8">
+            <Camera className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-5xl font-bold text-white mb-4">Thank You</h1>
+          <p className="text-2xl text-gray-400 mb-12">Let's discuss how we can work together</p>
+          
+          <div className="bg-gray-800/50 rounded-2xl p-8 max-w-md mx-auto border border-gray-700">
+            <div className="space-y-4 text-left">
+              <div>
+                <p className="text-gray-500 text-sm">Contact</p>
+                <p className="text-xl text-white">your.email@example.com</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Website</p>
+                <p className="text-xl text-white">www.snapnow.app</p>
+              </div>
+              <div>
+                <p className="text-gray-500 text-sm">Demo</p>
+                <p className="text-xl text-white">Available upon request</p>
+              </div>
+            </div>
+          </div>
+          
+          <p className="mt-12 text-gray-600">© 2025 SnapNow. All rights reserved.</p>
+        </section>
+
+      </div>
     </div>
   );
 }
