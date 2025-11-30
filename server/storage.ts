@@ -284,7 +284,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createBooking(booking: InsertBooking): Promise<Booking> {
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    // Calculate dynamic expiration based on session urgency
+    const sessionDate = new Date(booking.scheduledDate);
+    const now = new Date();
+    const hoursUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    let responseWindowMinutes: number;
+    if (hoursUntilSession <= 2) {
+      // Session in 2 hours or less → 30 minute response window
+      responseWindowMinutes = 30;
+    } else if (hoursUntilSession <= 12) {
+      // Session within 12 hours → 1 hour response window
+      responseWindowMinutes = 60;
+    } else if (hoursUntilSession <= 48) {
+      // Session within 48 hours → 4 hour response window
+      responseWindowMinutes = 240;
+    } else {
+      // Session more than 48 hours away → 24 hour response window
+      responseWindowMinutes = 24 * 60;
+    }
+    
+    const expiresAt = new Date(Date.now() + responseWindowMinutes * 60 * 1000);
     const result = await db.insert(bookings).values({ ...booking, expiresAt }).returning();
     return result[0];
   }
