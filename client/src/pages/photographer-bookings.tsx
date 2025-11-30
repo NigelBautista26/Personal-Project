@@ -104,10 +104,14 @@ export default function PhotographerBookings() {
     }
   }, [user, userLoading, setLocation]);
 
-  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
+  const expiredBookingIds = bookings
+    .filter((b: any) => b.status === 'expired')
+    .map((b: any) => b.id)
+    .sort()
+    .join(',');
 
   useEffect(() => {
-    if (expiredBookings.length === 0) return;
+    if (!expiredBookingIds) return;
     
     const STORAGE_KEY = 'snapnow_photographer_expired_notified';
     let notifiedIds: string[] = [];
@@ -118,21 +122,22 @@ export default function PhotographerBookings() {
       notifiedIds = [];
     }
     
-    const newExpiredBookings = expiredBookings.filter((b: any) => !notifiedIds.includes(b.id));
+    const expiredIds = expiredBookingIds.split(',');
+    const newExpiredIds = expiredIds.filter((id: string) => !notifiedIds.includes(id));
     
-    if (newExpiredBookings.length === 0) return;
+    if (newExpiredIds.length === 0) return;
     
-    const updatedNotifiedIds = [...notifiedIds, ...newExpiredBookings.map((b: any) => b.id)];
+    const updatedNotifiedIds = [...notifiedIds, ...newExpiredIds];
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));
     } catch (e) {}
     
     toast({
       title: "Booking Request Expired",
-      description: `${newExpiredBookings.length} booking request(s) expired because they weren't responded to in time.`,
+      description: `${newExpiredIds.length} booking request(s) expired because they weren't responded to in time.`,
       variant: "destructive",
     });
-  }, [expiredBookings, toast]);
+  }, [expiredBookingIds, toast]);
 
   const updateEditingStatusMutation = useMutation({
     mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {

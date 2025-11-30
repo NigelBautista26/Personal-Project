@@ -216,12 +216,16 @@ export default function Bookings() {
     },
   });
 
-  // Calculate filtered bookings
-  const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
+  // Calculate filtered bookings - use primitive string for stable dependency
+  const expiredBookingIds = bookings
+    .filter((b: any) => b.status === 'expired')
+    .map((b: any) => b.id)
+    .sort()
+    .join(',');
 
   // Show toast notification for NEW expired bookings only (must be before early returns)
   useEffect(() => {
-    if (expiredBookings.length === 0) return;
+    if (!expiredBookingIds) return;
     
     // Get previously notified booking IDs from localStorage
     const STORAGE_KEY = 'snapnow_expired_notified';
@@ -234,16 +238,18 @@ export default function Bookings() {
     }
     
     // Find bookings we haven't notified about yet
-    const newExpiredBookings = expiredBookings.filter((b: any) => !notifiedIds.includes(b.id));
+    const expiredIds = expiredBookingIds.split(',');
+    const newExpiredIds = expiredIds.filter((id: string) => !notifiedIds.includes(id));
     
-    if (newExpiredBookings.length === 0) return;
+    if (newExpiredIds.length === 0) return;
     
     // Mark these as notified
-    const updatedNotifiedIds = [...notifiedIds, ...newExpiredBookings.map((b: any) => b.id)];
+    const updatedNotifiedIds = [...notifiedIds, ...newExpiredIds];
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));
     } catch (e) {}
     
+    const newExpiredBookings = bookings.filter((b: any) => b.status === 'expired' && newExpiredIds.includes(b.id));
     const photographerNames = newExpiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
     
     // Play notification sound
@@ -292,7 +298,8 @@ export default function Bookings() {
       ),
       { duration: 4000 }
     );
-  }, [expiredBookings, setLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiredBookingIds, setLocation]);
 
   if (userLoading) {
     return (
