@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { ArrowLeft, Camera, User as UserIcon, Loader2, X, Check, ZoomIn, ZoomOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCurrentUser, updateUserProfile, getUserUploadUrl } from "@/lib/api";
+import { getCurrentUser, updateUserProfile, getUserUploadUrl, setUserProfilePicture } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -148,10 +148,9 @@ export default function AccountDetails() {
         throw new Error("Failed to upload photo");
       }
 
-      const publicUrl = uploadUrl.objectPath;
-      setProfileImage(publicUrl);
-      
-      await updateUserProfile({ profileImageUrl: publicUrl });
+      // Set ACL and save to profile using the dedicated endpoint
+      const user = await setUserProfilePicture(uploadUrl.objectPath);
+      setProfileImage(user.profileImageUrl);
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       
       toast({

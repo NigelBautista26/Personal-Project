@@ -169,6 +169,38 @@ export async function registerRoutes(
     }
   });
 
+  // Set user profile picture (after upload, set ACL and save URL)
+  app.post("/api/users/me/profile-picture", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      if (!req.body.imageURL) {
+        return res.status(400).json({ error: "imageURL is required" });
+      }
+
+      const userId = req.session.userId;
+      const objectStorageService = new ObjectStorageService();
+      
+      // Set ACL policy - owner is the user, visibility is public
+      const objectPath = await objectStorageService.trySetObjectEntityAclPolicy(
+        req.body.imageURL,
+        {
+          owner: userId,
+          visibility: "public",
+        },
+      );
+
+      // Update user profile with the image URL
+      const user = await storage.updateUser(userId, { profileImageUrl: objectPath });
+      res.status(200).json(user);
+    } catch (error) {
+      console.error("Error setting user profile picture:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Photographer Routes
   
   // Get current photographer's own profile
@@ -828,19 +860,25 @@ export async function registerRoutes(
   });
 
   app.get("/objects/:objectPath(*)", async (req, res) => {
+    console.log("Object request:", req.path, "userId:", req.session.userId);
     if (!req.session.userId) {
+      console.log("Object request denied - not authenticated");
       return res.status(401).json({ error: "Not authenticated" });
     }
 
     const userId = req.session.userId;
     const objectStorageService = new ObjectStorageService();
     try {
+      console.log("Getting object file for path:", req.path);
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      console.log("Object file found:", objectFile.name);
       const canAccess = await objectStorageService.canAccessObjectEntity({
         objectFile,
         userId: userId,
       });
+      console.log("Can access:", canAccess);
       if (!canAccess) {
+        console.log("Access denied for user:", userId);
         return res.sendStatus(401);
       }
       objectStorageService.downloadObject(objectFile, res);

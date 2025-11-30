@@ -178,3 +178,18 @@ export async function getUserUploadUrl(): Promise<{ uploadUrl: { uploadURL: stri
   
   return response.json();
 }
+
+export async function setUserProfilePicture(imageURL: string): Promise<User> {
+  const response = await fetch(`${API_BASE}/users/me/profile-picture`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageURL }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Failed to set profile picture");
+  }
+  
+  return response.json();
+}
