@@ -732,7 +732,7 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-lg w-[95vw] max-h-[80vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
+        <DialogContent className="max-w-md w-[92vw] max-h-[75vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col">
           {/* Header */}
           <div className="flex flex-col gap-2 p-4 pr-12 border-b border-white/10 shrink-0">
             <div className="flex items-start justify-between">
