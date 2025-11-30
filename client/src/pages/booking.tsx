@@ -342,7 +342,7 @@ export default function Booking() {
       </div>
 
       <Dialog open={showLocationPicker} onOpenChange={setShowLocationPicker}>
-        <DialogContent className="max-w-md bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="max-w-md w-[92vw] bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="text-white">Choose Location</DialogTitle>
           </DialogHeader>

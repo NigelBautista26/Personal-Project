@@ -922,7 +922,7 @@ export default function Bookings() {
           setEditingDialogBooking(null);
         }
       }}>
-        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
+        <DialogContent className="max-w-md w-[92vw] bg-zinc-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Palette className="w-5 h-5 text-violet-400" />
@@ -1057,7 +1057,7 @@ export default function Bookings() {
 
       {/* Review Modal */}
       <Dialog open={!!reviewingBookingId} onOpenChange={(open) => !open && setReviewingBookingId(null)}>
-        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
+        <DialogContent className="max-w-md w-[92vw] bg-zinc-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-400" />
