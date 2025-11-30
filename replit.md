@@ -59,6 +59,7 @@ Preferred communication style: Simple, everyday language.
 - `photographers` table: Extended profile data with location coordinates, portfolio, pricing
 - `bookings` table: Session reservations with status tracking and payment references
 - `earnings` table: Payment tracking for photographers with platform fee calculations
+- `reviews` table: Customer reviews with 1-5 star ratings, comments, and photographer responses (unique constraint per booking)
 
 **Key Architectural Patterns:**
 - Repository pattern via `IStorage` interface (DatabaseStorage implementation)
