@@ -97,6 +97,42 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const editingServices = pgTable("editing_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  photographerId: varchar("photographer_id").notNull().references(() => photographers.id).unique(),
+  isEnabled: boolean("is_enabled").default(false).notNull(),
+  pricingModel: text("pricing_model").notNull().default("flat"), // 'flat' or 'per_photo'
+  flatRate: decimal("flat_rate", { precision: 10, scale: 2 }), // price for flat rate editing
+  perPhotoRate: decimal("per_photo_rate", { precision: 10, scale: 2 }), // price per photo
+  turnaroundDays: integer("turnaround_days").default(3), // estimated delivery time
+  description: text("description"), // what's included in editing service
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const editingRequests = pgTable("editing_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bookingId: varchar("booking_id").notNull().references(() => bookings.id),
+  customerId: varchar("customer_id").notNull().references(() => users.id),
+  photographerId: varchar("photographer_id").notNull().references(() => photographers.id),
+  photoCount: integer("photo_count"), // number of photos to edit (for per_photo pricing)
+  pricingModel: text("pricing_model").notNull(), // 'flat' or 'per_photo'
+  baseAmount: decimal("base_amount", { precision: 10, scale: 2 }).notNull(),
+  customerServiceFee: decimal("customer_service_fee", { precision: 10, scale: 2 }).notNull(), // 10% fee
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // 20% from photographer
+  photographerEarnings: decimal("photographer_earnings", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("requested"), // requested, accepted, in_progress, delivered, completed, declined, cancelled
+  customerNotes: text("customer_notes"), // special requests from customer
+  photographerNotes: text("photographer_notes"), // notes from photographer
+  editedPhotos: text("edited_photos").array().default(sql`ARRAY[]::text[]`), // delivered edited photos
+  requestedAt: timestamp("requested_at").defaultNow().notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  deliveredAt: timestamp("delivered_at"),
+  completedAt: timestamp("completed_at"),
+  declinedAt: timestamp("declined_at"),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -138,6 +174,22 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   createdAt: true,
   photographerResponse: true,
   respondedAt: true,
+});
+
+export const insertEditingServiceSchema = createInsertSchema(editingServices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEditingRequestSchema = createInsertSchema(editingRequests).omit({
+  id: true,
+  requestedAt: true,
+  acceptedAt: true,
+  deliveredAt: true,
+  completedAt: true,
+  declinedAt: true,
+  editedPhotos: true,
 });
 
 // Types
@@ -182,5 +234,26 @@ export type ReviewWithCustomer = Review & {
   customer: {
     fullName: string;
     profileImageUrl: string | null;
+  };
+};
+
+export type InsertEditingService = z.infer<typeof insertEditingServiceSchema>;
+export type EditingService = typeof editingServices.$inferSelect;
+
+export type InsertEditingRequest = z.infer<typeof insertEditingRequestSchema>;
+export type EditingRequest = typeof editingRequests.$inferSelect;
+
+export type EditingRequestWithDetails = EditingRequest & {
+  customer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+  photographer: {
+    fullName: string;
+    profileImageUrl: string | null;
+  };
+  booking: {
+    location: string;
+    scheduledDate: Date;
   };
 };
