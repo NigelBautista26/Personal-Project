@@ -117,6 +117,8 @@ Preferred communication style: Simple, everyday language.
 
 - **Customer Reviews System** (Nov 2025): Full review system with 1-5 star ratings, comments, and photographer response capability. Reviews display in a sliding bottom sheet for clean profile layout. Rating aggregates calculated from real review data.
 
+**Demo Accounts:** All demo accounts use password "password" for easy testing.
+
 ## Feature Backlog
 
 **Planned Features:**
