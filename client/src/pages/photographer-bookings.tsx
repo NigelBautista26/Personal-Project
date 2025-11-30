@@ -739,30 +739,31 @@ export default function PhotographerBookings() {
             <p className="text-sm text-muted-foreground mb-4">These sessions are complete. Upload photos to finalize and get paid.</p>
             <div className="space-y-4">
               {awaitingUploadBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-blue-500/30" data-testid={`booking-upload-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
-                        {booking.customer?.profileImageUrl ? (
-                          <img 
-                            src={booking.customer.profileImageUrl} 
-                            alt={booking.customer.fullName} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-blue-400" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-4 border border-blue-500/30" data-testid={`booking-upload-${booking.id}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {booking.customer?.profileImageUrl ? (
+                        <img 
+                          src={booking.customer.profileImageUrl} 
+                          alt={booking.customer.fullName} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-blue-400" />
+                      )}
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">upload photos</span>
-                      <p className="text-white font-bold mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {booking.location}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-lg font-bold text-blue-400">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">earnings</p>
                     </div>
                   </div>
                   
@@ -782,40 +783,44 @@ export default function PhotographerBookings() {
 
         {completedBookings.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-white mb-4">Completed Sessions</h2>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Check className="w-5 h-5 text-green-400" />
+              Completed Sessions
+            </h2>
             <div className="space-y-4">
               {completedBookings.slice(0, 5).map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-completed-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-muted/20 flex items-center justify-center overflow-hidden">
-                        {booking.customer?.profileImageUrl ? (
-                          <img 
-                            src={booking.customer.profileImageUrl} 
-                            alt={booking.customer.fullName} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-4" data-testid={`booking-completed-${booking.id}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {booking.customer?.profileImageUrl ? (
+                        <img 
+                          src={booking.customer.profileImageUrl} 
+                          alt={booking.customer.fullName} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-green-400" />
+                      )}
                     </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">completed</span>
-                      <p className="text-white font-bold mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {booking.location}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-lg font-bold text-green-400">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">earned</p>
                     </div>
                   </div>
                   
                   <Button
                     onClick={() => handleOpenUploadDialog(booking.id)}
                     variant="outline"
-                    className="w-full border-primary/50 text-primary hover:bg-primary/10"
+                    className="w-full border-white/20 text-white hover:bg-white/10"
                     data-testid={`button-upload-photos-${booking.id}`}
                   >
                     <Upload className="w-4 h-4 mr-2" />
