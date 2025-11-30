@@ -6,7 +6,7 @@ import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,6 +98,12 @@ export default function PhotographerBookings() {
     enabled: !!photographer?.id,
   });
 
+  useEffect(() => {
+    if (!userLoading && (!user || user.role !== 'photographer')) {
+      setLocation("/login");
+    }
+  }, [user, userLoading, setLocation]);
+
   const updateEditingStatusMutation = useMutation({
     mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
       const res = await fetch(`/api/editing-requests/${requestId}/status`, {
@@ -188,14 +194,7 @@ export default function PhotographerBookings() {
 
         if (!putRes.ok) throw new Error("Failed to upload file");
         
-        const readRes = await fetch(`/api/objects/read?path=${encodeURIComponent(objectPath)}`, {
-          credentials: "include",
-        });
-        
-        if (readRes.ok) {
-          const { publicUrl } = await readRes.json();
-          setEditedPhotos(prev => [...prev, publicUrl]);
-        }
+        setEditedPhotos(prev => [...prev, objectPath]);
       }
       toast({
         title: "Photos Uploaded",
@@ -352,7 +351,6 @@ export default function PhotographerBookings() {
   }
 
   if (!user || user.role !== 'photographer') {
-    setLocation("/login");
     return null;
   }
 
