@@ -311,12 +311,29 @@ export default function Bookings() {
     );
   }
 
+  // Helper to check if a session has ended (date + time + duration)
+  const hasSessionEnded = (booking: any) => {
+    const sessionDate = new Date(booking.scheduledDate);
+    // Parse time like "5:40 PM" or "10:30 AM"
+    const timeMatch = booking.scheduledTime?.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const isPM = timeMatch[3].toUpperCase() === 'PM';
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      sessionDate.setHours(hours, minutes, 0, 0);
+    }
+    // Add duration to get session end time
+    const sessionEndTime = new Date(sessionDate.getTime() + (booking.duration || 1) * 60 * 60 * 1000);
+    return new Date() > sessionEndTime;
+  };
+
   const upcomingBookings = bookings.filter((b: any) => 
-    (b.status === 'pending' || b.status === 'confirmed') && 
-    new Date(b.scheduledDate) >= new Date()
+    (b.status === 'pending' || b.status === 'confirmed') && !hasSessionEnded(b)
   );
   const awaitingPhotosBookings = bookings.filter((b: any) => 
-    b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
+    b.status === 'confirmed' && hasSessionEnded(b)
   );
   const completedBookings = bookings.filter((b: any) => b.status === 'completed');
   const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
