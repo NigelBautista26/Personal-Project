@@ -360,18 +360,11 @@ export default function PhotographerHome() {
 
         {/* Live Map with Controls */}
         <section>
-          <div className="flex items-center justify-between mb-3">
+          <div className="mb-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <MapPin className="w-5 h-5 text-primary" />
               Live Map
             </h2>
-            <button 
-              onClick={() => setLocation("/photographer-map")}
-              className="text-sm text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1"
-            >
-              <Maximize2 className="w-4 h-4" />
-              Full Map
-            </button>
           </div>
           <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 relative">
             <div className="h-[220px]">
