@@ -43,59 +43,80 @@ export default function Bookings() {
   // Calculate filtered bookings
   const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
 
-  // Show toast notification for expired bookings (must be before early returns)
+  // Show toast notification for NEW expired bookings only (must be before early returns)
   useEffect(() => {
-    if (expiredBookings.length > 0) {
-      const photographerNames = expiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
-      
-      // Play notification sound
-      try {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        oscillator.frequency.value = 440;
-        oscillator.type = 'sine';
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.3);
-      } catch (e) {}
-      
-      toast.custom(
-        (t) => (
-          <div className="bg-zinc-900/95 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-4 shadow-2xl max-w-sm">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                <Clock className="w-4 h-4 text-orange-400" />
-              </div>
-              <div className="flex-1">
-                <p className="font-semibold text-white text-sm">Booking request expired</p>
-                <p className="text-zinc-400 text-xs mt-1">{photographerNames} didn't respond in time.</p>
-                <button 
-                  onClick={() => {
-                    toast.dismiss(t);
-                    setLocation("/photographers");
-                  }}
-                  className="mt-3 px-4 py-2 bg-primary text-white text-xs font-medium rounded-xl hover:bg-primary/90 transition-colors"
-                >
-                  Find another photographer
-                </button>
-              </div>
+    if (expiredBookings.length === 0) return;
+    
+    // Get previously notified booking IDs from localStorage
+    const STORAGE_KEY = 'snapnow_expired_notified';
+    let notifiedIds: string[] = [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      notifiedIds = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      notifiedIds = [];
+    }
+    
+    // Find bookings we haven't notified about yet
+    const newExpiredBookings = expiredBookings.filter((b: any) => !notifiedIds.includes(b.id));
+    
+    if (newExpiredBookings.length === 0) return;
+    
+    // Mark these as notified
+    const updatedNotifiedIds = [...notifiedIds, ...newExpiredBookings.map((b: any) => b.id)];
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));
+    } catch (e) {}
+    
+    const photographerNames = newExpiredBookings.map((b: any) => b.photographer?.fullName || 'A photographer').join(', ');
+    
+    // Play notification sound
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 440;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {}
+    
+    toast.custom(
+      (t) => (
+        <div className="bg-zinc-900/95 backdrop-blur-xl border border-orange-500/30 rounded-2xl p-4 shadow-2xl max-w-sm">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
+              <Clock className="w-4 h-4 text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-white text-sm">Booking request expired</p>
+              <p className="text-zinc-400 text-xs mt-1">{photographerNames} didn't respond in time.</p>
               <button 
-                onClick={() => toast.dismiss(t)}
-                className="text-zinc-500 hover:text-white transition-colors"
+                onClick={() => {
+                  toast.dismiss(t);
+                  setLocation("/photographers");
+                }}
+                className="mt-3 px-4 py-2 bg-primary text-white text-xs font-medium rounded-xl hover:bg-primary/90 transition-colors"
               >
-                <X className="w-4 h-4" />
+                Find another photographer
               </button>
             </div>
+            <button 
+              onClick={() => toast.dismiss(t)}
+              className="text-zinc-500 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
-        ),
-        { duration: 10000 }
-      );
-    }
-  }, [expiredBookings.length, setLocation]);
+        </div>
+      ),
+      { duration: 10000 }
+    );
+  }, [expiredBookings, setLocation]);
 
   if (userLoading) {
     return (
