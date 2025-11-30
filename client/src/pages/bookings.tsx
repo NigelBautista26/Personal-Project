@@ -1,13 +1,14 @@
 import { BottomNav } from "@/components/bottom-nav";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 interface PhotoDelivery {
   id: string;
@@ -18,10 +19,26 @@ interface PhotoDelivery {
   downloadedAt?: string;
 }
 
+interface ReviewInfo {
+  canReview: boolean;
+  reason?: string;
+  review?: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: string;
+  };
+}
+
 export default function Bookings() {
   const [, setLocation] = useLocation();
   const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery | null>(null);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
+  const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const queryClient = useQueryClient();
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -38,6 +55,59 @@ export default function Bookings() {
       return res.json();
     },
     enabled: !!user?.id,
+  });
+
+  const { data: reviewInfoMap = {} } = useQuery({
+    queryKey: ["bookingReviewInfo", bookings.map((b: any) => b.id)],
+    queryFn: async () => {
+      const completedBookings = bookings.filter((b: any) => b.status === 'completed');
+      const results: Record<string, ReviewInfo> = {};
+      
+      await Promise.all(
+        completedBookings.map(async (booking: any) => {
+          try {
+            const res = await fetch(`/api/bookings/${booking.id}/can-review`, {
+              credentials: "include",
+            });
+            if (res.ok) {
+              results[booking.id] = await res.json();
+            }
+          } catch (e) {
+            results[booking.id] = { canReview: false, reason: "Error checking" };
+          }
+        })
+      );
+      
+      return results;
+    },
+    enabled: bookings.length > 0,
+  });
+
+  const submitReviewMutation = useMutation({
+    mutationFn: async ({ bookingId, rating, comment }: { bookingId: string; rating: number; comment: string }) => {
+      const res = await fetch(`/api/bookings/${bookingId}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ rating, comment: comment || undefined }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to submit review");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Review submitted! Thank you for your feedback.");
+      setReviewingBookingId(null);
+      setReviewRating(5);
+      setReviewComment("");
+      queryClient.invalidateQueries({ queryKey: ["bookingReviewInfo"] });
+      queryClient.invalidateQueries({ queryKey: ["customerBookings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   // Calculate filtered bookings
@@ -335,42 +405,76 @@ export default function Bookings() {
           <section>
             <h2 className="text-lg font-bold text-white mb-4">Completed Sessions</h2>
             <div className="space-y-4">
-              {completedBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`completed-booking-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                        {booking.photographer?.profileImageUrl ? (
-                          <img 
-                            src={booking.photographer.profileImageUrl} 
-                            alt={booking.photographer.fullName} 
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-primary" />
-                        )}
+              {completedBookings.map((booking: any) => {
+                const reviewInfo = reviewInfoMap[booking.id];
+                
+                return (
+                  <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`completed-booking-${booking.id}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                          {booking.photographer?.profileImageUrl ? (
+                            <img 
+                              src={booking.photographer.profileImageUrl} 
+                              alt={booking.photographer.fullName} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-5 h-5 text-primary" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
+                      <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                     </div>
-                    <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
+                    
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleViewPhotos(booking.id)}
+                        variant="outline"
+                        className="flex-1 border-primary/50 text-primary hover:bg-primary/10"
+                        data-testid={`button-view-photos-${booking.id}`}
+                      >
+                        <Images className="w-4 h-4 mr-2" />
+                        View Photos
+                      </Button>
+                      
+                      {reviewInfo?.canReview ? (
+                        <Button
+                          onClick={() => {
+                            setReviewingBookingId(booking.id);
+                            setReviewRating(5);
+                            setReviewComment("");
+                          }}
+                          className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+                          data-testid={`button-leave-review-${booking.id}`}
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          Leave Review
+                        </Button>
+                      ) : reviewInfo?.review ? (
+                        <div className="flex-1 flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-green-500/20 border border-green-500/30">
+                          <Check className="w-4 h-4 text-green-400" />
+                          <span className="text-green-400 text-sm font-medium">Reviewed</span>
+                          <div className="flex items-center ml-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3 h-3 ${i < reviewInfo.review!.rating ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                  
-                  <Button
-                    onClick={() => handleViewPhotos(booking.id)}
-                    variant="outline"
-                    className="w-full mt-2 border-primary/50 text-primary hover:bg-primary/10"
-                    data-testid={`button-view-photos-${booking.id}`}
-                  >
-                    <Images className="w-4 h-4 mr-2" />
-                    View Photos
-                  </Button>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -502,6 +606,107 @@ export default function Bookings() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Modal */}
+      <Dialog open={!!reviewingBookingId} onOpenChange={(open) => !open && setReviewingBookingId(null)}>
+        <DialogContent className="sm:max-w-md bg-zinc-900 border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Star className="w-5 h-5 text-amber-400" />
+              Rate Your Experience
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            {/* Star Rating */}
+            <div className="text-center">
+              <p className="text-muted-foreground text-sm mb-3">How was your photo session?</p>
+              <div className="flex justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    onMouseEnter={() => setHoveredRating(star)}
+                    onMouseLeave={() => setHoveredRating(0)}
+                    className="transition-transform hover:scale-110"
+                    data-testid={`star-rating-${star}`}
+                  >
+                    <Star
+                      className={`w-10 h-10 transition-colors ${
+                        star <= (hoveredRating || reviewRating)
+                          ? 'fill-amber-400 text-amber-400'
+                          : 'text-zinc-600'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-amber-400 font-medium mt-2">
+                {reviewRating === 1 && "Poor"}
+                {reviewRating === 2 && "Fair"}
+                {reviewRating === 3 && "Good"}
+                {reviewRating === 4 && "Great"}
+                {reviewRating === 5 && "Excellent"}
+              </p>
+            </div>
+            
+            {/* Comment */}
+            <div>
+              <label className="text-sm text-muted-foreground mb-2 block">
+                <MessageSquare className="w-4 h-4 inline mr-1" />
+                Share your experience (optional)
+              </label>
+              <Textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Tell others about your experience with this photographer..."
+                className="bg-zinc-800 border-white/10 text-white placeholder:text-zinc-500 resize-none"
+                rows={4}
+                data-testid="input-review-comment"
+              />
+            </div>
+            
+            {/* Submit Button */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setReviewingBookingId(null)}
+                className="flex-1 border-white/10"
+                data-testid="button-cancel-review"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (reviewingBookingId) {
+                    submitReviewMutation.mutate({
+                      bookingId: reviewingBookingId,
+                      rating: reviewRating,
+                      comment: reviewComment,
+                    });
+                  }
+                }}
+                disabled={submitReviewMutation.isPending}
+                className="flex-1 bg-amber-500 hover:bg-amber-600 text-white"
+                data-testid="button-submit-review"
+              >
+                {submitReviewMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Star className="w-4 h-4 mr-2" />
+                    Submit Review
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
