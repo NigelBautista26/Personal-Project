@@ -637,16 +637,14 @@ export default function PhotographerProfilePage() {
                 data-testid="img-profile" 
               />
             </div>
-            {isEditing && (
-              <button 
-                onClick={handleChangeProfilePicture}
-                disabled={isUploading}
-                className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg disabled:opacity-50" 
-                data-testid="button-change-photo"
-              >
-                <Camera className="w-4 h-4 text-white" />
-              </button>
-            )}
+            <button 
+              onClick={handleChangeProfilePicture}
+              disabled={isUploading}
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg disabled:opacity-50 hover:bg-primary/90 transition-colors" 
+              data-testid="button-change-photo"
+            >
+              <Camera className="w-4 h-4 text-white" />
+            </button>
           </div>
           <div className="flex items-center gap-2 mb-2">
             <div className="flex items-center gap-1 bg-card/80 backdrop-blur px-3 py-1.5 rounded-full border border-white/10">
