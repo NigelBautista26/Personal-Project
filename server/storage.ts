@@ -21,7 +21,7 @@ import {
   photoDeliveries
 } from "@shared/schema";
 import { db } from "@db";
-import { eq, and, desc, lt } from "drizzle-orm";
+import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
 
 export type PhotographerWithUser = Photographer & { fullName: string };
 
@@ -318,34 +318,25 @@ export class DatabaseStorage implements IStorage {
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
-    const conditions = [eq(bookings.status, 'pending')];
+    const conditions = [
+      eq(bookings.status, 'pending'),
+      or(
+        lt(bookings.expiresAt, now),
+        and(isNull(bookings.expiresAt), lt(bookings.createdAt, twentyFourHoursAgo))
+      )
+    ];
     
     if (photographerId) {
       conditions.push(eq(bookings.photographerId, photographerId));
     }
     
-    const pendingBookings = await db
-      .select()
-      .from(bookings)
-      .where(and(...conditions));
+    const result = await db
+      .update(bookings)
+      .set({ status: 'expired' })
+      .where(and(...conditions))
+      .returning();
     
-    let expiredCount = 0;
-    for (const booking of pendingBookings) {
-      let shouldExpire = false;
-      
-      if (booking.expiresAt) {
-        shouldExpire = new Date(booking.expiresAt) < now;
-      } else {
-        shouldExpire = new Date(booking.createdAt) < twentyFourHoursAgo;
-      }
-      
-      if (shouldExpire) {
-        await db.update(bookings).set({ status: 'expired' }).where(eq(bookings.id, booking.id));
-        expiredCount++;
-      }
-    }
-    
-    return expiredCount;
+    return result.length;
   }
 
   // Earnings methods
