@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertPhotographerSchema, insertBookingSchema } from "@shared/schema";
+import { insertUserSchema, insertPhotographerSchema, insertBookingSchema, insertEditingRequestSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { z } from "zod";
@@ -1164,6 +1164,291 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error responding to review:", error);
       res.status(400).json({ error: "Failed to respond to review" });
+    }
+  });
+
+  // ===== EDITING SERVICES ROUTES =====
+  
+  // Get photographer's editing service settings
+  app.get("/api/editing-services/:photographerId", async (req, res) => {
+    try {
+      const service = await storage.getEditingService(req.params.photographerId);
+      res.json(service || null);
+    } catch (error) {
+      console.error("Error fetching editing service:", error);
+      res.status(500).json({ error: "Failed to fetch editing service" });
+    }
+  });
+
+  // Get current photographer's editing service settings
+  app.get("/api/editing-services/me/settings", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+
+      const service = await storage.getEditingService(photographer.id);
+      res.json(service || null);
+    } catch (error) {
+      console.error("Error fetching editing service settings:", error);
+      res.status(500).json({ error: "Failed to fetch editing service settings" });
+    }
+  });
+
+  // Update photographer's editing service settings
+  app.put("/api/editing-services/me/settings", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+
+      const settingsSchema = z.object({
+        isEnabled: z.boolean(),
+        pricingModel: z.enum(["flat", "per_photo"]),
+        flatRate: z.string().nullable().optional(),
+        perPhotoRate: z.string().nullable().optional(),
+        turnaroundDays: z.number().min(1).max(30).optional(),
+        description: z.string().max(500).nullable().optional(),
+      });
+
+      const settings = settingsSchema.parse(req.body);
+      const service = await storage.updateEditingService(photographer.id, settings);
+      res.json(service);
+    } catch (error) {
+      console.error("Error updating editing service settings:", error);
+      res.status(400).json({ error: "Failed to update editing service settings" });
+    }
+  });
+
+  // ===== EDITING REQUESTS ROUTES =====
+
+  // Create an editing request
+  app.post("/api/editing-requests", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const requestSchema = z.object({
+        bookingId: z.string(),
+        photographerId: z.string(),
+        photoCount: z.number().min(1).optional(),
+        customerNotes: z.string().max(500).optional(),
+      });
+
+      const { bookingId, photographerId, photoCount, customerNotes } = requestSchema.parse(req.body);
+
+      // Verify the booking belongs to this customer
+      const booking = await storage.getBooking(bookingId);
+      if (!booking || booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Booking not found or access denied" });
+      }
+
+      // Check if an editing request already exists for this booking
+      const existingRequest = await storage.getEditingRequestByBooking(bookingId);
+      if (existingRequest) {
+        return res.status(400).json({ error: "An editing request already exists for this booking" });
+      }
+
+      // Get photographer's editing service settings
+      const editingService = await storage.getEditingService(photographerId);
+      if (!editingService || !editingService.isEnabled) {
+        return res.status(400).json({ error: "Editing service not available for this photographer" });
+      }
+
+      // Calculate pricing (same 10% customer fee, 20% platform fee model)
+      let baseAmount: number;
+      if (editingService.pricingModel === "per_photo" && editingService.perPhotoRate && photoCount) {
+        baseAmount = parseFloat(editingService.perPhotoRate) * photoCount;
+      } else if (editingService.flatRate) {
+        baseAmount = parseFloat(editingService.flatRate);
+      } else {
+        return res.status(400).json({ error: "Pricing not configured" });
+      }
+
+      const customerServiceFee = baseAmount * 0.10;
+      const totalAmount = baseAmount + customerServiceFee;
+      const platformFee = baseAmount * 0.20;
+      const photographerEarnings = baseAmount - platformFee;
+
+      const editingRequest = await storage.createEditingRequest({
+        bookingId,
+        customerId: req.session.userId,
+        photographerId,
+        photoCount: photoCount || null,
+        pricingModel: editingService.pricingModel,
+        baseAmount: baseAmount.toFixed(2),
+        customerServiceFee: customerServiceFee.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        platformFee: platformFee.toFixed(2),
+        photographerEarnings: photographerEarnings.toFixed(2),
+        status: "requested",
+        customerNotes: customerNotes || null,
+        photographerNotes: null,
+      });
+
+      res.json(editingRequest);
+    } catch (error) {
+      console.error("Error creating editing request:", error);
+      res.status(400).json({ error: "Failed to create editing request" });
+    }
+  });
+
+  // Get editing request by booking ID
+  app.get("/api/editing-requests/booking/:bookingId", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const editingRequest = await storage.getEditingRequestByBooking(req.params.bookingId);
+      res.json(editingRequest || null);
+    } catch (error) {
+      console.error("Error fetching editing request:", error);
+      res.status(500).json({ error: "Failed to fetch editing request" });
+    }
+  });
+
+  // Get all editing requests for photographer
+  app.get("/api/editing-requests/photographer", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+
+      const requests = await storage.getEditingRequestsByPhotographer(photographer.id);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching editing requests:", error);
+      res.status(500).json({ error: "Failed to fetch editing requests" });
+    }
+  });
+
+  // Get all editing requests for customer
+  app.get("/api/editing-requests/customer", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const requests = await storage.getEditingRequestsByCustomer(req.session.userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching editing requests:", error);
+      res.status(500).json({ error: "Failed to fetch editing requests" });
+    }
+  });
+
+  // Update editing request status (photographer accepts/declines/starts work)
+  app.patch("/api/editing-requests/:requestId/status", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const statusSchema = z.object({
+        status: z.enum(["accepted", "declined", "in_progress"]),
+        photographerNotes: z.string().max(500).optional(),
+      });
+
+      const { status, photographerNotes } = statusSchema.parse(req.body);
+
+      const editingRequest = await storage.getEditingRequest(req.params.requestId);
+      if (!editingRequest) {
+        return res.status(404).json({ error: "Editing request not found" });
+      }
+
+      // Verify the photographer owns this request
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== editingRequest.photographerId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedRequest = await storage.updateEditingRequestStatus(
+        req.params.requestId,
+        status,
+        photographerNotes
+      );
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating editing request status:", error);
+      res.status(400).json({ error: "Failed to update editing request" });
+    }
+  });
+
+  // Deliver edited photos
+  app.post("/api/editing-requests/:requestId/deliver", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const deliverSchema = z.object({
+        photoUrls: z.array(z.string()).min(1),
+      });
+
+      const { photoUrls } = deliverSchema.parse(req.body);
+
+      const editingRequest = await storage.getEditingRequest(req.params.requestId);
+      if (!editingRequest) {
+        return res.status(404).json({ error: "Editing request not found" });
+      }
+
+      // Verify the photographer owns this request
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== editingRequest.photographerId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const updatedRequest = await storage.deliverEditedPhotos(req.params.requestId, photoUrls);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error delivering edited photos:", error);
+      res.status(400).json({ error: "Failed to deliver edited photos" });
+    }
+  });
+
+  // Customer confirms completion of editing request
+  app.patch("/api/editing-requests/:requestId/complete", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const editingRequest = await storage.getEditingRequest(req.params.requestId);
+      if (!editingRequest) {
+        return res.status(404).json({ error: "Editing request not found" });
+      }
+
+      // Verify the customer owns this request
+      if (editingRequest.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (editingRequest.status !== "delivered") {
+        return res.status(400).json({ error: "Cannot complete - photos not yet delivered" });
+      }
+
+      const updatedRequest = await storage.updateEditingRequestStatus(req.params.requestId, "completed");
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error completing editing request:", error);
+      res.status(400).json({ error: "Failed to complete editing request" });
     }
   });
 
