@@ -202,9 +202,10 @@ export default function PhotographerBookings() {
     b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
   );
   const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
-  const completedBookings = bookings.filter((b: any) => 
-    b.status === 'completed' || (new Date(b.scheduledDate) < new Date() && b.status === 'confirmed')
+  const awaitingUploadBookings = bookings.filter((b: any) => 
+    b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
   );
+  const completedBookings = bookings.filter((b: any) => b.status === 'completed');
   const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
   const getStatusColor = (status: string) => {
@@ -431,6 +432,56 @@ export default function PhotographerBookings() {
           </section>
         )}
 
+        {awaitingUploadBookings.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-blue-400" />
+              Ready for Photos ({awaitingUploadBookings.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">These sessions are complete. Upload photos to finalize and get paid.</p>
+            <div className="space-y-4">
+              {awaitingUploadBookings.map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-blue-500/30" data-testid={`booking-upload-${booking.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-blue-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">upload photos</span>
+                      <p className="text-white font-bold mt-1">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleOpenUploadDialog(booking.id)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    data-testid={`button-upload-photos-${booking.id}`}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photos Now
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {completedBookings.length > 0 && (
           <section>
             <h2 className="text-lg font-bold text-white mb-4">Completed Sessions</h2>
@@ -470,7 +521,7 @@ export default function PhotographerBookings() {
                     data-testid={`button-upload-photos-${booking.id}`}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Photos
+                    Manage Photos
                   </Button>
                 </div>
               ))}

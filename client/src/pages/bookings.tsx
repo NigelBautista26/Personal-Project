@@ -57,12 +57,14 @@ export default function Bookings() {
   }
 
   const upcomingBookings = bookings.filter((b: any) => 
-    new Date(b.scheduledDate) >= new Date() && b.status !== 'cancelled' && b.status !== 'expired'
+    (b.status === 'pending' || b.status === 'confirmed') && 
+    new Date(b.scheduledDate) >= new Date()
   );
   const expiredBookings = bookings.filter((b: any) => b.status === 'expired');
-  const completedBookings = bookings.filter((b: any) => 
-    b.status === 'completed' || (new Date(b.scheduledDate) < new Date() && b.status === 'confirmed')
+  const awaitingPhotosBookings = bookings.filter((b: any) => 
+    b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
   );
+  const completedBookings = bookings.filter((b: any) => b.status === 'completed');
   const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
   const fetchBookingPhotos = async (bookingId: string) => {
@@ -251,6 +253,47 @@ export default function Bookings() {
           </section>
         )}
 
+        {awaitingPhotosBookings.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-400" />
+              Awaiting Photos
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">Your session is complete! The photographer will upload your photos soon.</p>
+            <div className="space-y-4">
+              {awaitingPhotosBookings.map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-blue-500/30" data-testid={`awaiting-booking-${booking.id}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.photographer?.profileImageUrl ? (
+                          <img 
+                            src={booking.photographer.profileImageUrl} 
+                            alt={booking.photographer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-5 h-5 text-blue-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">awaiting photos</span>
+                      <p className="text-white font-bold mt-1">£{parseFloat(booking.totalAmount).toFixed(2)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {completedBookings.length > 0 && (
           <section>
             <h2 className="text-lg font-bold text-white mb-4">Completed Sessions</h2>
@@ -280,17 +323,15 @@ export default function Bookings() {
                     <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                   </div>
                   
-                  {booking.status === 'completed' && (
-                    <Button
-                      onClick={() => handleViewPhotos(booking.id)}
-                      variant="outline"
-                      className="w-full mt-2 border-primary/50 text-primary hover:bg-primary/10"
-                      data-testid={`button-view-photos-${booking.id}`}
-                    >
-                      <Images className="w-4 h-4 mr-2" />
-                      View Photos
-                    </Button>
-                  )}
+                  <Button
+                    onClick={() => handleViewPhotos(booking.id)}
+                    variant="outline"
+                    className="w-full mt-2 border-primary/50 text-primary hover:bg-primary/10"
+                    data-testid={`button-view-photos-${booking.id}`}
+                  >
+                    <Images className="w-4 h-4 mr-2" />
+                    View Photos
+                  </Button>
                 </div>
               ))}
             </div>

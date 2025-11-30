@@ -563,6 +563,9 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Cannot view another user's bookings" });
       }
       
+      // Expire any old pending bookings for this customer before fetching
+      await storage.expireOldPendingBookings();
+      
       const bookings = await storage.getBookingsByCustomerWithPhotographer(req.params.customerId);
       res.json(bookings);
     } catch (error) {
