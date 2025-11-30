@@ -1,13 +1,30 @@
+import { useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image, Maximize2 } from "lucide-react";
+import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image, Maximize2, Navigation, Layers, Map as MapIcon, Satellite, Lightbulb, Target, Zap
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
 import { isToday, startOfWeek, endOfWeek, isWithinInterval, format, formatDistanceToNow, isFuture, parseISO } from "date-fns";
-import { motion } from "framer-motion";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { motion, AnimatePresence } from "framer-motion";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+
+type MapStyle = 'dark' | 'satellite' | 'street';
+const MAP_STYLES = {
+  dark: { url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", name: "Dark", icon: MapIcon },
+  satellite: { url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", name: "Satellite", icon: Satellite },
+  street: { url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", name: "Street", icon: MapIcon },
+};
+
+function MapController({ userPosition }: { userPosition: [number, number] | null }) {
+  const map = useMap();
+  if (userPosition) {
+    map.setView(userPosition, 14);
+  }
+  return null;
+}
 
 const bookingMarkerIcon = new L.Icon({
   iconUrl: "data:image/svg+xml;base64," + btoa(`
@@ -49,6 +66,23 @@ const customerLiveIcon = new L.Icon({
 export default function PhotographerHome() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
+  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
+  const [showStylePicker, setShowStylePicker] = useState(false);
+  const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserPosition([position.coords.latitude, position.coords.longitude]);
+        setIsLocating(false);
+      },
+      () => setIsLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
 
   const { data: user } = useQuery({
     queryKey: ["currentUser"],
@@ -324,7 +358,7 @@ export default function PhotographerHome() {
           </div>
         </div>
 
-        {/* Live Map - Always show for photographers */}
+        {/* Live Map with Controls */}
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -339,74 +373,204 @@ export default function PhotographerHome() {
               Full Map
             </button>
           </div>
-          <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 h-[200px]">
-            <MapContainer
-              center={
-                photographer?.latitude && photographer?.longitude
-                  ? [parseFloat(photographer.latitude), parseFloat(photographer.longitude)]
-                  : [51.5074, -0.1278]
-              }
-              zoom={12}
-              style={{ height: "100%", width: "100%" }}
-              zoomControl={false}
-              attributionControl={false}
-            >
-              <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
-              {confirmedUpcoming
-                .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
-                .map((booking: any) => (
+          <div className="glass-dark rounded-2xl overflow-hidden border border-white/10 relative">
+            <div className="h-[220px]">
+              <MapContainer
+                center={
+                  userPosition || (photographer?.latitude && photographer?.longitude
+                    ? [parseFloat(photographer.latitude), parseFloat(photographer.longitude)]
+                    : [51.5074, -0.1278])
+                }
+                zoom={13}
+                style={{ height: "100%", width: "100%" }}
+                zoomControl={false}
+                attributionControl={false}
+                key={mapStyle}
+              >
+                <TileLayer url={MAP_STYLES[mapStyle].url} />
+                {userPosition && <MapController userPosition={userPosition} />}
+                {userPosition && (
                   <Marker
-                    key={booking.id}
-                    position={[parseFloat(booking.meetingLatitude), parseFloat(booking.meetingLongitude)]}
-                    icon={isToday(new Date(booking.scheduledDate)) ? todayMarkerIcon : bookingMarkerIcon}
-                    eventHandlers={{
-                      click: () => setLocation(`/photographer/booking/${booking.id}`)
-                    }}
+                    position={userPosition}
+                    icon={L.divIcon({
+                      className: "user-marker",
+                      html: `<div style="width:20px;height:20px;background:#3b82f6;border:3px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(59,130,246,0.5);"></div>`,
+                      iconSize: [20, 20],
+                      iconAnchor: [10, 10],
+                    })}
+                  />
+                )}
+                {confirmedUpcoming
+                  .filter((b: any) => b.meetingLatitude && b.meetingLongitude)
+                  .map((booking: any) => (
+                    <Marker
+                      key={booking.id}
+                      position={[parseFloat(booking.meetingLatitude), parseFloat(booking.meetingLongitude)]}
+                      icon={isToday(new Date(booking.scheduledDate)) ? todayMarkerIcon : bookingMarkerIcon}
+                      eventHandlers={{ click: () => setLocation(`/photographer/booking/${booking.id}`) }}
+                    >
+                      <Popup>
+                        <div className="text-sm p-1">
+                          <p className="font-medium">{booking.customer?.fullName}</p>
+                          <p className="text-muted-foreground">{format(new Date(booking.scheduledDate), 'MMM d')} at {booking.scheduledTime}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  ))}
+                {liveLocations.map((location: any) => (
+                  <Marker
+                    key={`live-${location.id}`}
+                    position={[parseFloat(location.latitude), parseFloat(location.longitude)]}
+                    icon={customerLiveIcon}
                   >
                     <Popup>
-                      <div className="text-sm">
-                        <p className="font-medium">{booking.customer?.fullName}</p>
-                        <p className="text-muted-foreground">{format(new Date(booking.scheduledDate), 'MMM d')} at {booking.scheduledTime}</p>
-                        <p className="text-xs text-muted-foreground">{booking.location}</p>
+                      <div className="text-sm p-1">
+                        <p className="font-medium text-blue-600">{location.customerName}</p>
+                        <p className="text-xs text-green-600">Live Location</p>
                       </div>
                     </Popup>
                   </Marker>
                 ))}
-              {liveLocations.map((location: any) => (
-                <Marker
-                  key={`live-${location.id}`}
-                  position={[parseFloat(location.latitude), parseFloat(location.longitude)]}
-                  icon={customerLiveIcon}
+              </MapContainer>
+            </div>
+            
+            {/* Map Controls */}
+            <div className="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
+              <div className="relative">
+                <button
+                  onClick={() => setShowStylePicker(!showStylePicker)}
+                  className="w-9 h-9 bg-black/70 hover:bg-black/90 rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 backdrop-blur-sm"
+                  data-testid="button-map-style"
                 >
-                  <Popup>
-                    <div className="text-sm">
-                      <p className="font-medium text-blue-600">{location.customerName}</p>
-                      <p className="text-xs text-green-600">Live Location</p>
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
-            </MapContainer>
+                  <Layers className="w-4 h-4" />
+                </button>
+                <AnimatePresence>
+                  {showStylePicker && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, x: 10 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, x: 10 }}
+                      className="absolute right-11 top-0 bg-black/90 backdrop-blur-md rounded-xl border border-white/10 p-1.5 shadow-xl"
+                    >
+                      {(Object.entries(MAP_STYLES) as [MapStyle, typeof MAP_STYLES.dark][]).map(([key, style]) => {
+                        const Icon = style.icon;
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => { setMapStyle(key); setShowStylePicker(false); }}
+                            className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg transition-all text-sm ${
+                              mapStyle === key ? 'bg-primary/20 text-primary' : 'text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            <Icon className="w-4 h-4" />
+                            <span className="whitespace-nowrap">{style.name}</span>
+                          </button>
+                        );
+                      })}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <button
+                onClick={handleLocateMe}
+                disabled={isLocating}
+                className="w-9 h-9 bg-black/70 hover:bg-black/90 rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 backdrop-blur-sm"
+                data-testid="button-locate-me"
+              >
+                {isLocating ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            
+            {/* Legend */}
+            <div className="absolute bottom-3 left-3 z-[1000] bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/10">
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-white/80">Today</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <span className="text-white/80">Upcoming</span>
+                </div>
+                {liveLocations.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                    <span className="text-white/80">Live</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="mt-2 space-y-1">
-            {liveLocations.length > 0 && (
-              <p className="text-xs text-blue-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                {liveLocations.length} customer{liveLocations.length > 1 ? 's' : ''} sharing live location
-              </p>
-            )}
-            {confirmedUpcoming.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center">
-                No upcoming sessions to display
-              </p>
-            ) : confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 0 && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <AlertCircle className="w-3 h-3" />
-                {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length} session{confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 1 ? 's need' : ' needs'} a meeting location set
-              </p>
-            )}
-          </div>
+          
+          {/* Map Status */}
+          {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 0 && (
+            <div className="mt-2 flex items-center gap-2 text-xs text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 border border-amber-500/20">
+              <AlertCircle className="w-3.5 h-3.5" />
+              <span>
+                {confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length} session{confirmedUpcoming.filter((b: any) => !b.meetingLatitude || !b.meetingLongitude).length > 1 ? 's need' : ' needs'} a meeting location
+              </span>
+            </div>
+          )}
         </section>
+
+        {/* Quick Actions - Show when no upcoming sessions */}
+        {confirmedUpcoming.length === 0 && (
+          <section className="space-y-3">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary" />
+              Get Ready for Bookings
+            </h2>
+            <div className="grid grid-cols-1 gap-3">
+              <Link href="/photographer-profile">
+                <motion.div 
+                  className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">Update Your Profile</p>
+                    <p className="text-xs text-muted-foreground">Add photos and update your bio to attract more customers</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </motion.div>
+              </Link>
+              
+              <Link href="/photographer-settings">
+                <motion.div 
+                  className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <DollarSign className="w-6 h-6 text-green-500" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium">Set Your Rates</p>
+                    <p className="text-xs text-muted-foreground">Adjust your hourly rate and add editing services</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                </motion.div>
+              </Link>
+              
+              <motion.div 
+                className="glass-dark rounded-2xl p-4 border border-white/10 flex items-center gap-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                  <Lightbulb className="w-6 h-6 text-amber-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-medium">Pro Tip</p>
+                  <p className="text-xs text-muted-foreground">Photographers with complete profiles and portfolio photos get 3x more bookings</p>
+                </div>
+              </motion.div>
+            </div>
+          </section>
+        )}
 
         {/* Upcoming Sessions */}
         {confirmedUpcoming.length > 0 && (
