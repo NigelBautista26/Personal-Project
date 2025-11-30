@@ -469,7 +469,12 @@ export default function Bookings() {
           ) : (
             <div className="space-y-4">
               {upcomingBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-card-${booking.id}`}>
+                <button
+                  key={booking.id}
+                  onClick={() => setLocation(`/booking/${booking.id}`)}
+                  className="glass-panel rounded-2xl p-4 space-y-3 w-full text-left hover:bg-white/5 transition-colors"
+                  data-testid={`booking-card-${booking.id}`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
@@ -488,9 +493,12 @@ export default function Bookings() {
                         <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
-                      {booking.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -512,7 +520,7 @@ export default function Bookings() {
                     <span className="text-muted-foreground text-sm">Total</span>
                     <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}

@@ -710,6 +710,39 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/customer/bookings", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      await storage.expireOldPendingBookings();
+      const bookings = await storage.getBookingsByCustomerWithPhotographer(req.session.userId);
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
+  app.get("/api/photographer/bookings", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer profile not found" });
+      }
+      
+      await storage.expireOldPendingBookings(photographer.id);
+      const bookings = await storage.getBookingsByPhotographerWithCustomer(photographer.id);
+      res.json(bookings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
   app.get("/api/bookings/photographer/:photographerId", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -1585,6 +1618,177 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error setting photographer image:", error);
       res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Message Routes
+  app.get("/api/bookings/:bookingId/messages", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Check if user is part of this booking (customer or photographer)
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer && booking.photographerId === photographer.id;
+
+      if (!isCustomer && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized to view these messages" });
+      }
+
+      const messages = await storage.getMessagesByBooking(bookingId);
+      
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/bookings/:bookingId/messages", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const { body } = req.body;
+
+      if (!body || typeof body !== "string" || body.trim().length === 0) {
+        return res.status(400).json({ error: "Message body is required" });
+      }
+
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Check if user is part of this booking
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer && booking.photographerId === photographer.id;
+
+      if (!isCustomer && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized to send messages in this booking" });
+      }
+
+      const message = await storage.createMessage({
+        bookingId,
+        senderId: req.session.userId,
+        body: body.trim(),
+      });
+
+      // Return the message with sender info
+      const user = await storage.getUser(req.session.userId);
+      const messageWithSender = {
+        ...message,
+        sender: {
+          fullName: user?.fullName || "Unknown",
+          profileImageUrl: user?.profileImageUrl || null,
+        },
+      };
+
+      res.status(201).json(messageWithSender);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
+    }
+  });
+
+  app.get("/api/messages/unread-count", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const count = await storage.getUnreadMessageCount(req.session.userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ error: "Failed to fetch unread count" });
+    }
+  });
+
+  app.post("/api/bookings/:bookingId/messages/mark-read", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer && booking.photographerId === photographer.id;
+
+      if (!isCustomer && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      await storage.markMessagesAsRead(bookingId, req.session.userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+      res.status(500).json({ error: "Failed to mark messages as read" });
+    }
+  });
+
+  // Meeting Location Routes
+  app.patch("/api/bookings/:bookingId/meeting-location", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const { latitude, longitude, notes } = req.body;
+
+      if (latitude === undefined || latitude === null || longitude === undefined || longitude === null) {
+        return res.status(400).json({ error: "Latitude and longitude are required" });
+      }
+
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Only photographer can set meeting location
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || booking.photographerId !== photographer.id) {
+        return res.status(403).json({ error: "Only the photographer can set the meeting location" });
+      }
+
+      // Booking must be confirmed
+      if (booking.status !== "confirmed") {
+        return res.status(400).json({ error: "Can only set meeting location for confirmed bookings" });
+      }
+
+      const updatedBooking = await storage.updateMeetingLocation(
+        bookingId,
+        latitude.toString(),
+        longitude.toString(),
+        notes
+      );
+
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Error updating meeting location:", error);
+      res.status(500).json({ error: "Failed to update meeting location" });
     }
   });
 

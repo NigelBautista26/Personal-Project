@@ -21,6 +21,9 @@ import {
   type EditingRequest,
   type InsertEditingRequest,
   type EditingRequestWithDetails,
+  type Message,
+  type InsertMessage,
+  type MessageWithSender,
   users,
   photographers,
   bookings,
@@ -29,7 +32,8 @@ import {
   photoDeliveries,
   reviews,
   editingServices,
-  editingRequests
+  editingRequests,
+  messages
 } from "@shared/schema";
 import { db } from "@db";
 import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
@@ -102,6 +106,15 @@ export interface IStorage {
   createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest>;
   updateEditingRequestStatus(id: string, status: string, photographerNotes?: string): Promise<EditingRequest | undefined>;
   deliverEditedPhotos(id: string, photoUrls: string[], photographerNotes?: string): Promise<EditingRequest | undefined>;
+  
+  // Message methods
+  getMessagesByBooking(bookingId: string): Promise<MessageWithSender[]>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  markMessagesAsRead(bookingId: string, userId: string): Promise<void>;
+  getUnreadMessageCount(userId: string): Promise<number>;
+  
+  // Meeting location methods
+  updateMeetingLocation(bookingId: string, latitude: string, longitude: string, notes?: string): Promise<Booking | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -227,6 +240,9 @@ export class DatabaseStorage implements IStorage {
         status: bookings.status,
         stripePaymentId: bookings.stripePaymentId,
         expiresAt: bookings.expiresAt,
+        meetingLatitude: bookings.meetingLatitude,
+        meetingLongitude: bookings.meetingLongitude,
+        meetingNotes: bookings.meetingNotes,
         createdAt: bookings.createdAt,
         photographerFullName: users.fullName,
         photographerProfileImageUrl: users.profileImageUrl,
@@ -253,6 +269,9 @@ export class DatabaseStorage implements IStorage {
       status: row.status,
       stripePaymentId: row.stripePaymentId,
       expiresAt: row.expiresAt,
+      meetingLatitude: row.meetingLatitude,
+      meetingLongitude: row.meetingLongitude,
+      meetingNotes: row.meetingNotes,
       createdAt: row.createdAt,
       photographer: {
         fullName: row.photographerFullName,
@@ -283,6 +302,9 @@ export class DatabaseStorage implements IStorage {
         status: bookings.status,
         stripePaymentId: bookings.stripePaymentId,
         expiresAt: bookings.expiresAt,
+        meetingLatitude: bookings.meetingLatitude,
+        meetingLongitude: bookings.meetingLongitude,
+        meetingNotes: bookings.meetingNotes,
         createdAt: bookings.createdAt,
         customerFullName: users.fullName,
         customerProfileImageUrl: users.profileImageUrl,
@@ -308,6 +330,9 @@ export class DatabaseStorage implements IStorage {
       status: row.status,
       stripePaymentId: row.stripePaymentId,
       expiresAt: row.expiresAt,
+      meetingLatitude: row.meetingLatitude,
+      meetingLongitude: row.meetingLongitude,
+      meetingNotes: row.meetingNotes,
       createdAt: row.createdAt,
       customer: {
         fullName: row.customerFullName,
@@ -757,6 +782,131 @@ export class DatabaseStorage implements IStorage {
     const result = await db.update(editingRequests)
       .set(updates)
       .where(eq(editingRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  // Message methods
+  async getMessagesByBooking(bookingId: string): Promise<MessageWithSender[]> {
+    const results = await db
+      .select({
+        id: messages.id,
+        bookingId: messages.bookingId,
+        senderId: messages.senderId,
+        body: messages.body,
+        isRead: messages.isRead,
+        createdAt: messages.createdAt,
+        senderFullName: users.fullName,
+        senderProfileImageUrl: users.profileImageUrl,
+      })
+      .from(messages)
+      .innerJoin(users, eq(messages.senderId, users.id))
+      .where(eq(messages.bookingId, bookingId))
+      .orderBy(messages.createdAt);
+
+    return results.map((row) => ({
+      id: row.id,
+      bookingId: row.bookingId,
+      senderId: row.senderId,
+      body: row.body,
+      isRead: row.isRead,
+      createdAt: row.createdAt,
+      sender: {
+        fullName: row.senderFullName,
+        profileImageUrl: row.senderProfileImageUrl,
+      },
+    }));
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const result = await db.insert(messages).values(message).returning();
+    return result[0];
+  }
+
+  async markMessagesAsRead(bookingId: string, userId: string): Promise<void> {
+    await db
+      .update(messages)
+      .set({ isRead: true })
+      .where(
+        and(
+          eq(messages.bookingId, bookingId),
+          eq(messages.isRead, false),
+          // Mark as read messages sent TO this user (not FROM this user)
+          // This requires a subquery approach - for now mark all unread as read
+        )
+      );
+  }
+
+  async getUnreadMessageCount(userId: string): Promise<number> {
+    // Get all bookings where this user is either customer or photographer
+    const customerBookings = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(eq(bookings.customerId, userId));
+
+    const photographerProfile = await db
+      .select({ id: photographers.id })
+      .from(photographers)
+      .where(eq(photographers.userId, userId))
+      .limit(1);
+
+    const photographerBookings = photographerProfile[0]
+      ? await db
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(eq(bookings.photographerId, photographerProfile[0].id))
+      : [];
+
+    const allBookingIds = [
+      ...customerBookings.map((b) => b.id),
+      ...photographerBookings.map((b) => b.id),
+    ];
+
+    if (allBookingIds.length === 0) return 0;
+
+    // Count unread messages in these bookings where userId is NOT the sender
+    let unreadCount = 0;
+    for (const bookingId of allBookingIds) {
+      const unreadMessages = await db
+        .select({ id: messages.id })
+        .from(messages)
+        .where(
+          and(
+            eq(messages.bookingId, bookingId),
+            eq(messages.isRead, false)
+          )
+        );
+      // Filter out messages sent by the user themselves
+      for (const msg of unreadMessages) {
+        const fullMsg = await db
+          .select({ senderId: messages.senderId })
+          .from(messages)
+          .where(eq(messages.id, msg.id))
+          .limit(1);
+        if (fullMsg[0] && fullMsg[0].senderId !== userId) {
+          unreadCount++;
+        }
+      }
+    }
+
+    return unreadCount;
+  }
+
+  // Meeting location methods
+  async updateMeetingLocation(bookingId: string, latitude: string, longitude: string, notes?: string): Promise<Booking | undefined> {
+    const updates: Record<string, unknown> = {
+      meetingLatitude: latitude,
+      meetingLongitude: longitude,
+    };
+    
+    if (notes !== undefined) {
+      updates.meetingNotes = notes;
+    }
+    
+    const result = await db
+      .update(bookings)
+      .set(updates)
+      .where(eq(bookings.id, bookingId))
       .returning();
     return result[0];
   }

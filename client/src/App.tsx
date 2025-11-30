@@ -25,6 +25,9 @@ import BusinessCase from "@/pages/business-case";
 import PhotoSpots from "@/pages/photo-spots";
 import PhotoSpotDetail from "@/pages/photo-spot-detail";
 import PitchDeck from "@/pages/pitch-deck";
+import PhotographerMap from "@/pages/photographer-map";
+import PhotographerBookingDetail from "@/pages/photographer-booking-detail";
+import CustomerBookingDetail from "@/pages/customer-booking-detail";
 
 function Router() {
   return (
@@ -50,6 +53,9 @@ function Router() {
       <Route path="/photographer/:id" component={PhotographerProfile} />
       <Route path="/book/:id" component={Booking} />
       <Route path="/pitch-deck" component={PitchDeck} />
+      <Route path="/photographer-map" component={PhotographerMap} />
+      <Route path="/photographer/booking/:id" component={PhotographerBookingDetail} />
+      <Route path="/booking/:id" component={CustomerBookingDetail} />
       <Route component={NotFound} />
     </Switch>
   );

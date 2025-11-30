@@ -278,52 +278,61 @@ export default function PhotographerHome() {
                 <Clock className="w-5 h-5 text-primary" />
                 Upcoming Sessions
               </h2>
-              <Link href="/photographer-bookings">
-                <span className="text-sm text-primary cursor-pointer">View All</span>
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/photographer-map">
+                  <span className="text-sm text-muted-foreground hover:text-primary cursor-pointer flex items-center gap-1">
+                    <MapPin className="w-4 h-4" />
+                    Map
+                  </span>
+                </Link>
+                <Link href="/photographer-bookings">
+                  <span className="text-sm text-primary cursor-pointer">View All</span>
+                </Link>
+              </div>
             </div>
             <div className="space-y-3">
               {confirmedUpcoming.slice(0, 2).map((booking: any, index: number) => (
-                <motion.div
-                  key={booking.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="glass-dark rounded-2xl p-4 border border-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                      {booking.customer?.profileImageUrl ? (
-                        <img 
-                          src={booking.customer.profileImageUrl} 
-                          alt={booking.customer.fullName} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-6 h-6 text-primary" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white font-medium">{booking.customer?.fullName || 'Customer'}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Calendar className="w-3 h-3" />
-                        <span>{format(new Date(booking.scheduledDate), 'EEE, MMM d')}</span>
-                        <Clock className="w-3 h-3 ml-1" />
-                        <span>{booking.scheduledTime}</span>
+                <Link key={booking.id} href={`/photographer/booking/${booking.id}`}>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="glass-dark rounded-2xl p-4 border border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-primary" />
+                        )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                        <MapPin className="w-3 h-3" />
-                        <span>{booking.location}</span>
+                      <div className="flex-1">
+                        <p className="text-white font-medium">{booking.customer?.fullName || 'Customer'}</p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="w-3 h-3" />
+                          <span>{format(new Date(booking.scheduledDate), 'EEE, MMM d')}</span>
+                          <Clock className="w-3 h-3 ml-1" />
+                          <span>{booking.scheduledTime}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                          <MapPin className="w-3 h-3" />
+                          <span>{booking.location}</span>
+                        </div>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-1">
+                        <p className="text-primary font-bold">£{parseFloat(booking.photographerEarnings).toFixed(0)}</p>
+                        {isToday(new Date(booking.scheduledDate)) && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">Today</span>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-primary font-bold">£{parseFloat(booking.photographerEarnings).toFixed(0)}</p>
-                      {isToday(new Date(booking.scheduledDate)) && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">Today</span>
-                      )}
-                    </div>
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Link>
               ))}
             </div>
           </section>

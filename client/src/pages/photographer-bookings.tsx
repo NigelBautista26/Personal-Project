@@ -681,7 +681,12 @@ export default function PhotographerBookings() {
           ) : (
             <div className="space-y-4">
               {confirmedBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`booking-confirmed-${booking.id}`}>
+                <button
+                  key={booking.id}
+                  onClick={() => setLocation(`/photographer/booking/${booking.id}`)}
+                  className="glass-panel rounded-2xl p-4 space-y-3 w-full text-left hover:bg-white/5 transition-colors"
+                  data-testid={`booking-confirmed-${booking.id}`}
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
@@ -700,9 +705,12 @@ export default function PhotographerBookings() {
                         <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
                       </div>
                     </div>
-                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
-                      {booking.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
                   </div>
                   
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -724,7 +732,7 @@ export default function PhotographerBookings() {
                     <span className="text-muted-foreground text-sm">You'll earn</span>
                     <span className="text-primary font-bold">£{parseFloat(booking.photographerEarnings).toFixed(2)}</span>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
