@@ -394,12 +394,30 @@ export default function PhotographerBookings() {
   }
 
   const pendingBookings = bookings.filter((b: any) => b.status === 'pending');
-  const confirmedBookings = bookings.filter((b: any) => 
-    b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
-  );
-  const awaitingUploadBookings = bookings.filter((b: any) => 
-    b.status === 'confirmed' && new Date(b.scheduledDate) < new Date()
-  );
+  
+  const getSessionEndTime = (booking: any) => {
+    const sessionDate = new Date(booking.scheduledDate);
+    const timeParts = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':');
+    const hours = parseInt(timeParts[0]);
+    const minutes = parseInt(timeParts[1]) || 0;
+    const isPM = booking.scheduledTime.toLowerCase().includes('pm');
+    sessionDate.setHours(isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours, minutes);
+    sessionDate.setHours(sessionDate.getHours() + (booking.duration || 1));
+    return sessionDate;
+  };
+
+  const confirmedBookings = bookings.filter((b: any) => {
+    if (b.status !== 'confirmed') return false;
+    const sessionEnd = getSessionEndTime(b);
+    return sessionEnd >= new Date();
+  });
+  
+  const awaitingUploadBookings = bookings.filter((b: any) => {
+    if (b.status !== 'confirmed') return false;
+    const sessionEnd = getSessionEndTime(b);
+    return sessionEnd < new Date();
+  });
+  
   const completedBookings = bookings.filter((b: any) => b.status === 'completed');
   const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
