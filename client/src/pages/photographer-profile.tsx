@@ -613,7 +613,7 @@ export default function PhotographerProfilePage() {
 
       {/* Reviews Bottom Sheet */}
       <Sheet open={reviewsSheetOpen} onOpenChange={setReviewsSheetOpen}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl bg-background border-white/10 p-0">
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl bg-background border-white/10 p-0 max-w-md mx-auto">
           <div className="flex flex-col h-full">
             <SheetHeader className="px-6 py-4 border-b border-white/10">
               <div className="flex items-center justify-between">
