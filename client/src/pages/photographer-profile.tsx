@@ -399,7 +399,7 @@ export default function PhotographerProfilePage() {
       if (!urlRes.ok) throw new Error("Failed to get upload URL");
       const { uploadUrl } = await urlRes.json();
 
-      const uploadRes = await fetch(uploadUrl, {
+      const uploadRes = await fetch(uploadUrl.uploadURL, {
         method: "PUT",
         body: file,
         headers: {
@@ -408,15 +408,12 @@ export default function PhotographerProfilePage() {
       });
 
       if (!uploadRes.ok) throw new Error("Failed to upload file");
-
-      const url = new URL(uploadUrl);
-      const objectPath = url.pathname;
       
       const addRes = await fetch("/api/photographers/me/portfolio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ imageUrl: objectPath }),
+        body: JSON.stringify({ imageUrl: uploadUrl.objectPath }),
       });
 
       if (!addRes.ok) throw new Error("Failed to save photo");
@@ -467,7 +464,7 @@ export default function PhotographerProfilePage() {
       if (!urlRes.ok) throw new Error("Failed to get upload URL");
       const { uploadUrl } = await urlRes.json();
 
-      const uploadRes = await fetch(uploadUrl, {
+      const uploadRes = await fetch(uploadUrl.uploadURL, {
         method: "PUT",
         body: croppedBlob,
         headers: {
@@ -477,14 +474,11 @@ export default function PhotographerProfilePage() {
 
       if (!uploadRes.ok) throw new Error("Failed to upload cropped image");
 
-      const url = new URL(uploadUrl);
-      const objectPath = url.pathname;
-      
       const addRes = await fetch("/api/photographers/me/profile-picture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ imageUrl: objectPath }),
+        body: JSON.stringify({ imageUrl: uploadUrl.objectPath }),
       });
 
       if (!addRes.ok) throw new Error("Failed to save profile picture");
