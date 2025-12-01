@@ -1520,13 +1520,13 @@ export default function Bookings() {
                   className="flex-1 bg-green-600 hover:bg-green-700"
                   onClick={() => {
                     if (viewingEditedPhotos?.requestId) {
-                      approveEditsMutation.mutate({ requestId: viewingEditedPhotos.requestId });
+                      completeEditingMutation.mutate(viewingEditedPhotos.requestId);
                     }
                   }}
-                  disabled={approveEditsMutation.isPending}
+                  disabled={completeEditingMutation.isPending}
                   data-testid="button-approve-edits"
                 >
-                  {approveEditsMutation.isPending ? (
+                  {completeEditingMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Check className="w-4 h-4 mr-2" />
