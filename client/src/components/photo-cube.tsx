@@ -20,14 +20,36 @@ interface CubeConfig {
 }
 
 const cubeConfigs: CubeConfig[] = [
-  { size: 120, top: "5%", left: "10%", delay: 0, duration: 20, opacity: 0.7, startPhotos: [0, 1, 2, 3, 4, 5] },
-  { size: 100, top: "15%", left: "75%", delay: -5, duration: 25, opacity: 0.6, startPhotos: [2, 3, 4, 5, 0, 1] },
-  { size: 80, top: "40%", left: "5%", delay: -10, duration: 22, opacity: 0.5, startPhotos: [4, 5, 0, 1, 2, 3] },
-  { size: 90, top: "55%", left: "85%", delay: -8, duration: 28, opacity: 0.5, startPhotos: [1, 2, 3, 4, 5, 0] },
-  { size: 70, top: "75%", left: "15%", delay: -3, duration: 24, opacity: 0.4, startPhotos: [3, 4, 5, 0, 1, 2] },
-  { size: 85, top: "80%", left: "70%", delay: -12, duration: 26, opacity: 0.45, startPhotos: [5, 0, 1, 2, 3, 4] },
-  { size: 60, top: "30%", left: "90%", delay: -7, duration: 30, opacity: 0.35, startPhotos: [0, 2, 4, 1, 3, 5] },
-  { size: 65, top: "60%", left: "50%", delay: -15, duration: 23, opacity: 0.3, startPhotos: [1, 3, 5, 0, 2, 4] },
+  // Top row
+  { size: 110, top: "2%", left: "5%", delay: 0, duration: 20, opacity: 0.75, startPhotos: [0, 1, 2, 3, 4, 5] },
+  { size: 95, top: "5%", left: "40%", delay: -4, duration: 24, opacity: 0.65, startPhotos: [3, 4, 5, 0, 1, 2] },
+  { size: 100, top: "3%", left: "72%", delay: -8, duration: 22, opacity: 0.7, startPhotos: [2, 3, 4, 5, 0, 1] },
+  
+  // Upper-middle row  
+  { size: 85, top: "18%", left: "20%", delay: -2, duration: 26, opacity: 0.55, startPhotos: [1, 2, 3, 4, 5, 0] },
+  { size: 80, top: "20%", left: "58%", delay: -10, duration: 28, opacity: 0.5, startPhotos: [4, 5, 0, 1, 2, 3] },
+  { size: 90, top: "16%", left: "85%", delay: -6, duration: 21, opacity: 0.6, startPhotos: [5, 0, 1, 2, 3, 4] },
+  
+  // Middle row
+  { size: 75, top: "35%", left: "2%", delay: -12, duration: 25, opacity: 0.5, startPhotos: [0, 2, 4, 1, 3, 5] },
+  { size: 70, top: "38%", left: "30%", delay: -5, duration: 30, opacity: 0.4, startPhotos: [1, 3, 5, 0, 2, 4] },
+  { size: 65, top: "40%", left: "65%", delay: -14, duration: 27, opacity: 0.35, startPhotos: [2, 4, 0, 3, 5, 1] },
+  { size: 80, top: "36%", left: "88%", delay: -9, duration: 23, opacity: 0.45, startPhotos: [3, 5, 1, 4, 0, 2] },
+  
+  // Lower-middle row
+  { size: 85, top: "55%", left: "8%", delay: -3, duration: 29, opacity: 0.5, startPhotos: [4, 0, 2, 5, 1, 3] },
+  { size: 75, top: "58%", left: "45%", delay: -16, duration: 24, opacity: 0.35, startPhotos: [5, 1, 3, 0, 2, 4] },
+  { size: 90, top: "52%", left: "78%", delay: -7, duration: 26, opacity: 0.55, startPhotos: [0, 3, 5, 2, 4, 1] },
+  
+  // Bottom row
+  { size: 95, top: "72%", left: "15%", delay: -11, duration: 22, opacity: 0.6, startPhotos: [1, 4, 0, 3, 5, 2] },
+  { size: 80, top: "75%", left: "50%", delay: -1, duration: 28, opacity: 0.5, startPhotos: [2, 5, 1, 4, 0, 3] },
+  { size: 100, top: "70%", left: "80%", delay: -13, duration: 25, opacity: 0.65, startPhotos: [3, 0, 2, 5, 1, 4] },
+  
+  // Very bottom row
+  { size: 85, top: "88%", left: "5%", delay: -15, duration: 27, opacity: 0.55, startPhotos: [4, 1, 3, 0, 2, 5] },
+  { size: 90, top: "90%", left: "35%", delay: -8, duration: 23, opacity: 0.5, startPhotos: [5, 2, 4, 1, 3, 0] },
+  { size: 95, top: "87%", left: "65%", delay: -4, duration: 26, opacity: 0.6, startPhotos: [0, 4, 1, 5, 2, 3] },
 ];
 
 function SingleCube({ config }: { config: CubeConfig }) {
