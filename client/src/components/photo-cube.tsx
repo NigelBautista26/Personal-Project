@@ -218,11 +218,21 @@ export default function PhotoCube() {
 
   if (isReduced) {
     return (
-      <div 
-        className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
-        style={{ opacity: isLoaded ? 1 : 0 }}
-      >
-        {rowConfigs.slice(0, 4).map((config, i) => (
+      <>
+        {/* Glass blur placeholder while loading */}
+        <div 
+          className="absolute inset-0 pointer-events-none transition-opacity duration-500 ease-out"
+          style={{ opacity: isLoaded ? 0 : 1 }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
+          <div className="absolute inset-0 backdrop-blur-xl bg-background/30" />
+        </div>
+        
+        <div 
+          className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+          style={{ opacity: isLoaded ? 1 : 0 }}
+        >
+          {rowConfigs.slice(0, 4).map((config, i) => (
           <div 
             key={i}
             className="absolute left-0 right-0 flex gap-4 px-4"
@@ -244,38 +254,50 @@ export default function PhotoCube() {
           </div>
         ))}
         <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
-      </div>
+        </div>
+      </>
     );
   }
 
   return (
-    <div 
-      className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
-      style={{ opacity: isLoaded ? 1 : 0 }}
-    >
-      {rowConfigs.map((config, i) => (
-        <MarqueeRow key={i} config={config} rowIndex={i} />
-      ))}
+    <>
+      {/* Glass blur placeholder while loading */}
+      <div 
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500 ease-out"
+        style={{ opacity: isLoaded ? 0 : 1 }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
+        <div className="absolute inset-0 backdrop-blur-xl bg-background/30" />
+      </div>
+      
+      <div 
+        className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+        style={{ opacity: isLoaded ? 1 : 0 }}
+      >
+        {rowConfigs.map((config, i) => (
+          <MarqueeRow key={i} config={config} rowIndex={i} />
+        ))}
 
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background/90" />
 
-      <style>{`
-        @keyframes cubeRotate {
-          0% { transform: rotateX(-15deg) rotateY(0deg); }
-          25% { transform: rotateX(15deg) rotateY(90deg); }
-          50% { transform: rotateX(-15deg) rotateY(180deg); }
-          75% { transform: rotateX(15deg) rotateY(270deg); }
-          100% { transform: rotateX(-15deg) rotateY(360deg); }
-        }
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .animate-marquee {
-          animation: marquee var(--duration, 60s) linear infinite;
-          animation-direction: var(--direction, normal);
-        }
-      `}</style>
-    </div>
+        <style>{`
+          @keyframes cubeRotate {
+            0% { transform: rotateX(-15deg) rotateY(0deg); }
+            25% { transform: rotateX(15deg) rotateY(90deg); }
+            50% { transform: rotateX(-15deg) rotateY(180deg); }
+            75% { transform: rotateX(15deg) rotateY(270deg); }
+            100% { transform: rotateX(-15deg) rotateY(360deg); }
+          }
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-marquee {
+            animation: marquee var(--duration, 60s) linear infinite;
+            animation-direction: var(--direction, normal);
+          }
+        `}</style>
+      </div>
+    </>
   );
 }
