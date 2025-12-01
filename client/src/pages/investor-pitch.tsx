@@ -14,11 +14,27 @@ export default function InvestorPitch() {
     <div className="min-h-screen bg-zinc-950 text-white p-4 print:bg-white print:text-black">
       <style>{`
         @media print {
-          @page { size: A4; margin: 0.5in; }
+          @page { size: A4; margin: 0.4in; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .print-content { 
-            background: white !important;
-            color: black !important;
+          section { 
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          table { 
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .grid { 
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          h2 { 
+            page-break-after: avoid !important;
+            break-after: avoid !important;
+          }
+          .no-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}</style>
