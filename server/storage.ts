@@ -112,6 +112,8 @@ export interface IStorage {
   createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest>;
   updateEditingRequestStatus(id: string, status: string, photographerNotes?: string): Promise<EditingRequest | undefined>;
   deliverEditedPhotos(id: string, photoUrls: string[], photographerNotes?: string): Promise<EditingRequest | undefined>;
+  requestRevision(id: string, revisionNotes: string): Promise<EditingRequest | undefined>;
+  completeEditingRequest(id: string): Promise<EditingRequest | undefined>;
   
   // Message methods
   getMessagesByBooking(bookingId: string): Promise<MessageWithSender[]>;
@@ -663,6 +665,8 @@ export class DatabaseStorage implements IStorage {
         status: editingRequests.status,
         customerNotes: editingRequests.customerNotes,
         photographerNotes: editingRequests.photographerNotes,
+        revisionNotes: editingRequests.revisionNotes,
+        revisionCount: editingRequests.revisionCount,
         requestedPhotoUrls: editingRequests.requestedPhotoUrls,
         editedPhotos: editingRequests.editedPhotos,
         requestedAt: editingRequests.requestedAt,
@@ -704,6 +708,8 @@ export class DatabaseStorage implements IStorage {
       status: row.status,
       customerNotes: row.customerNotes,
       photographerNotes: row.photographerNotes,
+      revisionNotes: row.revisionNotes,
+      revisionCount: row.revisionCount,
       requestedPhotoUrls: row.requestedPhotoUrls,
       editedPhotos: row.editedPhotos,
       requestedAt: row.requestedAt,
@@ -740,6 +746,8 @@ export class DatabaseStorage implements IStorage {
         status: editingRequests.status,
         customerNotes: editingRequests.customerNotes,
         photographerNotes: editingRequests.photographerNotes,
+        revisionNotes: editingRequests.revisionNotes,
+        revisionCount: editingRequests.revisionCount,
         requestedPhotoUrls: editingRequests.requestedPhotoUrls,
         editedPhotos: editingRequests.editedPhotos,
         requestedAt: editingRequests.requestedAt,
@@ -781,6 +789,8 @@ export class DatabaseStorage implements IStorage {
       status: row.status,
       customerNotes: row.customerNotes,
       photographerNotes: row.photographerNotes,
+      revisionNotes: row.revisionNotes,
+      revisionCount: row.revisionCount,
       requestedPhotoUrls: row.requestedPhotoUrls,
       editedPhotos: row.editedPhotos,
       requestedAt: row.requestedAt,
@@ -837,6 +847,32 @@ export class DatabaseStorage implements IStorage {
     
     const result = await db.update(editingRequests)
       .set(updates)
+      .where(eq(editingRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async requestRevision(id: string, revisionNotes: string): Promise<EditingRequest | undefined> {
+    const existing = await this.getEditingRequest(id);
+    if (!existing) return undefined;
+    
+    const result = await db.update(editingRequests)
+      .set({
+        status: "revision_requested",
+        revisionNotes,
+        revisionCount: (existing.revisionCount || 0) + 1,
+      })
+      .where(eq(editingRequests.id, id))
+      .returning();
+    return result[0];
+  }
+
+  async completeEditingRequest(id: string): Promise<EditingRequest | undefined> {
+    const result = await db.update(editingRequests)
+      .set({
+        status: "completed",
+        completedAt: new Date(),
+      })
       .where(eq(editingRequests.id, id))
       .returning();
     return result[0];

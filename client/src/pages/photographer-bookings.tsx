@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle, Palette, DollarSign, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle, Palette, DollarSign, ChevronRight, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -442,11 +442,12 @@ export default function PhotographerBookings() {
   });
 
   // Memoized editing request lists
-  const { pendingEditingRequests, activeEditingRequests, completedEditingRequests } = useMemo(() => ({
+  const { pendingEditingRequests, activeEditingRequests, revisionRequests, completedEditingRequests } = useMemo(() => ({
     pendingEditingRequests: editingRequests.filter((r: EditingRequest) => r.status === 'requested'),
     activeEditingRequests: editingRequests.filter((r: EditingRequest) => 
       r.status === 'accepted' || r.status === 'in_progress'
     ),
+    revisionRequests: editingRequests.filter((r: EditingRequest) => r.status === 'revision_requested'),
     completedEditingRequests: editingRequests.filter((r: EditingRequest) => 
       r.status === 'delivered' || r.status === 'completed'
     ),
@@ -750,6 +751,93 @@ export default function PhotographerBookings() {
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Deliver Edited Photos
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Revision Requests */}
+        {revisionRequests.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-orange-400" />
+              Revisions Requested ({revisionRequests.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">Customers have requested changes to these edits.</p>
+            
+            <div className="space-y-4">
+              {revisionRequests.map((request: EditingRequest) => (
+                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-orange-500/30" data-testid={`editing-revision-${request.id}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center overflow-hidden">
+                        {request.booking?.customer?.profileImageUrl ? (
+                          <img 
+                            src={request.booking.customer.profileImageUrl} 
+                            alt={request.booking.customer.fullName} 
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-orange-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{request.booking?.customer?.fullName || 'Customer'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {request.photoCount} photo{request.photoCount && request.photoCount > 1 ? 's' : ''} • Revision #{(request.revisionCount || 0) + 1}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full font-medium bg-orange-500/20 text-orange-400">
+                      Changes Requested
+                    </span>
+                  </div>
+                  
+                  {/* Customer's Revision Notes */}
+                  {request.revisionNotes && (
+                    <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                      <p className="text-xs text-orange-400 font-medium mb-1 flex items-center gap-1">
+                        <MessageSquare className="w-3 h-3" />
+                        Customer's Feedback
+                      </p>
+                      <p className="text-sm text-white">{request.revisionNotes}</p>
+                    </div>
+                  )}
+                  
+                  {/* Previously Delivered Photos */}
+                  {request.editedPhotos && request.editedPhotos.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Your previous delivery:</p>
+                      <div className="flex gap-1 overflow-x-auto pb-2">
+                        {request.editedPhotos.slice(0, 4).map((url, idx) => (
+                          <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 opacity-60">
+                            <img src={url} alt={`Previous edit ${idx + 1}`} className="w-full h-full object-cover" />
+                          </div>
+                        ))}
+                        {request.editedPhotos.length > 4 && (
+                          <div className="w-12 h-12 rounded-lg bg-black/40 flex items-center justify-center flex-shrink-0 opacity-60">
+                            <span className="text-xs text-muted-foreground">+{request.editedPhotos.length - 4}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <Button
+                    onClick={() => {
+                      setSelectedEditingRequest(request);
+                      setEditingAction("deliver");
+                      setEditedPhotos([]);
+                      setPhotographerNotes("");
+                    }}
+                    className="w-full bg-orange-600 hover:bg-orange-700"
+                    data-testid={`button-resubmit-editing-${request.id}`}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Revised Photos
                   </Button>
                 </div>
               ))}

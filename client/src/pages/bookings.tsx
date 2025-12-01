@@ -36,7 +36,13 @@ export default function Bookings() {
   const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<PhotoDelivery & { booking?: any } | null>(null);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
   const [selectedPhotosForEditing, setSelectedPhotosForEditing] = useState<Set<number>>(new Set());
-  const [viewingEditedPhotos, setViewingEditedPhotos] = useState<{ photos: string[]; bookingId: string } | null>(null);
+  const [viewingEditedPhotos, setViewingEditedPhotos] = useState<{ 
+    photos: string[]; 
+    bookingId: string; 
+    requestId?: string; 
+    status?: string;
+    requestedPhotoUrls?: string[] | null;
+  } | null>(null);
   const [editedPhotoIndex, setEditedPhotoIndex] = useState(0);
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
@@ -210,6 +216,61 @@ export default function Bookings() {
       setEditingDialogBooking(null);
       setEditingPhotoCount(1);
       setEditingNotes("");
+      queryClient.invalidateQueries({ queryKey: ["editingRequests"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // State for revision workflow
+  const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [showCompareMode, setShowCompareMode] = useState(false);
+
+  // Complete editing request mutation
+  const completeEditingMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const res = await fetch(`/api/editing-requests/${requestId}/complete`, {
+        method: "PATCH",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to complete editing");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Editing approved! The photos are now complete.");
+      setViewingEditedPhotos(null);
+      queryClient.invalidateQueries({ queryKey: ["editingRequests"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  // Request revision mutation
+  const requestRevisionMutation = useMutation({
+    mutationFn: async ({ requestId, revisionNotes }: { requestId: string; revisionNotes: string }) => {
+      const res = await fetch(`/api/editing-requests/${requestId}/request-revision`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ revisionNotes }),
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to request revision");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Revision requested! The photographer will update the photos.");
+      setViewingEditedPhotos(null);
+      setShowRevisionInput(false);
+      setRevisionNotes("");
       queryClient.invalidateQueries({ queryKey: ["editingRequests"] });
     },
     onError: (error: Error) => {
@@ -424,10 +485,19 @@ export default function Bookings() {
     });
   };
 
-  const handleViewEditedPhotos = (bookingId: string, editedPhotos: string[]) => {
-    if (editedPhotos && editedPhotos.length > 0) {
-      setViewingEditedPhotos({ photos: editedPhotos, bookingId });
+  const handleViewEditedPhotos = (bookingId: string, editingRequest: any) => {
+    if (editingRequest?.editedPhotos && editingRequest.editedPhotos.length > 0) {
+      setViewingEditedPhotos({ 
+        photos: editingRequest.editedPhotos, 
+        bookingId,
+        requestId: editingRequest.id,
+        status: editingRequest.status,
+        requestedPhotoUrls: editingRequest.requestedPhotoUrls,
+      });
       setEditedPhotoIndex(0);
+      setShowCompareMode(false);
+      setShowRevisionInput(false);
+      setRevisionNotes("");
     }
   };
 
@@ -748,7 +818,7 @@ export default function Bookings() {
                             <Button
                               size="sm"
                               className="bg-violet-500 hover:bg-violet-600 text-white text-xs"
-                              onClick={() => handleViewEditedPhotos(booking.id, editingRequest.editedPhotos!)}
+                              onClick={() => handleViewEditedPhotos(booking.id, editingRequest)}
                               data-testid={`button-view-edited-${booking.id}`}
                             >
                               <Images className="w-3 h-3 mr-1" />
@@ -1210,8 +1280,15 @@ export default function Bookings() {
       </Dialog>
 
       {/* Edited Photos Gallery Dialog */}
-      <Dialog open={!!viewingEditedPhotos} onOpenChange={(open) => !open && setViewingEditedPhotos(null)}>
-        <DialogContent className="max-h-[75vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
+      <Dialog open={!!viewingEditedPhotos} onOpenChange={(open) => {
+        if (!open) {
+          setViewingEditedPhotos(null);
+          setShowCompareMode(false);
+          setShowRevisionInput(false);
+          setRevisionNotes("");
+        }
+      }}>
+        <DialogContent className="max-h-[85vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
           <DialogHeader className="sr-only">
             <DialogTitle>Edited Photos</DialogTitle>
           </DialogHeader>
@@ -1221,6 +1298,16 @@ export default function Bookings() {
               <div className="flex items-center gap-2">
                 <Palette className="w-5 h-5 text-violet-400" />
                 <h2 className="text-white font-bold">Edited Photos</h2>
+                {viewingEditedPhotos?.status === 'delivered' && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
+                    Pending Approval
+                  </span>
+                )}
+                {viewingEditedPhotos?.status === 'completed' && (
+                  <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
+                    Approved
+                  </span>
+                )}
               </div>
               <Button
                 onClick={handleDownloadAllEdited}
@@ -1232,10 +1319,45 @@ export default function Bookings() {
                 Download All
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {viewingEditedPhotos?.photos.length || 0} edited photos ready
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                {viewingEditedPhotos?.photos.length || 0} edited photos ready
+              </p>
+              {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={`text-xs ${showCompareMode ? 'text-violet-400 bg-violet-500/20' : 'text-muted-foreground'}`}
+                  onClick={() => setShowCompareMode(!showCompareMode)}
+                  data-testid="button-toggle-compare"
+                >
+                  <Images className="w-3 h-3 mr-1" />
+                  {showCompareMode ? 'Hide Compare' : 'Compare with Original'}
+                </Button>
+              )}
+            </div>
           </div>
+
+          {/* Comparison View */}
+          {showCompareMode && viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+            <div className="p-4 border-b border-violet-500/30 bg-violet-500/5">
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <ImageIcon className="w-3 h-3" />
+                Original Photos You Requested to Edit
+              </p>
+              <div className="grid grid-cols-4 gap-2 max-h-24 overflow-y-auto">
+                {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
+                  <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40 border border-zinc-700">
+                    <img 
+                      src={url} 
+                      alt={`Original ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Photo Grid */}
           <div className="flex-1 overflow-y-auto p-4">
@@ -1309,6 +1431,96 @@ export default function Bookings() {
                 >
                   <Download className="w-4 h-4 mr-1" />
                   Download
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Revision Input */}
+          {showRevisionInput && viewingEditedPhotos?.requestId && (
+            <div className="p-4 border-t border-violet-500/30 bg-orange-500/5">
+              <p className="text-sm font-medium text-white mb-2">What changes would you like?</p>
+              <Textarea
+                value={revisionNotes}
+                onChange={(e) => setRevisionNotes(e.target.value)}
+                placeholder="Describe the changes you'd like the photographer to make..."
+                className="bg-black/40 border-orange-500/30 text-white placeholder:text-muted-foreground"
+                rows={3}
+                data-testid="input-revision-notes"
+              />
+              {!revisionNotes.trim() && (
+                <p className="text-xs text-orange-400/70 mt-1 mb-2">Please describe the changes you need</p>
+              )}
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setShowRevisionInput(false);
+                    setRevisionNotes("");
+                  }}
+                  className="flex-1 border-zinc-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (viewingEditedPhotos?.requestId && revisionNotes.trim()) {
+                      requestRevisionMutation.mutate({
+                        requestId: viewingEditedPhotos.requestId,
+                        revisionNotes: revisionNotes.trim(),
+                      });
+                    }
+                  }}
+                  disabled={!revisionNotes.trim() || requestRevisionMutation.isPending}
+                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  data-testid="button-submit-revision"
+                >
+                  {requestRevisionMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    'Send Revision Request'
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons - Only show when status is 'delivered' and not showing revision input */}
+          {viewingEditedPhotos?.status === 'delivered' && viewingEditedPhotos?.requestId && !showRevisionInput && (
+            <div className="p-4 border-t border-violet-500/30 bg-black/50">
+              <p className="text-xs text-muted-foreground mb-3 text-center">
+                Are you happy with these edits?
+              </p>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRevisionInput(true)}
+                  className="flex-1 border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                  data-testid="button-request-revision"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Request Changes
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (viewingEditedPhotos?.requestId) {
+                      completeEditingMutation.mutate(viewingEditedPhotos.requestId);
+                    }
+                  }}
+                  disabled={completeEditingMutation.isPending}
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  data-testid="button-approve-editing"
+                >
+                  {completeEditingMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Approve
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

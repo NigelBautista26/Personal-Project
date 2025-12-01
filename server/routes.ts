@@ -1517,11 +1517,46 @@ export async function registerRoutes(
         return res.status(400).json({ error: "Cannot complete - photos not yet delivered" });
       }
 
-      const updatedRequest = await storage.updateEditingRequestStatus(req.params.requestId, "completed");
+      const updatedRequest = await storage.completeEditingRequest(req.params.requestId);
       res.json(updatedRequest);
     } catch (error) {
       console.error("Error completing editing request:", error);
       res.status(400).json({ error: "Failed to complete editing request" });
+    }
+  });
+
+  // Customer requests revision of edited photos
+  app.post("/api/editing-requests/:requestId/request-revision", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const revisionSchema = z.object({
+        revisionNotes: z.string().min(1).max(1000),
+      });
+
+      const { revisionNotes } = revisionSchema.parse(req.body);
+
+      const editingRequest = await storage.getEditingRequest(req.params.requestId);
+      if (!editingRequest) {
+        return res.status(404).json({ error: "Editing request not found" });
+      }
+
+      // Verify the customer owns this request
+      if (editingRequest.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      if (editingRequest.status !== "delivered") {
+        return res.status(400).json({ error: "Cannot request revision - photos not yet delivered" });
+      }
+
+      const updatedRequest = await storage.requestRevision(req.params.requestId, revisionNotes);
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error requesting revision:", error);
+      res.status(400).json({ error: "Failed to request revision" });
     }
   });
 

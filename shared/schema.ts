@@ -152,9 +152,11 @@ export const editingRequests = pgTable("editing_requests", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(), // 20% from photographer
   photographerEarnings: decimal("photographer_earnings", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("requested"), // requested, accepted, in_progress, delivered, completed, declined, cancelled
+  status: text("status").notNull().default("requested"), // requested, accepted, in_progress, delivered, revision_requested, completed, declined, cancelled
   customerNotes: text("customer_notes"), // special requests from customer
   photographerNotes: text("photographer_notes"), // notes from photographer
+  revisionNotes: text("revision_notes"), // customer feedback when requesting revisions
+  revisionCount: integer("revision_count").default(0), // number of revision rounds
   requestedPhotoUrls: text("requested_photo_urls").array().default(sql`ARRAY[]::text[]`), // photos customer wants edited
   editedPhotos: text("edited_photos").array().default(sql`ARRAY[]::text[]`), // delivered edited photos
   requestedAt: timestamp("requested_at").defaultNow().notNull(),
