@@ -89,7 +89,8 @@ export const earnings = pgTable("earnings", {
   grossAmount: decimal("gross_amount", { precision: 10, scale: 2 }).notNull(),
   platformFee: decimal("platform_fee", { precision: 10, scale: 2 }).notNull(),
   netAmount: decimal("net_amount", { precision: 10, scale: 2 }).notNull(),
-  status: text("status").notNull().default("pending"), // pending, paid
+  status: text("status").notNull().default("held"), // held (until photos uploaded), pending (ready for payout), paid
+  releasedAt: timestamp("released_at"), // when photos uploaded and payment released
   paidAt: timestamp("paid_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

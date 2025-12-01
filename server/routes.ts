@@ -999,6 +999,9 @@ export async function registerRoutes(
       // Automatically mark booking as completed when photos are delivered
       if (booking.status === 'confirmed') {
         await storage.updateBookingStatus(booking.id, 'completed');
+        
+        // Release payment to photographer now that photos are uploaded
+        await storage.releaseEarningsByBooking(booking.id);
       }
       
       res.json(delivery);

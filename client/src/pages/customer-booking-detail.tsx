@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Camera, MessageCircle, Navigation, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, DollarSign, Camera, MessageCircle, Navigation, ChevronDown, ChevronUp, ExternalLink, Lock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format, parseISO, isToday, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -216,11 +216,40 @@ export default function CustomerBookingDetail() {
             <div>
               <p className="text-xs text-muted-foreground">Total Paid</p>
               <p className="text-white font-bold text-lg">
-                £{parseFloat(booking.totalAmount).toFixed(2)}
+                ${parseFloat(booking.totalAmount).toFixed(2)}
               </p>
             </div>
           </div>
         </div>
+
+        {/* Payment Protection Notice */}
+        {(booking.status === "confirmed" || booking.status === "pending") && (
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3" data-testid="payment-protection-notice">
+            <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+              <Lock className="w-5 h-5 text-amber-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-sm">Payment Protected</h3>
+              <p className="text-muted-foreground text-xs leading-relaxed mt-1">
+                Your payment is held securely until your photographer delivers your photos. This ensures you're protected and get what you paid for.
+              </p>
+            </div>
+          </div>
+        )}
+        
+        {booking.status === "completed" && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4 flex items-start gap-3" data-testid="payment-released-notice">
+            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-sm">Photos Delivered</h3>
+              <p className="text-muted-foreground text-xs leading-relaxed mt-1">
+                Your photographer has uploaded your photos and your payment has been released. Enjoy your memories!
+              </p>
+            </div>
+          </div>
+        )}
 
         {booking.status === "confirmed" && (
           <div className="glass-panel rounded-2xl p-5 space-y-4">

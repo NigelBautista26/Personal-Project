@@ -156,6 +156,13 @@ Preferred communication style: Simple, everyday language.
   - Profile is created via POST /api/photographers on completion
   - New photographers no longer show with misleading default ratings (fixed to show no rating until they receive actual reviews)
 
+- **Payment Hold System** (Dec 2025): Photographer payments are now held until photos are uploaded, ensuring customers receive their photos:
+  - Earnings are created with "held" status when booking is confirmed
+  - Payment is released (status changes to "pending") automatically when photographer uploads photos
+  - Photographer dashboard shows breakdown: Total Earned, Held (awaiting photo upload), Available (ready for withdrawal), Paid Out
+  - Customer booking detail shows "Payment Protected" notice during session and "Photos Delivered" when complete
+  - Encourages prompt photo delivery since photographers see held funds and clear path to release
+
 **Demo Accounts:** All demo accounts use password "password" for easy testing.
 
 ## Feature Backlog

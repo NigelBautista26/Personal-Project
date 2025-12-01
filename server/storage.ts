@@ -71,7 +71,9 @@ export interface IStorage {
   // Earnings methods
   getEarningsByPhotographer(photographerId: string): Promise<Earning[]>;
   createEarning(earning: InsertEarning): Promise<Earning>;
-  getTotalEarnings(photographerId: string): Promise<{ total: number; pending: number; paid: number }>;
+  getTotalEarnings(photographerId: string): Promise<{ total: number; held: number; pending: number; paid: number }>;
+  releaseEarningsByBooking(bookingId: string): Promise<Earning | undefined>;
+  getEarningByBooking(bookingId: string): Promise<Earning | undefined>;
   
   // Photo Spots methods
   getPhotoSpot(id: string): Promise<PhotoSpot | undefined>;
@@ -409,14 +411,34 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async getTotalEarnings(photographerId: string): Promise<{ total: number; pending: number; paid: number }> {
+  async getTotalEarnings(photographerId: string): Promise<{ total: number; held: number; pending: number; paid: number }> {
     const allEarnings = await this.getEarningsByPhotographer(photographerId);
     
     const total = allEarnings.reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
+    const held = allEarnings.filter(e => e.status === 'held').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
     const pending = allEarnings.filter(e => e.status === 'pending').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
     const paid = allEarnings.filter(e => e.status === 'paid').reduce((sum, e) => sum + parseFloat(e.netAmount), 0);
     
-    return { total, pending, paid };
+    return { total, held, pending, paid };
+  }
+
+  async releaseEarningsByBooking(bookingId: string): Promise<Earning | undefined> {
+    const result = await db.update(earnings)
+      .set({ 
+        status: 'pending', 
+        releasedAt: new Date() 
+      })
+      .where(and(
+        eq(earnings.bookingId, bookingId),
+        eq(earnings.status, 'held')
+      ))
+      .returning();
+    return result[0];
+  }
+
+  async getEarningByBooking(bookingId: string): Promise<Earning | undefined> {
+    const result = await db.select().from(earnings).where(eq(earnings.bookingId, bookingId)).limit(1);
+    return result[0];
   }
 
   // Photo Spots methods

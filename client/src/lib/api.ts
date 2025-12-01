@@ -125,6 +125,7 @@ export async function getPhotographerEarnings(photographerId: string): Promise<E
 
 export async function getPhotographerEarningsSummary(photographerId: string): Promise<{
   total: number;
+  held: number;
   pending: number;
   paid: number;
 }> {
