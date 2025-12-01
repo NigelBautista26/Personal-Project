@@ -1,11 +1,28 @@
 import { Link } from "wouter";
 import { ChevronRight } from "lucide-react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import PhotoCube from "@/components/photo-cube";
 
 import generatedImage from "@assets/generated_images/minimalist_icon_combining_a_camera_shutter_and_location_pin.png";
 
+// Preload the logo image globally
+const preloadLogo = new Image();
+preloadLogo.src = generatedImage;
+
 export default function Welcome() {
+  // Ensure logo is preloaded on mount
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = generatedImage;
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-black flex flex-col items-center justify-between p-8 relative overflow-hidden">
       {/* 3D Photo Cube Background */}
@@ -16,7 +33,14 @@ export default function Welcome() {
       
       <div className="relative z-20 w-full flex-1 flex flex-col items-center justify-center mt-12">
         <div className="w-32 h-32 rounded-3xl flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(255,255,255,0.15)] overflow-hidden backdrop-blur-sm bg-black/30 border border-white/10">
-          <img src={generatedImage} alt="SnapNow Logo" className="w-full h-full object-cover" />
+          <img 
+            src={generatedImage} 
+            alt="SnapNow Logo" 
+            className="w-full h-full object-cover" 
+            loading="eager"
+            decoding="sync"
+            fetchPriority="high"
+          />
         </div>
         
         <p className="text-muted-foreground text-center max-w-[280px] leading-relaxed text-lg">
