@@ -1,35 +1,27 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Loader2, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-import html2pdf from "html2pdf.js";
 
 export default function InvestorPitch() {
   const contentRef = useRef<HTMLDivElement>(null);
-  const [generating, setGenerating] = useState(false);
 
-  const generatePDF = async () => {
-    if (!contentRef.current) return;
-    setGenerating(true);
-    
-    const opt = {
-      margin: [10, 10, 10, 10] as [number, number, number, number],
-      filename: 'SnapNow_Investor_Pitch.pdf',
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
-    };
-
-    try {
-      await html2pdf().set(opt).from(contentRef.current).save();
-    } catch (error) {
-      console.error('PDF generation error:', error);
-    }
-    setGenerating(false);
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4">
+    <div className="min-h-screen bg-zinc-950 text-white p-4 print:bg-white print:text-black">
+      <style>{`
+        @media print {
+          @page { size: A4; margin: 0.5in; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .print-content { 
+            background: white !important;
+            color: black !important;
+          }
+        }
+      `}</style>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6 print:hidden">
           <Link href="/">
@@ -39,21 +31,11 @@ export default function InvestorPitch() {
             </Button>
           </Link>
           <Button 
-            onClick={generatePDF} 
-            disabled={generating}
+            onClick={handlePrint}
             className="bg-primary hover:bg-primary/90"
           >
-            {generating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Download PDF
-              </>
-            )}
+            <Printer className="w-4 h-4 mr-2" />
+            Print / Save PDF
           </Button>
         </div>
 
