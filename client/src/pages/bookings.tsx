@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/api";
 import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -216,6 +216,9 @@ export default function Bookings() {
     },
   });
 
+  // Ref to track notified IDs during this session (prevents race condition with localStorage)
+  const notifiedIdsRef = useRef<Set<string>>(new Set());
+
   // Calculate filtered bookings - use primitive string for stable dependency
   const expiredBookingIds = bookings
     .filter((b: any) => b.status === 'expired')
@@ -237,13 +240,18 @@ export default function Bookings() {
       notifiedIds = [];
     }
     
-    // Find bookings we haven't notified about yet
+    // Find bookings we haven't notified about yet (check both localStorage AND ref)
     const expiredIds = expiredBookingIds.split(',');
-    const newExpiredIds = expiredIds.filter((id: string) => !notifiedIds.includes(id));
+    const newExpiredIds = expiredIds.filter((id: string) => 
+      !notifiedIds.includes(id) && !notifiedIdsRef.current.has(id)
+    );
     
     if (newExpiredIds.length === 0) return;
     
-    // Mark these as notified
+    // Mark these as notified IMMEDIATELY in ref to prevent race conditions
+    newExpiredIds.forEach((id: string) => notifiedIdsRef.current.add(id));
+    
+    // Also persist to localStorage
     const updatedNotifiedIds = [...notifiedIds, ...newExpiredIds];
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));

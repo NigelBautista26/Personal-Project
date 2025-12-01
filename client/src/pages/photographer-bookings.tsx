@@ -6,7 +6,7 @@ import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -104,6 +104,9 @@ export default function PhotographerBookings() {
     }
   }, [user, userLoading, setLocation]);
 
+  // Ref to track notified IDs during this session (prevents race condition with localStorage)
+  const notifiedIdsRef = useRef<Set<string>>(new Set());
+
   const expiredBookingIds = bookings
     .filter((b: any) => b.status === 'expired')
     .map((b: any) => b.id)
@@ -122,11 +125,18 @@ export default function PhotographerBookings() {
       notifiedIds = [];
     }
     
+    // Find bookings we haven't notified about yet (check both localStorage AND ref)
     const expiredIds = expiredBookingIds.split(',');
-    const newExpiredIds = expiredIds.filter((id: string) => !notifiedIds.includes(id));
+    const newExpiredIds = expiredIds.filter((id: string) => 
+      !notifiedIds.includes(id) && !notifiedIdsRef.current.has(id)
+    );
     
     if (newExpiredIds.length === 0) return;
     
+    // Mark these as notified IMMEDIATELY in ref to prevent race conditions
+    newExpiredIds.forEach((id: string) => notifiedIdsRef.current.add(id));
+    
+    // Also persist to localStorage
     const updatedNotifiedIds = [...notifiedIds, ...newExpiredIds];
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedNotifiedIds));
