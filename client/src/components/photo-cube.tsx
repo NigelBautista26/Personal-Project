@@ -33,15 +33,15 @@ interface RowConfig {
 }
 
 const rowConfigs: RowConfig[] = [
-  { top: "0%", cubeSize: 100, direction: "right", duration: 60, opacity: 0.7, cubesPerRow: 6 },
-  { top: "12%", cubeSize: 90, direction: "left", duration: 70, opacity: 0.6, cubesPerRow: 7 },
-  { top: "23%", cubeSize: 85, direction: "right", duration: 65, opacity: 0.5, cubesPerRow: 7 },
-  { top: "34%", cubeSize: 80, direction: "left", duration: 75, opacity: 0.4, cubesPerRow: 8 },
-  { top: "44%", cubeSize: 75, direction: "right", duration: 62, opacity: 0.35, cubesPerRow: 8 },
-  { top: "54%", cubeSize: 80, direction: "left", duration: 78, opacity: 0.4, cubesPerRow: 8 },
-  { top: "65%", cubeSize: 85, direction: "right", duration: 64, opacity: 0.5, cubesPerRow: 7 },
-  { top: "76%", cubeSize: 90, direction: "left", duration: 72, opacity: 0.6, cubesPerRow: 7 },
-  { top: "88%", cubeSize: 95, direction: "right", duration: 68, opacity: 0.65, cubesPerRow: 6 },
+  { top: "0%", cubeSize: 100, direction: "right", duration: 80, opacity: 0.7, cubesPerRow: 5 },
+  { top: "12%", cubeSize: 90, direction: "left", duration: 90, opacity: 0.6, cubesPerRow: 6 },
+  { top: "23%", cubeSize: 85, direction: "right", duration: 85, opacity: 0.5, cubesPerRow: 6 },
+  { top: "34%", cubeSize: 80, direction: "left", duration: 95, opacity: 0.4, cubesPerRow: 7 },
+  { top: "44%", cubeSize: 75, direction: "right", duration: 82, opacity: 0.35, cubesPerRow: 7 },
+  { top: "54%", cubeSize: 80, direction: "left", duration: 98, opacity: 0.4, cubesPerRow: 7 },
+  { top: "65%", cubeSize: 85, direction: "right", duration: 84, opacity: 0.5, cubesPerRow: 6 },
+  { top: "76%", cubeSize: 90, direction: "left", duration: 92, opacity: 0.6, cubesPerRow: 6 },
+  { top: "88%", cubeSize: 95, direction: "right", duration: 88, opacity: 0.65, cubesPerRow: 5 },
 ];
 
 function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDelay: number; photoIndex: number }) {
@@ -121,35 +121,39 @@ function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDel
 
 function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number }) {
   const cubes = Array.from({ length: config.cubesPerRow }, (_, i) => i);
+  const isRight = config.direction === "right";
   
   return (
     <div 
-      className="absolute left-0 right-0 flex"
+      className="absolute flex"
       style={{
         top: config.top,
         opacity: config.opacity,
+        left: 0,
+        right: 0,
       }}
     >
       <div 
-        className="flex"
+        className="flex animate-marquee"
         style={{
-          animation: `marquee${config.direction === "right" ? "Right" : "Left"} ${config.duration}s linear infinite`,
+          ["--duration" as string]: `${config.duration}s`,
+          ["--direction" as string]: isRight ? "reverse" : "normal",
         }}
       >
         {cubes.map((i) => (
           <SingleCube 
             key={`a-${i}`} 
             size={config.cubeSize} 
-            rotateDelay={-i * 3 - rowIndex * 2}
-            photoIndex={i + rowIndex}
+            rotateDelay={-i * 4 - rowIndex * 3}
+            photoIndex={(i * 2 + rowIndex * 3) % 16}
           />
         ))}
         {cubes.map((i) => (
           <SingleCube 
             key={`b-${i}`} 
             size={config.cubeSize} 
-            rotateDelay={-i * 3 - rowIndex * 2 - 10}
-            photoIndex={i + rowIndex + 3}
+            rotateDelay={-i * 4 - rowIndex * 3}
+            photoIndex={(i * 2 + rowIndex * 3) % 16}
           />
         ))}
       </div>
@@ -214,13 +218,13 @@ export default function PhotoCube() {
           75% { transform: rotateX(15deg) rotateY(270deg); }
           100% { transform: rotateX(-15deg) rotateY(360deg); }
         }
-        @keyframes marqueeRight {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0%); }
-        }
-        @keyframes marqueeLeft {
-          0% { transform: translateX(0%); }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+          animation: marquee var(--duration, 60s) linear infinite;
+          animation-direction: var(--direction, normal);
         }
       `}</style>
     </div>
