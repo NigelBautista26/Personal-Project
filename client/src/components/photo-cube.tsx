@@ -6,8 +6,22 @@ import photo3 from "@assets/stock_images/beautiful_profession_95e1492a.jpg";
 import photo4 from "@assets/stock_images/beautiful_profession_ffa38dc4.jpg";
 import photo5 from "@assets/stock_images/beautiful_profession_3c074fd2.jpg";
 import photo6 from "@assets/stock_images/beautiful_profession_7eaa7b30.jpg";
+import photo7 from "@assets/stock_images/instagram_travel_pho_81d9c578.jpg";
+import photo8 from "@assets/stock_images/instagram_travel_pho_529df077.jpg";
+import photo9 from "@assets/stock_images/instagram_travel_pho_d24f756e.jpg";
+import photo10 from "@assets/stock_images/instagram_travel_pho_f619aac7.jpg";
+import photo11 from "@assets/stock_images/instagram_travel_pho_97901a84.jpg";
+import photo12 from "@assets/stock_images/instagram_travel_pho_05e6e9a8.jpg";
+import photo13 from "@assets/stock_images/instagram_travel_pho_1335fc3c.jpg";
+import photo14 from "@assets/stock_images/instagram_travel_pho_7bccb283.jpg";
+import photo15 from "@assets/stock_images/instagram_travel_pho_eada20e0.jpg";
+import photo16 from "@assets/stock_images/instagram_travel_pho_34fd34b8.jpg";
 
-const photos = [photo1, photo2, photo3, photo4, photo5, photo6];
+const photos = [
+  photo1, photo2, photo3, photo4, photo5, photo6,
+  photo7, photo8, photo9, photo10, photo11, photo12,
+  photo13, photo14, photo15, photo16
+];
 
 interface RowConfig {
   top: string;
@@ -19,26 +33,26 @@ interface RowConfig {
 }
 
 const rowConfigs: RowConfig[] = [
-  { top: "0%", cubeSize: 100, direction: "right", duration: 35, opacity: 0.7, cubesPerRow: 6 },
-  { top: "12%", cubeSize: 90, direction: "left", duration: 40, opacity: 0.6, cubesPerRow: 7 },
-  { top: "23%", cubeSize: 85, direction: "right", duration: 38, opacity: 0.5, cubesPerRow: 7 },
-  { top: "34%", cubeSize: 80, direction: "left", duration: 42, opacity: 0.4, cubesPerRow: 8 },
-  { top: "44%", cubeSize: 75, direction: "right", duration: 36, opacity: 0.35, cubesPerRow: 8 },
-  { top: "54%", cubeSize: 80, direction: "left", duration: 44, opacity: 0.4, cubesPerRow: 8 },
-  { top: "65%", cubeSize: 85, direction: "right", duration: 37, opacity: 0.5, cubesPerRow: 7 },
-  { top: "76%", cubeSize: 90, direction: "left", duration: 41, opacity: 0.6, cubesPerRow: 7 },
-  { top: "88%", cubeSize: 95, direction: "right", duration: 39, opacity: 0.65, cubesPerRow: 6 },
+  { top: "0%", cubeSize: 100, direction: "right", duration: 60, opacity: 0.7, cubesPerRow: 6 },
+  { top: "12%", cubeSize: 90, direction: "left", duration: 70, opacity: 0.6, cubesPerRow: 7 },
+  { top: "23%", cubeSize: 85, direction: "right", duration: 65, opacity: 0.5, cubesPerRow: 7 },
+  { top: "34%", cubeSize: 80, direction: "left", duration: 75, opacity: 0.4, cubesPerRow: 8 },
+  { top: "44%", cubeSize: 75, direction: "right", duration: 62, opacity: 0.35, cubesPerRow: 8 },
+  { top: "54%", cubeSize: 80, direction: "left", duration: 78, opacity: 0.4, cubesPerRow: 8 },
+  { top: "65%", cubeSize: 85, direction: "right", duration: 64, opacity: 0.5, cubesPerRow: 7 },
+  { top: "76%", cubeSize: 90, direction: "left", duration: 72, opacity: 0.6, cubesPerRow: 7 },
+  { top: "88%", cubeSize: 95, direction: "right", duration: 68, opacity: 0.65, cubesPerRow: 6 },
 ];
 
 function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDelay: number; photoIndex: number }) {
   const halfSize = size / 2;
   const startPhotos = [
-    photoIndex % 6,
-    (photoIndex + 1) % 6,
-    (photoIndex + 2) % 6,
-    (photoIndex + 3) % 6,
-    (photoIndex + 4) % 6,
-    (photoIndex + 5) % 6,
+    photoIndex % 16,
+    (photoIndex + 3) % 16,
+    (photoIndex + 6) % 16,
+    (photoIndex + 9) % 16,
+    (photoIndex + 12) % 16,
+    (photoIndex + 15) % 16,
   ];
   
   return (
@@ -54,7 +68,7 @@ function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDel
           width: `${size}px`,
           height: `${size}px`,
           transformStyle: "preserve-3d",
-          animation: `cubeRotate 20s infinite linear`,
+          animation: `cubeRotate 35s infinite linear`,
           animationDelay: `${rotateDelay}s`,
         }}
       >
