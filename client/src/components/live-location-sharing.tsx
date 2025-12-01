@@ -1,22 +1,33 @@
-import { useState, useEffect, useCallback } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { Navigation, MapPin, Loader2, X, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Navigation, MapPin, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface LiveLocationSharingProps {
   bookingId: string;
   scheduledDate: string;
   scheduledTime: string;
+  userType: "customer" | "photographer";
   onLocationUpdate?: (location: { lat: number; lng: number } | null) => void;
+  onOtherPartyLocation?: (location: { lat: number; lng: number; updatedAt: string } | null) => void;
 }
 
-export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, onLocationUpdate }: LiveLocationSharingProps) {
+export function LiveLocationSharing({ 
+  bookingId, 
+  scheduledDate, 
+  scheduledTime, 
+  userType,
+  onLocationUpdate,
+  onOtherPartyLocation
+}: LiveLocationSharingProps) {
   const [isSharing, setIsSharing] = useState(false);
   const [watchId, setWatchId] = useState<number | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [minutesUntilAvailable, setMinutesUntilAvailable] = useState<number | null>(null);
+  const [isWithinWindow, setIsWithinWindow] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const hasAutoStarted = useRef(false);
   const { toast } = useToast();
 
   const getSessionDateTime = useCallback(() => {
@@ -37,8 +48,10 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
       
       if (minutesUntil <= 10) {
         setMinutesUntilAvailable(null);
+        setIsWithinWindow(true);
       } else {
         setMinutesUntilAvailable(Math.ceil(minutesUntil - 10));
+        setIsWithinWindow(false);
       }
     };
 
@@ -53,7 +66,7 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ latitude, longitude, accuracy }),
+        body: JSON.stringify({ latitude, longitude, accuracy, userType }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -80,6 +93,32 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
     },
   });
 
+  const { data: otherPartyLocation } = useQuery<{ latitude: string; longitude: string; updatedAt: string } | null>({
+    queryKey: ["other-party-location", bookingId, userType],
+    queryFn: async () => {
+      const endpoint = userType === "customer" 
+        ? `/api/bookings/${bookingId}/photographer-location`
+        : `/api/bookings/${bookingId}/live-location`;
+      const res = await fetch(endpoint, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: isWithinWindow,
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    if (otherPartyLocation && onOtherPartyLocation) {
+      onOtherPartyLocation({
+        lat: parseFloat(otherPartyLocation.latitude),
+        lng: parseFloat(otherPartyLocation.longitude),
+        updatedAt: otherPartyLocation.updatedAt,
+      });
+    } else if (!otherPartyLocation && onOtherPartyLocation) {
+      onOtherPartyLocation(null);
+    }
+  }, [otherPartyLocation, onOtherPartyLocation]);
+
   const startSharing = useCallback(() => {
     if (!navigator.geolocation) {
       toast({
@@ -104,11 +143,7 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
         console.error("Geolocation error:", err);
         setError(err.message);
         if (err.code === err.PERMISSION_DENIED) {
-          toast({
-            title: "Permission Denied",
-            description: "Please allow location access to share your location",
-            variant: "destructive",
-          });
+          setPermissionDenied(true);
           stopSharing();
         }
       },
@@ -121,10 +156,6 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
 
     setWatchId(id);
     setIsSharing(true);
-    toast({
-      title: "Location Sharing Started",
-      description: "Your photographer can now see your location",
-    });
   }, [bookingId, toast, updateLocationMutation, onLocationUpdate]);
 
   const stopSharing = useCallback(() => {
@@ -136,11 +167,14 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
     setCurrentLocation(null);
     onLocationUpdate?.(null);
     stopLocationMutation.mutate();
-    toast({
-      title: "Location Sharing Stopped",
-      description: "Your location is no longer visible to the photographer",
-    });
-  }, [watchId, stopLocationMutation, toast, onLocationUpdate]);
+  }, [watchId, stopLocationMutation, onLocationUpdate]);
+
+  useEffect(() => {
+    if (isWithinWindow && !hasAutoStarted.current && !isSharing && !permissionDenied) {
+      hasAutoStarted.current = true;
+      startSharing();
+    }
+  }, [isWithinWindow, isSharing, permissionDenied, startSharing]);
 
   useEffect(() => {
     return () => {
@@ -158,9 +192,27 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
             <Navigation className="w-5 h-5 text-muted-foreground" />
           </div>
           <div className="flex-1">
-            <p className="text-white font-medium">Share Live Location</p>
+            <p className="text-white font-medium">Live Location Sharing</p>
             <p className="text-xs text-muted-foreground">
-              Available in {minutesUntilAvailable} minute{minutesUntilAvailable > 1 ? 's' : ''}
+              Starts automatically in {minutesUntilAvailable} minute{minutesUntilAvailable > 1 ? 's' : ''}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (permissionDenied) {
+    return (
+      <div className="glass-dark rounded-2xl p-4 border border-red-500/30 bg-red-500/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
+            <AlertCircle className="w-5 h-5 text-red-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-white font-medium">Location Access Denied</p>
+            <p className="text-xs text-muted-foreground">
+              Please enable location access in your browser settings to share your location
             </p>
           </div>
         </div>
@@ -177,7 +229,7 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
           </div>
           <div className="flex-1">
-            <p className="text-white font-medium">Sharing Location</p>
+            <p className="text-white font-medium">Sharing Your Location</p>
             {currentLocation && (
               <p className="text-xs text-blue-400 flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
@@ -185,16 +237,7 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
               </p>
             )}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={stopSharing}
-            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-            data-testid="button-stop-sharing"
-          >
-            <X className="w-4 h-4 mr-1" />
-            Stop
-          </Button>
+          <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
         </div>
         {error && (
           <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
@@ -213,30 +256,13 @@ export function LiveLocationSharing({ bookingId, scheduledDate, scheduledTime, o
           <Navigation className="w-5 h-5 text-blue-400" />
         </div>
         <div className="flex-1">
-          <p className="text-white font-medium">Share Live Location</p>
+          <p className="text-white font-medium">Live Location</p>
           <p className="text-xs text-muted-foreground">
-            Help your photographer find you
+            Starting location sharing...
           </p>
         </div>
-        <Button
-          onClick={startSharing}
-          disabled={updateLocationMutation.isPending}
-          className="bg-blue-500 hover:bg-blue-600"
-          data-testid="button-start-sharing"
-        >
-          {updateLocationMutation.isPending ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            "Share"
-          )}
-        </Button>
+        <Loader2 className="w-5 h-5 text-blue-400 animate-spin" />
       </div>
-      {error && (
-        <p className="text-xs text-red-400 mt-2 flex items-center gap-1">
-          <AlertCircle className="w-3 h-3" />
-          {error}
-        </p>
-      )}
     </div>
   );
 }

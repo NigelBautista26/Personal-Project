@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { format, parseISO, isToday, isFuture } from "date-fns";
 import { cn } from "@/lib/utils";
 import { BookingChat } from "@/components/booking-chat";
+import { LiveLocationSharing } from "@/components/live-location-sharing";
 import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -28,6 +29,19 @@ const customerLiveIcon = new L.Icon({
       <circle cx="20" cy="20" r="18" fill="#3b82f6" stroke="white" stroke-width="3"/>
       <circle cx="20" cy="20" r="8" fill="white"/>
       <circle cx="20" cy="20" r="4" fill="#3b82f6"/>
+    </svg>
+  `),
+  iconSize: [40, 40],
+  iconAnchor: [20, 20],
+  popupAnchor: [0, -20],
+});
+
+const photographerLiveIcon = new L.Icon({
+  iconUrl: "data:image/svg+xml;base64," + btoa(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+      <circle cx="20" cy="20" r="18" fill="#10b981" stroke="white" stroke-width="3"/>
+      <circle cx="20" cy="20" r="8" fill="white"/>
+      <circle cx="20" cy="20" r="4" fill="#10b981"/>
     </svg>
   `),
   iconSize: [40, 40],
@@ -81,6 +95,7 @@ export default function PhotographerBookingDetail() {
   const [editLongitude, setEditLongitude] = useState<number | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.5074, -0.1278]);
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
   const bookingId = params?.id;
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -341,6 +356,12 @@ export default function PhotographerBookingDetail() {
                         icon={customerLiveIcon}
                       />
                     )}
+                    {myLocation && (
+                      <Marker
+                        position={[myLocation.lat, myLocation.lng]}
+                        icon={photographerLiveIcon}
+                      />
+                    )}
                   </MapContainer>
                 </div>
 
@@ -435,12 +456,35 @@ export default function PhotographerBookingDetail() {
                         </Popup>
                       </Marker>
                     )}
+                    {myLocation && (
+                      <Marker
+                        position={[myLocation.lat, myLocation.lng]}
+                        icon={photographerLiveIcon}
+                      >
+                        <Popup>
+                          <div className="text-sm">
+                            <p className="font-medium text-green-600">You</p>
+                            <p className="text-xs text-green-600">Live Location</p>
+                          </div>
+                        </Popup>
+                      </Marker>
+                    )}
                   </MapContainer>
                 </div>
-                {liveLocation && (
-                  <div className="flex items-center gap-2 text-sm bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                    <span className="w-3 h-3 bg-blue-400 rounded-full animate-pulse" />
-                    <span className="text-blue-400 font-medium">{booking.customer.fullName} is sharing their live location</span>
+                {(liveLocation || myLocation) && (
+                  <div className="space-y-1">
+                    {liveLocation && (
+                      <div className="flex items-center gap-2 text-xs text-blue-400">
+                        <div className="w-3 h-3 rounded-full bg-blue-500 animate-pulse" />
+                        <span>{booking.customer.fullName}'s live location</span>
+                      </div>
+                    )}
+                    {myLocation && (
+                      <div className="flex items-center gap-2 text-xs text-green-400">
+                        <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                        <span>Your live location</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
@@ -457,6 +501,16 @@ export default function PhotographerBookingDetail() {
               </div>
             )}
           </div>
+        )}
+
+        {booking.status === "confirmed" && isUpcoming && (
+          <LiveLocationSharing
+            bookingId={booking.id}
+            scheduledDate={booking.scheduledDate}
+            scheduledTime={booking.scheduledTime}
+            userType="photographer"
+            onLocationUpdate={setMyLocation}
+          />
         )}
 
         <div className="glass-panel rounded-2xl overflow-hidden">

@@ -1792,7 +1792,7 @@ export async function registerRoutes(
     }
   });
 
-  // Live Location Routes
+  // Live Location Routes - Both customer and photographer can share location
   app.post("/api/bookings/:bookingId/live-location", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -1811,9 +1811,13 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      // Only customer can share their location
-      if (booking.customerId !== req.session.userId) {
-        return res.status(403).json({ error: "Only the customer can share their location" });
+      // Check if user is either the customer or the photographer for this booking
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer && booking.photographerId === photographer.id;
+
+      if (!isCustomer && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized to share location for this booking" });
       }
 
       // Booking must be confirmed
@@ -1868,6 +1872,7 @@ export async function registerRoutes(
     }
   });
 
+  // Photographer views customer's live location
   app.get("/api/bookings/:bookingId/live-location", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -1892,6 +1897,39 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching live location:", error);
       res.status(500).json({ error: "Failed to fetch live location" });
+    }
+  });
+
+  // Customer views photographer's live location
+  app.get("/api/bookings/:bookingId/photographer-location", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId } = req.params;
+      const booking = await storage.getBooking(bookingId);
+      
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Only customer can view photographer's live location
+      if (booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+
+      // Get photographer's user ID
+      const photographer = await storage.getPhotographer(booking.photographerId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer not found" });
+      }
+
+      const location = await storage.getLiveLocation(bookingId, photographer.userId);
+      res.json(location || null);
+    } catch (error) {
+      console.error("Error fetching photographer location:", error);
+      res.status(500).json({ error: "Failed to fetch photographer location" });
     }
   });
 
