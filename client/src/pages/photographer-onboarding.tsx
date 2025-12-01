@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, MapPin, DollarSign, FileText, Loader2, ArrowRight } from "lucide-react";
+import { Camera, MapPin, DollarSign, FileText, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ export default function PhotographerOnboarding() {
   const [hourlyRate, setHourlyRate] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
+  const [errors, setErrors] = useState<{ hourlyRate?: string; city?: string }>({});
   const { toast } = useToast();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -26,15 +27,21 @@ export default function PhotographerOnboarding() {
   const handleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!hourlyRate || !city) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in your hourly rate and city.",
-        variant: "destructive",
-      });
+    // Custom validation
+    const newErrors: { hourlyRate?: string; city?: string } = {};
+    if (!hourlyRate) {
+      newErrors.hourlyRate = "Please enter your hourly rate";
+    }
+    if (!city) {
+      newErrors.city = "Please enter your city";
+    }
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-
+    
+    setErrors({});
     setIsLoading(true);
     
     try {
@@ -115,13 +122,24 @@ export default function PhotographerOnboarding() {
                   min="1"
                   step="1"
                   value={hourlyRate}
-                  onChange={(e) => setHourlyRate(e.target.value)}
-                  className="pl-8 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                  required
+                  onChange={(e) => {
+                    setHourlyRate(e.target.value);
+                    if (errors.hourlyRate) setErrors(prev => ({ ...prev, hourlyRate: undefined }));
+                  }}
+                  className={`pl-8 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                    errors.hourlyRate ? "border-red-500" : "border-white/10"
+                  }`}
                   data-testid="input-hourly-rate"
                 />
               </div>
-              <p className="text-xs text-muted-foreground">This is your base rate per hour. You can change it later.</p>
+              {errors.hourlyRate ? (
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.hourlyRate}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">This is your base rate per hour. You can change it later.</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -134,12 +152,23 @@ export default function PhotographerOnboarding() {
                 type="text" 
                 placeholder="e.g., Paris, France"
                 value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  if (errors.city) setErrors(prev => ({ ...prev, city: undefined }));
+                }}
+                className={`bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                  errors.city ? "border-red-500" : "border-white/10"
+                }`}
                 data-testid="input-city"
               />
-              <p className="text-xs text-muted-foreground">Customers will find you based on this location.</p>
+              {errors.city ? (
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.city}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Customers will find you based on this location.</p>
+              )}
             </div>
 
             <div className="space-y-2">
