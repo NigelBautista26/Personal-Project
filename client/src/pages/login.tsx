@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import PhotoCube from "@/components/photo-cube";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -45,11 +46,10 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6 relative overflow-hidden">
-      {/* Ambient Background */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
-
-      <div className="flex items-center mb-8 mt-4">
+    <div className="min-h-screen bg-black flex flex-col p-6 relative overflow-hidden">
+      <PhotoCube />
+      
+      <div className="relative z-10 flex items-center mb-8 mt-4">
         <Link href="/">
           <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors" data-testid="button-back">
             <ArrowLeft className="w-5 h-5" />
@@ -57,84 +57,86 @@ export default function Login() {
         </Link>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
-          <p className="text-muted-foreground">Please enter your details to sign in.</p>
-        </div>
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white">Email address</Label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <Mail className="w-5 h-5" />
-              </div>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
-                data-testid="input-email"
-              />
-            </div>
+      <div className="relative z-10 flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
+        <div className="glass-dark rounded-3xl p-6 border border-white/10 backdrop-blur-xl">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-muted-foreground">Please enter your details to sign in.</p>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-white">Password</Label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <Lock className="w-5 h-5" />
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white">Email address</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
+                  required
+                  data-testid="input-email"
+                />
               </div>
-              <Input 
-                id="password" 
-                type={showPassword ? "text" : "password"} 
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
-                data-testid="input-password"
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-white">Password</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
+                  required
+                  data-testid="input-password"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+              data-testid="button-login"
+            >
+              {isLoading ? "Signing in..." : "Sign in"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-white font-medium hover:underline">
+                Sign up
+              </Link>
+            </p>
           </div>
-
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25 mt-4"
-            data-testid="button-login"
-          >
-            {isLoading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-white font-medium hover:underline">
-              Sign up
-            </Link>
-          </p>
         </div>
         
         {/* Test accounts info */}
-        <div className="mt-8 p-4 bg-card/50 rounded-xl border border-white/10">
+        <div className="mt-4 p-4 glass-dark rounded-xl border border-white/10">
           <p className="text-xs text-muted-foreground text-center mb-2">Test accounts:</p>
           <div className="text-xs text-center space-y-1">
             <p className="text-white">Customer: <span className="text-primary">customer@test.com</span></p>
             <p className="text-white">Photographer: <span className="text-primary">anna@snapnow.com</span></p>
-            <p className="text-muted-foreground">Password: password123</p>
+            <p className="text-muted-foreground">Password: password</p>
           </div>
         </div>
       </div>
