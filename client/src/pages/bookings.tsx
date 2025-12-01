@@ -1326,7 +1326,7 @@ export default function Bookings() {
                 data-testid="button-download-all-edited"
               >
                 <Download className="w-4 h-4 mr-2" />
-                Download All
+                Download Edited
               </Button>
             </div>
             <div className="flex items-center justify-between">
