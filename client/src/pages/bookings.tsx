@@ -498,7 +498,8 @@ export default function Bookings() {
         status: editingRequest.status,
         requestedPhotoUrls: editingRequest.requestedPhotoUrls,
       });
-      setEditedPhotoIndex(0);
+      setEditedPhotoIndex(null);
+      setViewingOriginalIndex(null);
       setShowCompareMode(false);
       setShowRevisionInput(false);
       setRevisionNotes("");
@@ -1332,23 +1333,21 @@ export default function Bookings() {
                 Download Edited
               </Button>
             </div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground">
-                {viewingEditedPhotos?.photos.length || 0} edited photos ready
-              </p>
-              {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className={`text-xs ${showCompareMode ? 'text-violet-400 bg-violet-500/20' : 'text-muted-foreground'}`}
-                  onClick={() => setShowCompareMode(!showCompareMode)}
-                  data-testid="button-toggle-compare"
-                >
-                  <Images className="w-3 h-3 mr-1" />
-                  {showCompareMode ? 'Hide Compare' : 'Compare with Original'}
-                </Button>
-              )}
-            </div>
+            <p className="text-xs text-muted-foreground">
+              {viewingEditedPhotos?.photos.length || 0} edited photos ready
+            </p>
+            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+              <Button
+                size="sm"
+                variant={showCompareMode ? "default" : "outline"}
+                className={`w-full mt-2 ${showCompareMode ? 'bg-violet-600 hover:bg-violet-700' : 'border-violet-500 text-violet-400 hover:bg-violet-500/20'}`}
+                onClick={() => setShowCompareMode(!showCompareMode)}
+                data-testid="button-toggle-compare"
+              >
+                <Images className="w-4 h-4 mr-2" />
+                {showCompareMode ? 'Hide Original Photos' : 'Compare with Original Photos'}
+              </Button>
+            )}
           </div>
 
           {/* Comparison View */}
