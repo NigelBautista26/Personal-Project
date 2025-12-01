@@ -803,7 +803,7 @@ export default function Bookings() {
 
       {/* Photo Gallery Dialog */}
       <Dialog open={!!selectedBookingPhotos} onOpenChange={(open) => !open && setSelectedBookingPhotos(null)}>
-        <DialogContent className="max-w-sm w-[88vw] max-h-[75vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col" aria-describedby={undefined}>
+        <DialogContent className="max-h-[75vh] p-0 bg-black/95 border-white/10 overflow-hidden flex flex-col" aria-describedby={undefined}>
           <DialogHeader className="sr-only">
             <DialogTitle>Photo Gallery</DialogTitle>
           </DialogHeader>
@@ -962,7 +962,7 @@ export default function Bookings() {
           setEditingDialogBooking(null);
         }
       }}>
-        <DialogContent className="max-w-sm w-[88vw] bg-zinc-900 border-white/10">
+        <DialogContent className="bg-zinc-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Palette className="w-5 h-5 text-violet-400" />
@@ -1097,7 +1097,7 @@ export default function Bookings() {
 
       {/* Review Modal */}
       <Dialog open={!!reviewingBookingId} onOpenChange={(open) => !open && setReviewingBookingId(null)}>
-        <DialogContent className="max-w-sm w-[88vw] bg-zinc-900 border-white/10">
+        <DialogContent className="bg-zinc-900 border-white/10">
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2">
               <Star className="w-5 h-5 text-amber-400" />
@@ -1198,7 +1198,7 @@ export default function Bookings() {
 
       {/* Edited Photos Gallery Dialog */}
       <Dialog open={!!viewingEditedPhotos} onOpenChange={(open) => !open && setViewingEditedPhotos(null)}>
-        <DialogContent className="max-w-sm w-[88vw] max-h-[75vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
+        <DialogContent className="max-h-[75vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
           <DialogHeader className="sr-only">
             <DialogTitle>Edited Photos</DialogTitle>
           </DialogHeader>

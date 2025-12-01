@@ -128,7 +128,7 @@ export function MeetingLocationPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="w-[88vw] max-w-sm bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col rounded-2xl">
+      <DialogContent className="bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-white">Set Meeting Location</DialogTitle>
         </DialogHeader>
