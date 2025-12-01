@@ -177,6 +177,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
 
 export default function PhotoCube() {
   const [isReduced, setIsReduced] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -187,9 +188,40 @@ export default function PhotoCube() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
+  useEffect(() => {
+    // Preload a few key images, then fade in the whole component
+    const imagesToPreload = photos.slice(0, 6);
+    let loadedCount = 0;
+    
+    imagesToPreload.forEach((src) => {
+      const img = new Image();
+      img.onload = () => {
+        loadedCount++;
+        if (loadedCount >= 3) {
+          // Show after just 3 images are ready for faster perceived load
+          setIsLoaded(true);
+        }
+      };
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount >= 3) {
+          setIsLoaded(true);
+        }
+      };
+      img.src = src;
+    });
+
+    // Fallback: show after 500ms even if images aren't loaded
+    const timeout = setTimeout(() => setIsLoaded(true), 500);
+    return () => clearTimeout(timeout);
+  }, []);
+
   if (isReduced) {
     return (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div 
+        className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+        style={{ opacity: isLoaded ? 1 : 0 }}
+      >
         {rowConfigs.slice(0, 4).map((config, i) => (
           <div 
             key={i}
@@ -217,7 +249,10 @@ export default function PhotoCube() {
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div 
+      className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+      style={{ opacity: isLoaded ? 1 : 0 }}
+    >
       {rowConfigs.map((config, i) => (
         <MarqueeRow key={i} config={config} rowIndex={i} />
       ))}
