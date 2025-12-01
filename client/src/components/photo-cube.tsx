@@ -16,11 +16,23 @@ import photo13 from "@assets/stock_images/instagram_travel_pho_1335fc3c.jpg";
 import photo14 from "@assets/stock_images/instagram_travel_pho_7bccb283.jpg";
 import photo15 from "@assets/stock_images/instagram_travel_pho_eada20e0.jpg";
 import photo16 from "@assets/stock_images/instagram_travel_pho_34fd34b8.jpg";
+import photo17 from "@assets/stock_images/travel_couple_advent_253494c1.jpg";
+import photo18 from "@assets/stock_images/travel_couple_advent_35d2ebfd.jpg";
+import photo19 from "@assets/stock_images/travel_couple_advent_73e0916a.jpg";
+import photo20 from "@assets/stock_images/travel_couple_advent_77edf336.jpg";
+import photo21 from "@assets/stock_images/travel_couple_advent_dc9de7bb.jpg";
+import photo22 from "@assets/stock_images/travel_couple_advent_f837ee33.jpg";
+import photo23 from "@assets/stock_images/travel_couple_advent_53423cf7.jpg";
+import photo24 from "@assets/stock_images/travel_couple_advent_cc19fcf2.jpg";
+import photo25 from "@assets/stock_images/travel_couple_advent_883c6da8.jpg";
+import photo26 from "@assets/stock_images/travel_couple_advent_60fdbf93.jpg";
 
 const photos = [
   photo1, photo2, photo3, photo4, photo5, photo6,
   photo7, photo8, photo9, photo10, photo11, photo12,
-  photo13, photo14, photo15, photo16
+  photo13, photo14, photo15, photo16, photo17, photo18,
+  photo19, photo20, photo21, photo22, photo23, photo24,
+  photo25, photo26
 ];
 
 interface RowConfig {
@@ -33,26 +45,28 @@ interface RowConfig {
 }
 
 const rowConfigs: RowConfig[] = [
-  { top: "0%", cubeSize: 100, direction: "right", duration: 80, opacity: 0.7, cubesPerRow: 4 },
-  { top: "13%", cubeSize: 90, direction: "left", duration: 90, opacity: 0.6, cubesPerRow: 4 },
-  { top: "25%", cubeSize: 85, direction: "right", duration: 85, opacity: 0.5, cubesPerRow: 5 },
-  { top: "37%", cubeSize: 80, direction: "left", duration: 95, opacity: 0.4, cubesPerRow: 5 },
-  { top: "48%", cubeSize: 75, direction: "right", duration: 82, opacity: 0.35, cubesPerRow: 5 },
-  { top: "58%", cubeSize: 80, direction: "left", duration: 98, opacity: 0.4, cubesPerRow: 5 },
-  { top: "69%", cubeSize: 85, direction: "right", duration: 84, opacity: 0.5, cubesPerRow: 5 },
-  { top: "80%", cubeSize: 90, direction: "left", duration: 92, opacity: 0.6, cubesPerRow: 4 },
-  { top: "92%", cubeSize: 95, direction: "right", duration: 88, opacity: 0.65, cubesPerRow: 4 },
+  { top: "-2%", cubeSize: 85, direction: "right", duration: 80, opacity: 0.7, cubesPerRow: 4 },
+  { top: "8%", cubeSize: 80, direction: "left", duration: 90, opacity: 0.6, cubesPerRow: 4 },
+  { top: "18%", cubeSize: 80, direction: "right", duration: 85, opacity: 0.5, cubesPerRow: 5 },
+  { top: "28%", cubeSize: 75, direction: "left", duration: 95, opacity: 0.45, cubesPerRow: 5 },
+  { top: "38%", cubeSize: 75, direction: "right", duration: 82, opacity: 0.4, cubesPerRow: 5 },
+  { top: "48%", cubeSize: 75, direction: "left", duration: 98, opacity: 0.35, cubesPerRow: 5 },
+  { top: "58%", cubeSize: 75, direction: "right", duration: 84, opacity: 0.4, cubesPerRow: 5 },
+  { top: "68%", cubeSize: 75, direction: "left", duration: 92, opacity: 0.45, cubesPerRow: 5 },
+  { top: "78%", cubeSize: 80, direction: "right", duration: 88, opacity: 0.5, cubesPerRow: 5 },
+  { top: "88%", cubeSize: 80, direction: "left", duration: 86, opacity: 0.6, cubesPerRow: 4 },
+  { top: "98%", cubeSize: 85, direction: "right", duration: 83, opacity: 0.65, cubesPerRow: 4 },
 ];
 
 function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDelay: number; photoIndex: number }) {
   const halfSize = size / 2;
   const startPhotos = [
-    photoIndex % 16,
-    (photoIndex + 3) % 16,
-    (photoIndex + 6) % 16,
-    (photoIndex + 9) % 16,
-    (photoIndex + 12) % 16,
-    (photoIndex + 15) % 16,
+    photoIndex % 26,
+    (photoIndex + 5) % 26,
+    (photoIndex + 10) % 26,
+    (photoIndex + 15) % 26,
+    (photoIndex + 20) % 26,
+    (photoIndex + 25) % 26,
   ];
   
   return (
@@ -145,7 +159,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
             key={`a-${i}`} 
             size={config.cubeSize} 
             rotateDelay={-i * 4 - rowIndex * 3}
-            photoIndex={(i * 2 + rowIndex * 3) % 16}
+            photoIndex={(i * 3 + rowIndex * 5) % 26}
           />
         ))}
         {cubes.map((i) => (
@@ -153,7 +167,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
             key={`b-${i}`} 
             size={config.cubeSize} 
             rotateDelay={-i * 4 - rowIndex * 3}
-            photoIndex={(i * 2 + rowIndex * 3) % 16}
+            photoIndex={(i * 3 + rowIndex * 5) % 26}
           />
         ))}
       </div>
