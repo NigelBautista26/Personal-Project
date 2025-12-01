@@ -43,7 +43,7 @@ export default function Bookings() {
     status?: string;
     requestedPhotoUrls?: string[] | null;
   } | null>(null);
-  const [editedPhotoIndex, setEditedPhotoIndex] = useState(0);
+  const [editedPhotoIndex, setEditedPhotoIndex] = useState<number | null>(null);
   const [viewingOriginalIndex, setViewingOriginalIndex] = useState<number | null>(null);
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
@@ -1298,6 +1298,7 @@ export default function Bookings() {
           setShowRevisionInput(false);
           setRevisionNotes("");
           setViewingOriginalIndex(null);
+          setEditedPhotoIndex(null);
         }
       }}>
         <DialogContent className="max-h-[85vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
@@ -1414,72 +1415,72 @@ export default function Bookings() {
             </div>
           )}
 
-          {/* Photo Grid */}
+          {/* Edited Photos Section */}
           <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-3 gap-2">
-              {viewingEditedPhotos?.photos.map((photo, index) => (
-                <div 
-                  key={index} 
-                  className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer border-2 border-violet-500/30"
-                  onClick={() => setEditedPhotoIndex(index)}
-                  data-testid={`edited-photo-thumb-${index}`}
-                >
+            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+              <Palette className="w-3 h-3" />
+              Edited Photos (tap to enlarge)
+            </p>
+            {editedPhotoIndex !== null && viewingEditedPhotos ? (
+              <div className="space-y-2">
+                <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-black">
                   <img
-                    src={photo}
-                    alt={`Edited photo ${index + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
+                    src={viewingEditedPhotos.photos[editedPhotoIndex]}
+                    alt={`Edited photo ${editedPhotoIndex + 1}`}
+                    className="w-full h-full object-contain"
                   />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <Download 
-                      className="w-6 h-6 text-white" 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDownloadEditedPhoto(photo, index);
-                      }}
-                    />
-                  </div>
-                  <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center font-bold">
-                    {index + 1}
-                  </div>
+                  {viewingEditedPhotos.photos.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setEditedPhotoIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.photos.length - 1)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setEditedPhotoIndex(prev => prev !== null && prev < viewingEditedPhotos.photos.length - 1 ? prev + 1 : 0)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
                 </div>
-              ))}
-            </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-violet-400">Edited {editedPhotoIndex + 1} of {viewingEditedPhotos.photos.length}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-xs text-violet-400"
+                    onClick={() => setEditedPhotoIndex(null)}
+                  >
+                    Show Thumbnails
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2">
+                {viewingEditedPhotos?.photos.map((photo, index) => (
+                  <div 
+                    key={index} 
+                    className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-violet-500/30 hover:border-violet-400 transition-colors"
+                    onClick={() => setEditedPhotoIndex(index)}
+                    data-testid={`edited-photo-thumb-${index}`}
+                  >
+                    <img
+                      src={photo}
+                      alt={`Edited photo ${index + 1}`}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-violet-500 text-white text-xs flex items-center justify-center font-bold">
+                      {index + 1}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* Full Photo View */}
-          {viewingEditedPhotos && viewingEditedPhotos.photos.length > 0 && (
-            <div className="border-t border-violet-500/30 p-4">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden bg-black">
-                <img
-                  src={viewingEditedPhotos.photos[editedPhotoIndex]}
-                  alt={`Edited photo ${editedPhotoIndex + 1}`}
-                  className="w-full h-full object-contain"
-                />
-                {viewingEditedPhotos.photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setEditedPhotoIndex(prev => prev > 0 ? prev - 1 : viewingEditedPhotos.photos.length - 1)}
-                      className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
-                    >
-                      <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setEditedPhotoIndex(prev => prev < viewingEditedPhotos.photos.length - 1 ? prev + 1 : 0)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
-                    >
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center justify-center mt-2">
-                <span className="text-xs text-muted-foreground">
-                  Edited Photo {editedPhotoIndex + 1} of {viewingEditedPhotos.photos.length}
-                </span>
-              </div>
-            </div>
-          )}
 
           {/* Revision Input */}
           {showRevisionInput && viewingEditedPhotos?.requestId && (
