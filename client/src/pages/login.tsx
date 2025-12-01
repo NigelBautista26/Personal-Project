@@ -34,8 +34,11 @@ export default function Login() {
       });
       
       // Redirect based on role and onboarding status
-      if (user.role === "photographer") {
+      if (user.role === "admin") {
+        setLocation("/admin");
+      } else if (user.role === "photographer") {
         if (user.hasPhotographerProfile) {
+          // Photographer home will handle verification status redirect
           setLocation("/photographer-home");
         } else {
           setLocation("/photographer-onboarding");
@@ -149,9 +152,9 @@ export default function Login() {
         <div className="mt-4 p-4 glass-dark rounded-xl border border-white/10">
           <p className="text-xs text-muted-foreground text-center mb-2">Test accounts:</p>
           <div className="text-xs text-center space-y-1">
-            <p className="text-white">Customer: <span className="text-primary">customer@test.com</span></p>
-            <p className="text-white">Photographer: <span className="text-primary">anna@snapnow.com</span></p>
-            <p className="text-muted-foreground">Password: password</p>
+            <p className="text-white">Customer: <span className="text-primary">customer@test.com</span> (password)</p>
+            <p className="text-white">Photographer: <span className="text-primary">anna@snapnow.com</span> (password)</p>
+            <p className="text-white">Admin: <span className="text-primary">admin@snapnow.com</span> (admin123)</p>
           </div>
         </div>
       </div>

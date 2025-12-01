@@ -163,7 +163,19 @@ Preferred communication style: Simple, everyday language.
   - Customer booking detail shows "Payment Protected" notice during session and "Photos Delivered" when complete
   - Encourages prompt photo delivery since photographers see held funds and clear path to release
 
-**Demo Accounts:** All demo accounts use password "password" for easy testing.
+- **Photographer Verification System** (Dec 2025): New photographers must be verified by admin before accepting bookings:
+  - **Verification Status**: Photographers have a status of pending_review, verified, or rejected
+  - **Portfolio Requirements**: New photographers must provide Instagram URL (required) and optional website URL during onboarding
+  - **Pending Page**: Unverified photographers see a dedicated pending page explaining their application status
+  - **Admin Dashboard**: Admin users can review applications at /admin, approve or reject with optional reason
+  - **Enforcement**: Only verified photographers appear in search results and can accept bookings
+  - **Admin Role**: New 'admin' role type added to users table
+  - Existing photographers were migrated to 'verified' status
+
+**Demo Accounts:**
+- Customer: customer@test.com / password
+- Photographer: anna@snapnow.com / password
+- Admin: admin@snapnow.com / admin123
 
 ## Feature Backlog
 

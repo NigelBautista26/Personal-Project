@@ -10,7 +10,7 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   phone: text("phone"),
   profileImageUrl: text("profile_image_url"),
-  role: text("role").notNull(), // 'customer' or 'photographer'
+  role: text("role").notNull(), // 'customer', 'photographer', or 'admin'
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -28,6 +28,12 @@ export const photographers = pgTable("photographers", {
   portfolioImages: text("portfolio_images").array().default(sql`ARRAY[]::text[]`),
   isAvailable: boolean("is_available").default(true),
   stripeAccountId: text("stripe_account_id"),
+  portfolioInstagramUrl: text("portfolio_instagram_url"),
+  portfolioWebsiteUrl: text("portfolio_website_url"),
+  verificationStatus: text("verification_status").notNull().default("pending_review"), // 'pending_review', 'verified', 'rejected'
+  rejectionReason: text("rejection_reason"),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: varchar("reviewed_by").references(() => users.id),
 });
 
 export const bookings = pgTable("bookings", {
@@ -168,7 +174,14 @@ export const insertPhotographerSchema = createInsertSchema(photographers).omit({
   rating: true,
   reviewCount: true,
   isAvailable: true,
+  verificationStatus: true,
+  rejectionReason: true,
+  reviewedAt: true,
+  reviewedBy: true,
 });
+
+export const verificationStatusSchema = z.enum(["pending_review", "verified", "rejected"]);
+export type VerificationStatus = z.infer<typeof verificationStatusSchema>;
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
@@ -304,5 +317,14 @@ export type MessageWithSender = Message & {
   sender: {
     fullName: string;
     profileImageUrl: string | null;
+  };
+};
+
+export type PhotographerApplication = Photographer & {
+  user: {
+    fullName: string;
+    email: string;
+    profileImageUrl: string | null;
+    createdAt: Date;
   };
 };

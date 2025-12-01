@@ -1985,5 +1985,117 @@ export async function registerRoutes(
     }
   });
 
+  // Admin Routes
+  
+  // Middleware to check if user is admin
+  const requireAdmin = async (req: any, res: any, next: any) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+    
+    next();
+  };
+
+  // Get all photographer applications (admin only)
+  app.get("/api/admin/photographers", requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.query;
+      
+      if (status && ['pending_review', 'verified', 'rejected'].includes(status as string)) {
+        const photographers = await storage.getPhotographersByVerificationStatus(status as 'pending_review' | 'verified' | 'rejected');
+        return res.json(photographers);
+      }
+      
+      const photographers = await storage.getAllPhotographerApplications();
+      res.json(photographers);
+    } catch (error) {
+      console.error("Error fetching photographer applications:", error);
+      res.status(500).json({ error: "Failed to fetch applications" });
+    }
+  });
+
+  // Get pending photographer applications count (admin only)
+  app.get("/api/admin/photographers/pending-count", requireAdmin, async (req, res) => {
+    try {
+      const pending = await storage.getPhotographersByVerificationStatus('pending_review');
+      res.json({ count: pending.length });
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+      res.status(500).json({ error: "Failed to fetch pending count" });
+    }
+  });
+
+  // Approve a photographer (admin only)
+  app.post("/api/admin/photographers/:id/approve", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const photographer = await storage.getPhotographer(id);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer not found" });
+      }
+      
+      const updated = await storage.updatePhotographerVerificationStatus(
+        id, 
+        'verified', 
+        req.session.userId!
+      );
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error approving photographer:", error);
+      res.status(500).json({ error: "Failed to approve photographer" });
+    }
+  });
+
+  // Reject a photographer (admin only)
+  app.post("/api/admin/photographers/:id/reject", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body;
+      
+      const photographer = await storage.getPhotographer(id);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer not found" });
+      }
+      
+      const updated = await storage.updatePhotographerVerificationStatus(
+        id, 
+        'rejected', 
+        req.session.userId!,
+        reason
+      );
+      
+      res.json(updated);
+    } catch (error) {
+      console.error("Error rejecting photographer:", error);
+      res.status(500).json({ error: "Failed to reject photographer" });
+    }
+  });
+
+  // Get admin stats (admin only)
+  app.get("/api/admin/stats", requireAdmin, async (req, res) => {
+    try {
+      const pending = await storage.getPhotographersByVerificationStatus('pending_review');
+      const verified = await storage.getPhotographersByVerificationStatus('verified');
+      const rejected = await storage.getPhotographersByVerificationStatus('rejected');
+      
+      res.json({
+        pendingCount: pending.length,
+        verifiedCount: verified.length,
+        rejectedCount: rejected.length,
+        totalCount: pending.length + verified.length + rejected.length,
+      });
+    } catch (error) {
+      console.error("Error fetching admin stats:", error);
+      res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
   return httpServer;
 }

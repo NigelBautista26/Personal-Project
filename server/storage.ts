@@ -25,6 +25,8 @@ import {
   type InsertMessage,
   type MessageWithSender,
   type LiveLocation,
+  type PhotographerApplication,
+  type VerificationStatus,
   users,
   photographers,
   bookings,
@@ -40,7 +42,7 @@ import {
 import { db } from "@db";
 import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
 
-export type PhotographerWithUser = Photographer & { fullName: string };
+export type PhotographerWithUser = Photographer & { fullName: string; email?: string };
 
 export interface IStorage {
   // User methods
@@ -119,6 +121,17 @@ export interface IStorage {
   
   // Meeting location methods
   updateMeetingLocation(bookingId: string, latitude: string, longitude: string, notes?: string): Promise<Booking | undefined>;
+  
+  // Admin / Verification methods
+  getPhotographersByVerificationStatus(status: VerificationStatus): Promise<PhotographerApplication[]>;
+  getAllPhotographerApplications(): Promise<PhotographerApplication[]>;
+  updatePhotographerVerificationStatus(
+    photographerId: string, 
+    status: VerificationStatus, 
+    reviewedBy: string, 
+    rejectionReason?: string
+  ): Promise<Photographer | undefined>;
+  getVerifiedPhotographersWithUsers(): Promise<PhotographerWithUser[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,6 +183,12 @@ export class DatabaseStorage implements IStorage {
         portfolioImages: photographers.portfolioImages,
         isAvailable: photographers.isAvailable,
         stripeAccountId: photographers.stripeAccountId,
+        portfolioInstagramUrl: photographers.portfolioInstagramUrl,
+        portfolioWebsiteUrl: photographers.portfolioWebsiteUrl,
+        verificationStatus: photographers.verificationStatus,
+        rejectionReason: photographers.rejectionReason,
+        reviewedAt: photographers.reviewedAt,
+        reviewedBy: photographers.reviewedBy,
         fullName: users.fullName,
       })
       .from(photographers)
@@ -199,11 +218,20 @@ export class DatabaseStorage implements IStorage {
         portfolioImages: photographers.portfolioImages,
         isAvailable: photographers.isAvailable,
         stripeAccountId: photographers.stripeAccountId,
+        portfolioInstagramUrl: photographers.portfolioInstagramUrl,
+        portfolioWebsiteUrl: photographers.portfolioWebsiteUrl,
+        verificationStatus: photographers.verificationStatus,
+        rejectionReason: photographers.rejectionReason,
+        reviewedAt: photographers.reviewedAt,
+        reviewedBy: photographers.reviewedBy,
         fullName: users.fullName,
       })
       .from(photographers)
       .innerJoin(users, eq(photographers.userId, users.id))
-      .where(eq(photographers.isAvailable, true));
+      .where(and(
+        eq(photographers.isAvailable, true),
+        eq(photographers.verificationStatus, 'verified')
+      ));
   }
 
   async createPhotographer(photographer: InsertPhotographer): Promise<Photographer> {
@@ -1041,6 +1069,187 @@ export class DatabaseStorage implements IStorage {
     }
 
     return results;
+  }
+
+  // Admin / Verification methods
+  async getPhotographersByVerificationStatus(status: VerificationStatus): Promise<PhotographerApplication[]> {
+    const results = await db
+      .select({
+        id: photographers.id,
+        userId: photographers.userId,
+        bio: photographers.bio,
+        hourlyRate: photographers.hourlyRate,
+        location: photographers.location,
+        latitude: photographers.latitude,
+        longitude: photographers.longitude,
+        rating: photographers.rating,
+        reviewCount: photographers.reviewCount,
+        profileImageUrl: photographers.profileImageUrl,
+        portfolioImages: photographers.portfolioImages,
+        isAvailable: photographers.isAvailable,
+        stripeAccountId: photographers.stripeAccountId,
+        portfolioInstagramUrl: photographers.portfolioInstagramUrl,
+        portfolioWebsiteUrl: photographers.portfolioWebsiteUrl,
+        verificationStatus: photographers.verificationStatus,
+        rejectionReason: photographers.rejectionReason,
+        reviewedAt: photographers.reviewedAt,
+        reviewedBy: photographers.reviewedBy,
+        userFullName: users.fullName,
+        userEmail: users.email,
+        userProfileImageUrl: users.profileImageUrl,
+        userCreatedAt: users.createdAt,
+      })
+      .from(photographers)
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .where(eq(photographers.verificationStatus, status))
+      .orderBy(desc(users.createdAt));
+
+    return results.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      bio: row.bio,
+      hourlyRate: row.hourlyRate,
+      location: row.location,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      rating: row.rating,
+      reviewCount: row.reviewCount,
+      profileImageUrl: row.profileImageUrl,
+      portfolioImages: row.portfolioImages,
+      isAvailable: row.isAvailable,
+      stripeAccountId: row.stripeAccountId,
+      portfolioInstagramUrl: row.portfolioInstagramUrl,
+      portfolioWebsiteUrl: row.portfolioWebsiteUrl,
+      verificationStatus: row.verificationStatus,
+      rejectionReason: row.rejectionReason,
+      reviewedAt: row.reviewedAt,
+      reviewedBy: row.reviewedBy,
+      user: {
+        fullName: row.userFullName,
+        email: row.userEmail,
+        profileImageUrl: row.userProfileImageUrl,
+        createdAt: row.userCreatedAt,
+      },
+    }));
+  }
+
+  async getAllPhotographerApplications(): Promise<PhotographerApplication[]> {
+    const results = await db
+      .select({
+        id: photographers.id,
+        userId: photographers.userId,
+        bio: photographers.bio,
+        hourlyRate: photographers.hourlyRate,
+        location: photographers.location,
+        latitude: photographers.latitude,
+        longitude: photographers.longitude,
+        rating: photographers.rating,
+        reviewCount: photographers.reviewCount,
+        profileImageUrl: photographers.profileImageUrl,
+        portfolioImages: photographers.portfolioImages,
+        isAvailable: photographers.isAvailable,
+        stripeAccountId: photographers.stripeAccountId,
+        portfolioInstagramUrl: photographers.portfolioInstagramUrl,
+        portfolioWebsiteUrl: photographers.portfolioWebsiteUrl,
+        verificationStatus: photographers.verificationStatus,
+        rejectionReason: photographers.rejectionReason,
+        reviewedAt: photographers.reviewedAt,
+        reviewedBy: photographers.reviewedBy,
+        userFullName: users.fullName,
+        userEmail: users.email,
+        userProfileImageUrl: users.profileImageUrl,
+        userCreatedAt: users.createdAt,
+      })
+      .from(photographers)
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .orderBy(desc(users.createdAt));
+
+    return results.map((row) => ({
+      id: row.id,
+      userId: row.userId,
+      bio: row.bio,
+      hourlyRate: row.hourlyRate,
+      location: row.location,
+      latitude: row.latitude,
+      longitude: row.longitude,
+      rating: row.rating,
+      reviewCount: row.reviewCount,
+      profileImageUrl: row.profileImageUrl,
+      portfolioImages: row.portfolioImages,
+      isAvailable: row.isAvailable,
+      stripeAccountId: row.stripeAccountId,
+      portfolioInstagramUrl: row.portfolioInstagramUrl,
+      portfolioWebsiteUrl: row.portfolioWebsiteUrl,
+      verificationStatus: row.verificationStatus,
+      rejectionReason: row.rejectionReason,
+      reviewedAt: row.reviewedAt,
+      reviewedBy: row.reviewedBy,
+      user: {
+        fullName: row.userFullName,
+        email: row.userEmail,
+        profileImageUrl: row.userProfileImageUrl,
+        createdAt: row.userCreatedAt,
+      },
+    }));
+  }
+
+  async updatePhotographerVerificationStatus(
+    photographerId: string, 
+    status: VerificationStatus, 
+    reviewedBy: string, 
+    rejectionReason?: string
+  ): Promise<Photographer | undefined> {
+    const updateData: Record<string, any> = {
+      verificationStatus: status,
+      reviewedAt: new Date(),
+      reviewedBy: reviewedBy,
+    };
+    
+    if (status === 'rejected' && rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    } else if (status !== 'rejected') {
+      updateData.rejectionReason = null;
+    }
+    
+    const result = await db
+      .update(photographers)
+      .set(updateData)
+      .where(eq(photographers.id, photographerId))
+      .returning();
+    
+    return result[0];
+  }
+
+  async getVerifiedPhotographersWithUsers(): Promise<PhotographerWithUser[]> {
+    return await db
+      .select({
+        id: photographers.id,
+        userId: photographers.userId,
+        bio: photographers.bio,
+        hourlyRate: photographers.hourlyRate,
+        location: photographers.location,
+        latitude: photographers.latitude,
+        longitude: photographers.longitude,
+        rating: photographers.rating,
+        reviewCount: photographers.reviewCount,
+        profileImageUrl: photographers.profileImageUrl,
+        portfolioImages: photographers.portfolioImages,
+        isAvailable: photographers.isAvailable,
+        stripeAccountId: photographers.stripeAccountId,
+        portfolioInstagramUrl: photographers.portfolioInstagramUrl,
+        portfolioWebsiteUrl: photographers.portfolioWebsiteUrl,
+        verificationStatus: photographers.verificationStatus,
+        rejectionReason: photographers.rejectionReason,
+        reviewedAt: photographers.reviewedAt,
+        reviewedBy: photographers.reviewedBy,
+        fullName: users.fullName,
+      })
+      .from(photographers)
+      .innerJoin(users, eq(photographers.userId, users.id))
+      .where(and(
+        eq(photographers.isAvailable, true),
+        eq(photographers.verificationStatus, 'verified')
+      ));
   }
 }
 

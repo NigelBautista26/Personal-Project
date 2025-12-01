@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { Camera, MapPin, DollarSign, FileText, Loader2, ArrowRight, AlertCircle } from "lucide-react";
+import { Camera, MapPin, DollarSign, FileText, Loader2, ArrowRight, AlertCircle, Instagram, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,9 @@ export default function PhotographerOnboarding() {
   const [hourlyRate, setHourlyRate] = useState("");
   const [city, setCity] = useState("");
   const [bio, setBio] = useState("");
-  const [errors, setErrors] = useState<{ hourlyRate?: string; city?: string }>({});
+  const [instagramUrl, setInstagramUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+  const [errors, setErrors] = useState<{ hourlyRate?: string; city?: string; instagramUrl?: string }>({});
   const { toast } = useToast();
 
   const { data: user, isLoading: userLoading } = useQuery({
@@ -28,12 +30,17 @@ export default function PhotographerOnboarding() {
     e.preventDefault();
     
     // Custom validation
-    const newErrors: { hourlyRate?: string; city?: string } = {};
+    const newErrors: { hourlyRate?: string; city?: string; instagramUrl?: string } = {};
     if (!hourlyRate) {
       newErrors.hourlyRate = "Please enter your hourly rate";
     }
     if (!city) {
       newErrors.city = "Please enter your city";
+    }
+    if (!instagramUrl) {
+      newErrors.instagramUrl = "Instagram portfolio is required for verification";
+    } else if (!instagramUrl.includes("instagram.com")) {
+      newErrors.instagramUrl = "Please enter a valid Instagram URL";
     }
     
     if (Object.keys(newErrors).length > 0) {
@@ -45,6 +52,24 @@ export default function PhotographerOnboarding() {
     setIsLoading(true);
     
     try {
+      // Geocode the city to get coordinates
+      let latitude = "51.5074";
+      let longitude = "-0.1278";
+      
+      try {
+        const geocodeResponse = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&limit=1`,
+          { headers: { "User-Agent": "SnapNow/1.0" } }
+        );
+        const geocodeData = await geocodeResponse.json();
+        if (geocodeData.length > 0) {
+          latitude = geocodeData[0].lat;
+          longitude = geocodeData[0].lon;
+        }
+      } catch (geoError) {
+        console.warn("Geocoding failed, using default coordinates");
+      }
+      
       const response = await fetch("/api/photographers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,7 +78,10 @@ export default function PhotographerOnboarding() {
           bio: bio || `Professional photographer based in ${city}`,
           hourlyRate: parseFloat(hourlyRate),
           location: city,
-          isAvailable: true,
+          latitude,
+          longitude,
+          portfolioInstagramUrl: instagramUrl,
+          portfolioWebsiteUrl: websiteUrl || null,
         }),
       });
 
@@ -62,11 +90,11 @@ export default function PhotographerOnboarding() {
       }
 
       toast({
-        title: "Profile created!",
-        description: "Your photographer profile is ready. Let's get you started!",
+        title: "Application submitted!",
+        description: "Your profile is under review. We'll notify you once approved.",
       });
       
-      setLocation("/photographer-home");
+      setLocation("/photographer-pending");
     } catch (error: any) {
       toast({
         title: "Setup failed",
@@ -102,7 +130,7 @@ export default function PhotographerOnboarding() {
               <Camera className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Welcome, {user.fullName}!</h1>
-            <p className="text-muted-foreground text-sm">Let's set up your photographer profile so customers can find you.</p>
+            <p className="text-muted-foreground text-sm">Set up your profile and submit your portfolio for review. Once approved, customers will be able to book you.</p>
           </div>
 
           <form onSubmit={handleComplete} className="space-y-4">
@@ -172,6 +200,52 @@ export default function PhotographerOnboarding() {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="instagramUrl" className="text-white flex items-center gap-2">
+                <Instagram className="w-4 h-4 text-primary" />
+                Instagram Portfolio <span className="text-red-400">*</span>
+              </Label>
+              <Input 
+                id="instagramUrl" 
+                type="url" 
+                placeholder="https://instagram.com/yourprofile"
+                value={instagramUrl}
+                onChange={(e) => {
+                  setInstagramUrl(e.target.value);
+                  if (errors.instagramUrl) setErrors(prev => ({ ...prev, instagramUrl: undefined }));
+                }}
+                className={`bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                  errors.instagramUrl ? "border-red-500" : "border-white/10"
+                }`}
+                data-testid="input-instagram-url"
+              />
+              {errors.instagramUrl ? (
+                <p className="text-xs text-red-400 flex items-center gap-1">
+                  <AlertCircle className="w-3 h-3" />
+                  {errors.instagramUrl}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Required for verification. Show us your best work!</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="websiteUrl" className="text-white flex items-center gap-2">
+                <Globe className="w-4 h-4 text-primary" />
+                Portfolio Website (optional)
+              </Label>
+              <Input 
+                id="websiteUrl" 
+                type="url" 
+                placeholder="https://yourwebsite.com"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                className="bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
+                data-testid="input-website-url"
+              />
+              <p className="text-xs text-muted-foreground">Additional portfolio or personal website</p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="bio" className="text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
                 About You (optional)
@@ -203,13 +277,13 @@ export default function PhotographerOnboarding() {
                 type="submit" 
                 disabled={isLoading}
                 className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-                data-testid="button-complete-setup"
+                data-testid="button-submit-application"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
                   <>
-                    Complete
+                    Submit for Review
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </>
                 )}

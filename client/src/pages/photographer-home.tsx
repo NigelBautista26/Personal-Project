@@ -102,12 +102,15 @@ export default function PhotographerHome() {
   });
 
   // Redirect customers to customer home, redirect photographers without profile to onboarding
+  // Redirect unverified photographers to pending page
   useEffect(() => {
     if (user) {
       if (user.role !== "photographer") {
         setLocation("/home");
       } else if (!photographerLoading && photographer === null) {
         setLocation("/photographer-onboarding");
+      } else if (!photographerLoading && photographer && photographer.verificationStatus !== "verified") {
+        setLocation("/photographer-pending");
       }
     }
   }, [user, photographerLoading, photographer, setLocation]);
