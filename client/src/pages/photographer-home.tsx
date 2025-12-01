@@ -250,8 +250,9 @@ export default function PhotographerHome() {
 
   const totalActionItems = pendingBookings.length + awaitingUpload.length + pendingEditingRequests.length;
 
-  // Show loading while checking for photographer profile
-  if (photographerLoading || photographer === null) {
+  // Show loading while checking user or photographer profile
+  // Don't show content until we know where to redirect
+  if (!user || photographerLoading || !photographer) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
