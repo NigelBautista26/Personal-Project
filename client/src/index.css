@@ -76,10 +76,7 @@
 @layer base {
   * {
     @apply border-border;
-  }
-  
-  /* Remove 300ms tap delay on mobile */
-  a, button, input, select, textarea, label, [role="button"], [tabindex] {
+    /* Remove tap delay on ALL mobile browsers */
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
