@@ -33,15 +33,15 @@ interface RowConfig {
 }
 
 const rowConfigs: RowConfig[] = [
-  { top: "0%", cubeSize: 100, direction: "right", duration: 80, opacity: 0.7, cubesPerRow: 5 },
-  { top: "12%", cubeSize: 90, direction: "left", duration: 90, opacity: 0.6, cubesPerRow: 6 },
-  { top: "23%", cubeSize: 85, direction: "right", duration: 85, opacity: 0.5, cubesPerRow: 6 },
-  { top: "34%", cubeSize: 80, direction: "left", duration: 95, opacity: 0.4, cubesPerRow: 7 },
-  { top: "44%", cubeSize: 75, direction: "right", duration: 82, opacity: 0.35, cubesPerRow: 7 },
-  { top: "54%", cubeSize: 80, direction: "left", duration: 98, opacity: 0.4, cubesPerRow: 7 },
-  { top: "65%", cubeSize: 85, direction: "right", duration: 84, opacity: 0.5, cubesPerRow: 6 },
-  { top: "76%", cubeSize: 90, direction: "left", duration: 92, opacity: 0.6, cubesPerRow: 6 },
-  { top: "88%", cubeSize: 95, direction: "right", duration: 88, opacity: 0.65, cubesPerRow: 5 },
+  { top: "0%", cubeSize: 100, direction: "right", duration: 80, opacity: 0.7, cubesPerRow: 4 },
+  { top: "13%", cubeSize: 90, direction: "left", duration: 90, opacity: 0.6, cubesPerRow: 4 },
+  { top: "25%", cubeSize: 85, direction: "right", duration: 85, opacity: 0.5, cubesPerRow: 5 },
+  { top: "37%", cubeSize: 80, direction: "left", duration: 95, opacity: 0.4, cubesPerRow: 5 },
+  { top: "48%", cubeSize: 75, direction: "right", duration: 82, opacity: 0.35, cubesPerRow: 5 },
+  { top: "58%", cubeSize: 80, direction: "left", duration: 98, opacity: 0.4, cubesPerRow: 5 },
+  { top: "69%", cubeSize: 85, direction: "right", duration: 84, opacity: 0.5, cubesPerRow: 5 },
+  { top: "80%", cubeSize: 90, direction: "left", duration: 92, opacity: 0.6, cubesPerRow: 4 },
+  { top: "92%", cubeSize: 95, direction: "right", duration: 88, opacity: 0.65, cubesPerRow: 4 },
 ];
 
 function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDelay: number; photoIndex: number }) {
@@ -57,7 +57,7 @@ function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDel
   
   return (
     <div 
-      className="flex-shrink-0 mx-2"
+      className="flex-shrink-0 mx-4"
       style={{
         perspective: "600px",
       }}
