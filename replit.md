@@ -142,6 +142,13 @@ Preferred communication style: Simple, everyday language.
 
 - **Customer Reviews System** (Nov 2025): Full review system with 1-5 star ratings, comments, and photographer response capability. Reviews display in a sliding bottom sheet for clean profile layout. Rating aggregates calculated from real review data.
 
+- **Automatic Two-Way Live Location Sharing** (Dec 2025): Both customers and photographers now automatically share their live location with each other when within 10 minutes of the session start time. Features include:
+  - Auto-start: Location sharing begins automatically when the page loads within the 10-minute window (browser still asks for permission first time)
+  - Two-way visibility: Customers see photographer's location (green dot), photographers see customer's location (blue dot) plus their own (green dot)
+  - Map indicators: Both maps show meeting point marker plus live location dots for each party currently sharing
+  - No manual buttons: Removed the "Start Sharing" button - sharing is now seamless and automatic
+  - Data stored in `live_locations` table with userId to distinguish between parties
+
 **Demo Accounts:** All demo accounts use password "password" for easy testing.
 
 ## Feature Backlog
