@@ -9,6 +9,126 @@ import photo6 from "@assets/stock_images/beautiful_profession_7eaa7b30.jpg";
 
 const photos = [photo1, photo2, photo3, photo4, photo5, photo6];
 
+interface CubeConfig {
+  size: number;
+  top: string;
+  left: string;
+  delay: number;
+  duration: number;
+  opacity: number;
+  startPhotos: number[];
+}
+
+const cubeConfigs: CubeConfig[] = [
+  { size: 120, top: "5%", left: "10%", delay: 0, duration: 20, opacity: 0.7, startPhotos: [0, 1, 2, 3, 4, 5] },
+  { size: 100, top: "15%", left: "75%", delay: -5, duration: 25, opacity: 0.6, startPhotos: [2, 3, 4, 5, 0, 1] },
+  { size: 80, top: "40%", left: "5%", delay: -10, duration: 22, opacity: 0.5, startPhotos: [4, 5, 0, 1, 2, 3] },
+  { size: 90, top: "55%", left: "85%", delay: -8, duration: 28, opacity: 0.5, startPhotos: [1, 2, 3, 4, 5, 0] },
+  { size: 70, top: "75%", left: "15%", delay: -3, duration: 24, opacity: 0.4, startPhotos: [3, 4, 5, 0, 1, 2] },
+  { size: 85, top: "80%", left: "70%", delay: -12, duration: 26, opacity: 0.45, startPhotos: [5, 0, 1, 2, 3, 4] },
+  { size: 60, top: "30%", left: "90%", delay: -7, duration: 30, opacity: 0.35, startPhotos: [0, 2, 4, 1, 3, 5] },
+  { size: 65, top: "60%", left: "50%", delay: -15, duration: 23, opacity: 0.3, startPhotos: [1, 3, 5, 0, 2, 4] },
+];
+
+function SingleCube({ config }: { config: CubeConfig }) {
+  const halfSize = config.size / 2;
+  
+  return (
+    <div 
+      className="absolute"
+      style={{
+        top: config.top,
+        left: config.left,
+        perspective: "800px",
+        opacity: config.opacity,
+      }}
+    >
+      <div 
+        className="relative"
+        style={{
+          width: `${config.size}px`,
+          height: `${config.size}px`,
+          transformStyle: "preserve-3d",
+          animation: `cubeRotate ${config.duration}s infinite linear`,
+          animationDelay: `${config.delay}s`,
+        }}
+      >
+        {/* Front face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[0]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+
+        {/* Back face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `rotateY(180deg) translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[1]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+
+        {/* Right face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `rotateY(90deg) translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[2]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+
+        {/* Left face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `rotateY(-90deg) translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[3]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+
+        {/* Top face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `rotateX(90deg) translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[4]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+
+        {/* Bottom face */}
+        <div 
+          className="absolute inset-0 rounded-lg overflow-hidden"
+          style={{
+            transform: `rotateX(-90deg) translateZ(${halfSize}px)`,
+            backfaceVisibility: "hidden",
+          }}
+        >
+          <img src={photos[config.startPhotos[5]]} alt="" className="w-full h-full object-cover" loading="lazy" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-transparent" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PhotoCube() {
   const [isReduced, setIsReduced] = useState(false);
 
@@ -24,134 +144,35 @@ export default function PhotoCube() {
   if (isReduced) {
     return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-2xl overflow-hidden opacity-20"
-          style={{
-            backgroundImage: `url(${photo1})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
+        {cubeConfigs.slice(0, 4).map((config, i) => (
+          <div 
+            key={i}
+            className="absolute rounded-xl overflow-hidden"
+            style={{
+              top: config.top,
+              left: config.left,
+              width: `${config.size}px`,
+              height: `${config.size}px`,
+              opacity: config.opacity * 0.5,
+              backgroundImage: `url(${photos[config.startPhotos[0]]})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background" />
       </div>
     );
   }
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-[15%] left-1/2 -translate-x-1/2 perspective-[1000px]">
-        <div 
-          className="relative w-[200px] h-[200px] md:w-[280px] md:h-[280px]"
-          style={{
-            transformStyle: "preserve-3d",
-            animation: "cubeRotate 25s infinite linear",
-          }}
-        >
-          {/* Front face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[0]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-
-          {/* Back face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "rotateY(180deg) translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[1]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-
-          {/* Right face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "rotateY(90deg) translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[2]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-
-          {/* Left face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "rotateY(-90deg) translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[3]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-
-          {/* Top face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "rotateX(90deg) translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[4]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-
-          {/* Bottom face */}
-          <div 
-            className="absolute inset-0 rounded-xl overflow-hidden backface-hidden"
-            style={{
-              transform: "rotateX(-90deg) translateZ(100px)",
-              backfaceVisibility: "hidden",
-            }}
-          >
-            <img 
-              src={photos[5]} 
-              alt="" 
-              className="w-full h-full object-cover"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-transparent" />
-          </div>
-        </div>
-      </div>
+      {cubeConfigs.map((config, i) => (
+        <SingleCube key={i} config={config} />
+      ))}
 
       {/* Gradient overlay to help with form readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/75 to-background/95" />
 
       <style>{`
         @keyframes cubeRotate {
