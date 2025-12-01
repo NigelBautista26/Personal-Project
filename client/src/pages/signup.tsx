@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { register } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import PhotoCube from "@/components/photo-cube";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -49,10 +50,13 @@ export default function Signup() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col p-6 relative overflow-hidden">
-      {/* Ambient Background */}
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none" />
+      {/* 3D Photo Cube Background */}
+      <PhotoCube />
 
-      <div className="flex items-center mb-8 mt-4">
+      {/* Ambient Glow Effects */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none z-10" />
+
+      <div className="relative z-20 flex items-center mb-8 mt-4">
         <Link href="/">
           <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors" data-testid="button-back">
             <ArrowLeft className="w-5 h-5" />
@@ -60,14 +64,16 @@ export default function Signup() {
         </Link>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Create account</h1>
-          <p className="text-muted-foreground">Join SnapNow and get started.</p>
-        </div>
+      <div className="relative z-20 flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
+        {/* Glass card for the form */}
+        <div className="glass-dark rounded-3xl p-6 border border-white/10 backdrop-blur-xl">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-white mb-2">Create account</h1>
+            <p className="text-muted-foreground">Join SnapNow and get started.</p>
+          </div>
 
-        {/* Role Selection */}
-        <div className="mb-6">
+          {/* Role Selection */}
+          <div className="mb-5">
           <Label className="text-white mb-3 block">I want to:</Label>
           <div className="grid grid-cols-2 gap-3">
             <button
@@ -181,13 +187,14 @@ export default function Signup() {
           </Button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-white font-medium hover:underline">
-              Sign in
-            </Link>
-          </p>
+          <div className="mt-6 text-center">
+            <p className="text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-white font-medium hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
