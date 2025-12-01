@@ -140,6 +140,9 @@ export default function Bookings() {
     totalAmount: string;
     photoCount: number | null;
     editedPhotos: string[] | null;
+    revisionCount: number | null;
+    revisionNotes: string | null;
+    requestedPhotoUrls: string[] | null;
   }
 
   const { data: editingServicesMap = {} } = useQuery({
@@ -785,6 +788,7 @@ export default function Bookings() {
                         editingRequest.status === 'completed' ? 'border-green-500/30 bg-green-500/10' :
                         editingRequest.status === 'delivered' ? 'border-violet-500/30 bg-violet-500/10' :
                         editingRequest.status === 'declined' ? 'border-red-500/30 bg-red-500/10' :
+                        editingRequest.status === 'revision_requested' ? 'border-orange-500/30 bg-orange-500/10' :
                         'border-yellow-500/30 bg-yellow-500/10'
                       }`}>
                         <div className="flex items-center gap-3">
@@ -792,12 +796,14 @@ export default function Bookings() {
                             editingRequest.status === 'completed' ? 'bg-green-500/20' :
                             editingRequest.status === 'delivered' ? 'bg-violet-500/20' :
                             editingRequest.status === 'declined' ? 'bg-red-500/20' :
+                            editingRequest.status === 'revision_requested' ? 'bg-orange-500/20' :
                             'bg-yellow-500/20'
                           }`}>
                             <Palette className={`w-4 h-4 ${
                               editingRequest.status === 'completed' ? 'text-green-400' :
                               editingRequest.status === 'delivered' ? 'text-violet-400' :
                               editingRequest.status === 'declined' ? 'text-red-400' :
+                              editingRequest.status === 'revision_requested' ? 'text-orange-400' :
                               'text-yellow-400'
                             }`} />
                           </div>
@@ -807,11 +813,15 @@ export default function Bookings() {
                               {editingRequest.status === 'accepted' && 'Editing Accepted'}
                               {editingRequest.status === 'in_progress' && 'Editing In Progress'}
                               {editingRequest.status === 'delivered' && 'Edited Photos Ready'}
+                              {editingRequest.status === 'revision_requested' && 'Revisions In Progress'}
                               {editingRequest.status === 'completed' && 'Editing Complete'}
                               {editingRequest.status === 'declined' && 'Editing Declined'}
                             </p>
                             <p className="text-xs text-muted-foreground">
                               £{parseFloat(editingRequest.totalAmount).toFixed(2)}
+                              {editingRequest.status === 'revision_requested' && editingRequest.revisionCount && (
+                                <span className="ml-1">• Revision #{editingRequest.revisionCount}</span>
+                              )}
                             </p>
                           </div>
                           {(editingRequest.status === 'delivered' || editingRequest.status === 'completed') && editingRequest.editedPhotos && editingRequest.editedPhotos.length > 0 && (
