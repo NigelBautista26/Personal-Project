@@ -179,10 +179,16 @@ export default function PhotoCube() {
   const [isReduced, setIsReduced] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setIsReduced(mediaQuery.matches);
+    // Disable heavy animations on mobile/touch devices for better performance
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth < 768;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    
+    // Use simple version on mobile or if user prefers reduced motion
+    setIsReduced(isTouchDevice || isSmallScreen || prefersReducedMotion);
 
-    const handler = (e: MediaQueryListEvent) => setIsReduced(e.matches);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const handler = (e: MediaQueryListEvent) => setIsReduced(e.matches || isTouchDevice || isSmallScreen);
     mediaQuery.addEventListener("change", handler);
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
