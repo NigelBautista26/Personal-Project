@@ -28,6 +28,7 @@ import PitchDeck from "@/pages/pitch-deck";
 import PhotographerMap from "@/pages/photographer-map";
 import PhotographerBookingDetail from "@/pages/photographer-booking-detail";
 import CustomerBookingDetail from "@/pages/customer-booking-detail";
+import PhotographerOnboarding from "@/pages/photographer-onboarding";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/" component={Welcome} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
+      <Route path="/photographer-onboarding" component={PhotographerOnboarding} />
       <Route path="/home" component={Home} />
       <Route path="/photographers" component={Photographers} />
       <Route path="/bookings" component={Bookings} />

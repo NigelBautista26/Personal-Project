@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image, Maximize2, Navigation, Layers, Map as MapIcon, Satellite, Lightbulb, Target, Zap
+import { Camera, Calendar, DollarSign, Star, MapPin, Settings as SettingsIcon, Clock, AlertCircle, ChevronRight, User, Sparkles, TrendingUp, Bell, CheckCircle2, Image, Maximize2, Navigation, Layers, Map as MapIcon, Satellite, Lightbulb, Target, Zap, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -89,15 +89,24 @@ export default function PhotographerHome() {
     queryFn: getCurrentUser,
   });
 
-  const { data: photographer } = useQuery({
+  const { data: photographer, isLoading: photographerLoading, isError: photographerError } = useQuery({
     queryKey: ["myPhotographerProfile"],
     queryFn: async () => {
       const res = await fetch("/api/photographers/me", { credentials: "include" });
+      if (res.status === 404) return null;
       if (!res.ok) throw new Error("Failed to fetch profile");
       return res.json();
     },
     enabled: !!user,
+    retry: false,
   });
+
+  // Redirect to onboarding if photographer doesn't have a profile yet
+  useEffect(() => {
+    if (user && !photographerLoading && photographer === null) {
+      setLocation("/photographer-onboarding");
+    }
+  }, [user, photographerLoading, photographer, setLocation]);
 
   const { data: bookings = [] } = useQuery({
     queryKey: ["photographerBookings", photographer?.id],
@@ -236,6 +245,15 @@ export default function PhotographerHome() {
   const statusInfo = getStatusInfo();
 
   const totalActionItems = pendingBookings.length + awaitingUpload.length + pendingEditingRequests.length;
+
+  // Show loading while checking for photographer profile
+  if (photographerLoading || photographer === null) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">

@@ -31,7 +31,8 @@ export default function Signup() {
       
       // Redirect based on role
       if (user.role === "photographer") {
-        setLocation("/photographer-home");
+        // New photographers go to onboarding to set up their profile
+        setLocation("/photographer-onboarding");
       } else {
         setLocation("/home");
       }
