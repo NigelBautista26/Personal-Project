@@ -149,6 +149,13 @@ Preferred communication style: Simple, everyday language.
   - No manual buttons: Removed the "Start Sharing" button - sharing is now seamless and automatic
   - Data stored in `live_locations` table with userId to distinguish between parties
 
+- **Photographer Onboarding Flow** (Dec 2025): New photographers are now guided through a setup process after signup:
+  - Dedicated onboarding page collects hourly rate, city/location, and optional bio
+  - Signup redirects photographers to onboarding instead of dashboard
+  - Existing photographers without profiles (logging in) are also redirected to onboarding
+  - Profile is created via POST /api/photographers on completion
+  - New photographers no longer show with misleading default ratings (fixed to show no rating until they receive actual reviews)
+
 **Demo Accounts:** All demo accounts use password "password" for easy testing.
 
 ## Feature Backlog
