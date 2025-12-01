@@ -33,6 +33,8 @@ interface EditingRequest {
   photographerNotes: string | null;
   requestedPhotoUrls: string[] | null;
   editedPhotos: string[] | null;
+  revisionNotes: string | null;
+  revisionCount: number | null;
   createdAt: string;
   booking?: {
     scheduledDate: string;
@@ -828,7 +830,7 @@ export default function PhotographerBookings() {
                   
                   <Button
                     onClick={() => {
-                      setSelectedEditingRequest(request);
+                      setEditingDialogRequest(request);
                       setEditingAction("deliver");
                       setEditedPhotos([]);
                       setPhotographerNotes("");
