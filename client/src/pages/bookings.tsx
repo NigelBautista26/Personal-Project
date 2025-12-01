@@ -44,6 +44,7 @@ export default function Bookings() {
     requestedPhotoUrls?: string[] | null;
   } | null>(null);
   const [editedPhotoIndex, setEditedPhotoIndex] = useState(0);
+  const [viewingOriginalIndex, setViewingOriginalIndex] = useState<number | null>(null);
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
@@ -1296,6 +1297,7 @@ export default function Bookings() {
           setShowCompareMode(false);
           setShowRevisionInput(false);
           setRevisionNotes("");
+          setViewingOriginalIndex(null);
         }
       }}>
         <DialogContent className="max-h-[85vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
@@ -1353,19 +1355,62 @@ export default function Bookings() {
             <div className="p-4 border-b border-violet-500/30 bg-violet-500/5">
               <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                 <ImageIcon className="w-3 h-3" />
-                Original Photos You Requested to Edit
+                Original Photos (tap to enlarge)
               </p>
-              <div className="grid grid-cols-4 gap-2 max-h-24 overflow-y-auto">
-                {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
-                  <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40 border border-zinc-700">
+              {viewingOriginalIndex !== null ? (
+                <div className="space-y-2">
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-black">
                     <img 
-                      src={url} 
-                      alt={`Original ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      src={viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex]} 
+                      alt={`Original ${viewingOriginalIndex + 1}`}
+                      className="w-full h-full object-contain"
                     />
+                    {viewingEditedPhotos.requestedPhotoUrls.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setViewingOriginalIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.requestedPhotoUrls!.length - 1)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setViewingOriginalIndex(prev => prev !== null && prev < viewingEditedPhotos.requestedPhotoUrls!.length - 1 ? prev + 1 : 0)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/60 text-white flex items-center justify-center"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-zinc-400">Original {viewingOriginalIndex + 1} of {viewingEditedPhotos.requestedPhotoUrls.length}</span>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs text-zinc-400"
+                      onClick={() => setViewingOriginalIndex(null)}
+                    >
+                      Show Thumbnails
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-4 gap-2">
+                  {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
+                    <div 
+                      key={idx} 
+                      className="aspect-square rounded-lg overflow-hidden bg-black/40 border border-zinc-700 cursor-pointer hover:border-violet-500 transition-colors"
+                      onClick={() => setViewingOriginalIndex(idx)}
+                    >
+                      <img 
+                        src={url} 
+                        alt={`Original ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1428,20 +1473,10 @@ export default function Bookings() {
                   </>
                 )}
               </div>
-              <div className="flex items-center justify-between mt-2">
+              <div className="flex items-center justify-center mt-2">
                 <span className="text-xs text-muted-foreground">
-                  Photo {editedPhotoIndex + 1} of {viewingEditedPhotos.photos.length}
+                  Edited Photo {editedPhotoIndex + 1} of {viewingEditedPhotos.photos.length}
                 </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-violet-400 hover:text-violet-300"
-                  onClick={() => handleDownloadEditedPhoto(viewingEditedPhotos.photos[editedPhotoIndex], editedPhotoIndex)}
-                  data-testid="button-download-current-edited"
-                >
-                  <Download className="w-4 h-4 mr-1" />
-                  Download
-                </Button>
               </div>
             </div>
           )}
