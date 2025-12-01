@@ -76,7 +76,7 @@ export default function PhotographerProfile() {
     <div className="min-h-screen bg-background pb-24">
       {/* Header Image Area */}
       <div className="relative h-72 w-full">
-        <img src={portfolioImages[0] || profileImage} className="w-full h-full object-cover opacity-60" />
+        <img src={portfolioImages[0] || profileImage} loading="lazy" className="w-full h-full object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
         
         <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-center z-10">
@@ -94,7 +94,7 @@ export default function PhotographerProfile() {
       <div className="px-6 -mt-12 relative z-10">
         <div className="flex justify-between items-end mb-6">
           <div className="w-24 h-24 rounded-2xl border-4 border-background overflow-hidden shadow-xl">
-            <img src={profileImage} className="w-full h-full object-cover" alt={photographer.fullName} data-testid="img-profile" />
+            <img src={profileImage} loading="lazy" className="w-full h-full object-cover" alt={photographer.fullName} data-testid="img-profile" />
           </div>
           <div className="flex gap-2 mb-2">
              <button className="w-10 h-10 bg-card rounded-full flex items-center justify-center text-white border border-white/10 hover:border-primary hover:text-primary transition-colors" data-testid="button-favorite">
@@ -148,6 +148,7 @@ export default function PhotographerProfile() {
             >
               <img 
                 src={img} 
+                loading="lazy"
                 className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
                 alt={`Portfolio ${i + 1}`}
               />
@@ -183,6 +184,7 @@ export default function PhotographerProfile() {
                       <img 
                         src={review.customer.profileImageUrl} 
                         alt={review.customer.fullName}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                       />
                     ) : (

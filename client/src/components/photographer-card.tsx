@@ -44,7 +44,7 @@ export function PhotographerCard({ id, name, location, price, rating, reviews, i
     <Link href={`/photographer/${id}`}>
       <div className="flex items-center gap-4 p-4 bg-card rounded-2xl border border-white/5 hover:bg-white/5 transition-colors cursor-pointer">
         <div className="relative">
-          <img src={image} alt={name} className="w-16 h-16 rounded-xl object-cover" />
+          <img src={image} alt={name} loading="lazy" className="w-16 h-16 rounded-xl object-cover" />
           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full ${status.color} border-2 border-card`} />
         </div>
         

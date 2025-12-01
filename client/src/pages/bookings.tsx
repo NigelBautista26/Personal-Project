@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/api";
 import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -329,7 +329,6 @@ export default function Bookings() {
   // Helper to check if a session has ended (date + time + duration)
   const hasSessionEnded = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
-    // Parse time like "5:40 PM" or "10:30 AM"
     const timeMatch = booking.scheduledTime?.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
     if (timeMatch) {
       let hours = parseInt(timeMatch[1]);
@@ -339,19 +338,23 @@ export default function Bookings() {
       if (!isPM && hours === 12) hours = 0;
       sessionDate.setHours(hours, minutes, 0, 0);
     }
-    // Add duration to get session end time
     const sessionEndTime = new Date(sessionDate.getTime() + (booking.duration || 1) * 60 * 60 * 1000);
     return new Date() > sessionEndTime;
   };
 
+  // Memoized status-based booking lists (don't depend on time)
+  const { completedBookings, cancelledBookings } = useMemo(() => ({
+    completedBookings: bookings.filter((b: any) => b.status === 'completed'),
+    cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled'),
+  }), [bookings]);
+
+  // Time-dependent filters - not memoized to ensure they update
   const upcomingBookings = bookings.filter((b: any) => 
     (b.status === 'pending' || b.status === 'confirmed') && !hasSessionEnded(b)
   );
   const awaitingPhotosBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && hasSessionEnded(b)
   );
-  const completedBookings = bookings.filter((b: any) => b.status === 'completed');
-  const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
   const fetchBookingPhotos = async (bookingId: string) => {
     const res = await fetch(`/api/bookings/${bookingId}/photos`, {
@@ -514,6 +517,7 @@ export default function Bookings() {
                           <img 
                             src={booking.photographer.profileImageUrl} 
                             alt={booking.photographer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -581,6 +585,7 @@ export default function Bookings() {
                           <img 
                             src={booking.photographer.profileImageUrl} 
                             alt={booking.photographer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -775,6 +780,7 @@ export default function Bookings() {
                           <img 
                             src={booking.photographer.profileImageUrl} 
                             alt={booking.photographer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover opacity-50"
                           />
                         ) : (
@@ -938,7 +944,7 @@ export default function Bookings() {
                       }`}
                       data-testid={`thumbnail-${idx}`}
                     >
-                      <img src={photo} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={photo} alt={`Thumbnail ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
                       {showSelectionUI && isSelected && (
                         <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-violet-500 flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />
@@ -1237,6 +1243,7 @@ export default function Bookings() {
                   <img
                     src={photo}
                     alt={`Edited photo ${index + 1}`}
+                    loading="lazy"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

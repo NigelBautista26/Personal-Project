@@ -408,8 +408,7 @@ export default function PhotographerBookings() {
     return null;
   }
 
-  const pendingBookings = bookings.filter((b: any) => b.status === 'pending');
-  
+  // Helper to calculate session end time
   const getSessionEndTime = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
     const timeParts = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':');
@@ -421,28 +420,36 @@ export default function PhotographerBookings() {
     return sessionDate;
   };
 
+  // Memoized status-based booking lists (don't depend on time)
+  const { pendingBookings, completedBookings, cancelledBookings } = useMemo(() => ({
+    pendingBookings: bookings.filter((b: any) => b.status === 'pending'),
+    completedBookings: bookings.filter((b: any) => b.status === 'completed'),
+    cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled'),
+  }), [bookings]);
+
+  // Time-dependent filters - not memoized to ensure they update
+  const now = new Date();
   const confirmedBookings = bookings.filter((b: any) => {
     if (b.status !== 'confirmed') return false;
     const sessionEnd = getSessionEndTime(b);
-    return sessionEnd >= new Date();
+    return sessionEnd >= now;
   });
-  
   const awaitingUploadBookings = bookings.filter((b: any) => {
     if (b.status !== 'confirmed') return false;
     const sessionEnd = getSessionEndTime(b);
-    return sessionEnd < new Date();
+    return sessionEnd < now;
   });
-  
-  const completedBookings = bookings.filter((b: any) => b.status === 'completed');
-  const cancelledBookings = bookings.filter((b: any) => b.status === 'cancelled');
 
-  const pendingEditingRequests = editingRequests.filter((r: EditingRequest) => r.status === 'requested');
-  const activeEditingRequests = editingRequests.filter((r: EditingRequest) => 
-    r.status === 'accepted' || r.status === 'in_progress'
-  );
-  const completedEditingRequests = editingRequests.filter((r: EditingRequest) => 
-    r.status === 'delivered' || r.status === 'completed'
-  );
+  // Memoized editing request lists
+  const { pendingEditingRequests, activeEditingRequests, completedEditingRequests } = useMemo(() => ({
+    pendingEditingRequests: editingRequests.filter((r: EditingRequest) => r.status === 'requested'),
+    activeEditingRequests: editingRequests.filter((r: EditingRequest) => 
+      r.status === 'accepted' || r.status === 'in_progress'
+    ),
+    completedEditingRequests: editingRequests.filter((r: EditingRequest) => 
+      r.status === 'delivered' || r.status === 'completed'
+    ),
+  }), [editingRequests]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -497,6 +504,7 @@ export default function PhotographerBookings() {
                           <img 
                             src={booking.customer.profileImageUrl} 
                             alt={booking.customer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -578,6 +586,7 @@ export default function PhotographerBookings() {
                           <img 
                             src={request.booking.customer.profileImageUrl} 
                             alt={request.booking.customer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -651,6 +660,7 @@ export default function PhotographerBookings() {
                           <img 
                             src={request.booking.customer.profileImageUrl} 
                             alt={request.booking.customer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -727,6 +737,7 @@ export default function PhotographerBookings() {
                           <img 
                             src={booking.customer.profileImageUrl} 
                             alt={booking.customer.fullName} 
+                            loading="lazy"
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -930,7 +941,7 @@ export default function PhotographerBookings() {
               <div className="grid grid-cols-3 gap-2">
                 {uploadingPhotos.map((photo, idx) => (
                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group">
-                    <img src={photo} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img src={photo} alt={`Upload ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
                   </div>
                 ))}
                 
@@ -1024,7 +1035,7 @@ export default function PhotographerBookings() {
               <div className="grid grid-cols-3 gap-2">
                 {editedPhotos.map((photo, idx) => (
                   <div key={idx} className="relative aspect-square rounded-lg overflow-hidden group">
-                    <img src={photo} alt={`Edited ${idx + 1}`} className="w-full h-full object-cover" />
+                    <img src={photo} alt={`Edited ${idx + 1}`} loading="lazy" className="w-full h-full object-cover" />
                     <button
                       onClick={() => setEditedPhotos(prev => prev.filter((_, i) => i !== idx))}
                       className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
