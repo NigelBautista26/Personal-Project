@@ -63,8 +63,15 @@ export async function registerRoutes(
       // Set session
       req.session.userId = user.id;
       
+      // Check if photographer has completed onboarding
+      let hasPhotographerProfile = false;
+      if (user.role === "photographer") {
+        const profile = await storage.getPhotographerByUserId(user.id);
+        hasPhotographerProfile = profile !== null;
+      }
+      
       const { password: _, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      res.json({ ...userWithoutPassword, hasPhotographerProfile });
     } catch (error) {
       console.error("Login error:", error);
       res.status(400).json({ error: "Invalid request" });

@@ -28,9 +28,13 @@ export default function Login() {
         description: `Logged in as ${user.fullName}`,
       });
       
-      // Redirect based on role
+      // Redirect based on role and onboarding status
       if (user.role === "photographer") {
-        setLocation("/photographer-home");
+        if (user.hasPhotographerProfile) {
+          setLocation("/photographer-home");
+        } else {
+          setLocation("/photographer-onboarding");
+        }
       } else {
         setLocation("/home");
       }

@@ -18,7 +18,7 @@ export async function register(email: string, password: string, fullName: string
   return response.json();
 }
 
-export async function login(email: string, password: string): Promise<User> {
+export async function login(email: string, password: string): Promise<User & { hasPhotographerProfile?: boolean }> {
   const response = await fetch(`${API_BASE}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
