@@ -101,10 +101,14 @@ export default function PhotographerHome() {
     retry: false,
   });
 
-  // Redirect to onboarding if photographer doesn't have a profile yet
+  // Redirect customers to customer home, redirect photographers without profile to onboarding
   useEffect(() => {
-    if (user && !photographerLoading && photographer === null) {
-      setLocation("/photographer-onboarding");
+    if (user) {
+      if (user.role !== "photographer") {
+        setLocation("/home");
+      } else if (!photographerLoading && photographer === null) {
+        setLocation("/photographer-onboarding");
+      }
     }
   }, [user, photographerLoading, photographer, setLocation]);
 
