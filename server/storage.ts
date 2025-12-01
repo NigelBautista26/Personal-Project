@@ -868,6 +868,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async completeEditingRequest(id: string): Promise<EditingRequest | undefined> {
+    // Get the editing request first to access payment details
+    const editingRequest = await this.getEditingRequest(id);
+    if (!editingRequest) return undefined;
+
+    // Update status to completed
     const result = await db.update(editingRequests)
       .set({
         status: "completed",
@@ -875,6 +880,18 @@ export class DatabaseStorage implements IStorage {
       })
       .where(eq(editingRequests.id, id))
       .returning();
+    
+    if (result[0]) {
+      // Create earnings record for the photographer (immediately available since photos already delivered)
+      await this.createEarning({
+        photographerId: editingRequest.photographerId,
+        bookingId: editingRequest.bookingId,
+        amount: editingRequest.photographerEarnings,
+        status: "pending", // Ready for withdrawal since edits are approved
+        description: `Editing service - ${editingRequest.photoCount || 1} photo(s)`,
+      });
+    }
+    
     return result[0];
   }
 
