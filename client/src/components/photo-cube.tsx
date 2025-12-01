@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import photo1 from "@assets/stock_images/beautiful_profession_d550635a.jpg";
 import photo2 from "@assets/stock_images/beautiful_profession_4e904727.jpg";
@@ -34,8 +34,6 @@ const photos = [
   photo19, photo20, photo21, photo22, photo23, photo24,
   photo25, photo26
 ];
-
-const preloadedImages = new Set<string>();
 
 interface RowConfig {
   top: string;
@@ -179,9 +177,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
 
 export default function PhotoCube() {
   const [isReduced, setIsReduced] = useState(false);
-  const [visibleRows, setVisibleRows] = useState(0);
-  const [animationsReady, setAnimationsReady] = useState(false);
-  const hasInitialized = useRef(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -193,72 +189,38 @@ export default function PhotoCube() {
   }, []);
 
   useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-
-    // Preload first 6 images before showing anything
+    // Preload a few key images, then fade in the whole component
     const imagesToPreload = photos.slice(0, 6);
     let loadedCount = 0;
     
-    const onImageReady = () => {
-      loadedCount++;
-      if (loadedCount >= 4) {
-        startProgressiveLoad();
-      }
-    };
-
     imagesToPreload.forEach((src) => {
-      if (preloadedImages.has(src)) {
-        onImageReady();
-        return;
-      }
       const img = new Image();
       img.onload = () => {
-        preloadedImages.add(src);
-        onImageReady();
+        loadedCount++;
+        if (loadedCount >= 3) {
+          // Show after just 3 images are ready for faster perceived load
+          setIsLoaded(true);
+        }
       };
-      img.onerror = onImageReady;
+      img.onerror = () => {
+        loadedCount++;
+        if (loadedCount >= 3) {
+          setIsLoaded(true);
+        }
+      };
       img.src = src;
     });
 
-    // Fallback timeout
-    const fallbackTimeout = setTimeout(() => startProgressiveLoad(), 300);
-
-    function startProgressiveLoad() {
-      clearTimeout(fallbackTimeout);
-      
-      // Start with 3 rows visible immediately
-      setVisibleRows(3);
-      
-      // Enable animations after a brief delay for smoother start
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setAnimationsReady(true);
-        });
-      });
-      
-      // Add remaining rows progressively
-      let currentRow = 3;
-      const addRow = () => {
-        if (currentRow < rowConfigs.length) {
-          currentRow++;
-          setVisibleRows(currentRow);
-          requestAnimationFrame(() => {
-            setTimeout(addRow, 100);
-          });
-        }
-      };
-      setTimeout(addRow, 200);
-    }
-
-    return () => clearTimeout(fallbackTimeout);
+    // Fallback: show after 500ms even if images aren't loaded
+    const timeout = setTimeout(() => setIsLoaded(true), 500);
+    return () => clearTimeout(timeout);
   }, []);
 
   if (isReduced) {
     return (
       <div 
-        className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-500 ease-out"
-        style={{ opacity: visibleRows > 0 ? 1 : 0 }}
+        className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+        style={{ opacity: isLoaded ? 1 : 0 }}
       >
         {rowConfigs.slice(0, 4).map((config, i) => (
           <div 
@@ -287,17 +249,12 @@ export default function PhotoCube() {
   }
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {rowConfigs.slice(0, visibleRows).map((config, i) => (
-        <div
-          key={i}
-          className="transition-opacity duration-500 ease-out"
-          style={{ 
-            opacity: animationsReady ? 1 : 0.5,
-          }}
-        >
-          <MarqueeRow config={config} rowIndex={i} />
-        </div>
+    <div 
+      className="absolute inset-0 overflow-hidden pointer-events-none transition-opacity duration-700 ease-out"
+      style={{ opacity: isLoaded ? 1 : 0 }}
+    >
+      {rowConfigs.map((config, i) => (
+        <MarqueeRow key={i} config={config} rowIndex={i} />
       ))}
 
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/70 to-background/90" />
