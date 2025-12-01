@@ -5,6 +5,7 @@ import { createServer } from "http";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import pg from "pg";
+import { setupWebSocket } from "./realtime";
 
 const app = express();
 const httpServer = createServer(app);
@@ -44,24 +45,26 @@ const pool = new pg.Pool({
 
 app.set("trust proxy", 1); // Trust first proxy for secure cookies
 
-app.use(
-  session({
-    store: new PgStore({
-      pool,
-      tableName: "session",
-      createTableIfMissing: true,
-    }),
-    secret: process.env.SESSION_SECRET || "snapnow-dev-secret-not-for-production",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
-    },
-  })
-);
+const sessionMiddleware = session({
+  store: new PgStore({
+    pool,
+    tableName: "session",
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET || "snapnow-dev-secret-not-for-production",
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+  },
+});
+
+app.use(sessionMiddleware);
+
+setupWebSocket(httpServer, sessionMiddleware);
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {

@@ -5,6 +5,7 @@ import { insertUserSchema, insertPhotographerSchema, insertBookingSchema, insert
 import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { z } from "zod";
+import { broadcastToBooking, broadcastToUser, broadcastToPhotographer, broadcastToCustomer } from "./realtime";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -790,6 +791,11 @@ export async function registerRoutes(
       }
       
       const updatedBooking = await storage.updateBookingStatus(req.params.bookingId, status);
+      
+      // Broadcast booking status change
+      broadcastToBooking(req.params.bookingId, "booking.updated", updatedBooking);
+      broadcastToCustomer(booking.customerId, "booking.updated", updatedBooking);
+      
       res.json(updatedBooking);
     } catch (error) {
       console.error("Booking status update error:", error);
@@ -1697,6 +1703,9 @@ export async function registerRoutes(
         },
       };
 
+      // Broadcast new message to booking channel
+      broadcastToBooking(bookingId, "message.new", messageWithSender);
+
       res.status(201).json(messageWithSender);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -1785,6 +1794,14 @@ export async function registerRoutes(
         notes
       );
 
+      // Broadcast meeting location update
+      broadcastToBooking(bookingId, "meeting.updated", {
+        latitude,
+        longitude,
+        notes,
+      });
+      broadcastToCustomer(booking.customerId, "booking.updated", updatedBooking);
+
       res.json(updatedBooking);
     } catch (error) {
       console.error("Error updating meeting location:", error);
@@ -1849,6 +1866,12 @@ export async function registerRoutes(
         longitude.toString(),
         accuracy?.toString()
       );
+
+      // Broadcast live location update to the booking channel
+      broadcastToBooking(bookingId, "location.update", {
+        ...liveLocation,
+        userType: isCustomer ? "customer" : "photographer",
+      });
 
       res.json(liveLocation);
     } catch (error) {

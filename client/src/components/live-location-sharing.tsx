@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Navigation, MapPin, Loader2, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useBookingChannel } from "@/hooks/use-realtime";
 
 interface LiveLocationSharingProps {
   bookingId: string;
@@ -29,6 +30,9 @@ export function LiveLocationSharing({
   const [permissionDenied, setPermissionDenied] = useState(false);
   const hasAutoStarted = useRef(false);
   const { toast } = useToast();
+
+  // Subscribe to real-time location updates
+  useBookingChannel(bookingId);
 
   const getSessionDateTime = useCallback(() => {
     const sessionDate = new Date(scheduledDate);
@@ -104,7 +108,7 @@ export function LiveLocationSharing({
       return res.json();
     },
     enabled: isWithinWindow,
-    refetchInterval: 5000,
+    refetchInterval: 15000, // Reduced since WebSocket provides real-time updates
   });
 
   useEffect(() => {

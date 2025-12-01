@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useBookingChannel } from "@/hooks/use-realtime";
 
 interface Message {
   id: string;
@@ -38,6 +39,9 @@ export function BookingChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
+  // Subscribe to real-time updates for this booking
+  useBookingChannel(bookingId);
+
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["booking-messages", bookingId],
     queryFn: async () => {
@@ -47,7 +51,7 @@ export function BookingChat({
       if (!res.ok) throw new Error("Failed to fetch messages");
       return res.json();
     },
-    refetchInterval: 5000,
+    refetchInterval: 30000, // Reduced polling since we have WebSocket
   });
 
   const sendMutation = useMutation({
