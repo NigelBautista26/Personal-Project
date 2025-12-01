@@ -52,8 +52,9 @@ export default function Welcome() {
 
       <div className="relative z-20 w-full space-y-4 mb-8">
         <Button 
-          className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25" 
+          className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 active:scale-95 transition-transform" 
           data-testid="button-get-started"
+          onTouchEnd={(e) => { e.preventDefault(); setLocation("/signup"); }}
           onClick={() => setLocation("/signup")}
         >
           Get Started
@@ -62,8 +63,9 @@ export default function Welcome() {
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Already have an account?</span>
           <button 
+            onTouchEnd={(e) => { e.preventDefault(); setLocation("/login"); }}
             onClick={() => setLocation("/login")} 
-            className="text-white font-medium flex items-center hover:underline"
+            className="text-white font-medium flex items-center hover:underline active:opacity-70"
           >
             Log in <ChevronRight className="w-3 h-3 ml-0.5" />
           </button>

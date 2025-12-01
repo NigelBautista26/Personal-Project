@@ -55,8 +55,9 @@ export default function Login() {
       
       <div className="relative z-10 flex items-center mb-8 mt-4">
         <button 
+          onTouchEnd={(e) => { e.preventDefault(); setLocation("/"); }}
           onClick={() => setLocation("/")}
-          className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors" 
+          className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors active:scale-95" 
           data-testid="button-back"
         >
           <ArrowLeft className="w-5 h-5" />
