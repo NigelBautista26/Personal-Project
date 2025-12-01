@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Camera, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,11 +57,13 @@ export default function Signup() {
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none z-10" />
 
       <div className="relative z-20 flex items-center mb-8 mt-4">
-        <Link href="/">
-          <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors" data-testid="button-back">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </Link>
+        <button 
+          onClick={() => setLocation("/")}
+          className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10 transition-colors" 
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
       </div>
 
       <div className="relative z-20 flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
@@ -190,9 +192,12 @@ export default function Signup() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-white font-medium hover:underline">
+              <button 
+                onClick={() => setLocation("/login")} 
+                className="text-white font-medium hover:underline"
+              >
                 Sign in
-              </Link>
+              </button>
             </p>
           </div>
         </div>

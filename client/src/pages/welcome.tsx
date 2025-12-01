@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { ChevronRight } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,8 @@ const preloadLogo = new Image();
 preloadLogo.src = generatedImage;
 
 export default function Welcome() {
+  const [, setLocation] = useLocation();
+  
   // Ensure logo is preloaded on mount
   useEffect(() => {
     const link = document.createElement('link');
@@ -49,17 +51,22 @@ export default function Welcome() {
       </div>
 
       <div className="relative z-20 w-full space-y-4 mb-8">
-        <Link href="/signup">
-          <Button className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25" data-testid="button-get-started">
-            Get Started
-          </Button>
-        </Link>
+        <Button 
+          className="w-full h-14 text-lg font-semibold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25" 
+          data-testid="button-get-started"
+          onClick={() => setLocation("/signup")}
+        >
+          Get Started
+        </Button>
         
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <span>Already have an account?</span>
-          <Link href="/login" className="text-white font-medium flex items-center hover:underline">
+          <button 
+            onClick={() => setLocation("/login")} 
+            className="text-white font-medium flex items-center hover:underline"
+          >
             Log in <ChevronRight className="w-3 h-3 ml-0.5" />
-          </Link>
+          </button>
         </div>
       </div>
     </div>
