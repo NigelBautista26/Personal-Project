@@ -884,7 +884,11 @@ export default function PhotographerBookings() {
                       <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
                         {request.status === 'completed' ? 'Approved' : 'Awaiting Approval'}
                       </span>
-                      <p className="text-lg font-bold text-green-400 mt-1">£{parseFloat(request.photographerEarnings).toFixed(2)}</p>
+                      {request.status === 'completed' ? (
+                        <p className="text-lg font-bold text-green-400 mt-1">+£{parseFloat(request.photographerEarnings).toFixed(2)}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground mt-1">Payment on approval</p>
+                      )}
                     </div>
                   </div>
                   
