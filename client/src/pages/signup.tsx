@@ -85,7 +85,7 @@ export default function Signup() {
       {/* Ambient Glow Effects */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none z-10" />
 
-      <div className="relative z-20 flex items-center justify-between mb-8 mt-4">
+      <div className="relative z-20 flex items-center mb-8 mt-4">
         <button 
           onTouchEnd={(e) => { e.preventDefault(); setLocation("/"); }}
           onClick={() => setLocation("/")}
@@ -94,25 +94,6 @@ export default function Signup() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-        
-        {/* Finish Later button for photographers */}
-        {role === "photographer" && (
-          <button
-            type="button"
-            onClick={() => {
-              toast({
-                title: "No worries!",
-                description: "Come back anytime to create your photographer account.",
-              });
-              setLocation("/");
-            }}
-            className="flex items-center gap-2 px-4 py-2 glass-dark rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm"
-            data-testid="button-finish-later"
-          >
-            <Clock className="w-4 h-4" />
-            Finish Later
-          </button>
-        )}
       </div>
 
       <div className="relative z-20 flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
@@ -257,14 +238,43 @@ export default function Signup() {
             )}
           </div>
 
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-            data-testid="button-signup"
-          >
-            {isLoading ? "Creating account..." : `Sign up as ${role === "customer" ? "Customer" : "Photographer"}`}
-          </Button>
+          {role === "photographer" ? (
+            <div className="flex gap-3">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  toast({
+                    title: "No worries!",
+                    description: "Come back anytime to create your photographer account.",
+                  });
+                  setLocation("/");
+                }}
+                className="flex-1 h-14 rounded-xl border-white/20 text-white hover:bg-white/10"
+                data-testid="button-finish-later"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                Finish later
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25"
+                data-testid="button-signup"
+              >
+                {isLoading ? "Creating..." : "Sign up"}
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              type="submit" 
+              disabled={isLoading}
+              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+              data-testid="button-signup"
+            >
+              {isLoading ? "Creating account..." : "Sign up as Customer"}
+            </Button>
+          )}
         </form>
 
           <div className="mt-6 text-center">
