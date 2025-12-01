@@ -77,6 +77,13 @@
   * {
     @apply border-border;
   }
+  
+  /* Remove 300ms tap delay on mobile */
+  a, button, input, select, textarea, label, [role="button"], [tabindex] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
   body {
     @apply font-sans antialiased bg-black text-foreground flex justify-center min-h-screen;
   }
