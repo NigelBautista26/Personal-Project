@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Camera, Users } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Camera, Users, AlertCircle, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +16,39 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"customer" | "photographer">("customer");
+  const [errors, setErrors] = useState<{ fullName?: string; email?: string; password?: string }>({});
   const { toast } = useToast();
+
+  const validateForm = () => {
+    const newErrors: { fullName?: string; email?: string; password?: string } = {};
+    
+    if (!fullName.trim()) {
+      newErrors.fullName = "Please enter your full name";
+    }
+    
+    if (!email.trim()) {
+      newErrors.email = "Please enter your email address";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (!password) {
+      newErrors.password = "Please enter a password";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -56,7 +85,7 @@ export default function Signup() {
       {/* Ambient Glow Effects */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none z-10" />
 
-      <div className="relative z-20 flex items-center mb-8 mt-4">
+      <div className="relative z-20 flex items-center justify-between mb-8 mt-4">
         <button 
           onTouchEnd={(e) => { e.preventDefault(); setLocation("/"); }}
           onClick={() => setLocation("/")}
@@ -65,6 +94,25 @@ export default function Signup() {
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
+        
+        {/* Finish Later button for photographers */}
+        {role === "photographer" && (
+          <button
+            type="button"
+            onClick={() => {
+              toast({
+                title: "No worries!",
+                description: "Come back anytime to create your photographer account.",
+              });
+              setLocation("/");
+            }}
+            className="flex items-center gap-2 px-4 py-2 glass-dark rounded-full text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm"
+            data-testid="button-finish-later"
+          >
+            <Clock className="w-4 h-4" />
+            Finish Later
+          </button>
+        )}
       </div>
 
       <div className="relative z-20 flex-1 flex flex-col justify-center max-w-sm mx-auto w-full">
@@ -126,12 +174,22 @@ export default function Signup() {
                 type="text" 
                 placeholder="Enter your full name"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="pl-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
+                onChange={(e) => {
+                  setFullName(e.target.value);
+                  if (errors.fullName) setErrors({ ...errors, fullName: undefined });
+                }}
+                className={`pl-10 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                  errors.fullName ? "border-red-500" : "border-white/10"
+                }`}
                 data-testid="input-name"
               />
             </div>
+            {errors.fullName && (
+              <div className="flex items-center gap-2 text-red-400 text-sm mt-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.fullName}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -145,12 +203,22 @@ export default function Signup() {
                 type="email" 
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="pl-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({ ...errors, email: undefined });
+                }}
+                className={`pl-10 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                  errors.email ? "border-red-500" : "border-white/10"
+                }`}
                 data-testid="input-email"
               />
             </div>
+            {errors.email && (
+              <div className="flex items-center gap-2 text-red-400 text-sm mt-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.email}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -164,10 +232,13 @@ export default function Signup() {
                 type={showPassword ? "text" : "password"} 
                 placeholder="At least 6 characters"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="pl-10 pr-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                required
-                minLength={6}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors({ ...errors, password: undefined });
+                }}
+                className={`pl-10 pr-10 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                  errors.password ? "border-red-500" : "border-white/10"
+                }`}
                 data-testid="input-password"
               />
               <button 
@@ -178,6 +249,12 @@ export default function Signup() {
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
+            {errors.password && (
+              <div className="flex items-center gap-2 text-red-400 text-sm mt-1">
+                <AlertCircle className="w-4 h-4" />
+                {errors.password}
+              </div>
+            )}
           </div>
 
           <Button 
