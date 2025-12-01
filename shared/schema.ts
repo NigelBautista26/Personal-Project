@@ -155,6 +155,7 @@ export const editingRequests = pgTable("editing_requests", {
   status: text("status").notNull().default("requested"), // requested, accepted, in_progress, delivered, completed, declined, cancelled
   customerNotes: text("customer_notes"), // special requests from customer
   photographerNotes: text("photographer_notes"), // notes from photographer
+  requestedPhotoUrls: text("requested_photo_urls").array().default(sql`ARRAY[]::text[]`), // photos customer wants edited
   editedPhotos: text("edited_photos").array().default(sql`ARRAY[]::text[]`), // delivered edited photos
   requestedAt: timestamp("requested_at").defaultNow().notNull(),
   acceptedAt: timestamp("accepted_at"),

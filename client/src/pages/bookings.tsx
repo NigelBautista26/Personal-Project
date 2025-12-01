@@ -42,7 +42,7 @@ export default function Bookings() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
-  const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string; returnToPhotos?: any} | null>(null);
+  const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string; returnToPhotos?: any; selectedPhotoUrls?: string[]} | null>(null);
   const [editingPhotoCount, setEditingPhotoCount] = useState(1);
   const [editingNotes, setEditingNotes] = useState("");
   const queryClient = useQueryClient();
@@ -186,17 +186,18 @@ export default function Bookings() {
   });
 
   const createEditingRequestMutation = useMutation({
-    mutationFn: async ({ bookingId, photographerId, photoCount, customerNotes }: { 
+    mutationFn: async ({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls }: { 
       bookingId: string; 
       photographerId: string; 
       photoCount?: number; 
-      customerNotes?: string 
+      customerNotes?: string;
+      requestedPhotoUrls?: string[];
     }) => {
       const res = await fetch("/api/editing-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bookingId, photographerId, photoCount, customerNotes }),
+        body: JSON.stringify({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -853,7 +854,12 @@ export default function Bookings() {
                         if (service.pricingModel === "per_photo") {
                           setEditingPhotoCount(selectedCount || 1);
                         }
-                        setEditingDialogBooking({ ...selectedBookingPhotos.booking, returnToPhotos: selectedBookingPhotos });
+                        const selectedUrls = Array.from(selectedPhotosForEditing).map(idx => selectedBookingPhotos.photos[idx]);
+                        setEditingDialogBooking({ 
+                          ...selectedBookingPhotos.booking, 
+                          returnToPhotos: selectedBookingPhotos,
+                          selectedPhotoUrls: selectedUrls.length > 0 ? selectedUrls : selectedBookingPhotos.photos
+                        });
                       }}
                       size="sm"
                       className="bg-violet-600 hover:bg-violet-700 text-white w-full"
@@ -1075,6 +1081,7 @@ export default function Bookings() {
                           photographerId: editingDialogBooking.photographerId,
                           photoCount: service.pricingModel === "per_photo" ? editingPhotoCount : undefined,
                           customerNotes: editingNotes || undefined,
+                          requestedPhotoUrls: editingDialogBooking.selectedPhotoUrls,
                         });
                       }
                     }}

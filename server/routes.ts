@@ -1293,9 +1293,10 @@ export async function registerRoutes(
         photographerId: z.string(),
         photoCount: z.number().min(1).optional(),
         customerNotes: z.string().max(500).optional(),
+        requestedPhotoUrls: z.array(z.string()).optional(),
       });
 
-      const { bookingId, photographerId, photoCount, customerNotes } = requestSchema.parse(req.body);
+      const { bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls } = requestSchema.parse(req.body);
 
       // Verify the booking belongs to this customer
       const booking = await storage.getBooking(bookingId);
@@ -1344,6 +1345,7 @@ export async function registerRoutes(
         status: "requested",
         customerNotes: customerNotes || null,
         photographerNotes: null,
+        requestedPhotoUrls: requestedPhotoUrls || [],
       });
 
       res.json(editingRequest);

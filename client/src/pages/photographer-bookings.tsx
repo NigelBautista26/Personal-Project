@@ -31,6 +31,7 @@ interface EditingRequest {
   photoCount: number | null;
   customerNotes: string | null;
   photographerNotes: string | null;
+  requestedPhotoUrls: string[] | null;
   editedPhotos: string[] | null;
   createdAt: string;
   booking?: {
@@ -615,6 +616,31 @@ export default function PhotographerBookings() {
                     </div>
                   )}
                   
+                  {request.requestedPhotoUrls && request.requestedPhotoUrls.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Images className="w-4 h-4" />
+                        Photos to edit ({request.requestedPhotoUrls.length})
+                      </p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {request.requestedPhotoUrls.slice(0, 8).map((url, idx) => (
+                          <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40">
+                            <img 
+                              src={url} 
+                              alt={`Photo ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        {request.requestedPhotoUrls.length > 8 && (
+                          <div className="aspect-square rounded-lg bg-violet-500/20 flex items-center justify-center">
+                            <span className="text-violet-400 text-sm font-medium">+{request.requestedPhotoUrls.length - 8}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex gap-3 pt-2">
                     <Button
                       onClick={() => updateEditingStatusMutation.mutate({ requestId: request.id, status: 'accepted' })}
@@ -684,6 +710,31 @@ export default function PhotographerBookings() {
                     <div className="bg-blue-500/10 rounded-lg p-3">
                       <p className="text-sm text-muted-foreground">Customer notes:</p>
                       <p className="text-sm text-white">{request.customerNotes}</p>
+                    </div>
+                  )}
+                  
+                  {request.requestedPhotoUrls && request.requestedPhotoUrls.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        <Images className="w-4 h-4" />
+                        Photos to edit ({request.requestedPhotoUrls.length})
+                      </p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {request.requestedPhotoUrls.slice(0, 8).map((url, idx) => (
+                          <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40">
+                            <img 
+                              src={url} 
+                              alt={`Photo ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        {request.requestedPhotoUrls.length > 8 && (
+                          <div className="aspect-square rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <span className="text-blue-400 text-sm font-medium">+{request.requestedPhotoUrls.length - 8}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                   
@@ -1027,6 +1078,27 @@ export default function PhotographerBookings() {
           </DialogHeader>
 
           <div className="space-y-4">
+            {/* Reference: Photos Requested for Editing */}
+            {editingDialogRequest?.requestedPhotoUrls && editingDialogRequest.requestedPhotoUrls.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground flex items-center gap-2">
+                  <Images className="w-4 h-4" />
+                  Photos to edit ({editingDialogRequest.requestedPhotoUrls.length})
+                </label>
+                <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                  {editingDialogRequest.requestedPhotoUrls.map((url, idx) => (
+                    <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40 border border-violet-500/30">
+                      <img 
+                        src={url} 
+                        alt={`Reference ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Edited Photo Grid */}
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">
