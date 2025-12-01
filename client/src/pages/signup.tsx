@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Camera, Users, AlertCircle, Clock } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Camera, Users, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -238,43 +238,14 @@ export default function Signup() {
             )}
           </div>
 
-          {role === "photographer" ? (
-            <div className="flex gap-3">
-              <Button 
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  toast({
-                    title: "No worries!",
-                    description: "Come back anytime to create your photographer account.",
-                  });
-                  setLocation("/");
-                }}
-                className="flex-1 h-14 rounded-xl border-white/20 text-white hover:bg-white/10"
-                data-testid="button-finish-later"
-              >
-                <Clock className="w-4 h-4 mr-2" />
-                Finish later
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isLoading}
-                className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/25"
-                data-testid="button-signup"
-              >
-                {isLoading ? "Creating..." : "Sign up"}
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-              data-testid="button-signup"
-            >
-              {isLoading ? "Creating account..." : "Sign up as Customer"}
-            </Button>
-          )}
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+            data-testid="button-signup"
+          >
+            {isLoading ? "Creating account..." : `Sign up as ${role === "customer" ? "Customer" : "Photographer"}`}
+          </Button>
         </form>
 
           <div className="mt-6 text-center">
