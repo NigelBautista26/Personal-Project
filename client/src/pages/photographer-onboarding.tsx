@@ -186,28 +186,39 @@ export default function PhotographerOnboarding() {
               />
             </div>
 
-            <Button 
-              type="submit" 
-              disabled={isLoading}
-              className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-              data-testid="button-complete-setup"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Setting up...
-                </>
-              ) : (
-                <>
-                  Complete Setup
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </>
-              )}
-            </Button>
+            <div className="flex gap-3">
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={async () => {
+                  await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+                  setLocation("/");
+                }}
+                className="flex-1 h-14 rounded-xl border-white/20 text-white hover:bg-white/10"
+                data-testid="button-finish-later"
+              >
+                Finish later
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="flex-1 h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+                data-testid="button-complete-setup"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <>
+                    Complete
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
 
           <p className="text-xs text-muted-foreground text-center mt-4">
-            You can always update your profile and add portfolio photos later.
+            Your account is saved. You can log back in anytime to finish setup.
           </p>
         </div>
       </div>
