@@ -501,6 +501,83 @@ export default function PhotographerBookings() {
       </div>
 
       <div className="px-6 space-y-8">
+        {/* Upcoming Sessions - First priority */}
+        <section>
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Upcoming Sessions
+          </h2>
+          
+          {bookingsLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
+            </div>
+          ) : confirmedBookings.length === 0 ? (
+            <div className="glass-panel rounded-2xl p-8 text-center">
+              <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No upcoming sessions</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {confirmedBookings.map((booking: any) => (
+                <button
+                  key={booking.id}
+                  onClick={() => setLocation(`/photographer/booking/${booking.id}`)}
+                  className="glass-panel rounded-2xl p-4 space-y-3 w-full text-left hover:bg-white/5 transition-colors"
+                  data-testid={`booking-confirmed-${booking.id}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
+                        {booking.customer?.profileImageUrl ? (
+                          <img 
+                            src={booking.customer.profileImageUrl} 
+                            alt={booking.customer.fullName} 
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{booking.customer?.fullName || 'Photo Session'}</h3>
+                        <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Calendar className="w-4 h-4" />
+                    <span>{format(new Date(booking.scheduledDate), 'EEEE, MMMM d, yyyy')}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    <span>{booking.scheduledTime}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{booking.location}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                    <span className="text-muted-foreground text-sm">You'll earn</span>
+                    <span className="text-primary font-bold">£{parseFloat(booking.photographerEarnings).toFixed(2)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
         {pendingBookings.length > 0 && (
           <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
@@ -937,82 +1014,6 @@ export default function PhotographerBookings() {
             </>)}
           </section>
         )}
-
-        <section>
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-primary" />
-            Upcoming Sessions
-          </h2>
-          
-          {bookingsLoading ? (
-            <div className="text-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto" />
-            </div>
-          ) : confirmedBookings.length === 0 ? (
-            <div className="glass-panel rounded-2xl p-8 text-center">
-              <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No upcoming sessions</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {confirmedBookings.map((booking: any) => (
-                <button
-                  key={booking.id}
-                  onClick={() => setLocation(`/photographer/booking/${booking.id}`)}
-                  className="glass-panel rounded-2xl p-4 space-y-3 w-full text-left hover:bg-white/5 transition-colors"
-                  data-testid={`booking-confirmed-${booking.id}`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden">
-                        {booking.customer?.profileImageUrl ? (
-                          <img 
-                            src={booking.customer.profileImageUrl} 
-                            alt={booking.customer.fullName} 
-                            loading="lazy"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <User className="w-6 h-6 text-primary" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-white">{booking.customer?.fullName || 'Photo Session'}</h3>
-                        <p className="text-sm text-muted-foreground">{booking.duration} hour{booking.duration > 1 ? 's' : ''}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusColor(booking.status)}`}>
-                        {booking.status}
-                      </span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>{format(new Date(booking.scheduledDate), 'EEEE, MMMM d, yyyy')}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>{booking.scheduledTime}</span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{booking.location}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center pt-2 border-t border-white/10">
-                    <span className="text-muted-foreground text-sm">You'll earn</span>
-                    <span className="text-primary font-bold">£{parseFloat(booking.photographerEarnings).toFixed(2)}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
 
         {awaitingUploadBookings.length > 0 && (
           <section>
