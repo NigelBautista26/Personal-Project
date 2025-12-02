@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +15,34 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+    
+    if (!email.trim()) {
+      newErrors.email = "Please enter your email address";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+    
+    if (!password) {
+      newErrors.password = "Please enter your password";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
@@ -91,12 +114,22 @@ export default function Login() {
                   type="email" 
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                  required
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors({ ...errors, email: undefined });
+                  }}
+                  className={`pl-10 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                    errors.email ? "border-red-500" : "border-white/10"
+                  }`}
                   data-testid="input-email"
                 />
               </div>
+              {errors.email && (
+                <div className="flex items-center gap-2 text-red-400 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.email}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -110,9 +143,13 @@ export default function Login() {
                   type={showPassword ? "text" : "password"} 
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 bg-card border-white/10 text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20"
-                  required
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({ ...errors, password: undefined });
+                  }}
+                  className={`pl-10 pr-10 bg-card text-white h-12 rounded-xl focus:border-primary focus:ring-primary/20 ${
+                    errors.password ? "border-red-500" : "border-white/10"
+                  }`}
                   data-testid="input-password"
                 />
                 <button 
@@ -123,6 +160,12 @@ export default function Login() {
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
+              {errors.password && (
+                <div className="flex items-center gap-2 text-red-400 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.password}
+                </div>
+              )}
             </div>
 
             <Button 
