@@ -886,9 +886,10 @@ export class DatabaseStorage implements IStorage {
       await this.createEarning({
         photographerId: editingRequest.photographerId,
         bookingId: editingRequest.bookingId,
-        amount: editingRequest.photographerEarnings,
+        grossAmount: editingRequest.baseAmount || "0",
+        platformFee: editingRequest.platformFee || "0",
+        netAmount: editingRequest.photographerEarnings || "0",
         status: "pending", // Ready for withdrawal since edits are approved
-        description: `Editing service - ${editingRequest.photoCount || 1} photo(s)`,
       });
     }
     

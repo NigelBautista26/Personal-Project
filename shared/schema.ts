@@ -195,7 +195,6 @@ export const insertBookingSchema = createInsertSchema(bookings).omit({
 export const insertEarningSchema = createInsertSchema(earnings).omit({
   id: true,
   createdAt: true,
-  status: true,
   paidAt: true,
 });
 
