@@ -934,7 +934,59 @@ export default function PhotographerBookings() {
           </section>
         )}
 
-        {/* Completed Editing Requests - awaiting customer approval */}
+        {/* Ready for Photos - Action item (expanded) */}
+        {awaitingUploadBookings.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Upload className="w-5 h-5 text-blue-400" />
+              Ready for Photos ({awaitingUploadBookings.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">These sessions are complete. Upload photos to finalize and get paid.</p>
+            <div className="space-y-4">
+              {awaitingUploadBookings.map((booking: any) => (
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-4 border border-blue-500/30" data-testid={`booking-upload-${booking.id}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {booking.customer?.profileImageUrl ? (
+                        <img 
+                          src={booking.customer.profileImageUrl} 
+                          alt={booking.customer.fullName} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6 text-blue-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-white">{booking.customer?.fullName || 'Customer'}</h3>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')}
+                      </p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {booking.location}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-lg font-bold text-blue-400">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground">earnings</p>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    onClick={() => handleOpenUploadDialog(booking.id)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    data-testid={`button-upload-photos-${booking.id}`}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Photos Now
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Completed Editing Requests - collapsed by default */}
         {completedEditingRequests.length > 0 && (
           <section>
             <button
@@ -1012,57 +1064,6 @@ export default function PhotographerBookings() {
               ))}
             </div>
             </>)}
-          </section>
-        )}
-
-        {awaitingUploadBookings.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-blue-400" />
-              Ready for Photos ({awaitingUploadBookings.length})
-            </h2>
-            <p className="text-sm text-muted-foreground mb-4">These sessions are complete. Upload photos to finalize and get paid.</p>
-            <div className="space-y-4">
-              {awaitingUploadBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-4 border border-blue-500/30" data-testid={`booking-upload-${booking.id}`}>
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {booking.customer?.profileImageUrl ? (
-                        <img 
-                          src={booking.customer.profileImageUrl} 
-                          alt={booking.customer.fullName} 
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <User className="w-6 h-6 text-blue-400" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-white">{booking.customer?.fullName || 'Customer'}</h3>
-                      <p className="text-sm text-muted-foreground mt-0.5">
-                        {format(new Date(booking.scheduledDate), 'MMM d, yyyy')}
-                      </p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {booking.location}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold text-blue-400">£{parseFloat(booking.photographerEarnings).toFixed(2)}</p>
-                      <p className="text-xs text-muted-foreground">earnings</p>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    onClick={() => handleOpenUploadDialog(booking.id)}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    data-testid={`button-upload-photos-${booking.id}`}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Photos Now
-                  </Button>
-                </div>
-              ))}
-            </div>
           </section>
         )}
 
