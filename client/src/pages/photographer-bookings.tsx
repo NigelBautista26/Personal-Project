@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle, Palette, DollarSign, ChevronRight, MessageSquare } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Check, X, Upload, Images, Plus, Trash2, AlertTriangle, Palette, DollarSign, ChevronRight, ChevronDown, MessageSquare } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,16 @@ export default function PhotographerBookings() {
   const [photographerNotes, setPhotographerNotes] = useState("");
   const [isUploadingEdited, setIsUploadingEdited] = useState(false);
   const editedFileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Collapsible section states - completed/approved sections collapsed by default
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    completedSessions: true,
+    editingDelivered: true,
+  });
+  
+  const toggleSection = (section: string) => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -850,10 +860,17 @@ export default function PhotographerBookings() {
         {/* Completed Editing Requests - awaiting customer approval */}
         {completedEditingRequests.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <button
+              onClick={() => toggleSection('editingDelivered')}
+              className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
+              data-testid="toggle-editing-delivered"
+            >
               <Check className="w-5 h-5 text-green-400" />
               Editing Delivered ({completedEditingRequests.length})
-            </h2>
+              <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${collapsedSections.editingDelivered ? '-rotate-90' : ''}`} />
+            </button>
+            {!collapsedSections.editingDelivered && (
+            <>
             <p className="text-sm text-muted-foreground mb-4">These edits have been delivered and are awaiting customer approval.</p>
             
             <div className="space-y-4">
@@ -917,6 +934,7 @@ export default function PhotographerBookings() {
                 </div>
               ))}
             </div>
+            </>)}
           </section>
         )}
 
@@ -1049,10 +1067,16 @@ export default function PhotographerBookings() {
 
         {completedBookings.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <button
+              onClick={() => toggleSection('completedSessions')}
+              className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
+              data-testid="toggle-completed-sessions"
+            >
               <Check className="w-5 h-5 text-green-400" />
-              Completed Sessions
-            </h2>
+              Completed Sessions ({completedBookings.length})
+              <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${collapsedSections.completedSessions ? '-rotate-90' : ''}`} />
+            </button>
+            {!collapsedSections.completedSessions && (
             <div className="space-y-4">
               {completedBookings.slice(0, 5).map((booking: any) => (
                 <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-4" data-testid={`booking-completed-${booking.id}`}>
@@ -1094,7 +1118,7 @@ export default function PhotographerBookings() {
                   </Button>
                 </div>
               ))}
-            </div>
+            </div>)}
           </section>
         )}
 
