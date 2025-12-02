@@ -501,7 +501,7 @@ export default function PhotographerBookings() {
 
       <div className="px-6 space-y-8">
         {/* Upcoming Sessions - First priority */}
-        <section className="border-l-4 border-blue-500 pl-4">
+        <section>
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
             Upcoming Sessions
@@ -578,7 +578,7 @@ export default function PhotographerBookings() {
         </section>
 
         {pendingBookings.length > 0 && (
-          <section className="border-l-4 border-yellow-500 pl-4">
+          <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-yellow-400" />
               Pending Requests ({pendingBookings.length})
@@ -660,7 +660,7 @@ export default function PhotographerBookings() {
 
         {/* Pending Editing Requests */}
         {pendingEditingRequests.length > 0 && (
-          <section className="border-l-4 border-violet-500 pl-4">
+          <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Palette className="w-5 h-5 text-violet-400" />
               Editing Requests ({pendingEditingRequests.length})
@@ -848,7 +848,7 @@ export default function PhotographerBookings() {
 
         {/* Revision Requests */}
         {revisionRequests.length > 0 && (
-          <section className="border-l-4 border-orange-500 pl-4">
+          <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-orange-400" />
               Revisions Requested ({revisionRequests.length})
@@ -935,7 +935,7 @@ export default function PhotographerBookings() {
 
         {/* Ready for Photos - Action item (expanded) */}
         {awaitingUploadBookings.length > 0 && (
-          <section className="border-l-4 border-blue-500 pl-4">
+          <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Upload className="w-5 h-5 text-blue-400" />
               Ready for Photos ({awaitingUploadBookings.length})
@@ -987,7 +987,7 @@ export default function PhotographerBookings() {
 
         {/* Awaiting Customer Approval - EXPANDED (active task) */}
         {awaitingApprovalRequests.length > 0 && (
-          <section className="border-l-4 border-yellow-500 pl-4">
+          <section>
             <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Clock className="w-5 h-5 text-yellow-400" />
               Awaiting Customer Approval ({awaitingApprovalRequests.length})
@@ -1056,7 +1056,7 @@ export default function PhotographerBookings() {
 
         {/* Approved Edits - COLLAPSED (completed) */}
         {approvedEditingRequests.length > 0 && (
-          <section className="border-l-4 border-green-500 pl-4">
+          <section>
             <button
               onClick={() => toggleSection('approvedEdits')}
               className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -1128,7 +1128,7 @@ export default function PhotographerBookings() {
         )}
 
         {completedBookings.length > 0 && (
-          <section className="border-l-4 border-green-500 pl-4">
+          <section>
             <button
               onClick={() => toggleSection('completedSessions')}
               className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
