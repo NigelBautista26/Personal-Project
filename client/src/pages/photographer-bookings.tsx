@@ -62,10 +62,10 @@ export default function PhotographerBookings() {
   const [isUploadingEdited, setIsUploadingEdited] = useState(false);
   const editedFileInputRef = useRef<HTMLInputElement>(null);
   
-  // Collapsible section states - completed/approved sections collapsed by default
+  // Collapsible section states - only truly completed items are collapsed
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completedSessions: true,
-    editingDelivered: true,
+    approvedEdits: true,
   });
   
   const toggleSection = (section: string) => {
@@ -454,15 +454,14 @@ export default function PhotographerBookings() {
   });
 
   // Memoized editing request lists
-  const { pendingEditingRequests, activeEditingRequests, revisionRequests, completedEditingRequests } = useMemo(() => ({
+  const { pendingEditingRequests, activeEditingRequests, revisionRequests, awaitingApprovalRequests, approvedEditingRequests } = useMemo(() => ({
     pendingEditingRequests: editingRequests.filter((r: EditingRequest) => r.status === 'requested'),
     activeEditingRequests: editingRequests.filter((r: EditingRequest) => 
       r.status === 'accepted' || r.status === 'in_progress'
     ),
     revisionRequests: editingRequests.filter((r: EditingRequest) => r.status === 'revision_requested'),
-    completedEditingRequests: editingRequests.filter((r: EditingRequest) => 
-      r.status === 'delivered' || r.status === 'completed'
-    ),
+    awaitingApprovalRequests: editingRequests.filter((r: EditingRequest) => r.status === 'delivered'),
+    approvedEditingRequests: editingRequests.filter((r: EditingRequest) => r.status === 'completed'),
   }), [editingRequests]);
 
   const getStatusColor = (status: string) => {
@@ -986,25 +985,91 @@ export default function PhotographerBookings() {
           </section>
         )}
 
-        {/* Completed Editing Requests - collapsed by default */}
-        {completedEditingRequests.length > 0 && (
+        {/* Awaiting Customer Approval - EXPANDED (active task) */}
+        {awaitingApprovalRequests.length > 0 && (
           <section>
-            <button
-              onClick={() => toggleSection('editingDelivered')}
-              className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
-              data-testid="toggle-editing-delivered"
-            >
-              <Check className="w-5 h-5 text-green-400" />
-              Editing Delivered ({completedEditingRequests.length})
-              <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${collapsedSections.editingDelivered ? '-rotate-90' : ''}`} />
-            </button>
-            {!collapsedSections.editingDelivered && (
-            <>
-            <p className="text-sm text-muted-foreground mb-4">These edits have been delivered and are awaiting customer approval.</p>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-yellow-400" />
+              Awaiting Customer Approval ({awaitingApprovalRequests.length})
+            </h2>
+            <p className="text-sm text-muted-foreground mb-4">These edits have been delivered and are waiting for customer approval.</p>
             
             <div className="space-y-4">
-              {completedEditingRequests.map((request: EditingRequest) => (
-                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-green-500/30" data-testid={`editing-delivered-${request.id}`}>
+              {awaitingApprovalRequests.map((request: EditingRequest) => (
+                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-yellow-500/30" data-testid={`editing-awaiting-${request.id}`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center overflow-hidden">
+                        {request.booking?.customer?.profileImageUrl ? (
+                          <img 
+                            src={request.booking.customer.profileImageUrl} 
+                            alt={request.booking.customer.fullName} 
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-yellow-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{request.booking?.customer?.fullName || 'Customer'}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {request.photoCount} photo{request.photoCount && request.photoCount > 1 ? 's' : ''} edited
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs px-2 py-1 rounded-full bg-yellow-500/20 text-yellow-400">
+                        Awaiting Approval
+                      </span>
+                      <p className="text-sm text-muted-foreground mt-1">Payment on approval</p>
+                    </div>
+                  </div>
+                  
+                  {/* Edited Photos Preview */}
+                  {request.editedPhotos && request.editedPhotos.length > 0 && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-2">Your delivered edits:</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {request.editedPhotos.slice(0, 8).map((url, idx) => (
+                          <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-black/40">
+                            <img 
+                              src={url} 
+                              alt={`Edited ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ))}
+                        {request.editedPhotos.length > 8 && (
+                          <div className="aspect-square rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                            <span className="text-yellow-400 text-sm font-medium">+{request.editedPhotos.length - 8}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Approved Edits - COLLAPSED (completed) */}
+        {approvedEditingRequests.length > 0 && (
+          <section>
+            <button
+              onClick={() => toggleSection('approvedEdits')}
+              className="w-full text-lg font-bold text-white mb-4 flex items-center gap-2 hover:opacity-80 transition-opacity"
+              data-testid="toggle-approved-edits"
+            >
+              <Check className="w-5 h-5 text-green-400" />
+              Approved Edits ({approvedEditingRequests.length})
+              <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${collapsedSections.approvedEdits ? '-rotate-90' : ''}`} />
+            </button>
+            {!collapsedSections.approvedEdits && (
+            <div className="space-y-4">
+              {approvedEditingRequests.map((request: EditingRequest) => (
+                <div key={request.id} className="glass-panel rounded-2xl p-4 space-y-3 border border-green-500/30" data-testid={`editing-approved-${request.id}`}>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center overflow-hidden">
@@ -1028,13 +1093,9 @@ export default function PhotographerBookings() {
                     </div>
                     <div className="text-right">
                       <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
-                        {request.status === 'completed' ? 'Approved' : 'Awaiting Approval'}
+                        Approved
                       </span>
-                      {request.status === 'completed' ? (
-                        <p className="text-lg font-bold text-green-400 mt-1">+£{parseFloat(request.photographerEarnings).toFixed(2)}</p>
-                      ) : (
-                        <p className="text-sm text-muted-foreground mt-1">Payment on approval</p>
-                      )}
+                      <p className="text-lg font-bold text-green-400 mt-1">+£{parseFloat(request.photographerEarnings).toFixed(2)}</p>
                     </div>
                   </div>
                   
@@ -1062,8 +1123,7 @@ export default function PhotographerBookings() {
                   )}
                 </div>
               ))}
-            </div>
-            </>)}
+            </div>)}
           </section>
         )}
 
