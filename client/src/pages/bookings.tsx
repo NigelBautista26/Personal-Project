@@ -1335,13 +1335,18 @@ export default function Bookings() {
           {/* Stacked Comparison View - Originals on top, Edited on bottom */}
           <div className="flex-1 overflow-y-auto">
             {/* Original Photos Section */}
-            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
-              <div className="p-4 pb-2">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-3 h-3 rounded-full bg-zinc-500"></div>
-                  <span className="text-sm font-medium text-zinc-300">Original Photos</span>
+            <div className="p-4 pb-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-3 h-3 rounded-full bg-zinc-500"></div>
+                <span className="text-sm font-medium text-zinc-300">Original Photos</span>
+                {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
                   <span className="text-xs text-zinc-500">({viewingEditedPhotos.requestedPhotoUrls.length})</span>
-                </div>
+                ) : (
+                  <span className="text-xs text-zinc-500">(not available)</span>
+                )}
+              </div>
+              {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
+                <>
                 {viewingOriginalIndex !== null ? (
                   <div className="space-y-2">
                     <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border-2 border-zinc-600">
@@ -1394,8 +1399,13 @@ export default function Bookings() {
                     ))}
                   </div>
                 )}
-              </div>
-            )}
+                </>
+              ) : (
+                <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+                  <p className="text-xs text-zinc-500 text-center">Original photos were not saved for this older request</p>
+                </div>
+              )}
+            </div>
 
             {/* Divider */}
             {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
