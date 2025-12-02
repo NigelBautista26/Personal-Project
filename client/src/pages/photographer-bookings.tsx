@@ -1240,60 +1240,61 @@ export default function PhotographerBookings() {
         )}
       </div>
 
-      {/* Photo Viewer Dialog for Revision Requests */}
+      {/* Photo Viewer Dialog for Revision Requests - Mobile-friendly */}
       <Dialog open={enlargedPhotoIndex !== null} onOpenChange={(open) => {
         if (!open) {
           setEnlargedPhotoIndex(null);
           setEnlargedPhotos(null);
         }
       }}>
-        <DialogContent className="max-w-[95vw] max-h-[90vh] p-2 bg-black/95">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Photo Viewer</DialogTitle>
+        <DialogContent className="w-[88vw] max-w-sm rounded-2xl p-4 bg-background border-white/10">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              Photo {enlargedPhotoIndex !== null ? enlargedPhotoIndex + 1 : 1} of {enlargedPhotos?.length || 1}
+            </DialogTitle>
           </DialogHeader>
           {enlargedPhotos && enlargedPhotoIndex !== null && (
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative w-full flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-full aspect-square rounded-xl overflow-hidden bg-black/20">
                 <img 
                   src={enlargedPhotos[enlargedPhotoIndex]} 
                   alt={`Photo ${enlargedPhotoIndex + 1}`}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  className="w-full h-full object-contain"
                 />
               </div>
               
-              {/* Navigation */}
-              <div className="flex items-center gap-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEnlargedPhotoIndex(Math.max(0, enlargedPhotoIndex - 1))}
-                  disabled={enlargedPhotoIndex === 0}
-                  className="border-white/20"
-                >
-                  Previous
-                </Button>
-                <span className="text-white text-sm">
-                  {enlargedPhotoIndex + 1} / {enlargedPhotos.length}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setEnlargedPhotoIndex(Math.min(enlargedPhotos.length - 1, enlargedPhotoIndex + 1))}
-                  disabled={enlargedPhotoIndex === enlargedPhotos.length - 1}
-                  className="border-white/20"
-                >
-                  Next
-                </Button>
-              </div>
+              {/* Navigation buttons */}
+              {enlargedPhotos.length > 1 && (
+                <div className="flex items-center justify-between w-full gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEnlargedPhotoIndex(Math.max(0, enlargedPhotoIndex - 1))}
+                    disabled={enlargedPhotoIndex === 0}
+                    className="flex-1 border-white/20"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEnlargedPhotoIndex(Math.min(enlargedPhotos.length - 1, enlargedPhotoIndex + 1))}
+                    disabled={enlargedPhotoIndex === enlargedPhotos.length - 1}
+                    className="flex-1 border-white/20"
+                  >
+                    Next
+                  </Button>
+                </div>
+              )}
               
               {/* Thumbnail strip */}
               {enlargedPhotos.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
+                <div className="flex gap-2 overflow-x-auto pb-1 w-full justify-center">
                   {enlargedPhotos.map((url, idx) => (
                     <button
                       key={idx}
                       onClick={() => setEnlargedPhotoIndex(idx)}
-                      className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 transition-all ${
+                      className={`w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 transition-all ${
                         idx === enlargedPhotoIndex ? 'ring-2 ring-primary opacity-100' : 'opacity-50 hover:opacity-75'
                       }`}
                     >
