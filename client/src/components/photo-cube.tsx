@@ -41,7 +41,6 @@ import photo38 from "@assets/stock_images/traveler_at_maldives_128502f2.jpg";
 import photo39 from "@assets/stock_images/woman_tourist_barcel_d93c215c.jpg";
 import photo40 from "@assets/stock_images/couple_at_niagara_fa_1fb9f1e5.jpg";
 import photo41 from "@assets/stock_images/traveler_at_dubai_sk_f1037b31.jpg";
-import photo42 from "@assets/stock_images/tourist_at_rio_de_ja_1aa536f8.jpg";
 
 const photos = [
   photo1, photo2, photo3, photo4, photo5, photo6,
@@ -50,7 +49,7 @@ const photos = [
   photo19, photo20, photo21, photo22, photo23, photo24,
   photo25, photo26, photo27, photo28, photo29, photo30,
   photo31, photo32, photo33, photo34, photo35, photo36,
-  photo37, photo38, photo39, photo40, photo41, photo42
+  photo37, photo38, photo39, photo40, photo41
 ];
 
 const TOTAL_PHOTOS = photos.length;
