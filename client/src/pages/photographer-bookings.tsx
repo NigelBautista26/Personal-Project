@@ -62,6 +62,10 @@ export default function PhotographerBookings() {
   const [isUploadingEdited, setIsUploadingEdited] = useState(false);
   const editedFileInputRef = useRef<HTMLInputElement>(null);
   
+  // State for viewing enlarged photos in revision requests
+  const [enlargedPhotos, setEnlargedPhotos] = useState<string[] | null>(null);
+  const [enlargedPhotoIndex, setEnlargedPhotoIndex] = useState<number | null>(null);
+  
   // Collapsible section states - only truly completed items are collapsed
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completedSessions: true,
@@ -895,20 +899,34 @@ export default function PhotographerBookings() {
                     </div>
                   )}
                   
-                  {/* Previously Delivered Photos */}
+                  {/* Previously Delivered Photos - Click to enlarge */}
                   {request.editedPhotos && request.editedPhotos.length > 0 && (
                     <div>
-                      <p className="text-xs text-muted-foreground mb-2">Your previous delivery:</p>
+                      <p className="text-xs text-muted-foreground mb-2">Your previous delivery (tap to enlarge):</p>
                       <div className="flex gap-1 overflow-x-auto pb-2">
                         {request.editedPhotos.slice(0, 4).map((url, idx) => (
-                          <div key={idx} className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 opacity-60">
+                          <button
+                            key={idx}
+                            onClick={() => {
+                              setEnlargedPhotos(request.editedPhotos);
+                              setEnlargedPhotoIndex(idx);
+                            }}
+                            className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+                            data-testid={`revision-photo-${request.id}-${idx}`}
+                          >
                             <img src={url} alt={`Previous edit ${idx + 1}`} className="w-full h-full object-cover" />
-                          </div>
+                          </button>
                         ))}
                         {request.editedPhotos.length > 4 && (
-                          <div className="w-12 h-12 rounded-lg bg-black/40 flex items-center justify-center flex-shrink-0 opacity-60">
+                          <button
+                            onClick={() => {
+                              setEnlargedPhotos(request.editedPhotos);
+                              setEnlargedPhotoIndex(4);
+                            }}
+                            className="w-12 h-12 rounded-lg bg-black/40 flex items-center justify-center flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
+                          >
                             <span className="text-xs text-muted-foreground">+{request.editedPhotos.length - 4}</span>
-                          </div>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -1221,6 +1239,73 @@ export default function PhotographerBookings() {
           </section>
         )}
       </div>
+
+      {/* Photo Viewer Dialog for Revision Requests */}
+      <Dialog open={enlargedPhotoIndex !== null} onOpenChange={(open) => {
+        if (!open) {
+          setEnlargedPhotoIndex(null);
+          setEnlargedPhotos(null);
+        }
+      }}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] p-2 bg-black/95">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Photo Viewer</DialogTitle>
+          </DialogHeader>
+          {enlargedPhotos && enlargedPhotoIndex !== null && (
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative w-full flex items-center justify-center">
+                <img 
+                  src={enlargedPhotos[enlargedPhotoIndex]} 
+                  alt={`Photo ${enlargedPhotoIndex + 1}`}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                />
+              </div>
+              
+              {/* Navigation */}
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEnlargedPhotoIndex(Math.max(0, enlargedPhotoIndex - 1))}
+                  disabled={enlargedPhotoIndex === 0}
+                  className="border-white/20"
+                >
+                  Previous
+                </Button>
+                <span className="text-white text-sm">
+                  {enlargedPhotoIndex + 1} / {enlargedPhotos.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEnlargedPhotoIndex(Math.min(enlargedPhotos.length - 1, enlargedPhotoIndex + 1))}
+                  disabled={enlargedPhotoIndex === enlargedPhotos.length - 1}
+                  className="border-white/20"
+                >
+                  Next
+                </Button>
+              </div>
+              
+              {/* Thumbnail strip */}
+              {enlargedPhotos.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2 max-w-full">
+                  {enlargedPhotos.map((url, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setEnlargedPhotoIndex(idx)}
+                      className={`w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 transition-all ${
+                        idx === enlargedPhotoIndex ? 'ring-2 ring-primary opacity-100' : 'opacity-50 hover:opacity-75'
+                      }`}
+                    >
+                      <img src={url} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <BottomNav />
 
