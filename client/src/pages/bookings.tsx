@@ -1302,68 +1302,49 @@ export default function Bookings() {
           setEditedPhotoIndex(null);
         }
       }}>
-        <DialogContent className="max-h-[85vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
+        <DialogContent className="max-h-[90vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
           <DialogHeader className="sr-only">
             <DialogTitle>Edited Photos</DialogTitle>
           </DialogHeader>
           {/* Header */}
-          <div className="flex flex-col gap-3 p-4 pr-12 border-b border-violet-500/30 shrink-0">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <h2 className="text-white font-bold text-lg">Your Edited Photos</h2>
-                {viewingEditedPhotos?.status === 'delivered' && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
-                    Review Required
-                  </span>
-                )}
-                {viewingEditedPhotos?.status === 'completed' && (
-                  <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
-                    Approved
-                  </span>
-                )}
-              </div>
+          <div className="flex items-center justify-between p-4 pr-12 border-b border-violet-500/30 shrink-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-white font-bold text-lg">Compare Photos</h2>
+              {viewingEditedPhotos?.status === 'delivered' && (
+                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
+                  Review
+                </span>
+              )}
+              {viewingEditedPhotos?.status === 'completed' && (
+                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-medium">
+                  Approved
+                </span>
+              )}
             </div>
-            
-            {/* Tab Switcher */}
-            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
-              <div className="flex rounded-lg bg-zinc-800 p-1">
-                <button
-                  onClick={() => setShowCompareMode(false)}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                    !showCompareMode 
-                      ? 'bg-violet-600 text-white' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <Palette className="w-4 h-4" />
-                  Edited ({viewingEditedPhotos?.photos.length || 0})
-                </button>
-                <button
-                  onClick={() => setShowCompareMode(true)}
-                  className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                    showCompareMode 
-                      ? 'bg-zinc-600 text-white' 
-                      : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  <ImageIcon className="w-4 h-4" />
-                  Original ({viewingEditedPhotos?.requestedPhotoUrls?.length || 0})
-                </button>
-              </div>
-            )}
+            <Button
+              onClick={handleDownloadAllEdited}
+              size="sm"
+              className="bg-violet-600 hover:bg-violet-700"
+              data-testid="button-download-all-edited"
+            >
+              <Download className="w-4 h-4 mr-1" />
+              Download
+            </Button>
           </div>
 
-          {/* Photo Gallery - Shows either Edited or Original based on tab */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {showCompareMode && viewingEditedPhotos?.requestedPhotoUrls ? (
-              /* Original Photos View */
-              <>
+          {/* Stacked Comparison View - Originals on top, Edited on bottom */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Original Photos Section */}
+            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+              <div className="p-4 pb-2">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-full bg-zinc-500"></div>
+                  <span className="text-sm font-medium text-zinc-300">Original Photos</span>
+                  <span className="text-xs text-zinc-500">({viewingEditedPhotos.requestedPhotoUrls.length})</span>
+                </div>
                 {viewingOriginalIndex !== null ? (
-                  <div className="space-y-3">
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black border-2 border-zinc-600">
-                      <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-zinc-700 text-zinc-200 text-xs font-medium">
-                        Original
-                      </div>
+                  <div className="space-y-2">
+                    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border-2 border-zinc-600">
                       <img 
                         src={viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex]} 
                         alt={`Original ${viewingOriginalIndex + 1}`}
@@ -1373,40 +1354,35 @@ export default function Bookings() {
                         <>
                           <button
                             onClick={() => setViewingOriginalIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.requestedPhotoUrls!.length - 1)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
                           >
-                            <ChevronLeft className="w-6 h-6" />
+                            <ChevronLeft className="w-5 h-5" />
                           </button>
                           <button
                             onClick={() => setViewingOriginalIndex(prev => prev !== null && prev < viewingEditedPhotos.requestedPhotoUrls!.length - 1 ? prev + 1 : 0)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
                           >
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-5 h-5" />
                           </button>
                         </>
                       )}
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-300">{viewingOriginalIndex + 1} of {viewingEditedPhotos.requestedPhotoUrls.length}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-zinc-600 text-zinc-300"
+                      <button
                         onClick={() => setViewingOriginalIndex(null)}
+                        className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-xs text-white"
                       >
-                        View All
-                      </Button>
+                        View all
+                      </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="flex gap-2 overflow-x-auto pb-1">
                     {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
                       <div 
                         key={idx} 
-                        className="relative aspect-square rounded-xl overflow-hidden bg-black cursor-pointer border-2 border-zinc-700 hover:border-zinc-500 transition-colors"
+                        className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-black cursor-pointer border-2 border-zinc-600 hover:border-zinc-400 transition-colors"
                         onClick={() => setViewingOriginalIndex(idx)}
                       >
-                        <div className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-zinc-700 text-zinc-200 text-xs font-bold flex items-center justify-center">
+                        <div className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-zinc-600 text-zinc-200 text-xs font-bold flex items-center justify-center">
                           {idx + 1}
                         </div>
                         <img 
@@ -1418,89 +1394,81 @@ export default function Bookings() {
                     ))}
                   </div>
                 )}
-              </>
-            ) : (
-              /* Edited Photos View */
-              <>
-                {editedPhotoIndex !== null && viewingEditedPhotos ? (
-                  <div className="space-y-3">
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black border-2 border-violet-500">
-                      <div className="absolute top-2 left-2 z-10 px-2 py-1 rounded-full bg-violet-600 text-white text-xs font-medium">
-                        Edited
+              </div>
+            )}
+
+            {/* Divider */}
+            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+              <div className="flex items-center gap-3 px-4 py-1">
+                <div className="flex-1 h-px bg-zinc-700"></div>
+                <span className="text-xs text-zinc-500">vs</span>
+                <div className="flex-1 h-px bg-zinc-700"></div>
+              </div>
+            )}
+
+            {/* Edited Photos Section */}
+            <div className="p-4 pt-2">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-3 h-3 rounded-full bg-violet-500"></div>
+                <span className="text-sm font-medium text-violet-300">Edited Photos</span>
+                <span className="text-xs text-violet-500">({viewingEditedPhotos?.photos.length || 0})</span>
+              </div>
+              {editedPhotoIndex !== null && viewingEditedPhotos ? (
+                <div className="space-y-2">
+                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border-2 border-violet-500">
+                    <img
+                      src={viewingEditedPhotos.photos[editedPhotoIndex]}
+                      alt={`Edited photo ${editedPhotoIndex + 1}`}
+                      className="w-full h-full object-contain"
+                    />
+                    {viewingEditedPhotos.photos.length > 1 && (
+                      <>
+                        <button
+                          onClick={() => setEditedPhotoIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.photos.length - 1)}
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => setEditedPhotoIndex(prev => prev !== null && prev < viewingEditedPhotos.photos.length - 1 ? prev + 1 : 0)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => setEditedPhotoIndex(null)}
+                      className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-xs text-white"
+                    >
+                      View all
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {viewingEditedPhotos?.photos.map((photo, index) => (
+                    <div 
+                      key={index} 
+                      className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-black cursor-pointer border-2 border-violet-500/50 hover:border-violet-400 transition-colors"
+                      onClick={() => setEditedPhotoIndex(index)}
+                      data-testid={`edited-photo-thumb-${index}`}
+                    >
+                      <div className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
+                        {index + 1}
                       </div>
                       <img
-                        src={viewingEditedPhotos.photos[editedPhotoIndex]}
-                        alt={`Edited photo ${editedPhotoIndex + 1}`}
-                        className="w-full h-full object-contain"
+                        src={photo}
+                        alt={`Edited photo ${index + 1}`}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
                       />
-                      {viewingEditedPhotos.photos.length > 1 && (
-                        <>
-                          <button
-                            onClick={() => setEditedPhotoIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.photos.length - 1)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center"
-                          >
-                            <ChevronLeft className="w-6 h-6" />
-                          </button>
-                          <button
-                            onClick={() => setEditedPhotoIndex(prev => prev !== null && prev < viewingEditedPhotos.photos.length - 1 ? prev + 1 : 0)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/70 text-white flex items-center justify-center"
-                          >
-                            <ChevronRight className="w-6 h-6" />
-                          </button>
-                        </>
-                      )}
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-violet-300">{editedPhotoIndex + 1} of {viewingEditedPhotos.photos.length}</span>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-violet-500 text-violet-300"
-                        onClick={() => setEditedPhotoIndex(null)}
-                      >
-                        View All
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {viewingEditedPhotos?.photos.map((photo, index) => (
-                      <div 
-                        key={index} 
-                        className="relative aspect-square rounded-xl overflow-hidden bg-black cursor-pointer border-2 border-violet-500/50 hover:border-violet-400 transition-colors"
-                        onClick={() => setEditedPhotoIndex(index)}
-                        data-testid={`edited-photo-thumb-${index}`}
-                      >
-                        <div className="absolute top-2 left-2 z-10 w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
-                          {index + 1}
-                        </div>
-                        <img
-                          src={photo}
-                          alt={`Edited photo ${index + 1}`}
-                          loading="lazy"
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          
-          {/* Download Button */}
-          {!showCompareMode && (
-            <div className="p-4 pt-0">
-              <Button
-                onClick={handleDownloadAllEdited}
-                className="w-full bg-violet-600 hover:bg-violet-700"
-                data-testid="button-download-all-edited"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                Download All Edited Photos
-              </Button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* Approval Actions */}
           {viewingEditedPhotos?.status === 'delivered' && !showRevisionInput && (
