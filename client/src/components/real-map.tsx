@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle } from "react-leaflet";
 import L from "leaflet";
 import { Link } from "wouter";
@@ -259,6 +259,39 @@ function PhotoSpotMarker({ spot }: { spot: PhotoSpot }) {
   );
 }
 
+function getOffsetPhotographers(photographers: Photographer[]): (Photographer & { offsetLat: number; offsetLng: number })[] {
+  const coordMap = new Map<string, Photographer[]>();
+  
+  photographers.forEach(p => {
+    const key = `${p.latitude},${p.longitude}`;
+    if (!coordMap.has(key)) {
+      coordMap.set(key, []);
+    }
+    coordMap.get(key)!.push(p);
+  });
+  
+  const result: (Photographer & { offsetLat: number; offsetLng: number })[] = [];
+  
+  coordMap.forEach((group) => {
+    if (group.length === 1) {
+      result.push({ ...group[0], offsetLat: parseFloat(group[0].latitude), offsetLng: parseFloat(group[0].longitude) });
+    } else {
+      const baseLat = parseFloat(group[0].latitude);
+      const baseLng = parseFloat(group[0].longitude);
+      const offsetDistance = 0.003;
+      
+      group.forEach((p, index) => {
+        const angle = (2 * Math.PI * index) / group.length;
+        const offsetLat = baseLat + offsetDistance * Math.cos(angle);
+        const offsetLng = baseLng + offsetDistance * Math.sin(angle);
+        result.push({ ...p, offsetLat, offsetLng });
+      });
+    }
+  });
+  
+  return result;
+}
+
 export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMapProps) {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
@@ -266,6 +299,8 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
   const [shouldFollowUser, setShouldFollowUser] = useState(false);
   const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
   const [showStylePicker, setShowStylePicker] = useState(false);
+  
+  const offsetPhotographers = useMemo(() => getOffsetPhotographers(photographers), [photographers]);
 
   const handleLocateMe = useCallback(() => {
     if (!navigator.geolocation) {
@@ -379,13 +414,13 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
           <PhotoSpotMarker key={spot.id} spot={spot} />
         ))}
         
-        {photographers.map((p: Photographer) => (
+        {offsetPhotographers.map((p) => (
           <PhotographerMarker
             key={p.id}
             id={p.id}
             name={p.fullName || "Photographer"}
-            lat={parseFloat(p.latitude)}
-            lng={parseFloat(p.longitude)}
+            lat={p.offsetLat}
+            lng={p.offsetLng}
             price={`£${parseFloat(p.hourlyRate)}`}
             image={p.profileImageUrl || "https://via.placeholder.com/52?text=P"}
           />
