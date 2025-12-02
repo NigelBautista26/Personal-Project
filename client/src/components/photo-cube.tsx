@@ -26,14 +26,34 @@ import photo23 from "@assets/stock_images/travel_couple_advent_53423cf7.jpg";
 import photo24 from "@assets/stock_images/travel_couple_advent_cc19fcf2.jpg";
 import photo25 from "@assets/stock_images/travel_couple_advent_883c6da8.jpg";
 import photo26 from "@assets/stock_images/travel_couple_advent_60fdbf93.jpg";
+import photo27 from "@assets/stock_images/tourist_couple_posin_257e64ff.jpg";
+import photo28 from "@assets/stock_images/happy_traveler_woman_7a3c530d.jpg";
+import photo29 from "@assets/stock_images/couple_taking_photo__b70143ec.jpg";
+import photo30 from "@assets/stock_images/tourist_woman_at_mac_d7ad2bbc.jpg";
+import photo31 from "@assets/stock_images/couple_romantic_phot_0a7ea51e.jpg";
+import photo32 from "@assets/stock_images/traveler_at_taj_maha_b4dc6427.jpg";
+import photo33 from "@assets/stock_images/woman_tourist_tokyo__f3e944d2.jpg";
+import photo34 from "@assets/stock_images/couple_at_colosseum__ceb17ec7.jpg";
+import photo35 from "@assets/stock_images/traveler_at_great_wa_4d10a265.jpg";
+import photo36 from "@assets/stock_images/tourist_woman_sydney_5c4945aa.jpg";
+import photo37 from "@assets/stock_images/couple_at_bali_templ_0c5fd15f.jpg";
+import photo38 from "@assets/stock_images/traveler_at_maldives_128502f2.jpg";
+import photo39 from "@assets/stock_images/woman_tourist_barcel_d93c215c.jpg";
+import photo40 from "@assets/stock_images/couple_at_niagara_fa_1fb9f1e5.jpg";
+import photo41 from "@assets/stock_images/traveler_at_dubai_sk_f1037b31.jpg";
+import photo42 from "@assets/stock_images/tourist_at_rio_de_ja_1aa536f8.jpg";
 
 const photos = [
   photo1, photo2, photo3, photo4, photo5, photo6,
   photo7, photo8, photo9, photo10, photo11, photo12,
   photo13, photo14, photo15, photo16, photo17, photo18,
   photo19, photo20, photo21, photo22, photo23, photo24,
-  photo25, photo26
+  photo25, photo26, photo27, photo28, photo29, photo30,
+  photo31, photo32, photo33, photo34, photo35, photo36,
+  photo37, photo38, photo39, photo40, photo41, photo42
 ];
+
+const TOTAL_PHOTOS = photos.length;
 
 interface RowConfig {
   top: string;
@@ -61,12 +81,12 @@ const rowConfigs: RowConfig[] = [
 function SingleCube({ size, rotateDelay, photoIndex }: { size: number; rotateDelay: number; photoIndex: number }) {
   const halfSize = size / 2;
   const startPhotos = [
-    photoIndex % 26,
-    (photoIndex + 5) % 26,
-    (photoIndex + 10) % 26,
-    (photoIndex + 15) % 26,
-    (photoIndex + 20) % 26,
-    (photoIndex + 25) % 26,
+    photoIndex % TOTAL_PHOTOS,
+    (photoIndex + 7) % TOTAL_PHOTOS,
+    (photoIndex + 14) % TOTAL_PHOTOS,
+    (photoIndex + 21) % TOTAL_PHOTOS,
+    (photoIndex + 28) % TOTAL_PHOTOS,
+    (photoIndex + 35) % TOTAL_PHOTOS,
   ];
   
   return (
@@ -159,7 +179,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
             key={`a-${i}`} 
             size={config.cubeSize} 
             rotateDelay={-i * 4 - rowIndex * 3}
-            photoIndex={(i * 3 + rowIndex * 5) % 26}
+            photoIndex={(i * 3 + rowIndex * 7) % TOTAL_PHOTOS}
           />
         ))}
         {cubes.map((i) => (
@@ -167,7 +187,7 @@ function MarqueeRow({ config, rowIndex }: { config: RowConfig; rowIndex: number 
             key={`b-${i}`} 
             size={config.cubeSize} 
             rotateDelay={-i * 4 - rowIndex * 3}
-            photoIndex={(i * 3 + rowIndex * 5) % 26}
+            photoIndex={(i * 3 + rowIndex * 7) % TOTAL_PHOTOS}
           />
         ))}
       </div>
