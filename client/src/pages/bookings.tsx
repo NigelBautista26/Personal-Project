@@ -1291,7 +1291,7 @@ export default function Bookings() {
         </DialogContent>
       </Dialog>
 
-      {/* Edited Photos Gallery Dialog */}
+      {/* Edited Photos Gallery Dialog - Mobile-friendly */}
       <Dialog open={!!viewingEditedPhotos} onOpenChange={(open) => {
         if (!open) {
           setViewingEditedPhotos(null);
@@ -1302,14 +1302,10 @@ export default function Bookings() {
           setEditedPhotoIndex(null);
         }
       }}>
-        <DialogContent className="max-h-[90vh] p-0 bg-black/95 border-violet-500/30 overflow-hidden flex flex-col" aria-describedby={undefined}>
-          <DialogHeader className="sr-only">
-            <DialogTitle>Edited Photos</DialogTitle>
-          </DialogHeader>
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 pr-12 border-b border-violet-500/30 shrink-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-white font-bold text-lg">Compare Photos</h2>
+        <DialogContent className="w-[88vw] max-w-sm max-h-[85vh] p-0 rounded-2xl bg-background border-white/10 overflow-hidden flex flex-col" aria-describedby={undefined}>
+          <DialogHeader className="p-4 pb-3 border-b border-white/10 shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <span>Compare Photos</span>
               {viewingEditedPhotos?.status === 'delivered' && (
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
                   Review
@@ -1320,36 +1316,36 @@ export default function Bookings() {
                   Approved
                 </span>
               )}
-            </div>
+            </DialogTitle>
             <Button
               onClick={handleDownloadAllEdited}
               size="sm"
-              className="bg-violet-600 hover:bg-violet-700"
+              className="bg-violet-600 hover:bg-violet-700 w-full mt-2"
               data-testid="button-download-all-edited"
             >
-              <Download className="w-4 h-4 mr-1" />
-              Download
+              <Download className="w-4 h-4 mr-2" />
+              Download All Photos
             </Button>
-          </div>
+          </DialogHeader>
 
           {/* Stacked Comparison View - Originals on top, Edited on bottom */}
           <div className="flex-1 overflow-y-auto">
             {/* Original Photos Section */}
-            <div className="p-4 pb-2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-3 h-3 rounded-full bg-zinc-500"></div>
-                <span className="text-sm font-medium text-zinc-300">Original Photos</span>
+            <div className="p-3 pb-2">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-zinc-500"></div>
+                <span className="text-xs font-medium text-zinc-400">Original Photos</span>
                 {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
-                  <span className="text-xs text-zinc-500">({viewingEditedPhotos.requestedPhotoUrls.length})</span>
+                  <span className="text-xs text-zinc-600">({viewingEditedPhotos.requestedPhotoUrls.length})</span>
                 ) : (
-                  <span className="text-xs text-zinc-500">(not available)</span>
+                  <span className="text-xs text-zinc-600">(not available)</span>
                 )}
               </div>
               {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
                 <>
                 {viewingOriginalIndex !== null ? (
                   <div className="space-y-2">
-                    <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border-2 border-zinc-600">
+                    <div className="relative aspect-square rounded-xl overflow-hidden bg-black/50 border border-zinc-700">
                       <img 
                         src={viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex]} 
                         alt={`Original ${viewingOriginalIndex + 1}`}
@@ -1359,15 +1355,15 @@ export default function Bookings() {
                         <>
                           <button
                             onClick={() => setViewingOriginalIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.requestedPhotoUrls!.length - 1)}
-                            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center"
                           >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setViewingOriginalIndex(prev => prev !== null && prev < viewingEditedPhotos.requestedPhotoUrls!.length - 1 ? prev + 1 : 0)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center"
                           >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-4 h-4" />
                           </button>
                         </>
                       )}
@@ -1375,19 +1371,19 @@ export default function Bookings() {
                         onClick={() => setViewingOriginalIndex(null)}
                         className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-xs text-white"
                       >
-                        View all
+                        All
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
                     {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
                       <div 
                         key={idx} 
-                        className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-black cursor-pointer border-2 border-zinc-600 hover:border-zinc-400 transition-colors"
+                        className="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-black cursor-pointer border border-zinc-700 hover:border-zinc-500 transition-colors"
                         onClick={() => setViewingOriginalIndex(idx)}
                       >
-                        <div className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-zinc-600 text-zinc-200 text-xs font-bold flex items-center justify-center">
+                        <div className="absolute top-0.5 left-0.5 z-10 w-4 h-4 rounded-full bg-zinc-600 text-zinc-200 text-[10px] font-bold flex items-center justify-center">
                           {idx + 1}
                         </div>
                         <img 
@@ -1401,31 +1397,31 @@ export default function Bookings() {
                 )}
                 </>
               ) : (
-                <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
-                  <p className="text-xs text-zinc-500 text-center">Original photos were not saved for this older request</p>
+                <div className="p-2 rounded-lg bg-zinc-800/30 border border-zinc-800">
+                  <p className="text-xs text-zinc-600 text-center">Original photos not saved for older requests</p>
                 </div>
               )}
             </div>
 
             {/* Divider */}
             {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
-              <div className="flex items-center gap-3 px-4 py-1">
-                <div className="flex-1 h-px bg-zinc-700"></div>
-                <span className="text-xs text-zinc-500">vs</span>
-                <div className="flex-1 h-px bg-zinc-700"></div>
+              <div className="flex items-center gap-2 px-3 py-0.5">
+                <div className="flex-1 h-px bg-white/10"></div>
+                <span className="text-[10px] text-zinc-600">vs</span>
+                <div className="flex-1 h-px bg-white/10"></div>
               </div>
             )}
 
             {/* Edited Photos Section */}
-            <div className="p-4 pt-2">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-3 h-3 rounded-full bg-violet-500"></div>
-                <span className="text-sm font-medium text-violet-300">Edited Photos</span>
-                <span className="text-xs text-violet-500">({viewingEditedPhotos?.photos.length || 0})</span>
+            <div className="p-3 pt-2">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-violet-500"></div>
+                <span className="text-xs font-medium text-violet-400">Edited Photos</span>
+                <span className="text-xs text-violet-600">({viewingEditedPhotos?.photos.length || 0})</span>
               </div>
               {editedPhotoIndex !== null && viewingEditedPhotos ? (
                 <div className="space-y-2">
-                  <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-black border-2 border-violet-500">
+                  <div className="relative aspect-square rounded-xl overflow-hidden bg-black/50 border border-violet-500">
                     <img
                       src={viewingEditedPhotos.photos[editedPhotoIndex]}
                       alt={`Edited photo ${editedPhotoIndex + 1}`}
@@ -1435,15 +1431,15 @@ export default function Bookings() {
                       <>
                         <button
                           onClick={() => setEditedPhotoIndex(prev => prev !== null && prev > 0 ? prev - 1 : viewingEditedPhotos.photos.length - 1)}
-                          className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center"
                         >
-                          <ChevronLeft className="w-5 h-5" />
+                          <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setEditedPhotoIndex(prev => prev !== null && prev < viewingEditedPhotos.photos.length - 1 ? prev + 1 : 0)}
-                          className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/70 text-white flex items-center justify-center"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/70 text-white flex items-center justify-center"
                         >
-                          <ChevronRight className="w-5 h-5" />
+                          <ChevronRight className="w-4 h-4" />
                         </button>
                       </>
                     )}
@@ -1451,20 +1447,20 @@ export default function Bookings() {
                       onClick={() => setEditedPhotoIndex(null)}
                       className="absolute top-2 right-2 px-2 py-1 rounded bg-black/70 text-xs text-white"
                     >
-                      View all
+                      All
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-2 overflow-x-auto pb-1">
+                <div className="flex gap-1.5 overflow-x-auto pb-1">
                   {viewingEditedPhotos?.photos.map((photo, index) => (
                     <div 
                       key={index} 
-                      className="relative shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-black cursor-pointer border-2 border-violet-500/50 hover:border-violet-400 transition-colors"
+                      className="relative shrink-0 w-14 h-14 rounded-lg overflow-hidden bg-black cursor-pointer border border-violet-500/50 hover:border-violet-400 transition-colors"
                       onClick={() => setEditedPhotoIndex(index)}
                       data-testid={`edited-photo-thumb-${index}`}
                     >
-                      <div className="absolute top-1 left-1 z-10 w-5 h-5 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">
+                      <div className="absolute top-0.5 left-0.5 z-10 w-4 h-4 rounded-full bg-violet-600 text-white text-[10px] font-bold flex items-center justify-center">
                         {index + 1}
                       </div>
                       <img
@@ -1482,20 +1478,22 @@ export default function Bookings() {
 
           {/* Approval Actions */}
           {viewingEditedPhotos?.status === 'delivered' && !showRevisionInput && (
-            <div className="p-4 border-t border-violet-500/30 bg-zinc-900/50">
-              <p className="text-center text-sm text-muted-foreground mb-3">Are you happy with these edits?</p>
-              <div className="flex gap-3">
+            <div className="p-3 border-t border-white/10 bg-black/20 shrink-0">
+              <p className="text-center text-xs text-muted-foreground mb-2">Happy with these edits?</p>
+              <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1 border-orange-500/50 text-orange-400 hover:bg-orange-500/10"
+                  size="sm"
+                  className="flex-1 border-orange-500/50 text-orange-400 hover:bg-orange-500/10 text-xs"
                   onClick={() => setShowRevisionInput(true)}
                   data-testid="button-request-revision"
                 >
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Request Changes
+                  <MessageSquare className="w-3 h-3 mr-1" />
+                  Changes
                 </Button>
                 <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  size="sm"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-xs"
                   onClick={() => {
                     if (viewingEditedPhotos?.requestId) {
                       completeEditingMutation.mutate(viewingEditedPhotos.requestId);
@@ -1505,9 +1503,9 @@ export default function Bookings() {
                   data-testid="button-approve-edits"
                 >
                   {completeEditingMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
                   ) : (
-                    <Check className="w-4 h-4 mr-2" />
+                    <Check className="w-3 h-3 mr-1" />
                   )}
                   Approve
                 </Button>
@@ -1517,20 +1515,20 @@ export default function Bookings() {
           
           {/* Revision Input */}
           {showRevisionInput && viewingEditedPhotos?.requestId && (
-            <div className="p-4 border-t border-violet-500/30 bg-orange-500/5">
-              <p className="text-sm font-medium text-white mb-2">What changes would you like?</p>
+            <div className="p-3 border-t border-white/10 bg-orange-500/5 shrink-0">
+              <p className="text-xs font-medium text-white mb-2">What changes would you like?</p>
               <Textarea
                 value={revisionNotes}
                 onChange={(e) => setRevisionNotes(e.target.value)}
-                placeholder="Describe the changes you'd like the photographer to make..."
-                className="bg-black/40 border-orange-500/30 text-white placeholder:text-muted-foreground"
-                rows={3}
+                placeholder="Describe the changes..."
+                className="bg-black/40 border-orange-500/30 text-white placeholder:text-muted-foreground text-sm"
+                rows={2}
                 data-testid="input-revision-notes"
               />
               {!revisionNotes.trim() && (
-                <p className="text-xs text-orange-400/70 mt-1 mb-2">Please describe the changes you need</p>
+                <p className="text-[10px] text-orange-400/70 mt-1 mb-2">Please describe the changes you need</p>
               )}
-              <div className="flex gap-2 mt-3">
+              <div className="flex gap-2 mt-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -1538,7 +1536,7 @@ export default function Bookings() {
                     setShowRevisionInput(false);
                     setRevisionNotes("");
                   }}
-                  className="flex-1 border-zinc-700"
+                  className="flex-1 border-zinc-700 text-xs"
                 >
                   Cancel
                 </Button>
@@ -1553,13 +1551,13 @@ export default function Bookings() {
                     }
                   }}
                   disabled={!revisionNotes.trim() || requestRevisionMutation.isPending}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-xs"
                   data-testid="button-submit-revision"
                 >
                   {requestRevisionMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3 h-3 animate-spin" />
                   ) : (
-                    'Send Revision Request'
+                    'Send'
                   )}
                 </Button>
               </div>
