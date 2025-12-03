@@ -32,6 +32,7 @@ import PhotographerOnboarding from "@/pages/photographer-onboarding";
 import PhotographerPending from "@/pages/photographer-pending";
 import AdminDashboard from "@/pages/admin";
 import InvestorPitch from "@/pages/investor-pitch";
+import InvestorProjections from "@/pages/investor-projections";
 
 function Router() {
   return (
@@ -64,6 +65,7 @@ function Router() {
       <Route path="/photographer/booking/:id" component={PhotographerBookingDetail} />
       <Route path="/booking/:id" component={CustomerBookingDetail} />
       <Route path="/investor-pitch" component={InvestorPitch} />
+      <Route path="/investor-projections" component={InvestorProjections} />
       <Route component={NotFound} />
     </Switch>
   );
