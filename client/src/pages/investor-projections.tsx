@@ -28,7 +28,7 @@ export default function InvestorProjections() {
         @media print {
           @page { 
             size: A4; 
-            margin: 0.4in; 
+            margin: 0; 
           }
           
           * {
@@ -43,7 +43,7 @@ export default function InvestorProjections() {
             width: auto !important;
             border: none !important;
             box-shadow: none !important;
-            background: white !important;
+            background: #111827 !important;
           }
           
           .investor-projections-page {
@@ -52,17 +52,20 @@ export default function InvestorProjections() {
             height: auto !important;
             width: auto !important;
             padding: 0 !important;
-            background: white !important;
+            background: #111827 !important;
           }
           
           .print-wrapper {
             max-width: none !important;
+            background: #111827 !important;
           }
           
           .print-content {
             box-shadow: none !important;
             border-radius: 0 !important;
-            padding: 0.5in !important;
+            padding: 0.4in !important;
+            background: #111827 !important;
+            min-height: 100vh !important;
           }
           
           .no-print {
