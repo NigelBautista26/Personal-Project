@@ -182,7 +182,7 @@ export default function Booking() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
-  const [paymentMethod, setPaymentMethod] = useState<'demo' | 'stripe'>('demo');
+  const [paymentMethod, setPaymentMethod] = useState<'stripe'>('stripe');
   const [stripeConfig, setStripeConfig] = useState<{ configured: boolean; publishableKey?: string } | null>(null);
   const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
   
@@ -611,76 +611,10 @@ export default function Booking() {
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-primary" />
-                <h3 className="font-semibold text-white">Payment Method</h3>
+                <h3 className="font-semibold text-white">Payment</h3>
               </div>
               
-              <div className="space-y-3">
-                <button
-                  onClick={() => setPaymentMethod('demo')}
-                  className={cn(
-                    "w-full flex items-center justify-between p-4 rounded-xl bg-card border transition-colors",
-                    paymentMethod === 'demo' ? "border-primary/50 bg-primary/5" : "border-white/10 hover:border-white/20"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      paymentMethod === 'demo' ? "bg-primary/20" : "bg-white/10"
-                    )}>
-                      <CreditCard className={cn("w-5 h-5", paymentMethod === 'demo' ? "text-primary" : "text-muted-foreground")} />
-                    </div>
-                    <div className="text-left">
-                      <span className="text-white font-medium block">Demo Payment</span>
-                      <span className="text-xs text-muted-foreground">Quick demo - no real payment</span>
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                    paymentMethod === 'demo' ? "border-primary bg-primary" : "border-white/30"
-                  )}>
-                    {paymentMethod === 'demo' && <Check className="w-3 h-3 text-white" />}
-                  </div>
-                </button>
-
-                {stripeConfig?.configured && (
-                  <button
-                    onClick={() => setPaymentMethod('stripe')}
-                    className={cn(
-                      "w-full flex items-center justify-between p-4 rounded-xl bg-card border transition-colors",
-                      paymentMethod === 'stripe' ? "border-violet-500/50 bg-violet-500/5" : "border-white/10 hover:border-white/20"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center",
-                        paymentMethod === 'stripe' ? "bg-violet-500/20" : "bg-white/10"
-                      )}>
-                        <svg className={cn("w-5 h-5", paymentMethod === 'stripe' ? "text-violet-400" : "text-muted-foreground")} viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.992 3.757 7.218c0 4.039 2.467 5.76 6.476 7.219 2.585.92 3.445 1.574 3.445 2.583 0 .98-.84 1.545-2.354 1.545-1.875 0-4.965-.921-6.99-2.109l-.9 5.555C5.175 22.99 8.385 24 11.714 24c2.641 0 4.843-.624 6.328-1.813 1.664-1.305 2.525-3.236 2.525-5.732 0-4.128-2.524-5.851-6.591-7.305z"/>
-                        </svg>
-                      </div>
-                      <div className="text-left">
-                        <span className="text-white font-medium block">Stripe Payment</span>
-                        <span className="text-xs text-muted-foreground">Secure card payment (Sandbox)</span>
-                      </div>
-                    </div>
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center",
-                      paymentMethod === 'stripe' ? "border-violet-500 bg-violet-500" : "border-white/30"
-                    )}>
-                      {paymentMethod === 'stripe' && <Check className="w-3 h-3 text-white" />}
-                    </div>
-                  </button>
-                )}
-              </div>
-
-              {paymentMethod === 'demo' && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Demo mode - booking will be created instantly without payment processing
-                </p>
-              )}
-              
-              {paymentMethod === 'stripe' && stripePromise && (
+              {stripePromise ? (
                 <div className="space-y-4">
                   <div className="bg-violet-500/10 p-3 rounded-lg border border-violet-500/20">
                     <p className="text-xs text-violet-300 text-center">
@@ -705,27 +639,25 @@ export default function Booking() {
                     />
                   </Elements>
                 </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Loading payment...</p>
+                </div>
               )}
             </div>
           </div>
         )}
       </div>
 
-      {(step === 1 || (step === 2 && paymentMethod === 'demo')) && (
+      {step === 1 && (
         <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
           <Button 
-            onClick={() => step === 1 ? setStep(2) : handleConfirmBooking()}
-            disabled={bookingMutation.isPending}
+            onClick={() => setStep(2)}
             className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-            data-testid={step === 1 ? "button-continue" : "button-confirm"}
+            data-testid="button-continue"
           >
-            {bookingMutation.isPending ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : step === 1 ? (
-              "Continue to Payment"
-            ) : (
-              `Confirm Booking - £${grandTotal.toFixed(2)}`
-            )}
+            Continue to Payment
           </Button>
         </div>
       )}
