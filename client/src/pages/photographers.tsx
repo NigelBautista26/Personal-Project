@@ -83,8 +83,8 @@ export default function Photographers() {
   }));
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12 space-y-4">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 bg-background border-b border-white/5 p-6 pt-12 space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -120,7 +120,7 @@ export default function Photographers() {
         </motion.div>
       </div>
 
-      <div className="p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto pb-24 p-6 space-y-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

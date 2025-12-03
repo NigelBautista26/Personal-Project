@@ -55,8 +55,8 @@ export default function PhotoSpots() {
   const categories = Array.from(new Set(spots.map(s => s.category)));
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12 space-y-4">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 bg-background border-b border-white/5 p-6 pt-12 space-y-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/home")} 
@@ -85,7 +85,7 @@ export default function PhotoSpots() {
         </button>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="flex-1 overflow-y-auto pb-24 p-6 space-y-6">
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             Loading photo spots...

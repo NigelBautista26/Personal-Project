@@ -550,13 +550,13 @@ export default function Bookings() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <div className="flex-shrink-0 bg-background border-b border-white/5 p-6 pt-12">
         <h1 className="text-2xl font-bold text-white mb-2">My Bookings</h1>
         <p className="text-muted-foreground">View and manage your photo sessions</p>
       </div>
 
-      <div className="px-6 pt-6 space-y-8">
+      <div className="flex-1 overflow-y-auto pb-24 px-6 pt-6 space-y-8">
         <section>
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
