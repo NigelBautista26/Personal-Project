@@ -68,7 +68,7 @@ export interface IStorage {
   getBookingsByPhotographerWithCustomer(photographerId: string): Promise<BookingWithCustomer[]>;
   createBooking(booking: InsertBooking): Promise<Booking>;
   updateBookingStatus(id: string, status: string): Promise<Booking | undefined>;
-  expireOldPendingBookings(photographerId?: string): Promise<number>;
+  expireOldPendingBookings(photographerId?: string): Promise<Booking[]>;
   
   // Earnings methods
   getEarningsByPhotographer(photographerId: string): Promise<Earning[]>;
@@ -406,7 +406,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
-  async expireOldPendingBookings(photographerId?: string): Promise<number> {
+  async expireOldPendingBookings(photographerId?: string): Promise<Booking[]> {
     const now = new Date();
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     
@@ -428,7 +428,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(...conditions))
       .returning();
     
-    return result.length;
+    return result; // Return expired bookings so we can cancel their payment intents
   }
 
   // Earnings methods

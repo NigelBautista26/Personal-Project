@@ -8,6 +8,32 @@ import { z } from "zod";
 import { broadcastToBooking, broadcastToUser, broadcastToPhotographer, broadcastToCustomer } from "./realtime";
 import { getUncachableStripeClient, getStripePublishableKey, isStripeConfigured } from "./stripeClient";
 
+// Helper function to expire bookings and cancel their Stripe payment intents
+async function expireBookingsAndCancelPayments(photographerId?: string): Promise<void> {
+  const expiredBookings = await storage.expireOldPendingBookings(photographerId);
+  
+  // Cancel payment intents for expired bookings
+  if (expiredBookings.length > 0) {
+    try {
+      const stripe = await getUncachableStripeClient();
+      for (const booking of expiredBookings) {
+        if (booking.stripePaymentId) {
+          try {
+            await stripe.paymentIntents.cancel(booking.stripePaymentId);
+            console.log(`Payment authorization cancelled for expired booking ${booking.id}`);
+          } catch (stripeError: any) {
+            // Payment may already be cancelled - log but don't fail
+            console.log(`Note: Could not cancel payment for booking ${booking.id}:`, stripeError.message);
+          }
+        }
+      }
+    } catch (error) {
+      // Stripe not configured - skip payment cancellation
+      console.log("Stripe not configured, skipping payment cancellation for expired bookings");
+    }
+  }
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -712,7 +738,7 @@ export async function registerRoutes(
       }
       
       // Expire any old pending bookings for this customer before fetching
-      await storage.expireOldPendingBookings();
+      await expireBookingsAndCancelPayments();
       
       const bookings = await storage.getBookingsByCustomerWithPhotographer(req.params.customerId);
       res.json(bookings);
@@ -727,7 +753,7 @@ export async function registerRoutes(
         return res.status(401).json({ error: "Not authenticated" });
       }
       
-      await storage.expireOldPendingBookings();
+      await expireBookingsAndCancelPayments();
       const bookings = await storage.getBookingsByCustomerWithPhotographer(req.session.userId);
       res.json(bookings);
     } catch (error) {
@@ -746,7 +772,7 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Photographer profile not found" });
       }
       
-      await storage.expireOldPendingBookings(photographer.id);
+      await expireBookingsAndCancelPayments(photographer.id);
       const bookings = await storage.getBookingsByPhotographerWithCustomer(photographer.id);
       res.json(bookings);
     } catch (error) {
@@ -767,7 +793,7 @@ export async function registerRoutes(
       }
       
       // Expire any old pending bookings for this photographer before fetching
-      await storage.expireOldPendingBookings(req.params.photographerId);
+      await expireBookingsAndCancelPayments(req.params.photographerId);
       
       // Return bookings with customer info for photographer view
       const bookings = await storage.getBookingsByPhotographerWithCustomer(req.params.photographerId);
