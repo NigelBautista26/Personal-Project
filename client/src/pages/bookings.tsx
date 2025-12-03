@@ -448,8 +448,10 @@ export default function Bookings() {
   });
 
   // Time-dependent filters - not memoized to ensure they update
+  // Pending bookings always show (regardless of time since they haven't been accepted yet)
+  // Confirmed bookings only show if session hasn't ended
   const upcomingBookings = bookings.filter((b: any) => 
-    (b.status === 'pending' || b.status === 'confirmed') && !hasSessionEnded(b)
+    b.status === 'pending' || (b.status === 'confirmed' && !hasSessionEnded(b))
   );
   const awaitingPhotosBookings = bookings.filter((b: any) => 
     b.status === 'confirmed' && hasSessionEnded(b)
