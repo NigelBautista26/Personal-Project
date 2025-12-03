@@ -639,9 +639,10 @@ export async function registerRoutes(
         location: z.string().min(1),
         scheduledDate: z.string().datetime().or(z.string().regex(/^\d{4}-\d{2}-\d{2}T/)),
         scheduledTime: z.string(),
+        stripePaymentIntentId: z.string().optional(),
       });
       
-      const { photographerId, duration, location, scheduledDate, scheduledTime } = bookingInputSchema.parse(req.body);
+      const { photographerId, duration, location, scheduledDate, scheduledTime, stripePaymentIntentId } = bookingInputSchema.parse(req.body);
       
       // Verify photographer exists and is available
       const photographer = await storage.getPhotographer(photographerId);
@@ -677,6 +678,7 @@ export async function registerRoutes(
         totalAmount: totalAmount.toFixed(2),
         platformFee: platformFee.toFixed(2),
         photographerEarnings: photographerEarnings.toFixed(2),
+        stripePaymentId: stripePaymentIntentId, // Store payment intent ID for later capture/cancel
       });
       
       // Create earnings record
@@ -796,6 +798,31 @@ export async function registerRoutes(
       const photographer = await storage.getPhotographer(booking.photographerId);
       if (!photographer || photographer.userId !== req.session.userId) {
         return res.status(403).json({ error: "Not authorized to update this booking" });
+      }
+      
+      // Handle Stripe payment based on status change
+      if (booking.stripePaymentId) {
+        const stripe = await getUncachableStripeClient();
+        
+        if (status === 'confirmed') {
+          // Capture the payment when photographer accepts
+          try {
+            await stripe.paymentIntents.capture(booking.stripePaymentId);
+            console.log(`Payment captured for booking ${booking.id}`);
+          } catch (stripeError: any) {
+            console.error("Failed to capture payment:", stripeError);
+            return res.status(500).json({ error: "Failed to capture payment. The authorization may have expired." });
+          }
+        } else if (status === 'cancelled') {
+          // Cancel the payment authorization when photographer declines
+          try {
+            await stripe.paymentIntents.cancel(booking.stripePaymentId);
+            console.log(`Payment authorization cancelled for booking ${booking.id}`);
+          } catch (stripeError: any) {
+            // Payment may already be cancelled or captured - log but don't fail
+            console.log("Payment cancellation note:", stripeError.message);
+          }
+        }
       }
       
       const updatedBooking = await storage.updateBookingStatus(req.params.bookingId, status);
