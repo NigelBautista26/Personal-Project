@@ -84,7 +84,7 @@ export default function Photographers() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-6 pt-12 space-y-4">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12 space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -118,7 +118,9 @@ export default function Photographers() {
             />
           </div>
         </motion.div>
+      </div>
 
+      <div className="p-6 space-y-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

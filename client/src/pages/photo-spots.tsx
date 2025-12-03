@@ -56,7 +56,7 @@ export default function PhotoSpots() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-6 pt-12 space-y-6">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12 space-y-4">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate("/home")} 
@@ -83,7 +83,9 @@ export default function PhotoSpots() {
           </div>
           <span className="text-primary text-sm">Change</span>
         </button>
+      </div>
 
+      <div className="p-6 space-y-6">
         {isLoading ? (
           <div className="text-center py-12 text-muted-foreground">
             Loading photo spots...

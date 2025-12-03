@@ -551,12 +551,12 @@ export default function Bookings() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="p-6 pt-12">
+      <div className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-white/5 p-6 pt-12">
         <h1 className="text-2xl font-bold text-white mb-2">My Bookings</h1>
         <p className="text-muted-foreground">View and manage your photo sessions</p>
       </div>
 
-      <div className="px-6 space-y-8">
+      <div className="px-6 pt-6 space-y-8">
         <section>
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
