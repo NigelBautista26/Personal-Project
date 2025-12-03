@@ -395,15 +395,26 @@ export default function Bookings() {
   // Helper to check if a session has ended (date + time + duration)
   const hasSessionEnded = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
-    const timeMatch = booking.scheduledTime?.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-    if (timeMatch) {
-      let hours = parseInt(timeMatch[1]);
-      const minutes = parseInt(timeMatch[2]);
-      const isPM = timeMatch[3].toUpperCase() === 'PM';
+    const scheduledTime = booking.scheduledTime;
+    
+    // Try 12-hour format first (e.g., "2:00 PM")
+    const timeMatch12 = scheduledTime?.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    // Try 24-hour format (e.g., "14:00")
+    const timeMatch24 = scheduledTime?.match(/^(\d{1,2}):(\d{2})$/);
+    
+    if (timeMatch12) {
+      let hours = parseInt(timeMatch12[1]);
+      const minutes = parseInt(timeMatch12[2]);
+      const isPM = timeMatch12[3].toUpperCase() === 'PM';
       if (isPM && hours !== 12) hours += 12;
       if (!isPM && hours === 12) hours = 0;
       sessionDate.setHours(hours, minutes, 0, 0);
+    } else if (timeMatch24) {
+      const hours = parseInt(timeMatch24[1]);
+      const minutes = parseInt(timeMatch24[2]);
+      sessionDate.setHours(hours, minutes, 0, 0);
     }
+    
     const sessionEndTime = new Date(sessionDate.getTime() + (booking.duration || 1) * 60 * 60 * 1000);
     return new Date() > sessionEndTime;
   };
