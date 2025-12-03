@@ -1,5 +1,5 @@
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X, Map, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X, Map, ChevronLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useMemo } from "react";
@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 const customIcon = L.divIcon({
   className: 'custom-marker',
@@ -45,6 +47,123 @@ function MapCenterUpdater({ center }: { center: [number, number] }) {
   return null;
 }
 
+const cardElementOptions = {
+  style: {
+    base: {
+      color: '#ffffff',
+      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#6b7280',
+      },
+      iconColor: '#8b5cf6',
+    },
+    invalid: {
+      color: '#ef4444',
+      iconColor: '#ef4444',
+    },
+  },
+};
+
+function StripePaymentForm({ 
+  amount, 
+  photographerName,
+  onSuccess, 
+  onError 
+}: { 
+  amount: number;
+  photographerName: string;
+  onSuccess: () => void;
+  onError: (error: string) => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [cardComplete, setCardComplete] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!stripe || !elements) {
+      onError("Stripe hasn't loaded yet. Please try again.");
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      onError("Card element not found");
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      const response = await fetch('/api/stripe/create-payment-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ 
+          amount, 
+          photographerName,
+        }),
+      });
+
+      const { clientSecret, error: serverError } = await response.json();
+      
+      if (serverError) {
+        throw new Error(serverError);
+      }
+
+      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement,
+        },
+      });
+
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+      if (paymentIntent?.status === 'succeeded') {
+        onSuccess();
+      } else {
+        throw new Error('Payment was not successful');
+      }
+    } catch (error: any) {
+      onError(error.message || 'Payment failed');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-card/80 p-4 rounded-xl border border-white/10">
+        <CardElement 
+          options={cardElementOptions}
+          onChange={(e) => setCardComplete(e.complete)}
+        />
+      </div>
+      
+      <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground">
+        <Lock className="w-3 h-3" />
+        <span>Secured by Stripe</span>
+      </div>
+
+      <Button
+        onClick={handleSubmit}
+        disabled={!stripe || isProcessing || !cardComplete}
+        className="w-full h-14 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold text-lg shadow-lg shadow-violet-500/25"
+      >
+        {isProcessing ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          `Pay £${amount.toFixed(2)}`
+        )}
+      </Button>
+    </div>
+  );
+}
+
 export default function Booking() {
   const [match, params] = useRoute("/book/:id");
   const [, setLocation] = useLocation();
@@ -65,14 +184,19 @@ export default function Booking() {
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [paymentMethod, setPaymentMethod] = useState<'demo' | 'stripe'>('demo');
   const [stripeConfig, setStripeConfig] = useState<{ configured: boolean; publishableKey?: string } | null>(null);
-  const [isProcessingStripe, setIsProcessingStripe] = useState(false);
+  const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
   
   const id = params?.id;
 
   useEffect(() => {
     fetch('/api/stripe/config')
       .then(res => res.json())
-      .then(data => setStripeConfig(data))
+      .then(data => {
+        setStripeConfig(data);
+        if (data.configured && data.publishableKey) {
+          setStripePromise(loadStripe(data.publishableKey));
+        }
+      })
       .catch(() => setStripeConfig({ configured: false }));
   }, []);
 
@@ -556,11 +680,30 @@ export default function Booking() {
                 </p>
               )}
               
-              {paymentMethod === 'stripe' && (
-                <div className="bg-violet-500/10 p-3 rounded-lg border border-violet-500/20">
-                  <p className="text-xs text-violet-300 text-center">
-                    Stripe Sandbox Mode - Use test card: 4242 4242 4242 4242, any future date, any CVC
-                  </p>
+              {paymentMethod === 'stripe' && stripePromise && (
+                <div className="space-y-4">
+                  <div className="bg-violet-500/10 p-3 rounded-lg border border-violet-500/20">
+                    <p className="text-xs text-violet-300 text-center">
+                      Sandbox Mode - Use test card: 4242 4242 4242 4242, any future date, any CVC
+                    </p>
+                  </div>
+                  
+                  <Elements stripe={stripePromise}>
+                    <StripePaymentForm
+                      amount={grandTotal}
+                      photographerName={photographer?.fullName || 'Photographer'}
+                      onSuccess={() => {
+                        handleConfirmBooking();
+                      }}
+                      onError={(error) => {
+                        toast({
+                          title: "Payment Failed",
+                          description: error,
+                          variant: "destructive",
+                        });
+                      }}
+                    />
+                  </Elements>
                 </div>
               )}
             </div>
@@ -568,22 +711,24 @@ export default function Booking() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
-        <Button 
-          onClick={() => step === 1 ? setStep(2) : handleConfirmBooking()}
-          disabled={bookingMutation.isPending}
-          className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
-          data-testid={step === 1 ? "button-continue" : "button-confirm"}
-        >
-          {bookingMutation.isPending ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : step === 1 ? (
-            "Continue to Payment"
-          ) : (
-            `Confirm Booking - £${grandTotal.toFixed(2)}`
-          )}
-        </Button>
-      </div>
+      {(step === 1 || (step === 2 && paymentMethod === 'demo')) && (
+        <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
+          <Button 
+            onClick={() => step === 1 ? setStep(2) : handleConfirmBooking()}
+            disabled={bookingMutation.isPending}
+            className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
+            data-testid={step === 1 ? "button-continue" : "button-confirm"}
+          >
+            {bookingMutation.isPending ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : step === 1 ? (
+              "Continue to Payment"
+            ) : (
+              `Confirm Booking - £${grandTotal.toFixed(2)}`
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Location Picker Dialog */}
       <Dialog open={showLocationPicker} onOpenChange={setShowLocationPicker}>
