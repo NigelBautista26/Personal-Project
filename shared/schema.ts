@@ -55,6 +55,7 @@ export const bookings = pgTable("bookings", {
   meetingLatitude: decimal("meeting_latitude", { precision: 10, scale: 7 }),
   meetingLongitude: decimal("meeting_longitude", { precision: 10, scale: 7 }),
   meetingNotes: text("meeting_notes"),
+  dismissedAt: timestamp("dismissed_at"), // when customer dismisses expired booking from their view
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
