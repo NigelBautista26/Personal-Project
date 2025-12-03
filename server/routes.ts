@@ -903,6 +903,38 @@ export async function registerRoutes(
     }
   });
 
+  // Dismiss expired booking (customer only)
+  app.post("/api/bookings/:bookingId/dismiss", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Only the customer who created the booking can dismiss it
+      if (booking.customerId !== req.session.userId) {
+        return res.status(403).json({ error: "Not authorized to dismiss this booking" });
+      }
+
+      // Only expired or cancelled bookings can be dismissed
+      if (booking.status !== "expired" && booking.status !== "cancelled") {
+        return res.status(400).json({ error: "Only expired or cancelled bookings can be dismissed" });
+      }
+
+      // Update the booking with dismissedAt timestamp
+      await storage.dismissBooking(req.params.bookingId);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error dismissing booking:", error);
+      res.status(500).json({ error: "Failed to dismiss booking" });
+    }
+  });
+
   // Photo Spots Routes
   app.get("/api/photo-spots", async (req, res) => {
     try {
