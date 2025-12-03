@@ -266,7 +266,7 @@ export default function Booking() {
         </div>
         <h2 className="text-2xl font-bold mb-2" data-testid="text-booking-success">Booking Requested!</h2>
         <p className="text-muted-foreground text-center mb-8">
-          {photographer.name} will review your request and respond shortly.
+          {photographer.fullName} will review your request and respond shortly.
         </p>
         <Button 
           onClick={() => setLocation("/bookings")} 
@@ -310,15 +310,15 @@ export default function Booking() {
 
       <div className="p-4 space-y-6">
         <div className="flex items-center gap-4 p-4 bg-card/50 rounded-2xl border border-white/5">
-          <div className="w-16 h-16 rounded-xl overflow-hidden">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-white/10">
             <img 
-              src={photographer.profilePicture || "/placeholder-avatar.jpg"} 
-              alt={photographer.name}
+              src={photographer.profileImageUrl || "/placeholder-avatar.jpg"} 
+              alt={photographer.fullName}
               className="w-full h-full object-cover"
             />
           </div>
           <div>
-            <h3 className="font-bold text-white" data-testid="text-photographer-name">{photographer.name}</h3>
+            <h3 className="font-bold text-white" data-testid="text-photographer-name">{photographer.fullName}</h3>
             <p className="text-sm text-muted-foreground">{photographer.location}</p>
             <p className="text-primary font-medium">£{hourlyRate}/hour</p>
           </div>
