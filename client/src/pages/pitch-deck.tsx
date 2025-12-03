@@ -341,6 +341,11 @@ export default function PitchDeck() {
                   <p className="text-gray-300">Photographer Commission</p>
                   <p className="text-sm text-gray-500">Deducted from photographer earnings</p>
                 </div>
+                <div className="bg-amber-900/50 rounded-lg p-4">
+                  <p className="text-4xl font-bold text-amber-400 mb-1">20%</p>
+                  <p className="text-gray-300">Editing Add-on Commission</p>
+                  <p className="text-sm text-gray-500">Applied to photo editing services</p>
+                </div>
               </div>
             </div>
 
