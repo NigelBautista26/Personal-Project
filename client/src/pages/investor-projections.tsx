@@ -11,7 +11,10 @@ export default function InvestorProjections() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 print:bg-white print:text-black">
+    <div 
+      className="fixed inset-0 z-[9999] bg-zinc-950 text-white p-4 overflow-y-auto print:bg-white print:text-black"
+      style={{ width: '100vw', height: '100vh', maxWidth: 'none' }}
+    >
       <style>{`
         @media print {
           @page { size: A4; margin: 0.4in; }
@@ -42,7 +45,7 @@ export default function InvestorProjections() {
           }
         }
       `}</style>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6 print:hidden">
           <Link href="/">
             <Button variant="ghost" className="text-muted-foreground">
