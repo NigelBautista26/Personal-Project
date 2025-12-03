@@ -1,13 +1,23 @@
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X, Map } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPhotographer, getCurrentUser } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+const customIcon = L.divIcon({
+  className: 'custom-marker',
+  html: `<div style="width: 32px; height: 32px; background: #8b5cf6; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 32],
+});
 
 interface PhotoSpot {
   id: string;
@@ -16,6 +26,23 @@ interface PhotoSpot {
   description: string;
   category: string;
   imageUrl: string;
+}
+
+function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      onLocationSelect(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
+function MapCenterUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, 13);
+  }, [center, map]);
+  return null;
 }
 
 export default function Booking() {
@@ -28,7 +55,11 @@ export default function Booking() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState("14:00");
   const [showLocationPicker, setShowLocationPicker] = useState(false);
-  const [locationMode, setLocationMode] = useState<'spot' | 'current' | 'manual'>('manual');
+  const [locationMode, setLocationMode] = useState<'spot' | 'current' | 'manual' | 'map'>('manual');
+  const [showMapPicker, setShowMapPicker] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([51.5074, -0.1278]); // Default to London
+  const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   
   const id = params?.id;
 
@@ -54,6 +85,20 @@ export default function Booking() {
   };
   const photographerCity = getPhotographerCity();
 
+  // Set map center based on photographer's city
+  useEffect(() => {
+    const cityCoords: Record<string, [number, number]> = {
+      'London': [51.5074, -0.1278],
+      'Paris': [48.8566, 2.3522],
+      'New York': [40.7128, -74.0060],
+      'Tokyo': [35.6762, 139.6503],
+      'Rome': [41.9028, 12.4964],
+    };
+    if (photographerCity && cityCoords[photographerCity]) {
+      setMapCenter(cityCoords[photographerCity]);
+    }
+  }, [photographerCity]);
+
   const { data: photoSpots = [] } = useQuery<PhotoSpot[]>({
     queryKey: ["photo-spots", photographerCity],
     queryFn: async () => {
@@ -76,6 +121,75 @@ export default function Booking() {
   const baseAmount = hourlyRate * selectedDuration;
   const customerServiceFee = Math.round(baseAmount * 0.10 * 100) / 100;
   const grandTotal = Math.round((baseAmount + customerServiceFee) * 100) / 100;
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Location not available", description: "Your browser doesn't support geolocation", variant: "destructive" });
+      return;
+    }
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setMeetingLocation(`My Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        setLocationMode('current');
+        setShowLocationPicker(false);
+        setIsGettingLocation(false);
+        toast({ title: "Location set", description: "Using your current GPS location" });
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let message = "Could not get your location";
+        if (error.code === 1) {
+          message = "Location access denied. Please allow location access in your browser settings.";
+        } else if (error.code === 2) {
+          message = "Location unavailable. Please try again.";
+        } else if (error.code === 3) {
+          message = "Location request timed out. Please try again.";
+        }
+        toast({ title: "Location error", description: message, variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
+  const handleMapLocationSelect = (lat: number, lng: number) => {
+    setSelectedCoords({ lat, lng });
+  };
+
+  const confirmMapLocation = () => {
+    if (selectedCoords) {
+      setMeetingLocation(`Custom Location (${selectedCoords.lat.toFixed(4)}, ${selectedCoords.lng.toFixed(4)})`);
+      setLocationMode('map');
+      setShowMapPicker(false);
+      setShowLocationPicker(false);
+      setSelectedCoords(null);
+      toast({ title: "Location set", description: "Custom map location selected" });
+    }
+  };
+
+  const centerOnMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Location not available", variant: "destructive" });
+      return;
+    }
+    setIsGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        setMapCenter([lat, lng]);
+        setSelectedCoords({ lat, lng });
+        setIsGettingLocation(false);
+      },
+      () => {
+        setIsGettingLocation(false);
+        toast({ title: "Could not get location", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const bookingMutation = useMutation({
     mutationFn: async () => {
@@ -123,6 +237,8 @@ export default function Booking() {
     bookingMutation.mutate();
   };
 
+  if (!match) return null;
+
   if (photographerLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -131,187 +247,240 @@ export default function Booking() {
     );
   }
 
-  if (!user) {
+  if (!photographer) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-        <h1 className="text-xl font-bold text-white mb-4">Please log in to book</h1>
-        <Button onClick={() => setLocation("/login")}>Log In</Button>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-white">
+        <p className="text-lg">Photographer not found</p>
+        <Button onClick={() => setLocation("/home")} className="mt-4">
+          Go Back
+        </Button>
       </div>
     );
   }
 
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mb-8 animate-in zoom-in duration-300">
-          <Check className="w-10 h-10 text-white" strokeWidth={3} />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-white px-6">
+        <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mb-6">
+          <Check className="w-10 h-10 text-primary" />
         </div>
-        <h1 className="text-3xl font-bold text-white mb-2">Booking Confirmed!</h1>
-        <p className="text-muted-foreground mb-8">
-          Your session with {photographer?.fullName} has been confirmed for {selectedDate} at {selectedTime}.
+        <h2 className="text-2xl font-bold mb-2" data-testid="text-booking-success">Booking Requested!</h2>
+        <p className="text-muted-foreground text-center mb-8">
+          {photographer.name} will review your request and respond shortly.
         </p>
-        <Button onClick={() => setLocation("/bookings")} className="w-full h-14 rounded-xl bg-white text-black hover:bg-white/90 font-bold" data-testid="button-view-bookings">
+        <Button 
+          onClick={() => setLocation("/bookings")} 
+          className="w-full max-w-xs h-12 rounded-xl"
+          data-testid="button-view-bookings"
+        >
           View My Bookings
         </Button>
       </div>
     );
   }
 
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let hour = 6; hour <= 20; hour++) {
+      const time = `${hour.toString().padStart(2, '0')}:00`;
+      const label = hour < 12 ? `${hour}:00 AM` : hour === 12 ? `12:00 PM` : `${hour - 12}:00 PM`;
+      slots.push({ value: time, label });
+    }
+    return slots;
+  };
+
   return (
     <div className="min-h-screen bg-background pb-32">
-      <div className="p-6 pt-12 flex items-center gap-4">
-        <button 
-          onClick={() => step === 1 ? window.history.back() : setStep(step - 1)} 
-          className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <h1 className="text-xl font-bold text-white">
-          {step === 1 ? "Book Session" : "Confirm Booking"}
-        </h1>
-      </div>
-
-      <div className="px-6">
-        <div className="glass-panel rounded-2xl p-4 mb-6 flex items-center gap-4">
-          <img 
-            src={photographer?.profileImageUrl || "https://via.placeholder.com/60"} 
-            alt={photographer?.fullName} 
-            className="w-14 h-14 rounded-full object-cover"
-          />
-          <div>
-            <h2 className="text-white font-bold">{photographer?.fullName}</h2>
-            <p className="text-sm text-muted-foreground">{photographer?.location}</p>
-            <p className="text-sm text-primary font-medium">£{hourlyRate}/hour</p>
+      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5">
+        <div className="px-4 py-4 flex items-center gap-4">
+          <button 
+            onClick={() => step === 1 ? setLocation(`/photographer/${id}`) : setStep(step - 1)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+            data-testid="button-back"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </button>
+          <h1 className="text-xl font-bold text-white">Book Session</h1>
+        </div>
+        
+        <div className="px-4 pb-4">
+          <div className="flex gap-2">
+            {[1, 2].map((s) => (
+              <div 
+                key={s}
+                className={cn(
+                  "h-1 flex-1 rounded-full transition-all",
+                  step >= s ? "bg-primary" : "bg-white/10"
+                )}
+              />
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="px-6 space-y-8">
+      <div className="p-4 space-y-6">
+        <div className="flex items-center gap-4 p-4 bg-card/50 rounded-2xl border border-white/5">
+          <div className="w-16 h-16 rounded-xl overflow-hidden">
+            <img 
+              src={photographer.profilePicture || "/placeholder-avatar.jpg"} 
+              alt={photographer.name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <h3 className="font-bold text-white" data-testid="text-photographer-name">{photographer.name}</h3>
+            <p className="text-sm text-muted-foreground">{photographer.location}</p>
+            <p className="text-primary font-medium">£{hourlyRate}/hour</p>
+          </div>
+        </div>
+
         {step === 1 && (
-          <>
-            <section>
-              <h3 className="text-white font-bold mb-4">Duration</h3>
-              <div className="flex gap-3">
+          <div className="space-y-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-white">Session Duration</h3>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
                 {durations.map((d) => (
                   <button
                     key={d.hours}
                     onClick={() => setSelectedDuration(d.hours)}
                     className={cn(
-                      "flex-1 py-3 px-4 rounded-xl border text-center transition-all",
+                      "p-4 rounded-xl border text-center transition-all",
                       selectedDuration === d.hours 
-                        ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
-                        : "bg-card border-white/10 text-muted-foreground hover:bg-white/5"
+                        ? "border-primary bg-primary/10 text-white" 
+                        : "border-white/10 text-muted-foreground hover:border-white/20"
                     )}
                     data-testid={`button-duration-${d.hours}`}
                   >
-                    <span className="block font-bold text-sm">{d.label}</span>
-                    <span className="text-xs opacity-80">£{hourlyRate * d.hours}</span>
+                    <p className="font-bold text-lg">{d.label}</p>
+                    <p className="text-xs mt-1">£{(hourlyRate * d.hours).toFixed(0)}</p>
                   </button>
                 ))}
-              </div>
-            </section>
-
-            <section>
-              <h3 className="text-white font-bold mb-4">Where should we meet?</h3>
-              
-              <button
-                onClick={() => setShowLocationPicker(true)}
-                className="w-full bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3 hover:bg-white/5 transition-colors text-left"
-                data-testid="button-select-location"
-              >
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center",
-                  meetingLocation ? "bg-primary/20" : "bg-white/10"
-                )}>
-                  {locationMode === 'spot' ? (
-                    <Camera className="w-5 h-5 text-primary" />
-                  ) : locationMode === 'current' ? (
-                    <Navigation className="w-5 h-5 text-primary" />
-                  ) : (
-                    <MapPin className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  {meetingLocation ? (
-                    <>
-                      <p className="text-white font-medium">{meetingLocation}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {locationMode === 'spot' ? 'Photo Spot' : locationMode === 'current' ? 'Current Location' : 'Custom Location'}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground">Select a location</p>
-                      <p className="text-xs text-muted-foreground">Choose a photo spot or enter manually</p>
-                    </>
-                  )}
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </section>
-
-            <section>
-              <h3 className="text-white font-bold mb-4">When?</h3>
-              <div className="flex gap-3">
-                <div className="flex-1 bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-primary" />
-                  <Input 
-                    type="date" 
-                    value={selectedDate}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="bg-transparent border-none text-white focus-visible:ring-0 p-0"
-                    data-testid="input-date"
-                  />
-                </div>
-                <div className="flex-1 bg-card border border-white/10 rounded-xl p-4 flex items-center gap-3">
-                  <Clock className="w-5 h-5 text-primary" />
-                  <Input 
-                    type="time" 
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                    className="bg-transparent border-none text-white focus-visible:ring-0 p-0"
-                    data-testid="input-time"
-                  />
-                </div>
-              </div>
-            </section>
-          </>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="bg-card border border-white/10 rounded-2xl p-6 space-y-4">
-              <h3 className="text-white font-bold mb-2">Booking Summary</h3>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Photography Session ({selectedDuration} hour{selectedDuration > 1 ? 's' : ''})</span>
-                <span className="text-white font-medium">£{baseAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Location</span>
-                <span className="text-white font-medium">{meetingLocation}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Date & Time</span>
-                <span className="text-white font-medium">{selectedDate} at {selectedTime}</span>
-              </div>
-              <div className="h-px bg-white/10 my-2" />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Service Fee (10%)</span>
-                <span>£{customerServiceFee.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold">
-                <span className="text-white">Total</span>
-                <span className="text-primary">£{grandTotal.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-white font-bold">Payment Method</h3>
-              <div className="flex items-center justify-between p-4 rounded-xl border border-primary bg-primary/10">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-white">Date & Time</h3>
+              </div>
+              <div className="space-y-3">
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="h-12 bg-card border-white/10 text-white rounded-xl"
+                  data-testid="input-date"
+                />
+                <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                  {getTimeSlots().map((slot) => (
+                    <button
+                      key={slot.value}
+                      onClick={() => setSelectedTime(slot.value)}
+                      className={cn(
+                        "p-2 rounded-lg text-xs font-medium transition-all",
+                        selectedTime === slot.value
+                          ? "bg-primary text-white"
+                          : "bg-white/5 text-muted-foreground hover:bg-white/10"
+                      )}
+                      data-testid={`button-time-${slot.value}`}
+                    >
+                      {slot.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-white">Meeting Location</h3>
+              </div>
+              <button
+                onClick={() => setShowLocationPicker(true)}
+                className="w-full p-4 rounded-xl bg-card border border-white/10 flex items-center justify-between hover:bg-white/5 transition-colors"
+                data-testid="button-select-location"
+              >
+                <span className={cn(
+                  "text-sm",
+                  meetingLocation ? "text-white" : "text-muted-foreground"
+                )}>
+                  {meetingLocation || "Select a location"}
+                </span>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            <div className="bg-card/50 rounded-2xl p-4 border border-white/5">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-muted-foreground">Session ({selectedDuration}h)</span>
+                <span className="text-white">£{baseAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-muted-foreground">Service fee (10%)</span>
+                <span className="text-white">£{customerServiceFee.toFixed(2)}</span>
+              </div>
+              <div className="h-px bg-white/10 my-3" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-white">Total</span>
+                <span className="font-bold text-xl text-primary" data-testid="text-total">£{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-6">
+            <div className="bg-card/50 rounded-2xl p-4 border border-white/5 space-y-3">
+              <h3 className="font-semibold text-white">Booking Summary</h3>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Duration</span>
+                  <span className="text-white">{selectedDuration} hour{selectedDuration > 1 ? 's' : ''}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Date</span>
+                  <span className="text-white">{new Date(selectedDate).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Time</span>
+                  <span className="text-white">{selectedTime}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Location</span>
+                  <span className="text-white text-right max-w-[200px] truncate">{meetingLocation}</span>
+                </div>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Session ({selectedDuration}h)</span>
+                <span className="text-white">£{baseAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground">Service fee (10%)</span>
+                <span className="text-white">£{customerServiceFee.toFixed(2)}</span>
+              </div>
+              <div className="h-px bg-white/10" />
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-white">Total</span>
+                <span className="font-bold text-xl text-primary">£{grandTotal.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                <h3 className="font-semibold text-white">Payment Method</h3>
+              </div>
+              <div className="flex items-center justify-between p-4 rounded-xl bg-card border border-primary/30">
                 <div className="flex items-center gap-3">
-                  <CreditCard className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                  </div>
                   <span className="text-white font-medium">Demo Payment</span>
                 </div>
                 <div className="w-4 h-4 rounded-full bg-primary border-2 border-primary" />
@@ -341,35 +510,27 @@ export default function Booking() {
         </Button>
       </div>
 
+      {/* Location Picker Dialog */}
       <Dialog open={showLocationPicker} onOpenChange={setShowLocationPicker}>
-        <DialogContent className="bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="bg-background border-white/10 max-h-[85vh] overflow-hidden flex flex-col w-[88vw] max-w-sm rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-white">Choose Location</DialogTitle>
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+            {/* Use Current Location */}
             <button
-              onClick={() => {
-                if (!navigator.geolocation) {
-                  toast({ title: "Location not available", description: "Your browser doesn't support geolocation", variant: "destructive" });
-                  return;
-                }
-                navigator.geolocation.getCurrentPosition(
-                  (position) => {
-                    setMeetingLocation(`My Current Location (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
-                    setLocationMode('current');
-                    setShowLocationPicker(false);
-                  },
-                  () => {
-                    toast({ title: "Location error", description: "Could not get your location", variant: "destructive" });
-                  }
-                );
-              }}
-              className="w-full flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20"
+              onClick={handleUseCurrentLocation}
+              disabled={isGettingLocation}
+              className="w-full flex items-center gap-3 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors border border-primary/20 disabled:opacity-50"
               data-testid="button-use-current-location"
             >
               <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
-                <Navigation className="w-5 h-5 text-primary" />
+                {isGettingLocation ? (
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                ) : (
+                  <Navigation className="w-5 h-5 text-primary" />
+                )}
               </div>
               <div className="text-left">
                 <p className="font-medium text-white">Use Current Location</p>
@@ -377,6 +538,22 @@ export default function Booking() {
               </div>
             </button>
 
+            {/* Pick on Map */}
+            <button
+              onClick={() => setShowMapPicker(true)}
+              className="w-full flex items-center gap-3 p-4 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 transition-colors border border-violet-500/20"
+              data-testid="button-pick-on-map"
+            >
+              <div className="w-10 h-10 bg-violet-500/20 rounded-full flex items-center justify-center">
+                <Map className="w-5 h-5 text-violet-400" />
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-white">Pick on Map</p>
+                <p className="text-xs text-muted-foreground">Tap anywhere to set location</p>
+              </div>
+            </button>
+
+            {/* Enter Manually */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -412,6 +589,7 @@ export default function Booking() {
               </div>
             </div>
 
+            {/* Popular Photo Spots */}
             {photoSpots.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -448,6 +626,93 @@ export default function Booking() {
                 </div>
               </div>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Map Picker Dialog */}
+      <Dialog open={showMapPicker} onOpenChange={(open) => {
+        setShowMapPicker(open);
+        if (!open) setSelectedCoords(null);
+      }}>
+        <DialogContent className="bg-background border-white/10 p-0 overflow-hidden w-[92vw] max-w-md h-[80vh] rounded-2xl">
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-white">Pick Location</h3>
+                <p className="text-xs text-muted-foreground">Tap on the map to set meeting point</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowMapPicker(false);
+                  setSelectedCoords(null);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+            
+            <div className="flex-1 relative">
+              <MapContainer
+                center={mapCenter}
+                zoom={13}
+                className="h-full w-full"
+                style={{ background: '#1a1a2e' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+                <MapClickHandler onLocationSelect={handleMapLocationSelect} />
+                <MapCenterUpdater center={mapCenter} />
+                {selectedCoords && (
+                  <Marker 
+                    position={[selectedCoords.lat, selectedCoords.lng]}
+                    icon={customIcon}
+                  />
+                )}
+              </MapContainer>
+              
+              {/* Center on my location button */}
+              <button
+                onClick={centerOnMyLocation}
+                disabled={isGettingLocation}
+                className="absolute bottom-4 right-4 z-[1000] w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-100 transition-colors disabled:opacity-50"
+                data-testid="button-center-my-location"
+              >
+                {isGettingLocation ? (
+                  <Loader2 className="w-5 h-5 text-gray-700 animate-spin" />
+                ) : (
+                  <Navigation className="w-5 h-5 text-gray-700" />
+                )}
+              </button>
+            </div>
+            
+            <div className="p-4 border-t border-white/10 space-y-3">
+              {selectedCoords ? (
+                <>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    <span className="text-white">
+                      {selectedCoords.lat.toFixed(4)}, {selectedCoords.lng.toFixed(4)}
+                    </span>
+                  </div>
+                  <Button
+                    onClick={confirmMapLocation}
+                    className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90"
+                    data-testid="button-confirm-map-location"
+                  >
+                    <Check className="w-4 h-4 mr-2" />
+                    Confirm This Location
+                  </Button>
+                </>
+              ) : (
+                <p className="text-center text-muted-foreground text-sm py-2">
+                  Tap anywhere on the map to select a location
+                </p>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
