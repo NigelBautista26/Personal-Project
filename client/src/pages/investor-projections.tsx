@@ -207,6 +207,10 @@ export default function InvestorProjections() {
                     <span>Photographer Commission:</span>
                     <span className="text-green-400 font-bold">20%</span>
                   </li>
+                  <li className="flex justify-between">
+                    <span>Editing Add-on Commission:</span>
+                    <span className="text-green-400 font-bold">20%</span>
+                  </li>
                   <li className="flex justify-between border-t border-gray-600 pt-2 mt-1">
                     <span className="text-violet-300">Total Platform Take:</span>
                     <span className="text-violet-400 font-bold">30%</span>
