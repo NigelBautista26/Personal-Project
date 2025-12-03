@@ -12,40 +12,74 @@ export default function InvestorProjections() {
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-zinc-950 text-white p-4 overflow-y-auto print:bg-white print:text-black"
+      className="fixed inset-0 z-[9999] bg-zinc-950 text-white p-4 overflow-y-auto"
       style={{ width: '100vw', height: '100vh', maxWidth: 'none' }}
     >
       <style>{`
         @media print {
-          @page { size: A4; margin: 0.4in; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { 
+            size: A4; 
+            margin: 0.5in; 
+          }
+          
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          #root {
+            height: auto !important;
+            overflow: visible !important;
+            max-width: none !important;
+            border: none !important;
+          }
+          
+          .print-container {
+            position: static !important;
+            overflow: visible !important;
+            height: auto !important;
+            width: 100% !important;
+            max-width: none !important;
+          }
+          
+          .print-content {
+            background: #111827 !important;
+            color: white !important;
+          }
+          
           section { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           table { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           .grid { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           h2 { 
             page-break-after: avoid !important;
             break-after: avoid !important;
           }
-          .no-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
+          
           .page-break {
             page-break-before: always !important;
             break-before: page !important;
           }
+          
+          .print\\:hidden {
+            display: none !important;
+          }
         }
       `}</style>
-      <div className="max-w-5xl mx-auto">
+      <div className="print-container max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-6 print:hidden">
           <Link href="/">
             <Button variant="ghost" className="text-muted-foreground">
@@ -64,7 +98,7 @@ export default function InvestorProjections() {
 
         <div 
           ref={contentRef} 
-          className="bg-gray-900 text-white p-8 rounded-lg shadow-xl print:bg-gray-900"
+          className="print-content bg-gray-900 text-white p-8 rounded-lg shadow-xl"
           style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
         >
           {/* Header */}
