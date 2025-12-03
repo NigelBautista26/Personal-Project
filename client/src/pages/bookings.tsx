@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, XCircle, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -420,9 +420,8 @@ export default function Bookings() {
   };
 
   // Memoized status-based booking lists (don't depend on time)
-  const { completedBookings, cancelledBookings, expiredBookings } = useMemo(() => ({
+  const { completedBookings, expiredBookings } = useMemo(() => ({
     completedBookings: bookings.filter((b: any) => b.status === 'completed'),
-    cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled'),
     expiredBookings: bookings.filter((b: any) => b.status === 'expired' && !b.dismissedAt),
   }), [bookings]);
 
@@ -942,46 +941,6 @@ export default function Bookings() {
                   </div>
                 );
               })}
-            </div>
-          </section>
-        )}
-
-        {cancelledBookings.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-              <XCircle className="w-5 h-5 text-red-400" />
-              Cancelled
-            </h2>
-            <div className="space-y-4">
-              {cancelledBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 opacity-60" data-testid={`cancelled-booking-${booking.id}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center overflow-hidden">
-                        {booking.photographer?.profileImageUrl ? (
-                          <img 
-                            src={booking.photographer.profileImageUrl} 
-                            alt={booking.photographer.fullName} 
-                            loading="lazy"
-                            className="w-full h-full object-cover opacity-50"
-                          />
-                        ) : (
-                          <User className="w-5 h-5 text-red-400" />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {format(new Date(booking.scheduledDate), 'MMM d, yyyy')} - {booking.location}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">cancelled</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
         )}
