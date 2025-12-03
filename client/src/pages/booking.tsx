@@ -80,6 +80,7 @@ function StripePaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentSucceeded, setPaymentSucceeded] = useState(false);
   const [cardComplete, setCardComplete] = useState(false);
 
   const handleSubmit = async () => {
@@ -124,16 +125,31 @@ function StripePaymentForm({
       }
 
       if (paymentIntent?.status === 'succeeded') {
+        setPaymentSucceeded(true);
         onSuccess();
       } else {
         throw new Error('Payment was not successful');
       }
     } catch (error: any) {
       onError(error.message || 'Payment failed');
-    } finally {
       setIsProcessing(false);
     }
   };
+
+  if (paymentSucceeded) {
+    return (
+      <div className="text-center py-8 space-y-4">
+        <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
+          <Check className="w-8 h-8 text-green-400" />
+        </div>
+        <div>
+          <p className="text-white font-semibold">Payment Successful!</p>
+          <p className="text-sm text-muted-foreground">Creating your booking...</p>
+        </div>
+        <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
