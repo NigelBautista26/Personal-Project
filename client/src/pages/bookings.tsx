@@ -423,8 +423,30 @@ export default function Bookings() {
   const { completedBookings, cancelledBookings, expiredBookings } = useMemo(() => ({
     completedBookings: bookings.filter((b: any) => b.status === 'completed'),
     cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled'),
-    expiredBookings: bookings.filter((b: any) => b.status === 'expired'),
+    expiredBookings: bookings.filter((b: any) => b.status === 'expired' && !b.dismissedAt),
   }), [bookings]);
+
+  // Dismiss expired booking mutation
+  const dismissBookingMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      const res = await fetch(`/api/bookings/${bookingId}/dismiss`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to dismiss booking");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Booking dismissed");
+      queryClient.invalidateQueries({ queryKey: ["customerBookings"] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
 
   // Time-dependent filters - not memoized to ensure they update
   const pendingRequests = bookings.filter((b: any) => b.status === 'pending');
@@ -975,7 +997,7 @@ export default function Bookings() {
             </p>
             <div className="space-y-4">
               {expiredBookings.map((booking: any) => (
-                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3 opacity-60" data-testid={`expired-booking-${booking.id}`}>
+                <div key={booking.id} className="glass-panel rounded-2xl p-4 space-y-3" data-testid={`expired-booking-${booking.id}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center overflow-hidden">
@@ -984,7 +1006,7 @@ export default function Bookings() {
                             src={booking.photographer.profileImageUrl} 
                             alt={booking.photographer.fullName} 
                             loading="lazy"
-                            className="w-full h-full object-cover opacity-50"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <User className="w-5 h-5 text-orange-400" />
@@ -1000,6 +1022,29 @@ export default function Bookings() {
                     <div className="text-right">
                       <span className="text-xs px-2 py-1 rounded-full bg-orange-500/20 text-orange-400">expired</span>
                     </div>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <Link href={`/photographers/${booking.photographerId}`} className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full border-white/10 hover:bg-white/5"
+                        data-testid={`button-rebook-${booking.id}`}
+                      >
+                        <Camera className="w-4 h-4 mr-2" />
+                        Book Again
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => dismissBookingMutation.mutate(booking.id)}
+                      disabled={dismissBookingMutation.isPending}
+                      className="text-muted-foreground hover:text-white hover:bg-white/5"
+                      data-testid={`button-dismiss-${booking.id}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
                 </div>
               ))}
