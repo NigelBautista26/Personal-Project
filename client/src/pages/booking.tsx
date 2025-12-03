@@ -279,16 +279,6 @@ export default function Booking() {
     );
   }
 
-  const getTimeSlots = () => {
-    const slots = [];
-    for (let hour = 6; hour <= 20; hour++) {
-      const time = `${hour.toString().padStart(2, '0')}:00`;
-      const label = hour < 12 ? `${hour}:00 AM` : hour === 12 ? `12:00 PM` : `${hour - 12}:00 PM`;
-      slots.push({ value: time, label });
-    }
-    return slots;
-  };
-
   return (
     <div className="min-h-screen bg-background pb-32">
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-white/5">
@@ -366,31 +356,27 @@ export default function Booking() {
                 <Calendar className="w-5 h-5 text-primary" />
                 <h3 className="font-semibold text-white">Date & Time</h3>
               </div>
-              <div className="space-y-3">
-                <Input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className="h-12 bg-card border-white/10 text-white rounded-xl"
-                  data-testid="input-date"
-                />
-                <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
-                  {getTimeSlots().map((slot) => (
-                    <button
-                      key={slot.value}
-                      onClick={() => setSelectedTime(slot.value)}
-                      className={cn(
-                        "p-2 rounded-lg text-xs font-medium transition-all",
-                        selectedTime === slot.value
-                          ? "bg-primary text-white"
-                          : "bg-white/5 text-muted-foreground hover:bg-white/10"
-                      )}
-                      data-testid={`button-time-${slot.value}`}
-                    >
-                      {slot.label}
-                    </button>
-                  ))}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Date</label>
+                  <Input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="h-12 bg-card border-white/10 text-white rounded-xl"
+                    data-testid="input-date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Time</label>
+                  <Input
+                    type="time"
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="h-12 bg-card border-white/10 text-white rounded-xl"
+                    data-testid="input-time"
+                  />
                 </div>
               </div>
             </div>
