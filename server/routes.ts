@@ -2166,6 +2166,7 @@ export async function registerRoutes(
       const paymentIntent = await stripe.paymentIntents.create({
         amount: Math.round(amount * 100),
         currency: 'gbp',
+        capture_method: 'manual', // Authorization hold - don't charge until photographer accepts
         metadata: {
           bookingId: bookingId || 'demo',
           userId: req.session.userId,
