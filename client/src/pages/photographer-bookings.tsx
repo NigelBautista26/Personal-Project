@@ -309,6 +309,31 @@ export default function PhotographerBookings() {
     },
   });
 
+  const dismissBookingMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      const res = await fetch(`/api/bookings/${bookingId}/dismiss`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to dismiss booking");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["photographerBookings"] });
+      toast({
+        title: "Booking Dismissed",
+        description: "The declined booking has been removed from your list.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Dismiss Failed",
+        description: "Could not dismiss booking. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const fetchExistingDelivery = async (bookingId: string): Promise<PhotoDelivery | null> => {
     const res = await fetch(`/api/bookings/${bookingId}/photos`, { credentials: "include" });
     if (!res.ok) return null;
@@ -441,7 +466,7 @@ export default function PhotographerBookings() {
   const { pendingBookings, completedBookings, cancelledBookings } = useMemo(() => ({
     pendingBookings: bookings.filter((b: any) => b.status === 'pending'),
     completedBookings: bookings.filter((b: any) => b.status === 'completed'),
-    cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled'),
+    cancelledBookings: bookings.filter((b: any) => b.status === 'cancelled' && !b.dismissedAt),
   }), [bookings]);
 
   // Time-dependent filters - not memoized to ensure they update
@@ -1231,7 +1256,20 @@ export default function PhotographerBookings() {
                         </p>
                       </div>
                     </div>
-                    <span className="text-xs px-2 py-1 rounded-full bg-red-500/20 text-red-400">declined</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => dismissBookingMutation.mutate(booking.id)}
+                      disabled={dismissBookingMutation.isPending}
+                      className="text-muted-foreground hover:text-white hover:bg-white/10"
+                      data-testid={`button-dismiss-declined-${booking.id}`}
+                    >
+                      {dismissBookingMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <X className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               ))}

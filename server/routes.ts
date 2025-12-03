@@ -903,7 +903,7 @@ export async function registerRoutes(
     }
   });
 
-  // Dismiss expired booking (customer only)
+  // Dismiss expired/cancelled booking (customer or photographer)
   app.post("/api/bookings/:bookingId/dismiss", async (req, res) => {
     try {
       if (!req.session.userId) {
@@ -915,8 +915,14 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Booking not found" });
       }
 
-      // Only the customer who created the booking can dismiss it
-      if (booking.customerId !== req.session.userId) {
+      // Get photographer profile if user is a photographer
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      
+      // Check if user is the customer OR the photographer for this booking
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer && booking.photographerId === photographer.id;
+      
+      if (!isCustomer && !isPhotographer) {
         return res.status(403).json({ error: "Not authorized to dismiss this booking" });
       }
 
