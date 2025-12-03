@@ -426,6 +426,7 @@ export default function Bookings() {
   }), [bookings]);
 
   // Time-dependent filters - not memoized to ensure they update
+  const pendingRequests = bookings.filter((b: any) => b.status === 'pending');
   const upcomingBookings = bookings.filter((b: any) => 
     (b.status === 'pending' || b.status === 'confirmed') && !hasSessionEnded(b)
   );
@@ -568,6 +569,70 @@ export default function Bookings() {
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24 px-6 pt-6 space-y-8">
+        {pendingRequests.length > 0 && (
+          <section>
+            <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+              <div className="relative">
+                <Clock className="w-5 h-5 text-yellow-400" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />
+              </div>
+              Awaiting Photographer Response
+            </h2>
+            <div className="space-y-4">
+              {pendingRequests.map((booking: any) => (
+                <button
+                  key={booking.id}
+                  onClick={() => setLocation(`/booking/${booking.id}`)}
+                  className="glass-panel rounded-2xl p-4 space-y-3 w-full text-left hover:bg-white/5 transition-colors border border-yellow-500/20"
+                  data-testid={`pending-booking-${booking.id}`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center overflow-hidden">
+                        {booking.photographer?.profileImageUrl ? (
+                          <img 
+                            src={booking.photographer.profileImageUrl} 
+                            alt={booking.photographer.fullName} 
+                            loading="lazy"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <User className="w-6 h-6 text-yellow-400" />
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white">{booking.photographer?.fullName || 'Photo Session'}</h3>
+                        <p className="text-sm text-yellow-400">Waiting for confirmation...</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                  
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(new Date(booking.scheduledDate), 'MMM d')}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span>{booking.scheduledTime}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      <span className="truncate max-w-[120px]">{booking.location}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-center pt-2 border-t border-white/10">
+                    <span className="text-muted-foreground text-sm">Total</span>
+                    <span className="text-white font-bold">£{parseFloat(booking.totalAmount).toFixed(2)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section>
           <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-primary" />
