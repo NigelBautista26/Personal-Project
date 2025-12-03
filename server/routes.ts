@@ -2259,5 +2259,47 @@ export async function registerRoutes(
     }
   });
 
+  // Cancel a payment intent (used when booking creation fails after payment authorization)
+  app.post("/api/stripe/cancel-payment-intent", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { paymentIntentId } = req.body;
+
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: "Payment intent ID required" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      
+      // Security: Verify the payment intent belongs to this user before cancelling
+      // Check the metadata to ensure this user created the payment
+      try {
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        
+        // Only allow cancellation if:
+        // 1. The payment was created by this user (stored in metadata)
+        // 2. The payment is still in a cancellable state
+        if (paymentIntent.metadata?.userId !== req.session.userId) {
+          console.warn(`User ${req.session.userId} attempted to cancel payment ${paymentIntentId} belonging to user ${paymentIntent.metadata?.userId}`);
+          return res.status(403).json({ error: "Not authorized to cancel this payment" });
+        }
+        
+        await stripe.paymentIntents.cancel(paymentIntentId);
+        console.log(`Payment intent ${paymentIntentId} cancelled by user ${req.session.userId}`);
+        res.json({ success: true });
+      } catch (stripeError: any) {
+        // Payment may already be cancelled or in a non-cancellable state
+        console.log("Payment cancellation note:", stripeError.message);
+        res.json({ success: true, note: "Payment may already be released" });
+      }
+    } catch (error: any) {
+      console.error("Stripe cancel payment intent error:", error);
+      res.status(500).json({ error: error.message || "Failed to cancel payment intent" });
+    }
+  });
+
   return httpServer;
 }

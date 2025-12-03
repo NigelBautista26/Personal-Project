@@ -74,7 +74,7 @@ function StripePaymentForm({
 }: { 
   amount: number;
   photographerName: string;
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
 }) {
   const stripe = useStripe();
@@ -108,7 +108,7 @@ function StripePaymentForm({
         }),
       });
 
-      const { clientSecret, error: serverError } = await response.json();
+      const { clientSecret, paymentIntentId, error: serverError } = await response.json();
       
       if (serverError) {
         throw new Error(serverError);
@@ -124,11 +124,13 @@ function StripePaymentForm({
         throw new Error(stripeError.message);
       }
 
-      if (paymentIntent?.status === 'succeeded') {
+      // With manual capture, status is 'requires_capture' (authorization hold)
+      // The payment will be captured when the photographer accepts the booking
+      if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
         setPaymentSucceeded(true);
-        onSuccess();
+        onSuccess(paymentIntent.id);
       } else {
-        throw new Error('Payment was not successful');
+        throw new Error('Payment authorization was not successful');
       }
     } catch (error: any) {
       onError(error.message || 'Payment failed');
@@ -143,8 +145,8 @@ function StripePaymentForm({
           <Check className="w-8 h-8 text-green-400" />
         </div>
         <div>
-          <p className="text-white font-semibold">Payment Successful!</p>
-          <p className="text-sm text-muted-foreground">Creating your booking...</p>
+          <p className="text-white font-semibold">Card Authorized!</p>
+          <p className="text-sm text-muted-foreground">You won't be charged until the photographer confirms.</p>
         </div>
         <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
       </div>
@@ -345,26 +347,51 @@ export default function Booking() {
   };
 
   const bookingMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/bookings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          photographerId: id,
-          duration: selectedDuration,
-          location: meetingLocation,
-          scheduledDate: new Date(`${selectedDate}T${selectedTime}`).toISOString(),
-          scheduledTime: selectedTime,
-        }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Booking failed");
+    mutationFn: async (stripePaymentIntentId?: string) => {
+      // Helper to cancel payment authorization on any failure
+      const cancelPaymentAuthorization = async () => {
+        if (stripePaymentIntentId) {
+          try {
+            await fetch("/api/stripe/cancel-payment-intent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ paymentIntentId: stripePaymentIntentId }),
+            });
+          } catch (cancelError) {
+            console.error("Failed to cancel payment authorization:", cancelError);
+          }
+        }
+      };
+
+      try {
+        const response = await fetch("/api/bookings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            photographerId: id,
+            duration: selectedDuration,
+            location: meetingLocation,
+            scheduledDate: new Date(`${selectedDate}T${selectedTime}`).toISOString(),
+            scheduledTime: selectedTime,
+            stripePaymentIntentId,
+          }),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          // Cancel payment authorization on server error
+          await cancelPaymentAuthorization();
+          throw new Error(error.error || "Booking failed");
+        }
+        
+        return response.json();
+      } catch (error) {
+        // Cancel payment authorization on network/parsing errors
+        await cancelPaymentAuthorization();
+        throw error;
       }
-      
-      return response.json();
     },
     onSuccess: () => {
       setStep(3);
@@ -378,16 +405,25 @@ export default function Booking() {
     },
   });
 
-  const handleConfirmBooking = () => {
+  const handleConfirmBooking = (paymentIntentId?: string) => {
     if (!meetingLocation.trim()) {
       toast({
         title: "Location Required",
         description: "Please enter a meeting location.",
         variant: "destructive",
       });
+      // Cancel the payment authorization if booking validation fails
+      if (paymentIntentId) {
+        fetch("/api/stripe/cancel-payment-intent", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ paymentIntentId }),
+        }).catch(console.error);
+      }
       return;
     }
-    bookingMutation.mutate();
+    bookingMutation.mutate(paymentIntentId);
   };
 
   if (!match) return null;
@@ -642,8 +678,8 @@ export default function Booking() {
                     <StripePaymentForm
                       amount={grandTotal}
                       photographerName={photographer?.fullName || 'Photographer'}
-                      onSuccess={() => {
-                        handleConfirmBooking();
+                      onSuccess={(paymentIntentId) => {
+                        handleConfirmBooking(paymentIntentId);
                       }}
                       onError={(error) => {
                         toast({
@@ -669,7 +705,17 @@ export default function Booking() {
       {step === 1 && (
         <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md p-4 bg-background border-t border-white/10 z-50">
           <Button 
-            onClick={() => setStep(2)}
+            onClick={() => {
+              if (!meetingLocation.trim()) {
+                toast({
+                  title: "Location Required",
+                  description: "Please choose a meeting location before continuing.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              setStep(2);
+            }}
             className="w-full h-14 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-lg shadow-lg shadow-primary/25"
             data-testid="button-continue"
           >
