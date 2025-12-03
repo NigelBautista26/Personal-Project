@@ -6,6 +6,7 @@ import bcrypt from "bcrypt";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import { z } from "zod";
 import { broadcastToBooking, broadcastToUser, broadcastToPhotographer, broadcastToCustomer } from "./realtime";
+import { getUncachableStripeClient, getStripePublishableKey, isStripeConfigured } from "./stripeClient";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -2131,6 +2132,76 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching admin stats:", error);
       res.status(500).json({ error: "Failed to fetch stats" });
+    }
+  });
+
+  // Stripe Payment Routes
+  app.get("/api/stripe/config", async (req, res) => {
+    try {
+      const configured = await isStripeConfigured();
+      if (!configured) {
+        return res.json({ configured: false });
+      }
+      const publishableKey = await getStripePublishableKey();
+      res.json({ configured: true, publishableKey });
+    } catch (error) {
+      res.json({ configured: false });
+    }
+  });
+
+  app.post("/api/stripe/create-payment-intent", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { amount, bookingId, photographerName } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: 'gbp',
+        metadata: {
+          bookingId: bookingId || 'demo',
+          userId: req.session.userId,
+          photographerName: photographerName || 'Demo Photographer',
+        },
+        description: `SnapNow Photography Session${photographerName ? ` with ${photographerName}` : ''}`,
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error: any) {
+      console.error("Stripe payment intent error:", error);
+      res.status(500).json({ error: error.message || "Failed to create payment intent" });
+    }
+  });
+
+  app.post("/api/stripe/confirm-payment", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { paymentIntentId } = req.body;
+
+      const stripe = await getUncachableStripeClient();
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      res.json({
+        status: paymentIntent.status,
+        succeeded: paymentIntent.status === 'succeeded',
+      });
+    } catch (error: any) {
+      console.error("Stripe confirm payment error:", error);
+      res.status(500).json({ error: error.message || "Failed to confirm payment" });
     }
   });
 
