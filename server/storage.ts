@@ -278,6 +278,7 @@ export class DatabaseStorage implements IStorage {
         meetingLatitude: bookings.meetingLatitude,
         meetingLongitude: bookings.meetingLongitude,
         meetingNotes: bookings.meetingNotes,
+        dismissedAt: bookings.dismissedAt,
         createdAt: bookings.createdAt,
         photographerFullName: users.fullName,
         photographerProfileImageUrl: users.profileImageUrl,
@@ -307,6 +308,7 @@ export class DatabaseStorage implements IStorage {
       meetingLatitude: row.meetingLatitude,
       meetingLongitude: row.meetingLongitude,
       meetingNotes: row.meetingNotes,
+      dismissedAt: row.dismissedAt,
       createdAt: row.createdAt,
       photographer: {
         fullName: row.photographerFullName,
@@ -340,6 +342,7 @@ export class DatabaseStorage implements IStorage {
         meetingLatitude: bookings.meetingLatitude,
         meetingLongitude: bookings.meetingLongitude,
         meetingNotes: bookings.meetingNotes,
+        dismissedAt: bookings.dismissedAt,
         createdAt: bookings.createdAt,
         customerFullName: users.fullName,
         customerProfileImageUrl: users.profileImageUrl,
@@ -368,6 +371,7 @@ export class DatabaseStorage implements IStorage {
       meetingLatitude: row.meetingLatitude,
       meetingLongitude: row.meetingLongitude,
       meetingNotes: row.meetingNotes,
+      dismissedAt: row.dismissedAt,
       createdAt: row.createdAt,
       customer: {
         fullName: row.customerFullName,
