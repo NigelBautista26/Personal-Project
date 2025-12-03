@@ -722,12 +722,12 @@ export default function Booking() {
 
       {/* Custom Date Picker Dialog */}
       <Dialog open={showDatePicker} onOpenChange={setShowDatePicker}>
-        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden">
+        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden [&>button]:hidden">
           <div className="p-4 border-b border-white/10">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors border border-white/20"
               >
                 <ChevronLeft className="w-5 h-5 text-white" />
               </button>
@@ -736,7 +736,7 @@ export default function Booking() {
               </h3>
               <button
                 onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
-                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors border border-white/20"
               >
                 <ChevronRight className="w-5 h-5 text-white" />
               </button>
@@ -824,7 +824,7 @@ export default function Booking() {
 
       {/* Custom Time Picker Dialog */}
       <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
-        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden">
+        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden [&>button]:hidden">
           <DialogHeader className="p-4 border-b border-white/10">
             <DialogTitle className="text-white text-center">Select Time</DialogTitle>
           </DialogHeader>
