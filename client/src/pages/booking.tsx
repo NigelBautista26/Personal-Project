@@ -1,8 +1,8 @@
 import { useRoute, useLocation } from "wouter";
-import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X, Map } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, Check, Loader2, Navigation, Camera, ChevronRight, X, Map, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getPhotographer, getCurrentUser } from "@/lib/api";
@@ -60,6 +60,9 @@ export default function Booking() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([51.5074, -0.1278]); // Default to London
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
   
   const id = params?.id;
 
@@ -357,27 +360,41 @@ export default function Booking() {
                 <h3 className="font-semibold text-white">Date & Time</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Date</label>
-                  <Input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="h-12 bg-card border-white/10 text-white rounded-xl"
-                    data-testid="input-date"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs text-muted-foreground uppercase tracking-wider">Time</label>
-                  <Input
-                    type="time"
-                    value={selectedTime}
-                    onChange={(e) => setSelectedTime(e.target.value)}
-                    className="h-12 bg-card border-white/10 text-white rounded-xl"
-                    data-testid="input-time"
-                  />
-                </div>
+                <button
+                  onClick={() => setShowDatePicker(true)}
+                  className="h-14 px-4 bg-card border border-white/10 rounded-xl flex items-center justify-between hover:bg-white/5 transition-colors"
+                  data-testid="button-select-date"
+                >
+                  <div className="text-left">
+                    <p className="text-xs text-muted-foreground">Date</p>
+                    <p className="text-white font-medium">
+                      {new Date(selectedDate).toLocaleDateString('en-GB', { 
+                        day: 'numeric', 
+                        month: 'short'
+                      })}
+                    </p>
+                  </div>
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                </button>
+                <button
+                  onClick={() => setShowTimePicker(true)}
+                  className="h-14 px-4 bg-card border border-white/10 rounded-xl flex items-center justify-between hover:bg-white/5 transition-colors"
+                  data-testid="button-select-time"
+                >
+                  <div className="text-left">
+                    <p className="text-xs text-muted-foreground">Time</p>
+                    <p className="text-white font-medium">
+                      {(() => {
+                        const [h, m] = selectedTime.split(':');
+                        const hour = parseInt(h);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                        return `${hour12}:${m} ${ampm}`;
+                      })()}
+                    </p>
+                  </div>
+                  <Clock className="w-4 h-4 text-muted-foreground" />
+                </button>
               </div>
             </div>
 
@@ -699,6 +716,194 @@ export default function Booking() {
                 </p>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Date Picker Dialog */}
+      <Dialog open={showDatePicker} onOpenChange={setShowDatePicker}>
+        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden">
+          <div className="p-4 border-b border-white/10">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              >
+                <ChevronLeft className="w-5 h-5 text-white" />
+              </button>
+              <h3 className="text-white font-semibold">
+                {calendarMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}
+              </h3>
+              <button
+                onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))}
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+              >
+                <ChevronRight className="w-5 h-5 text-white" />
+              </button>
+            </div>
+          </div>
+          
+          <div className="p-4">
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(day => (
+                <div key={day} className="text-center text-xs text-muted-foreground py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {(() => {
+                const year = calendarMonth.getFullYear();
+                const month = calendarMonth.getMonth();
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const startPadding = (firstDay.getDay() + 6) % 7;
+                const days = [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                for (let i = 0; i < startPadding; i++) {
+                  days.push(<div key={`pad-${i}`} />);
+                }
+                
+                for (let day = 1; day <= lastDay.getDate(); day++) {
+                  const date = new Date(year, month, day);
+                  const dateStr = date.toISOString().split('T')[0];
+                  const isSelected = dateStr === selectedDate;
+                  const isPast = date < today;
+                  const isToday = date.toDateString() === today.toDateString();
+                  
+                  days.push(
+                    <button
+                      key={day}
+                      onClick={() => {
+                        if (!isPast) {
+                          setSelectedDate(dateStr);
+                          setShowDatePicker(false);
+                        }
+                      }}
+                      disabled={isPast}
+                      className={cn(
+                        "w-full aspect-square rounded-full flex items-center justify-center text-sm font-medium transition-all",
+                        isSelected && "bg-primary text-white",
+                        !isSelected && !isPast && "hover:bg-white/10 text-white",
+                        isPast && "text-muted-foreground/50 cursor-not-allowed",
+                        isToday && !isSelected && "ring-1 ring-primary"
+                      )}
+                    >
+                      {day}
+                    </button>
+                  );
+                }
+                
+                return days;
+              })()}
+            </div>
+          </div>
+          
+          <div className="p-4 border-t border-white/10 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 border-white/20"
+              onClick={() => {
+                setSelectedDate(new Date().toISOString().split('T')[0]);
+                setShowDatePicker(false);
+              }}
+            >
+              Today
+            </Button>
+            <Button
+              className="flex-1 bg-primary hover:bg-primary/90"
+              onClick={() => setShowDatePicker(false)}
+            >
+              Done
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Time Picker Dialog */}
+      <Dialog open={showTimePicker} onOpenChange={setShowTimePicker}>
+        <DialogContent className="bg-background border-white/10 w-[88vw] max-w-sm rounded-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b border-white/10">
+            <DialogTitle className="text-white text-center">Select Time</DialogTitle>
+          </DialogHeader>
+          
+          <div className="p-6">
+            <div className="flex justify-center gap-4">
+              {/* Hours */}
+              <div className="flex-1 max-w-[80px]">
+                <p className="text-xs text-muted-foreground text-center mb-2">Hour</p>
+                <div className="h-48 overflow-y-auto rounded-xl bg-white/5 scrollbar-hide">
+                  {Array.from({ length: 24 }, (_, i) => {
+                    const hour = i;
+                    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                    const currentHour = parseInt(selectedTime.split(':')[0]);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          const [, mins] = selectedTime.split(':');
+                          setSelectedTime(`${hour.toString().padStart(2, '0')}:${mins}`);
+                        }}
+                        className={cn(
+                          "w-full py-3 text-center text-lg font-medium transition-colors",
+                          hour === currentHour ? "bg-primary text-white" : "text-white hover:bg-white/10"
+                        )}
+                      >
+                        {hour12} {hour < 12 ? 'AM' : 'PM'}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              {/* Minutes */}
+              <div className="flex-1 max-w-[80px]">
+                <p className="text-xs text-muted-foreground text-center mb-2">Minute</p>
+                <div className="h-48 overflow-y-auto rounded-xl bg-white/5 scrollbar-hide">
+                  {Array.from({ length: 12 }, (_, i) => {
+                    const mins = i * 5;
+                    const currentMins = parseInt(selectedTime.split(':')[1]);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          const [hours] = selectedTime.split(':');
+                          setSelectedTime(`${hours}:${mins.toString().padStart(2, '0')}`);
+                        }}
+                        className={cn(
+                          "w-full py-3 text-center text-lg font-medium transition-colors",
+                          mins === currentMins ? "bg-primary text-white" : "text-white hover:bg-white/10"
+                        )}
+                      >
+                        :{mins.toString().padStart(2, '0')}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-center text-white text-2xl font-bold mt-4">
+              {(() => {
+                const [h, m] = selectedTime.split(':');
+                const hour = parseInt(h);
+                const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                return `${hour12}:${m} ${ampm}`;
+              })()}
+            </p>
+          </div>
+          
+          <div className="p-4 border-t border-white/10">
+            <Button
+              className="w-full h-12 bg-primary hover:bg-primary/90 rounded-xl"
+              onClick={() => setShowTimePicker(false)}
+            >
+              <Check className="w-4 h-4 mr-2" />
+              Confirm Time
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
