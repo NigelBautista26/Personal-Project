@@ -33,6 +33,7 @@ import PhotographerPending from "@/pages/photographer-pending";
 import AdminDashboard from "@/pages/admin";
 import InvestorPitch from "@/pages/investor-pitch";
 import InvestorProjections from "@/pages/investor-projections";
+import FundingPlan from "@/pages/funding-plan";
 
 function Router() {
   return (
@@ -66,6 +67,7 @@ function Router() {
       <Route path="/booking/:id" component={CustomerBookingDetail} />
       <Route path="/investor-pitch" component={InvestorPitch} />
       <Route path="/investor-projections" component={InvestorProjections} />
+      <Route path="/funding-plan" component={FundingPlan} />
       <Route component={NotFound} />
     </Switch>
   );
