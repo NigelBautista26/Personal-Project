@@ -11,55 +11,111 @@ export default function InvestorPitch() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-4 print:bg-white print:text-black">
+    <>
       <style>{`
+        .investor-pitch-page {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          background: #09090b;
+          color: white;
+          padding: 1rem;
+          overflow-y: auto;
+          width: 100vw;
+          height: 100vh;
+        }
+        
         @media print {
-          @page { size: A4; margin: 0.4in; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { 
+            size: A4; 
+            margin: 0; 
+          }
+          
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          html, body, #root {
+            height: auto !important;
+            overflow: visible !important;
+            max-width: none !important;
+            width: auto !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: #111827 !important;
+          }
+          
+          .investor-pitch-page {
+            position: static !important;
+            overflow: visible !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            background: #111827 !important;
+          }
+          
+          .print-wrapper {
+            max-width: none !important;
+            background: #111827 !important;
+          }
+          
+          .print-content {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            padding: 0.4in !important;
+            background: #111827 !important;
+            min-height: 100vh !important;
+          }
+          
+          .no-print {
+            display: none !important;
+          }
+          
           section { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           table { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           .grid { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
           }
+          
           h2 { 
             page-break-after: avoid !important;
             break-after: avoid !important;
           }
-          .no-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
         }
       `}</style>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6 print:hidden">
-          <Link href="/">
-            <Button variant="ghost" className="text-muted-foreground">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to App
+      <div className="investor-pitch-page">
+        <div className="print-wrapper max-w-5xl mx-auto">
+          <div className="flex items-center justify-between mb-6 no-print">
+            <Link href="/">
+              <Button variant="ghost" className="text-muted-foreground">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to App
+              </Button>
+            </Link>
+            <Button 
+              onClick={handlePrint}
+              className="bg-primary hover:bg-primary/90"
+            >
+              <Printer className="w-4 h-4 mr-2" />
+              Print / Save PDF
             </Button>
-          </Link>
-          <Button 
-            onClick={handlePrint}
-            className="bg-primary hover:bg-primary/90"
-          >
-            <Printer className="w-4 h-4 mr-2" />
-            Print / Save PDF
-          </Button>
-        </div>
+          </div>
 
-        <div 
-          ref={contentRef} 
-          className="bg-gray-900 text-white p-8 rounded-lg shadow-xl print:bg-gray-900"
-          style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
-        >
+          <div 
+            ref={contentRef} 
+            className="print-content bg-gray-900 text-white p-8 rounded-lg shadow-xl"
+            style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+          >
           {/* Header */}
           <div className="text-center mb-8 pb-6 border-b-2 border-violet-500">
             <h1 className="text-4xl font-bold text-violet-400 mb-2">SnapNow</h1>
@@ -288,7 +344,8 @@ export default function InvestorPitch() {
             <p className="text-gray-600 text-xs mt-2">Contact: hello@snapnow.app</p>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

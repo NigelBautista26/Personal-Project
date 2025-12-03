@@ -45,17 +45,63 @@ export default function PitchDeck() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 print:bg-gray-900">
+    <>
       <style>{`
+        .pitch-deck-page {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          background: #111827;
+          color: white;
+          padding: 1rem;
+          overflow-y: auto;
+          width: 100vw;
+          height: 100vh;
+        }
+        
         @media print {
-          @page { size: A4; margin: 0.4in; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          @page { size: A4; margin: 0; }
+          
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
+          html, body, #root {
+            height: auto !important;
+            overflow: visible !important;
+            max-width: none !important;
+            width: auto !important;
+            border: none !important;
+            box-shadow: none !important;
+            background: #111827 !important;
+          }
+          
+          .pitch-deck-page {
+            position: static !important;
+            overflow: visible !important;
+            height: auto !important;
+            width: auto !important;
+            padding: 0 !important;
+            background: #111827 !important;
+          }
+          
+          .print-wrapper {
+            max-width: none !important;
+            background: #111827 !important;
+          }
+          
+          .no-print {
+            display: none !important;
+          }
+          
           .pitch-slide { 
             page-break-after: always; 
             page-break-inside: avoid;
             min-height: 0;
-            padding: 1rem 0 !important;
+            padding: 0.4in !important;
             margin-bottom: 0 !important;
+            background: #111827 !important;
           }
           .pitch-slide:last-of-type { page-break-after: auto; }
           .pitch-slide h2 { font-size: 1.75rem !important; margin-bottom: 0.75rem !important; padding-bottom: 0.4rem !important; }
@@ -84,26 +130,28 @@ export default function PitchDeck() {
           .pitch-slide .space-y-2 > * + * { margin-top: 0.25rem !important; }
         }
       `}</style>
-      <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between print:hidden">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition-colors"
-          data-testid="button-download-pdf"
-        >
-          <Printer className="w-4 h-4" />
-          Print / Save PDF
-        </button>
-      </div>
+      <div className="pitch-deck-page">
+        <div className="print-wrapper max-w-5xl mx-auto">
+          <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800 p-4 flex items-center justify-between no-print">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Back
+            </button>
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg transition-colors"
+              data-testid="button-download-pdf"
+            >
+              <Printer className="w-4 h-4" />
+              Print / Save PDF
+            </button>
+          </div>
 
-      <div ref={contentRef} className="max-w-4xl mx-auto p-4 md:p-8 text-white bg-gray-900">
+          <div ref={contentRef} className="p-4 md:p-8 text-white">
         
         {/* Slide 1: Cover */}
         <div className="text-center py-16 mb-12 border-b-2 border-violet-500" style={{ pageBreakAfter: "always" }}>
@@ -541,7 +589,9 @@ export default function PitchDeck() {
           <p className="mt-12 text-gray-600">© 2025 SnapNow. All rights reserved.</p>
         </section>
 
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
