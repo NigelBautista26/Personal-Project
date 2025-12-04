@@ -94,7 +94,7 @@ export default function FounderCV() {
         }
         
         @media print {
-          @page { size: A4; margin: 0.4in; }
+          @page { size: A4; margin: 0; }
           
           * {
             -webkit-print-color-adjust: exact !important;
@@ -106,8 +106,8 @@ export default function FounderCV() {
             overflow: visible !important;
             max-width: none !important;
             width: auto !important;
-            background: white !important;
-            color: #1e293b !important;
+            background: #0f172a !important;
+            color: white !important;
           }
           
           .cv-page {
@@ -115,14 +115,14 @@ export default function FounderCV() {
             overflow: visible !important;
             height: auto !important;
             width: auto !important;
-            padding: 0 !important;
-            background: white !important;
-            color: #1e293b !important;
+            padding: 0.4in !important;
+            background: #0f172a !important;
+            color: white !important;
           }
           
           .print-wrapper {
             max-width: none !important;
-            background: white !important;
+            background: #0f172a !important;
           }
           
           .no-print {
@@ -132,6 +132,7 @@ export default function FounderCV() {
           .cv-section { 
             page-break-inside: avoid;
             margin-bottom: 0.5rem !important;
+            background: rgba(30, 41, 59, 0.5) !important;
           }
           
           .cv-header {
@@ -140,8 +141,12 @@ export default function FounderCV() {
             print-color-adjust: exact !important;
           }
           
-          h2 { font-size: 1rem !important; margin-bottom: 0.5rem !important; }
-          h3 { font-size: 0.9rem !important; }
+          .bg-slate-800\/50 {
+            background: rgba(30, 41, 59, 0.5) !important;
+          }
+          
+          h2 { font-size: 1rem !important; margin-bottom: 0.5rem !important; color: white !important; }
+          h3 { font-size: 0.9rem !important; color: white !important; }
           p, li { font-size: 0.8rem !important; line-height: 1.3 !important; }
           .text-sm { font-size: 0.75rem !important; }
           .mb-6 { margin-bottom: 0.4rem !important; }
@@ -152,10 +157,17 @@ export default function FounderCV() {
           .space-y-4 > * + * { margin-top: 0.3rem !important; }
           .space-y-2 > * + * { margin-top: 0.15rem !important; }
           
-          .print-dark-text { color: #1e293b !important; }
-          .print-muted-text { color: #64748b !important; }
-          .print-accent { color: #6366f1 !important; }
-          .print-bg-light { background: #f8fafc !important; }
+          .text-white { color: white !important; }
+          .text-gray-300 { color: #d1d5db !important; }
+          .text-gray-400 { color: #9ca3af !important; }
+          .text-gray-500 { color: #6b7280 !important; }
+          .text-indigo-400 { color: #818cf8 !important; }
+          .text-indigo-200 { color: #c7d2fe !important; }
+          .text-indigo-100 { color: #e0e7ff !important; }
+          .text-green-400 { color: #4ade80 !important; }
+          
+          .border-indigo-500 { border-color: #6366f1 !important; }
+          .border-slate-700 { border-color: #334155 !important; }
         }
       `}</style>
       <div className="cv-page">
