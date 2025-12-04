@@ -1,0 +1,110 @@
+Nigel Bautista
+07462413044
+nigel.zamudio.bautista@gmail.com
+LinkedIn: Linkedin Profile
+GitHub: GitHub Profile
+
+***
+
+Work Profile:
+I am an experienced Senior SDET / Software Engineer in Test. I have been working as an SDET for the last 12 years now, functioning as an all-rounder, covering all areas of testing, including Front-end, Back-end, and Automation, for Web and Mobile applications across different technologies.
+
+My core expertise is in building, maintaining, and enhancing the CI/CD Continuous Integration and Continuous Delivery pipeline. I specialize in shift-left methodology, ensuring quality is integrated from the earliest stages of development.
+
+This involves:
+* Pre-Merge Quality Gates: Implementing rigorous pre-merge checks using GitHub Actions and other tools (Jenkins, GitLab, Docker) that mandate all automated tests must pass before merging into the main branch, thus maintaining the integrity and stability of the production environment.
+* Full-Stack Test Automation: Architecting and integrating multiple layers of automated testing (Unit, API/Integration, and End-to-End) directly into the CI/CD process to maximize test coverage and drastically reduce testing environments prior to production releases.
+* Framework Leadership: Leading the development and setting the standards for robust testing frameworks using technologies like Playwright/Typescript and Cypress/Javascript, which accelerates testing and improves collaboration between development and quality teams.
+
+My focus is on the analytical rigor necessary to scope every test scenario correctly, combined with the software engineering skills to make testing efficient through automation. I truly enjoy working with the latest technology and continuously learning how to be more efficient in the art of building reliable software.
+
+Testing Skills and Tools | Experience Level
+---|---
+Functional UI Testing | Experienced
+API Testing | Experienced
+Smoke & Regression Testing | Experienced
+Exploratory Testing | Experienced
+CI/CD pre merge software delivery End-to-end Testing | Experienced
+Playwright & Typescript | Experienced
+Cypress & Javascript | Experienced
+Webdrivelo & Javascript | Experienced
+Android & IOS | Experienced
+Git/Github / Github Actions / Gitlab / Jenkins / Docker | Experienced
+Appium | Experienced
+Amazon AWS/EC2/S3/ Lambda | Experienced
+Node JS | Experienced
+BDD & TDD | Experienced
+JIRA & Confluence | Experienced
+Postman & Swagger | Experienced
+
+***
+
+During my IT years I successfully combined my work and other commitments showing myself to be self-motivated, organised and capable of working under pressure. I have a clear, logical mind with a practical approach to problem solving and a drive to see things through to completion, I enjoy working on my own initiative or in a team. In short, I am reliable, trustworthy, hardworking and eager to learn and have a genuine interest in what I do, I also have excellent written and oral English and I also did training in ITL Foundation and Business Analysis Foundation Courses to improve my understanding of both technical and business terms.
+
+***
+
+Job Experiences:
+
+Companies House:
+Senior Software Engineer in Test (SDET), Started: August 2024 - (Current Job)
+In my current role as a senior SDET, I'm a part of the migration team that is in charge of migrating the old tests from their old framework to the new framework. I am one of 5 people who leads the project and built the new framework from scratch and formed its architecture and at the same time set the standards for the new Playwright TS framework. My main daily task now is to migrate old Java Cucumber tests into our new Playwright TS framework.
+
+Natter:
+Principal Software Engineer in Test (SDET), Started: Jan 2024 - Aug 2024
+* Focused on Real-World Testing: I shifted our testing strategy to concentrate more on how our products perform under actual user conditions. This shift helped us catch and fix issues that really matter to our users.
+* Led a Skilled SDET Team: As the team lead for two other SDETs, I've focused on building a strong team that's deeply involved in our development process from start to finish. Together, we've set high standards for quality and worked closely with everyone involved to make sure we meet them.
+* Developed a Custom Testing Framework: I introduced a new testing framework using Playwright and JavaScript/TypeScript, which made it easier for us to test our software more thoroughly and quickly. This tool is now a key part of how we work, helping us catch issues early and improve collaboration between our developers and SDET team.
+* Improved Our CI/CD Pipeline: I took on the challenge of upgrading our CI/CD pipeline with better GitHub and GitHub Actions integration. This move has made our development process smoother and more reliable, reducing the risk of errors and ensuring that we can deliver high-quality software more consistently.
+* Thanks to these efforts, Natter has made significant strides in how we develop software and ensure quality. We've become more efficient and agile, and I'm proud of the role I've played in making that happen.
+
+Endeavor Streaming:
+Senior Software Engineer in Test (SDET) Started: Feb 2022 - Jan 2024
+In my role as Senior SDET, I have led a transformative shift towards a more agile and efficient software delivery process. My contributions include:
+* Agile Methodology Implementation: Spearheaded the adoption of a "shift-left" approach, significantly enhancing collaboration between product and development teams. This initiative ensured a deeper, upfront understanding of project scopes, minimising misunderstandings and preventing potential issues early in the development lifecycle.
+* Framework Development: Innovated by creating and implementing a proprietary end-to-end testing framework using Playwright and JavaScript/TypeScript. Initially housed in a separate repository, the framework was later integrated into the main application repository to streamline operations and improve developer collaboration.
+* CI/CD Process Enhancement: Played a pivotal role in integrating our agile processes with the CI/CD pipeline using GitHub and GitHub Actions. This strategy includes a rigorous pre-merge check that ensures all test layers pass before merging into the master branch, thereby maintaining the integrity and stability of the production environment. This approach has not only bolstered our confidence in the software quality but also eliminated the necessity for multiple testing environments prior to production releases, yielding a significant increase in process efficiency.
+
+Hopin:
+Senior Software Engineer in Test (SDET), Aug 2020 - Jan 2022
+* Led the shift-left methodology implementation amidst the company's hyper-growth, scaling the workforce from 50 to over 1000 employees within a year, and significantly enhancing the CI/CD process and product quality.
+* Collaborated closely with product managers and designers to ensure quality was integrated at every stage of development, minimising risks and maximising product reliability.
+* Managed the end-to-end automation suite, streamlining the testing process and ensuring green builds before development merges, contributing to the robustness of CI/CD goals.
+* Engaged in continuous learning, acquiring skills in the React testing library to improve unit testing effectiveness and coverage.
+
+Automation Hero:
+Software Engineer in Test (SDET), Jan 2020 - Aug 2020
+* Developed a specialised testing framework using Cypress and Jenkins for efficient front-end testing, and JavaScript with Supertest for API integration testing, accelerating the CI/CD pipeline.
+* Utilised Postman for API testing before automation, ensuring comprehensive coverage and reliability of API functionality in regression tests.
+
+Arcadia:
+Software Engineer in Test (SDET), Mar 2018 - Jan 2020
+* Executed a wide array of testing strategies across automation, web, mobile, front-end, and back-end testing in an Agile CI/CD environment, maintaining high-quality standards across diverse platforms.
+* Contributed to a seamless user experience for Arcadia's global customer base by ensuring the quality and reliability of software across multiple devices and platforms.
+
+ECS Digital:
+Software Engineer in Test (SDET), Sep 2017 - Feb 2018
+* Led automated testing efforts for web/mobile applications in an agile continuous integration environment, enhancing project efficiency and test coverage.
+* Integrated automated tests into the automation framework using JavaScript, Cucumber, Chai, and WebDriverIO, significantly reducing testing workload and improving test reliability.
+
+HAPARA:
+Software Engineer in Test (SDET), Feb 2016 - Aug 2017
+* Supported educational software testing, paving the way for the adoption of automation testing.
+* Initiated the use of Protractor for AngularJS applications to contribute to automation testing efforts, enhancing product reliability for educational users.
+
+SPARK:
+Software Engineer in Test (SDET), Feb 2015 - Jan 2016
+* Participated in the testing of MorePork, a home security application, ensuring a high-quality, defect-free launch through rigorous automated testing methods.
+
+DATACOM:
+Junior Software Engineer in Test (SDET), Mar 2013 - Jan 2015
+* Transitioned from a developer to a tester role, applying coding skills to kick-start automation testing efforts.
+* Played a key role in project support and testing, leveraging technical skills in Linux Servers, VirtualBox, bash scripting, and SQL databases to support and improve production systems.
+
+Production Support Junior Developer: May 2012 - Feb 2013
+* Managed production support, bug tracking, and fixes, ensuring high system uptime and efficiency. Contributed to change management processes, enhancing system reliability and performance.
+
+***
+
+QUALIFICATIONS and EDUCATION:
+2007-2010 Informatics International College, Quezon City, Philippines Bachelor of Science in Information Technology
+Subjects included: System's analysis and Design Program Logic, Formulation Database Management System, Data Structures and Algorithms Advance Diploma in Computer Studies Major in Multimedia, 2003-2007 Penn Foster High School, Pennsylvania USA High School Diploma, March 2007
