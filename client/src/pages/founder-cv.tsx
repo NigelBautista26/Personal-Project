@@ -210,11 +210,11 @@ export default function FounderCV() {
                     <Mail className="w-4 h-4" />
                     nigel.zamudio.bautista@gmail.com
                   </a>
-                  <a href="https://linkedin.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <a href="https://www.linkedin.com/in/nigel-bautista-70ab4045/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
                     <Linkedin className="w-4 h-4" />
                     LinkedIn Profile
                   </a>
-                  <a href="https://github.com" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <a href="https://github.com/NigelBautista26?tab=repositories" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-white transition-colors">
                     <Github className="w-4 h-4" />
                     GitHub Profile
                   </a>
