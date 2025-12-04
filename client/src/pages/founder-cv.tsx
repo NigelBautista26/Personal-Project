@@ -199,7 +199,6 @@ export default function FounderCV() {
                 <div>
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Nigel Bautista</h1>
                   <p className="text-xl text-indigo-200 font-medium">Senior SDET / Software Engineer in Test</p>
-                  <p className="text-indigo-200 mt-2">Co-Founder & Technical Lead, SnapNow</p>
                 </div>
                 <div className="flex flex-col gap-2 text-sm text-indigo-100">
                   <a href="tel:07462413044" className="flex items-center gap-2 hover:text-white transition-colors">
@@ -330,10 +329,6 @@ export default function FounderCV() {
               </div>
             </section>
 
-            {/* Footer */}
-            <div className="mt-8 pt-4 border-t border-slate-700 text-center text-sm text-gray-500 print-muted-text no-print">
-              <p>Co-Founder & Technical Lead at SnapNow - The Uber for Professional Photography</p>
-            </div>
           </div>
         </div>
       </div>
