@@ -30,7 +30,7 @@ export default function FounderCV() {
     },
     {
       company: "At Last (Part-time Contractor)",
-      role: "Founding Senior SDET",
+      role: "Founding SDET",
       period: "2024 - Present",
       highlights: [
         "Architected the complete test automation infrastructure for a multi-carrier logistics platform, designing scalable TypeScript/Playwright frameworks from scratch",
