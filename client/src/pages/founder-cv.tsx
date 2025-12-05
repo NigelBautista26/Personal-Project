@@ -105,7 +105,10 @@ export default function FounderCV() {
         }
         
         @media print {
-          @page { size: A4; margin: 0; }
+          @page { 
+            size: A4; 
+            margin: 0.5in 0.4in;
+          }
           
           * {
             -webkit-print-color-adjust: exact !important;
@@ -126,7 +129,7 @@ export default function FounderCV() {
             overflow: visible !important;
             height: auto !important;
             width: auto !important;
-            padding: 0.4in !important;
+            padding: 0 !important;
             background: #0f172a !important;
             color: white !important;
           }
@@ -136,42 +139,94 @@ export default function FounderCV() {
             background: #0f172a !important;
           }
           
+          .cv-content {
+            padding: 0 !important;
+          }
+          
           .no-print {
             display: none !important;
           }
           
           .cv-section { 
-            page-break-inside: avoid;
-            margin-bottom: 0.5rem !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin-bottom: 0.6rem !important;
             background: rgba(30, 41, 59, 0.5) !important;
+            border-radius: 0.5rem !important;
+            padding: 0.5rem !important;
           }
           
           .job-card {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            margin-bottom: 0.4rem !important;
+            padding: 0.4rem !important;
+            border-radius: 0.5rem !important;
+          }
+          
+          .experience-section {
+            page-break-before: auto;
           }
           
           .cv-header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            padding: 0.6rem !important;
+            border-radius: 0.75rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .cv-header h1 {
+            font-size: 1.5rem !important;
+            margin-bottom: 0.2rem !important;
+          }
+          
+          .cv-header .text-xl {
+            font-size: 0.95rem !important;
           }
           
           .bg-slate-800\/50 {
             background: rgba(30, 41, 59, 0.5) !important;
           }
           
-          h2 { font-size: 1rem !important; margin-bottom: 0.5rem !important; color: white !important; }
-          h3 { font-size: 0.9rem !important; color: white !important; }
-          p, li { font-size: 0.8rem !important; line-height: 1.3 !important; }
-          .text-sm { font-size: 0.75rem !important; }
+          h2 { 
+            font-size: 0.95rem !important; 
+            margin-bottom: 0.4rem !important; 
+            color: white !important;
+          }
+          h3 { 
+            font-size: 0.85rem !important; 
+            color: white !important;
+            margin-bottom: 0.1rem !important;
+          }
+          p { 
+            font-size: 0.75rem !important; 
+            line-height: 1.35 !important;
+            margin-bottom: 0.2rem !important;
+          }
+          li { 
+            font-size: 0.72rem !important; 
+            line-height: 1.3 !important;
+            margin-bottom: 0.1rem !important;
+          }
+          .text-sm { font-size: 0.7rem !important; }
           .mb-6 { margin-bottom: 0.4rem !important; }
           .mb-4 { margin-bottom: 0.3rem !important; }
-          .py-6 { padding-top: 0.4rem !important; padding-bottom: 0.4rem !important; }
-          .p-4 { padding: 0.3rem !important; }
-          .gap-4 { gap: 0.3rem !important; }
-          .space-y-4 > * + * { margin-top: 0.3rem !important; }
-          .space-y-2 > * + * { margin-top: 0.15rem !important; }
+          .mb-3 { margin-bottom: 0.25rem !important; }
+          .mb-2 { margin-bottom: 0.15rem !important; }
+          .py-6 { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
+          .p-4 { padding: 0.35rem !important; }
+          .p-6 { padding: 0.5rem !important; }
+          .gap-4 { gap: 0.25rem !important; }
+          .gap-2 { gap: 0.15rem !important; }
+          .space-y-4 > * + * { margin-top: 0.25rem !important; }
+          .space-y-3 > * + * { margin-top: 0.2rem !important; }
+          .space-y-2 > * + * { margin-top: 0.1rem !important; }
+          .space-y-1 > * + * { margin-top: 0.05rem !important; }
+          
+          .rounded-xl { border-radius: 0.5rem !important; }
+          .rounded-2xl { border-radius: 0.75rem !important; }
           
           .text-white { color: white !important; }
           .text-gray-300 { color: #d1d5db !important; }
@@ -184,6 +239,21 @@ export default function FounderCV() {
           
           .border-indigo-500 { border-color: #6366f1 !important; }
           .border-slate-700 { border-color: #334155 !important; }
+          .border-l-4 { border-left-width: 3px !important; }
+          
+          .skills-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 0.3rem !important;
+          }
+          
+          .skills-grid > div {
+            padding: 0.3rem !important;
+          }
+          
+          .earlier-career {
+            page-break-inside: avoid !important;
+          }
         }
       `}</style>
       <div className="cv-page">
@@ -270,7 +340,7 @@ export default function FounderCV() {
                 <Code className="w-5 h-5 text-indigo-400 print-accent" />
                 Technical Skills
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="skills-grid grid grid-cols-2 md:grid-cols-4 gap-4">
                 {skills.map((skillGroup, idx) => (
                   <div key={idx} className="print-bg-light rounded-xl p-4 bg-slate-800/50">
                     <h3 className="font-semibold text-indigo-400 print-accent mb-2 text-sm">{skillGroup.category}</h3>
@@ -288,7 +358,7 @@ export default function FounderCV() {
             </section>
 
             {/* Experience */}
-            <section className="cv-section mb-6">
+            <section className="experience-section mb-6">
               <h2 className="text-xl font-bold text-white print-dark-text mb-4 flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-indigo-400 print-accent" />
                 Professional Experience
@@ -317,7 +387,7 @@ export default function FounderCV() {
             </section>
 
             {/* Earlier Experience Summary */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
+            <section className="earlier-career cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
               <h3 className="font-bold text-white print-dark-text mb-3">Earlier Career</h3>
               <div className="grid md:grid-cols-2 gap-3 text-sm">
                 <div className="flex justify-between">
