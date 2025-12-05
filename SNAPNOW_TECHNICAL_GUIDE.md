@@ -1,469 +1,432 @@
-# SnapNow - Technical Guide
+# SnapNow - Complete Technical Documentation
 
-## 🎯 What You Have Built
+> A comprehensive guide for developers building on or porting the SnapNow platform
 
-**SnapNow** is a fully functional marketplace platform connecting travelers with professional photographers. Think "Uber for Photography" - customers can discover nearby photographers, view portfolios, book sessions, and pay instantly. Photographers earn money with a transparent 20% platform commission model.
+## Overview
 
-## 📊 Current Architecture
+**SnapNow** is a fully functional marketplace platform connecting travelers with professional photographers. Think "Uber for Photography" - customers can discover nearby photographers, view portfolios, book sessions, and pay instantly. Photographers earn money with a transparent platform commission model.
 
-### Backend (Express + PostgreSQL + Object Storage)
+**Live Demo**: Built and running on Replit
+**Demo Accounts**:
+- Customer: `customer@test.com` / `password`
+- Photographer: `anna@snapnow.com` / `password`
+- Admin: `admin@snapnow.com` / `admin123`
 
-Your backend is a REST API built with:
-- **Express.js**: Web framework handling HTTP requests
-- **PostgreSQL Database**: Stores all user data, bookings, earnings
-- **Drizzle ORM**: Type-safe database queries
-- **Object Storage** (Google Cloud Storage): Stores photographer portfolio images
-- **Session-based Authentication**: Secure login with bcrypt password hashing
+---
 
-### Frontend (React + TanStack Query)
+## Tech Stack Summary
 
-Your frontend is a React single-page application with:
-- **React**: UI framework
-- **TanStack Query**: Data fetching and caching
-- **Tailwind CSS**: Styling
-- **Framer Motion**: Animations
-- **Wouter**: Client-side routing
+### Frontend
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| React | UI Framework | 18.x |
+| TypeScript | Type Safety | 5.x |
+| Vite | Build Tool & Dev Server | 5.x |
+| TanStack Query | Server State Management | 5.x |
+| Wouter | Client-side Routing | 3.x |
+| Tailwind CSS | Styling | 4.x |
+| shadcn/ui | Component Library (Radix UI) | Latest |
+| Framer Motion | Animations | 11.x |
+| Leaflet + React-Leaflet | Interactive Maps | 1.9.x |
+| Recharts | Data Visualization | 2.x |
 
-### Database Schema
+### Backend
+| Technology | Purpose | Version |
+|------------|---------|---------|
+| Node.js | Runtime | 20.x |
+| Express.js | Web Framework | 4.x |
+| TypeScript | Type Safety | 5.x |
+| Drizzle ORM | Database Queries | Latest |
+| PostgreSQL | Database (Neon Serverless) | 15.x |
+| express-session | Session Management | 1.x |
+| bcrypt | Password Hashing | 5.x |
+| Zod | Schema Validation | 3.x |
+
+### External Services
+| Service | Purpose |
+|---------|---------|
+| Stripe Connect | Payment Processing (Authorization Holds) |
+| Google Cloud Storage | Image/File Storage |
+| Neon | Serverless PostgreSQL |
+
+---
+
+## Project Structure
 
 ```
+├── client/                    # Frontend React application
+│   ├── src/
+│   │   ├── components/        # Reusable UI components
+│   │   │   └── ui/           # shadcn/ui components
+│   │   ├── hooks/            # Custom React hooks
+│   │   ├── lib/              # Utilities (queryClient, utils)
+│   │   ├── pages/            # Route components
+│   │   └── App.tsx           # Main app with routing
+│   └── index.html
+├── server/                    # Backend Express application
+│   ├── routes.ts             # API route definitions
+│   ├── storage.ts            # Database operations (IStorage interface)
+│   ├── index.ts              # Server entry point
+│   └── vite.ts               # Vite dev server integration
+├── shared/                    # Shared between client/server
+│   └── schema.ts             # Drizzle schema + Zod types
+├── scripts/                   # Utility scripts
+└── drizzle.config.ts         # Database config
+```
+
+---
+
+## Database Schema
+
+### Core Tables
+
+```sql
+-- Users (Authentication)
 users
-├── id (uuid)
-├── email
-├── password (hashed)
-├── fullName
-├── role ('customer' or 'photographer')
-└── createdAt
+├── id: uuid (PK)
+├── email: text (unique)
+├── password: text (bcrypt hashed)
+├── fullName: text
+├── role: enum ('customer', 'photographer', 'admin')
+└── createdAt: timestamp
 
+-- Photographer Profiles
 photographers
-├── id (uuid)
-├── userId (foreign key → users)
-├── bio
-├── hourlyRate
-├── location
-├── latitude/longitude
-├── rating
-├── reviewCount
-├── profileImageUrl
-├── portfolioImages (array)
-├── isAvailable
-└── stripeAccountId
+├── id: uuid (PK)
+├── userId: uuid (FK → users)
+├── bio: text
+├── hourlyRate: decimal
+├── location: text (city name)
+├── latitude: decimal
+├── longitude: decimal
+├── rating: decimal (calculated from reviews)
+├── reviewCount: integer
+├── profileImageUrl: text
+├── portfolioImages: text[] (array)
+├── isAvailable: boolean
+├── stripeAccountId: text
+├── instagramUrl: text
+├── websiteUrl: text
+└── verificationStatus: enum ('pending_review', 'verified', 'rejected')
 
+-- Bookings
 bookings
-├── id (uuid)
-├── customerId (foreign key → users)
-├── photographerId (foreign key → photographers)
-├── duration
-├── location
-├── scheduledDate/Time
-├── totalAmount
-├── platformFee (20%)
-├── photographerEarnings (80%)
-├── status
-├── stripePaymentId
-└── createdAt
+├── id: uuid (PK)
+├── customerId: uuid (FK → users)
+├── photographerId: uuid (FK → photographers)
+├── duration: integer (hours)
+├── location: text
+├── latitude: decimal
+├── longitude: decimal
+├── scheduledDate: date
+├── scheduledTime: text
+├── totalAmount: decimal
+├── serviceFee: decimal (10% customer fee)
+├── platformFee: decimal (20% photographer fee)
+├── photographerEarnings: decimal (80% of booking)
+├── status: enum ('pending', 'confirmed', 'completed', 'cancelled', 'expired', 'declined')
+├── stripePaymentIntentId: text
+├── expiresAt: timestamp
+├── customerDismissed: boolean
+├── photographerDismissed: boolean
+├── photoUrls: text[] (delivered photos)
+└── createdAt: timestamp
 
+-- Earnings Tracking
 earnings
-├── id (uuid)
-├── photographerId (foreign key → photographers)
-├── bookingId (foreign key → bookings)
-├── grossAmount
-├── platformFee (20%)
-├── netAmount (80%)
-├── status ('pending' or 'paid')
-├── paidAt
-└── createdAt
+├── id: uuid (PK)
+├── photographerId: uuid (FK → photographers)
+├── bookingId: uuid (FK → bookings)
+├── grossAmount: decimal
+├── platformFee: decimal
+├── netAmount: decimal
+├── status: enum ('held', 'pending', 'paid')
+├── paidAt: timestamp
+└── createdAt: timestamp
+
+-- Reviews
+reviews
+├── id: uuid (PK)
+├── bookingId: uuid (FK → bookings, unique)
+├── customerId: uuid (FK → users)
+├── photographerId: uuid (FK → photographers)
+├── rating: integer (1-5)
+├── comment: text
+├── photographerResponse: text
+└── createdAt: timestamp
+
+-- Photo Editing Service
+editing_service_settings
+├── id: uuid (PK)
+├── photographerId: uuid (FK → photographers, unique)
+├── isEnabled: boolean
+├── pricingModel: enum ('flat', 'per_photo')
+├── flatRate: decimal
+├── perPhotoRate: decimal
+└── turnaroundDays: integer
+
+editing_requests
+├── id: uuid (PK)
+├── bookingId: uuid (FK → bookings)
+├── customerId: uuid (FK → users)
+├── photographerId: uuid (FK → photographers)
+├── photoCount: integer
+├── totalCost: decimal
+├── platformFee: decimal
+├── photographerEarnings: decimal
+├── status: enum ('requested', 'accepted', 'declined', 'in_progress', 'delivered', 'completed')
+├── editedPhotoUrls: text[]
+├── revisionCount: integer
+└── createdAt: timestamp
+
+-- Live Location Sharing
+live_locations
+├── id: uuid (PK)
+├── bookingId: uuid (FK → bookings)
+├── userId: uuid (FK → users)
+├── latitude: decimal
+├── longitude: decimal
+└── updatedAt: timestamp
 ```
 
-## 🔐 How Authentication Works
+---
 
-### Registration
-1. User submits email, password, full name, and role (customer/photographer)
-2. Backend hashes password with bcrypt (10 rounds)
-3. User record created in `users` table
-4. Session created and stored
-5. User logged in automatically
+## API Endpoints
 
-### Login
-1. User submits email and password
-2. Backend looks up user by email
-3. Password compared using bcrypt
-4. If valid, session created with `userId`
-5. Frontend receives user data (password excluded)
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | Create new user account |
+| POST | `/api/login` | Authenticate user |
+| POST | `/api/logout` | End session |
+| GET | `/api/user` | Get current user |
 
-### Protected Routes
-All API endpoints check `req.session.userId` to verify authentication. If missing, returns 401 Unauthorized.
+### Photographers
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/photographers` | List all verified photographers |
+| GET | `/api/photographers/:id` | Get photographer profile |
+| POST | `/api/photographers` | Create photographer profile |
+| PUT | `/api/photographers/:id` | Update photographer profile |
+| GET | `/api/photographer/me` | Get current photographer's profile |
 
-## 📸 How Image Storage Works
+### Bookings
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/bookings` | Get user's bookings |
+| GET | `/api/bookings/:id` | Get booking details |
+| POST | `/api/bookings` | Create new booking (with Stripe hold) |
+| PUT | `/api/bookings/:id/accept` | Photographer accepts (captures payment) |
+| PUT | `/api/bookings/:id/decline` | Photographer declines |
+| PUT | `/api/bookings/:id/complete` | Mark as completed |
+| PUT | `/api/bookings/:id/dismiss` | Dismiss notification |
+| POST | `/api/bookings/:id/photos` | Upload delivered photos |
 
-### Object Storage Setup
-- **Public Directory**: `/repl-default-bucket-.../public/` - For public assets
-- **Private Directory**: `/repl-default-bucket-.../.private/uploads/` - For user uploads
+### Reviews
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/photographers/:id/reviews` | Get photographer's reviews |
+| POST | `/api/bookings/:id/review` | Submit review |
+| POST | `/api/reviews/:id/respond` | Photographer responds |
 
-### Upload Flow
-1. Frontend requests upload URL from `/api/objects/upload`
-2. Backend generates presigned URL (valid for 15 minutes)
-3. Frontend uploads image directly to Google Cloud Storage
-4. Frontend sends image URL to `/api/photographer-images`
-5. Backend sets ACL policy (owner, visibility: public)
-6. Backend stores normalized path in database
+### Payments
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/create-payment-intent` | Create Stripe authorization hold |
+| GET | `/api/photographer/earnings` | Get earnings breakdown |
+| POST | `/api/stripe/onboard` | Start Stripe Connect onboarding |
 
-### Serving Images
-- **Public images**: `/public-objects/:filePath` - No auth required
-- **Private images**: `/objects/:objectPath` - Requires auth + ACL check
+### Admin
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/admin/pending-photographers` | List pending applications |
+| POST | `/api/admin/photographers/:id/verify` | Approve photographer |
+| POST | `/api/admin/photographers/:id/reject` | Reject photographer |
 
-## 💰 How Payments Will Work (Stripe Connect)
+### Object Storage
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/objects/upload` | Get presigned upload URL |
+| GET | `/public-objects/:path` | Serve public images |
+| POST | `/api/photographer-images` | Save image to profile |
 
-### The 20% Commission Model
+---
 
-SnapNow operates as a **marketplace** using Stripe Connect:
+## Key Features Implemented
 
-1. **Platform Account** (You): Receives 20% of all bookings
-2. **Photographer Accounts**: Each photographer gets their own Stripe Connect account
+### 1. Payment System (Stripe Connect)
+- **Authorization Holds**: Customer's card is authorized but not charged until photographer accepts
+- **Dual Fee Structure**: 10% customer service fee + 20% photographer commission = 30% total take rate
+- **Payment Protection**: Funds held until photographer uploads photos
+- **Connected Accounts**: Each photographer has their own Stripe account for payouts
 
-### Payment Flow
-```
-Customer pays £100
-    ↓
-Stripe receives £100
-    ↓
-    ├─ £20 goes to Platform (your account) → 20% commission
-    └─ £80 goes to Photographer's account → their earnings
-```
+### 2. Photographer Verification
+- New photographers submit portfolio (Instagram required)
+- Admin dashboard for reviewing applications
+- Only verified photographers appear in search
+- Rejection reasons provided to applicants
 
-### Implementation Steps
+### 3. Booking Flow
+1. Customer searches photographers by location
+2. Selects photographer, date, time, duration
+3. Payment authorized (not captured)
+4. Photographer has time window to accept/decline
+5. On accept: payment captured, booking confirmed
+6. On decline/expire: authorization released
 
-#### 1. Setup Stripe Integration
-```bash
-# Use Replit's Stripe integration (handles API keys automatically)
-```
+### 4. Photo Delivery
+- Photographer uploads photos after session
+- Customer can view and download
+- Payment released to photographer after upload
 
-#### 2. Create Connected Accounts for Photographers
-When a photographer signs up:
-```typescript
-// server/routes.ts
-const account = await stripe.accounts.create({
-  type: 'express',
-  country: 'GB',
-  email: photographer.email,
-  capabilities: {
-    card_payments: { requested: true },
-    transfers: { requested: true },
-  },
-});
+### 5. Review System
+- 1-5 star ratings with comments
+- Photographer can respond to reviews
+- Ratings aggregated for photographer profiles
 
-// Store account.id in photographers.stripeAccountId
-```
+### 6. Photo Editing Add-on
+- Photographers can offer editing services
+- Flat fee or per-photo pricing
+- Unlimited revisions until customer satisfied
+- 20% platform commission on editing services
 
-#### 3. Onboarding Link
-```typescript
-const accountLink = await stripe.accountLinks.create({
-  account: photographerStripeAccountId,
-  refresh_url: 'https://yourapp.replit.dev/photographer/onboarding',
-  return_url: 'https://yourapp.replit.dev/photographer/dashboard',
-  type: 'account_onboarding',
-});
-// Send photographer to accountLink.url to complete onboarding
-```
+### 7. Live Location Sharing
+- Automatic sharing within 10 minutes of session
+- Two-way visibility (customer sees photographer, vice versa)
+- Uses browser geolocation API
 
-#### 4. Process Booking Payment
-```typescript
-const paymentIntent = await stripe.paymentIntents.create({
-  amount: 10000, // £100 in pence
-  currency: 'gbp',
-  application_fee_amount: 2000, // £20 (20% commission)
-  transfer_data: {
-    destination: photographerStripeAccountId, // £80 goes here
-  },
-});
-```
+---
 
-### Stripe Connect Dashboard
-Photographers can see their earnings in their own Stripe dashboard, and you can track platform revenue in your main Stripe account.
-
-## 📱 Converting to Native Mobile App (iOS & Android)
-
-### Current State: Progressive Web App (PWA)
-- Works in mobile browsers
-- Can be "installed" to home screen
-- Limited native features
-
-### Option 1: React Native with Expo (Recommended)
-
-Expo is a framework that lets you build **one codebase** for iOS and Android.
-
-#### Step 1: Install Expo CLI
-```bash
-npm install -g expo-cli
-```
-
-#### Step 2: Create New Expo Project
-```bash
-npx create-expo-app snapnow-mobile
-cd snapnow-mobile
-```
-
-#### Step 3: Copy Your Components
-Most of your React components can be reused! Main changes:
-- `<div>` → `<View>`
-- `<span>` → `<Text>`
-- `onClick` → `onPress`
-- CSS → StyleSheet or NativeWind (Tailwind for React Native)
-
-#### Step 4: Install Dependencies
-```bash
-npm install @tanstack/react-query
-npm install expo-router # For navigation
-npm install nativewind # For Tailwind CSS
-```
-
-#### Step 5: Update Components
-```tsx
-// Before (React Web)
-<div className="bg-black p-4">
-  <h1 className="text-white">SnapNow</h1>
-</div>
-
-// After (React Native)
-<View className="bg-black p-4">
-  <Text className="text-white text-2xl font-bold">SnapNow</Text>
-</View>
-```
-
-#### Step 6: Test on Your Phone
-```bash
-expo start
-# Scan QR code with Expo Go app (iOS/Android)
-```
-
-#### Step 7: Build for App Stores
-```bash
-# iOS
-expo build:ios
-
-# Android
-expo build:android
-```
-
-### Option 2: Capacitor (Keep Existing Web Code)
-
-Capacitor wraps your web app into native containers:
-
-```bash
-npm install @capacitor/core @capacitor/cli
-npx cap init
-npx cap add ios
-npx cap add android
-npx cap open ios # Opens Xcode
-npx cap open android # Opens Android Studio
-```
-
-### Mobile-Specific Features to Add
-
-#### 1. Location Services
-```tsx
-import * as Location from 'expo-location';
-
-const { status } = await Location.requestForegroundPermissionsAsync();
-const location = await Location.getCurrentPositionAsync();
-```
-
-#### 2. Camera Access (for photographer portfolios)
-```tsx
-import * as ImagePicker from 'expo-image-picker';
-
-const result = await ImagePicker.launchCameraAsync({
-  allowsEditing: true,
-  aspect: [4, 3],
-  quality: 1,
-});
-```
-
-#### 3. Push Notifications (for booking confirmations)
-```tsx
-import * as Notifications from 'expo-notifications';
-
-await Notifications.scheduleNotificationAsync({
-  content: {
-    title: "Booking Confirmed!",
-    body: "Your photoshoot with Sarah is confirmed for tomorrow at 2 PM",
-  },
-  trigger: { seconds: 2 },
-});
-```
-
-## 🚀 Deployment & Publishing
-
-### Backend Deployment (Replit)
-Your backend is already live! When you click "Publish" in Replit:
-- Your Express server becomes publicly accessible
-- Database automatically connected
-- Object storage works out of the box
-- Get custom domain: `snapnow.replit.app`
-
-### Frontend Deployment
-Currently served by Express. To deploy separately:
-
-#### Option 1: Same Replit (Current Setup)
-```bash
-npm run build # Builds to dist/
-# Express serves static files from dist/
-```
-
-#### Option 2: Separate Frontend (Vercel/Netlify)
-```bash
-# Build frontend
-npm run build
-
-# Deploy to Vercel
-npm i -g vercel
-vercel --prod
-
-# Update API base URL
-# client/src/lib/api.ts
-const API_BASE = "https://snapnow-backend.replit.dev/api";
-```
-
-### Mobile App Publishing
-
-#### iOS App Store
-1. **Apple Developer Account**: $99/year
-2. **Bundle ID**: `com.snapnow.app`
-3. **Build**: `expo build:ios`
-4. **Submit**: Upload to App Store Connect
-5. **Review**: Apple reviews in 24-48 hours
-
-#### Google Play Store
-1. **Google Play Developer**: $25 one-time
-2. **Package Name**: `com.snapnow.app`
-3. **Build**: `expo build:android`
-4. **Submit**: Upload to Google Play Console
-5. **Review**: Usually approved in hours
-
-## 🔧 Environment Variables
-
-Your app requires these environment variables (already set in Replit):
+## Environment Variables
 
 ```env
-# Database
-DATABASE_URL=postgresql://...
+# Database (PostgreSQL)
+DATABASE_URL=postgresql://user:pass@host:5432/db
 PGHOST=...
-PGPORT=...
+PGPORT=5432
 PGUSER=...
 PGPASSWORD=...
 PGDATABASE=...
+
+# Session Security
+SESSION_SECRET=your-secret-key
 
 # Object Storage
 DEFAULT_OBJECT_STORAGE_BUCKET_ID=...
 PUBLIC_OBJECT_SEARCH_PATHS=/bucket/public
 PRIVATE_OBJECT_DIR=/bucket/.private
 
-# Session (change in production!)
-SESSION_SECRET=snapnow-secret-change-in-production
-
-# Stripe (to be added)
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
+# Stripe
+STRIPE_SECRET_KEY=sk_...
+STRIPE_PUBLISHABLE_KEY=pk_...
 ```
-
-## ✅ Completed Features
-
-### Stripe Payments - DONE
-- [x] Stripe integration with authorization holds (manual capture)
-- [x] Payment only captured when photographer accepts booking
-- [x] Auto-cancel on expiration/decline
-- [x] Platform fee collection (10% customer + 20% photographer = 30% total)
-
-### Core Features - DONE
-- [x] Review and rating system (1-5 stars with comments)
-- [x] Photo delivery system (photographer uploads, customer downloads)
-- [x] Payment hold system (funds held until photos uploaded)
-- [x] Professional photographer onboarding with verification
-- [x] Admin dashboard for photographer approval
-- [x] Live location sharing between customer and photographer
-- [x] Photo editing add-on service with revisions
-- [x] Booking dismiss feature for expired/declined bookings
-
-### Investor Materials - DONE
-- [x] Founder CV page at `/founder-cv` with print-to-PDF
-- [x] Global Talent visa optimised format
-
-## 📈 Future Enhancements
-
-### Planned Features
-- [ ] Push notifications for booking updates
-- [ ] Email notifications (booking confirmations, expirations)
-- [ ] In-app messaging between customers and photographers
-- [ ] Calendar availability for photographers
-
-### Mobile App (Future)
-- [ ] Set up Expo project
-- [ ] Port components to React Native
-- [ ] Add camera and location features
-- [ ] Test on iOS and Android
-- [ ] Submit to app stores
-
-## 🎓 Learning Resources
-
-### Stripe Connect
-- https://stripe.com/docs/connect
-- https://stripe.com/docs/connect/collect-then-transfer-guide
-
-### React Native / Expo
-- https://docs.expo.dev/
-- https://reactnative.dev/
-
-### PostgreSQL & Drizzle
-- https://orm.drizzle.team/docs/overview
-- https://www.postgresql.org/docs/
-
-## 💡 Business Model Summary
-
-### Revenue Streams
-1. **Primary**: 30% total take rate on every booking (10% customer service fee + 20% photographer commission)
-2. **Secondary**: Photo editing add-on services (20% commission)
-3. **Future**: Featured photographer placements, premium subscriptions
-
-### Unit Economics Example
-- Average booking: £75
-- Customer pays: £82.50 (includes 10% service fee)
-- Platform revenue: £22.50 (10% from customer + 20% from photographer)
-- Photographer earnings: £60 (80% of booking)
-- Target: 100 bookings/month = £2,250 monthly revenue
-
-### Growth Strategy
-1. **Phase 1**: Launch in one city (London)
-2. **Phase 2**: Expand to 3 major tourist cities
-3. **Phase 3**: International expansion
-4. **Phase 4**: Add video services, drone photography
 
 ---
 
-## 🆘 Need Help?
+## Authentication Flow
+
+### Session-based Auth
+1. User submits credentials
+2. Server validates and creates session
+3. Session ID stored in HTTP-only cookie
+4. All requests include cookie automatically
+5. Server validates session on each request
+
+### Password Security
+- Bcrypt with 10 salt rounds
+- Passwords never stored in plain text
+- Session secrets required in production
+
+---
+
+## Image Storage Flow
+
+### Upload Process
+1. Frontend requests presigned URL from `/api/objects/upload`
+2. Backend generates URL valid for 15 minutes
+3. Frontend uploads directly to Google Cloud Storage
+4. Frontend notifies backend with file path
+5. Backend sets ACL policy and stores reference
+
+### Serving Images
+- Public images: No auth required, served via `/public-objects/`
+- Private images: Auth + ACL check required
+
+---
+
+## Native App Conversion Guide
+
+### Recommended Approach: React Native + Expo
+
+The frontend is React-based, making React Native the natural choice.
+
+#### What Transfers Directly
+- Business logic and API calls
+- TanStack Query data fetching patterns
+- TypeScript types from `shared/schema.ts`
+- Authentication flow logic
+
+#### What Needs Replacement
+| Web | React Native |
+|-----|--------------|
+| Tailwind CSS | NativeWind or StyleSheet |
+| shadcn/ui | React Native Paper or custom |
+| Wouter routing | React Navigation |
+| Leaflet maps | react-native-maps |
+| Browser geolocation | expo-location |
+| File upload | expo-image-picker |
+
+#### Backend Considerations
+- Backend API remains unchanged
+- Update CORS settings for mobile app
+- Consider adding push notifications (Firebase)
+- May need refresh token system for mobile sessions
+
+### Key Files to Reference
+- `shared/schema.ts` - All data types
+- `server/routes.ts` - Complete API documentation
+- `server/storage.ts` - Database operations
+- `client/src/lib/queryClient.ts` - API call patterns
+
+---
+
+## Troubleshooting
 
 ### Database Issues
 ```bash
-# Reset database
-npm run db:push --force
+# Push schema changes
+npm run db:push
 
-# Re-seed data
-npx tsx server/seed.ts
+# Force reset (loses data)
+npm run db:push --force
 ```
 
 ### API Not Working
-```bash
-# Check server logs
-# Look for errors in the console
-# Verify authentication headers
-```
+- Check server logs in console
+- Verify session cookie is being sent
+- Check CORS configuration
 
 ### Image Upload Issues
-```bash
-# Verify object storage is set up
-# Check PRIVATE_OBJECT_DIR env var
-# Test presigned URL generation
-```
+- Verify object storage is configured
+- Check presigned URL generation
+- Ensure ACL policies are set correctly
 
 ---
 
-**Built with ❤️ on Replit**
+## Business Model
+
+### Revenue Streams
+1. **Primary**: 30% total take rate (10% customer + 20% photographer)
+2. **Secondary**: 20% commission on photo editing services
+3. **Future**: Featured placements, premium subscriptions
+
+### Unit Economics
+- Average booking: £75
+- Customer pays: £82.50 (includes 10% fee)
+- Platform revenue: £22.50 per booking
+- Photographer receives: £60 (80%)
+
+---
+
+**Last Updated**: December 2025
+**Built with Replit**
