@@ -11,10 +11,10 @@ export default function FounderCV() {
   };
 
   const skills = [
-    { category: "Engineering & Automation", items: ["TypeScript, JavaScript", "Playwright, Cypress, WebdriverIO", "Node.js, REST API testing"] },
-    { category: "CI/CD & Infrastructure", items: ["GitHub Actions, CircleCI", "Docker, AWS Cloud", "Distributed test execution"] },
-    { category: "Systems Architecture", items: ["E2E validation platforms", "Integration testing frameworks", "Automated release governance"] },
-    { category: "Quality Leadership", items: ["Shift-left design", "Scalable test architecture", "Mentoring & enablement"] },
+    { category: "UI & Automation", items: ["Playwright & TypeScript", "Cypress & JavaScript", "WebdriverIO", "Appium"] },
+    { category: "CI/CD & DevOps", items: ["GitHub Actions", "Jenkins", "GitLab CI", "Docker"] },
+    { category: "Cloud & Backend", items: ["AWS EC2/S3/Lambda", "Node.js", "Linux Servers"] },
+    { category: "Testing Methods", items: ["BDD & TDD", "API Testing", "E2E Testing", "Exploratory Testing"] },
   ];
 
   const experience = [
@@ -30,26 +30,22 @@ export default function FounderCV() {
     },
     {
       company: "At Last (Part-time Contractor)",
-      role: "Founding Automation Architect",
+      role: "Founding SDET",
       period: "2024 - Present",
       highlights: [
-        "Built the foundational TypeScript/Playwright automation framework validating 20+ carrier integrations from the ground up",
-        "Eliminated a critical business risk related to external API reliability and operational readiness",
-        "Recognised by CTO and CEO as the 'Founding Architect' of the company's validation infrastructure",
-        "Enabled investor confidence by stabilising multi-carrier logistics workflows",
-        "Engineered end-to-end, integration, and API test suites for Albert AI, implementing pre-merge validation pipelines that enforce green builds before any code merges to master"
+        "Architected the complete test automation infrastructure for a multi-carrier logistics platform, designing scalable TypeScript/Playwright frameworks from scratch",
+        "Engineered end-to-end, integration, and API test suites for Albert AI, implementing pre-merge validation pipelines that enforce green builds before any code merges to master",
+        "Built CI/CD workflows with GitHub Actions, configuring branch protection rules, automated test runners, and rebase-before-merge enforcement across all repositories"
       ]
     },
     {
-      company: "Natter (Tenth Chapter Limited)",
+      company: "Natter",
       role: "Principal Software Engineer in Test (SDET)",
       period: "Jan 2024 - Aug 2024",
       highlights: [
-        "Architected and deployed organisation-wide automated release-validation infrastructure used across all product squads",
-        "Implemented CI/CD quality-gate enforcement, increasing release confidence and stability",
-        "Recognised by CEO for delivering a high-ROI engineering platform that reduced commercial risk",
         "Promoted to Principal role to lead and mentor a team of 2 SDETs, establishing quality standards from sprint planning through deployment",
-        "Designed and implemented a Playwright/TypeScript framework that reduced regression testing time from 4 hours to 45 minutes"
+        "Designed and implemented a Playwright/TypeScript framework that reduced regression testing time from 4 hours to 45 minutes",
+        "Transformed CI/CD pipeline with GitHub Actions, enforcing branch protection rules that mandate rebasing and green builds before any merge to master"
       ]
     },
     {
@@ -68,11 +64,9 @@ export default function FounderCV() {
       role: "Senior Software Engineer in Test (SDET)",
       period: "Aug 2020 - Jan 2022",
       highlights: [
-        "Scaled automation architecture across 20+ engineering teams during hyper-growth (50 to 1,000+ employees)",
-        "Increased unit test coverage from 40% to 85%, improving platform reliability",
-        "Integrated system-level automation into CI/CD pipelines, enforcing green-build standards",
-        "Partnered with engineering squads to adopt React Testing Library and improve shift-left coverage strategies",
-        "Architected end-to-end automation suite with strict green-build requirements—no PR merged without passing all test layers"
+        "Scaled testing infrastructure during explosive hyper-growth (50 to 1,000+ employees), maintaining quality while shipping daily",
+        "Architected end-to-end automation suite with strict green-build requirements—no PR merged without passing all test layers",
+        "Collaborated with 20+ engineering squads to integrate React Testing Library, increasing unit test coverage from 40% to 85%"
       ]
     },
     {
@@ -299,69 +293,30 @@ export default function FounderCV() {
               </div>
             </div>
 
-            {/* Professional Summary */}
+            {/* Profile Summary */}
             <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
               <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
                 <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Professional Summary
+                Professional Profile
               </h2>
               <div className="text-gray-300 print-muted-text leading-relaxed space-y-3">
                 <p>
-                  Senior Software Development Engineer in Test (SDET) and Technical Systems Architect with 12+ years' experience designing, 
-                  engineering, and scaling proprietary automation platforms for high-growth technology companies. Specialised in architecting 
-                  end-to-end validation infrastructure, CI/CD quality-gate systems, and multi-service integration frameworks that reduce 
-                  operational risk and accelerate product delivery.
+                  Accomplished Senior SDET with 12+ years of expertise transforming software delivery through shift-left quality engineering. 
+                  I specialise in revolutionising development workflows by embedding quality gates directly into the CI/CD pipeline, ensuring 
+                  no code reaches production without passing rigorous automated validation.
                 </p>
                 <p>
-                  Proven track record as a founding automation architect, delivering business-critical engineering platforms at multiple 
-                  startups—directly contributing to funding readiness, commercial reliability, and organisational scalability. Recognised 
-                  by CEOs and CTOs for building high-ROI validation systems that safeguard product releases.
+                  My approach centres on pre-merge quality enforcement: every pull request must rebase against the latest master branch and 
+                  pass comprehensive test suites (unit, integration, and end-to-end) before merge approval. This methodology eliminates 
+                  the traditional "test after development" bottleneck, catching defects at the earliest and cheapest point in the lifecycle. 
+                  By mandating green builds as a merge prerequisite, I've helped organisations achieve near-zero production defects while 
+                  accelerating release velocity.
                 </p>
                 <p>
-                  Expertise includes TypeScript/Playwright framework design, GitHub Actions CI/CD integration, AWS cloud infrastructure, 
-                  and cross-functional engineering leadership. Known for mentoring developers, influencing testability standards, and 
-                  driving shift-left quality culture across engineering organisations.
+                  I architect robust testing frameworks using Playwright/TypeScript and Cypress/JavaScript, integrating them seamlessly 
+                  with GitHub Actions, Jenkins, and GitLab CI. My frameworks are designed for developer adoption—enabling engineers to 
+                  write and run tests locally before pushing, fostering a culture where quality is everyone's responsibility.
                 </p>
-              </div>
-            </section>
-
-            {/* Innovation & Technical Leadership Highlights */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Innovation & Technical Leadership Highlights
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Architected Proprietary Enterprise Validation Platform — Natter</h3>
-                  <p className="text-sm text-gray-300">
-                    Designed and deployed the company-wide automation and release-validation infrastructure, cited by the CEO as 
-                    mission-critical for mitigating commercial and operational risk. This system enforced automated quality gates 
-                    across all services and became the core technical safeguard for the organisation's scalability.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Founding Automation Architect — At Last</h3>
-                  <p className="text-sm text-gray-300">
-                    Built the entire TypeScript/Playwright multi-carrier logistics automation framework from the ground up. This 
-                    platform validated integrations with 20+ external carrier APIs, eliminating the company's most significant 
-                    technical risk and directly contributing to funding readiness and commercial reliability (confirmed by CEO and CTO letters).
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">CI/CD Quality Gate Transformation — Hopin</h3>
-                  <p className="text-sm text-gray-300">
-                    Engineered the green-build enforcement system and integrated automation across more than 20 engineering squads 
-                    during hyper-growth. Increased unit-test coverage from 40% to 85%, enabling safe continuous delivery at scale.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Cross-Functional Engineering Leadership</h3>
-                  <p className="text-sm text-gray-300">
-                    Recognised as a technical leader across engineering squads, mentoring developers on testability, automation, 
-                    and architectural patterns, and influencing organisational development standards.
-                  </p>
-                </div>
               </div>
             </section>
 
@@ -438,54 +393,6 @@ export default function FounderCV() {
                   <span className="text-gray-500">Mar 2013 - Jan 2015</span>
                 </div>
               </div>
-            </section>
-
-            {/* Recognition & Leadership */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Recognition & Leadership
-              </h2>
-              <ul className="space-y-2">
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Identified by multiple CEOs/CTOs as a principal-level SDET architect with organisation-wide impact
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Delivered business-critical engineering platforms at Natter and At Last, documented in leadership recommendation letters
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Served as founding automation architect across multiple startups, influencing engineering culture and delivery standards
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Provided cross-team mentoring and technical guidance to engineering squads, improving automation maturity and testability practices
-                </li>
-              </ul>
-            </section>
-
-            {/* Founder & Innovation Roadmap */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Founder & Innovation Roadmap
-              </h2>
-              <ul className="space-y-2">
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Currently developing an early-stage prototype for a new technology startup
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Focused on leveraging automation, systems architecture, and platform engineering expertise to build scalable tech products
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Future plans include contributing automation frameworks, open-source tooling, and engineering knowledge to the UK tech ecosystem
-                </li>
-              </ul>
             </section>
 
             {/* Education */}
