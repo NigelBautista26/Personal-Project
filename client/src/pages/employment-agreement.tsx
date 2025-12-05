@@ -127,7 +127,7 @@ export default function EmploymentAgreement() {
             <div className="section mb-6">
               <h2 className="text-lg font-bold mb-3">2 DUTIES</h2>
               <div className="ml-6 space-y-2 text-sm">
-                <p><strong>2.1</strong> You are employed as <strong>Senior SDET</strong>, where you shall perform the duties and exercise the powers which from time to time may be assigned to you or vested in you by the Company and shall devote the whole of your time, ability and attention to these duties under this Agreement.</p>
+                <p><strong>2.1</strong> You are employed as Senior SDET, where you shall perform the duties and exercise the powers which from time to time may be assigned to you or vested in you by the Company and shall devote the whole of your time, ability and attention to these duties under this Agreement.</p>
                 <p><strong>2.2</strong> You may be required to undertake other duties from time to time as we may reasonably require.</p>
                 <p><strong>2.3</strong> You confirm that you are entitled to work in the United Kingdom without any additional approvals and that you will tell us immediately if this changes.</p>
                 <p><strong>2.4</strong> You agree not to work for anyone else while you are employed by Natter, other than by prior agreement with the Company.</p>
