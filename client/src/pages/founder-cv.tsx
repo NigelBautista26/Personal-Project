@@ -146,6 +146,11 @@ export default function FounderCV() {
             background: rgba(30, 41, 59, 0.5) !important;
           }
           
+          .job-card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          
           .cv-header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
             -webkit-print-color-adjust: exact !important;
@@ -290,7 +295,7 @@ export default function FounderCV() {
               </h2>
               <div className="space-y-4">
                 {experience.map((job, idx) => (
-                  <div key={idx} className="print-bg-light rounded-xl p-4 bg-slate-800/50 border-l-4 border-indigo-500">
+                  <div key={idx} className="job-card print-bg-light rounded-xl p-4 bg-slate-800/50 border-l-4 border-indigo-500">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2">
                       <div>
                         <h3 className="font-bold text-white print-dark-text">{job.company}</h3>
