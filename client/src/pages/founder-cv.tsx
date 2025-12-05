@@ -150,18 +150,18 @@ export default function FounderCV() {
           .cv-section { 
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 0.6rem !important;
+            margin-bottom: 1rem !important;
             background: rgba(30, 41, 59, 0.5) !important;
-            border-radius: 0.5rem !important;
-            padding: 0.5rem !important;
+            border-radius: 0.75rem !important;
+            padding: 1rem !important;
           }
           
           .job-card {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 0.4rem !important;
-            padding: 0.4rem !important;
-            border-radius: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            padding: 1rem !important;
+            border-radius: 0.75rem !important;
           }
           
           .experience-section {
@@ -215,39 +215,39 @@ export default function FounderCV() {
           }
           
           h2 { 
-            font-size: 0.95rem !important; 
-            margin-bottom: 0.4rem !important; 
+            font-size: 1.1rem !important; 
+            margin-bottom: 0.5rem !important; 
             color: white !important;
           }
           h3 { 
-            font-size: 0.85rem !important; 
+            font-size: 1rem !important; 
             color: white !important;
-            margin-bottom: 0.1rem !important;
+            margin-bottom: 0.25rem !important;
           }
           p { 
-            font-size: 0.75rem !important; 
-            line-height: 1.35 !important;
-            margin-bottom: 0.2rem !important;
+            font-size: 0.85rem !important; 
+            line-height: 1.5 !important;
+            margin-bottom: 0.5rem !important;
           }
           li { 
-            font-size: 0.72rem !important; 
-            line-height: 1.3 !important;
-            margin-bottom: 0.1rem !important;
+            font-size: 0.85rem !important; 
+            line-height: 1.45 !important;
+            margin-bottom: 0.25rem !important;
           }
-          .text-sm { font-size: 0.7rem !important; }
-          .mb-6 { margin-bottom: 0.4rem !important; }
-          .mb-4 { margin-bottom: 0.3rem !important; }
-          .mb-3 { margin-bottom: 0.25rem !important; }
-          .mb-2 { margin-bottom: 0.15rem !important; }
-          .py-6 { padding-top: 0.3rem !important; padding-bottom: 0.3rem !important; }
-          .p-4 { padding: 0.35rem !important; }
-          .p-6 { padding: 0.5rem !important; }
-          .gap-4 { gap: 0.25rem !important; }
-          .gap-2 { gap: 0.15rem !important; }
-          .space-y-4 > * + * { margin-top: 0.25rem !important; }
-          .space-y-3 > * + * { margin-top: 0.2rem !important; }
-          .space-y-2 > * + * { margin-top: 0.1rem !important; }
-          .space-y-1 > * + * { margin-top: 0.05rem !important; }
+          .text-sm { font-size: 0.8rem !important; }
+          .mb-6 { margin-bottom: 1rem !important; }
+          .mb-4 { margin-bottom: 0.75rem !important; }
+          .mb-3 { margin-bottom: 0.5rem !important; }
+          .mb-2 { margin-bottom: 0.35rem !important; }
+          .py-6 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+          .p-4 { padding: 0.75rem !important; }
+          .p-6 { padding: 1rem !important; }
+          .gap-4 { gap: 0.75rem !important; }
+          .gap-2 { gap: 0.4rem !important; }
+          .space-y-4 > * + * { margin-top: 0.75rem !important; }
+          .space-y-3 > * + * { margin-top: 0.5rem !important; }
+          .space-y-2 > * + * { margin-top: 0.35rem !important; }
+          .space-y-1 > * + * { margin-top: 0.2rem !important; }
           
           .rounded-xl { border-radius: 0.5rem !important; }
           .rounded-2xl { border-radius: 0.75rem !important; }
@@ -268,11 +268,11 @@ export default function FounderCV() {
           .skills-grid {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
-            gap: 0.3rem !important;
+            gap: 0.75rem !important;
           }
           
           .skills-grid > div {
-            padding: 0.3rem !important;
+            padding: 0.75rem !important;
           }
           
           .earlier-career {
