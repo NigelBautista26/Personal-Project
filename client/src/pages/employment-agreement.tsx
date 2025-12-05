@@ -91,6 +91,11 @@ export default function EmploymentAgreement() {
           </div>
 
           <div ref={contentRef} className="p-8 bg-white">
+            {/* DocuSign Header */}
+            <div className="text-xs text-gray-400 mb-4">
+              <p>DocuSign Envelope ID: 9EFC016F-3FBB-4B7F-98AE-D783CF20F18E</p>
+            </div>
+
             {/* Header */}
             <div className="text-right mb-8 text-sm text-gray-600">
               <p className="font-semibold">Tenth Chapter Limited (trading as "Natter")</p>
@@ -98,6 +103,9 @@ export default function EmploymentAgreement() {
               <p>Aldwych House, 71-91 Aldwych, London, WC2B 4HN, United Kingdom</p>
             </div>
 
+            <div className="text-right mb-2 text-sm text-gray-600">
+              <p>27 September 2023 | 8:15 AM PDT</p>
+            </div>
             <div className="text-center mb-8">
               <p className="text-sm">This agreement is dated .........................................................</p>
             </div>
