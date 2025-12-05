@@ -194,8 +194,24 @@ export default function FounderCV() {
             gap: 0.4rem !important;
           }
           
-          .bg-slate-800\/50 {
-            background: rgba(30, 41, 59, 0.5) !important;
+          .bg-slate-800\/50,
+          .print-bg-light {
+            background-color: #1e293b !important;
+            background: #1e293b !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          .cv-section,
+          .job-card,
+          .skills-grid > div,
+          .earlier-career {
+            background-color: #1e293b !important;
+            background: #1e293b !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           
           h2 { 
