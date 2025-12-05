@@ -172,18 +172,26 @@ export default function FounderCV() {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            padding: 0.6rem !important;
-            border-radius: 0.75rem !important;
-            margin-bottom: 0.5rem !important;
+            padding: 1.25rem 1.5rem !important;
+            border-radius: 1rem !important;
+            margin-bottom: 0.75rem !important;
           }
           
           .cv-header h1 {
-            font-size: 1.5rem !important;
-            margin-bottom: 0.2rem !important;
+            font-size: 1.75rem !important;
+            margin-bottom: 0.4rem !important;
           }
           
           .cv-header .text-xl {
-            font-size: 0.95rem !important;
+            font-size: 1.1rem !important;
+          }
+          
+          .cv-header .text-sm {
+            font-size: 0.8rem !important;
+          }
+          
+          .cv-header .gap-2 {
+            gap: 0.4rem !important;
           }
           
           .bg-slate-800\/50 {
