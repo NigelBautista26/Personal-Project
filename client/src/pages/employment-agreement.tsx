@@ -352,27 +352,41 @@ export default function EmploymentAgreement() {
               </div>
             </div>
 
+            {/* Schedule One */}
+            <div className="section mb-6 mt-12 pt-8 border-t border-gray-300">
+              <h2 className="text-lg font-bold mb-4 text-center">SCHEDULE ONE: EQUITY INCENTIVE PLAN</h2>
+              <div className="space-y-3 text-sm">
+                <p>Provided that you meet the requirements of the Company's EMI (within the meaning of Schedule 5 ITEPA 2003) option scheme, and provided that an EMI valuation is obtained from HMRC by the Company, you'll be eligible to participate in the scheme.</p>
+                <p>Pursuant to our annual staff option grant, in or about each June, qualifying employees who have not yet been awarded an option by the Company, provided that they have been with the Company for more than 6 months, and whose performance over that time meets the relevant standard of performance, are granted an option to subscribe for shares in the Company ("Performance Options"). All Performance Options are granted at the absolute discretion of the Company.</p>
+                <p>If you qualify for Performance Options, you'll be granted an option in relation to shares that represent, depending on your performance, a percentage of your basic salary (or as per the methodology the Company has in place at that time) at the applicable Company valuation approved by the Company's board of directors.</p>
+                <p>Your option will be subject to the rules contained in a separate option grant agreement, and in case of any discrepancy or conflict between the option grant agreement and this Schedule One the option grant agreement will prevail. The Company reserves the right at its absolute discretion to award a nil Performance Option award.</p>
+                <p>On termination of your employment (however arising) you will not be entitled to any compensation for the loss of any rights or benefits (as applicable) under any share option, bonus, long-term, incentive plan or other profit sharing scheme operated by the Company in which you may then participate.</p>
+              </div>
+            </div>
+
             {/* Signature Block */}
             <div className="mt-12 pt-8 border-t border-gray-300">
-              <p className="mb-8">Yours sincerely,</p>
+              <p className="mb-8 text-sm">Please indicate your acceptance of these terms and conditions of employment by signing this letter.</p>
               
-              <div className="mb-8">
-                <p className="mb-4">_______________________________</p>
-                <p className="font-semibold">For and on behalf of Tenth Chapter Limited</p>
+              <div className="mb-12">
+                <p className="mb-2 text-sm italic text-gray-500">[Signed electronically via DocuSign]</p>
+                <p className="mb-4">……………………………………………….</p>
+                <p className="text-sm">Acting as a director; for and on behalf of Tenth Chapter Limited</p>
+                <div className="mt-4 space-y-1 text-sm">
+                  <p><strong>Name:</strong> James Stevens</p>
+                  <p><strong>Job Title:</strong> Company Director, COO/CFO</p>
+                  <p><strong>Date signed:</strong> 27 September 2023 | 8:15 AM PDT</p>
+                </div>
               </div>
 
               <div className="mt-12">
-                <p className="mb-2">I confirm my acceptance of the terms set out above and my agreement to be bound by them.</p>
+                <p className="mb-4 text-sm">I agree to the above terms and conditions of employment.</p>
                 
-                <div className="mt-8 grid grid-cols-2 gap-8">
-                  <div>
-                    <p className="mb-4">_______________________________</p>
-                    <p>Nigel Bautista</p>
-                  </div>
-                  <div>
-                    <p className="mb-4">_______________________________</p>
-                    <p>Date</p>
-                  </div>
+                <p className="mb-2 text-sm italic text-gray-500">[Signed electronically via DocuSign]</p>
+                <p className="mb-4">……………………………………………….</p>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Name:</strong> Nigel Bautista</p>
+                  <p><strong>Date signed:</strong> 27,09,2023</p>
                 </div>
               </div>
             </div>
