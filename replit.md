@@ -172,6 +172,16 @@ Preferred communication style: Simple, everyday language.
   - **Admin Role**: New 'admin' role type added to users table
   - Existing photographers were migrated to 'verified' status
 
+- **Booking Dismiss Feature** (Dec 2025): Both customers and photographers can now dismiss expired or declined booking notifications from their respective booking pages.
+
+- **Founder CV Page** (Dec 2025): Interactive CV page at `/founder-cv` for investor materials:
+  - Global Talent visa optimised format with Professional Summary, Innovation & Technical Leadership Highlights
+  - Technical Skills grid with Engineering, CI/CD, Systems Architecture, and Quality Leadership categories
+  - Detailed work experience with measurable impact metrics
+  - Recognition & Leadership section highlighting CEO/CTO endorsements
+  - Founder & Innovation Roadmap section for startup prototype work
+  - Print-to-PDF functionality with proper A4 formatting and page breaks
+
 **Demo Accounts:**
 - Customer: customer@test.com / password
 - Photographer: anna@snapnow.com / password
