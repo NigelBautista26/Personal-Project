@@ -30,10 +30,10 @@ export default function FounderCV() {
     },
     {
       company: "At Last (Part-time Contractor)",
-      role: "Founding QA Engineer",
+      role: "Founding Senior SDET",
       period: "2024 - Present",
       highlights: [
-        "Selected as the founding QA engineer to establish quality practices from the ground up at this early-stage startup",
+        "Selected as the founding Senior SDET to establish quality practices from the ground up at this early-stage startup",
         "Building test automation infrastructure and defining quality standards while working 2 days per week alongside full-time role",
         "Collaborating directly with founders to embed shift-left testing culture from day one of product development"
       ]
