@@ -33,9 +33,9 @@ export default function FounderCV() {
       role: "Founding Senior SDET",
       period: "2024 - Present",
       highlights: [
-        "Selected as the founding Senior SDET to establish quality practices from the ground up at this early-stage startup",
-        "Building test automation infrastructure and defining quality standards while working 2 days per week alongside full-time role",
-        "Collaborating directly with founders to embed shift-left testing culture from day one of product development"
+        "Sole SDET responsible for architecting the entire quality ecosystem for a multi-carrier logistics platform from the ground up",
+        "Established the TypeScript/Playwright automation framework from scratch, ensuring Albert AI was developed with built-in, rigorous quality standards",
+        "Defined and implemented comprehensive testing strategies, quality gates, and CI/CD integration as the founding quality engineer"
       ]
     },
     {
