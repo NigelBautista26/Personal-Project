@@ -366,36 +366,42 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
-## 📈 Next Steps to Launch
+## ✅ Completed Features
 
-### 1. Add Stripe Payments (2-4 hours)
-- Set up Stripe account
-- Add Stripe integration
-- Implement Connected Accounts
-- Test payment flow
-- Add payout tracking
+### Stripe Payments - DONE
+- [x] Stripe integration with authorization holds (manual capture)
+- [x] Payment only captured when photographer accepts booking
+- [x] Auto-cancel on expiration/decline
+- [x] Platform fee collection (10% customer + 20% photographer = 30% total)
 
-### 2. Enhanced Features (1-2 days)
-- [ ] Real-time chat between customer and photographer
+### Core Features - DONE
+- [x] Review and rating system (1-5 stars with comments)
+- [x] Photo delivery system (photographer uploads, customer downloads)
+- [x] Payment hold system (funds held until photos uploaded)
+- [x] Professional photographer onboarding with verification
+- [x] Admin dashboard for photographer approval
+- [x] Live location sharing between customer and photographer
+- [x] Photo editing add-on service with revisions
+- [x] Booking dismiss feature for expired/declined bookings
+
+### Investor Materials - DONE
+- [x] Founder CV page at `/founder-cv` with print-to-PDF
+- [x] Global Talent visa optimised format
+
+## 📈 Future Enhancements
+
+### Planned Features
+- [ ] Push notifications for booking updates
+- [ ] Email notifications (booking confirmations, expirations)
+- [ ] In-app messaging between customers and photographers
 - [ ] Calendar availability for photographers
-- [ ] Review and rating system after bookings
-- [ ] Email notifications (booking confirmations)
-- [ ] Photo delivery system (photographer uploads final photos)
-- [ ] Refund and cancellation policies
 
-### 3. Convert to Mobile App (3-5 days)
+### Mobile App (Future)
 - [ ] Set up Expo project
 - [ ] Port components to React Native
 - [ ] Add camera and location features
 - [ ] Test on iOS and Android
 - [ ] Submit to app stores
-
-### 4. Polish & Launch (1 week)
-- [ ] Professional photographer onboarding
-- [ ] Legal pages (Terms, Privacy Policy)
-- [ ] Customer support system
-- [ ] Analytics (track bookings, revenue)
-- [ ] Marketing website
 
 ## 🎓 Learning Resources
 
@@ -414,15 +420,16 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 ## 💡 Business Model Summary
 
 ### Revenue Streams
-1. **Primary**: 20% commission on every booking
-2. **Secondary**: Featured photographer placements (£50/month)
-3. **Tertiary**: Premium photographer subscriptions (lower commission: 15%)
+1. **Primary**: 30% total take rate on every booking (10% customer service fee + 20% photographer commission)
+2. **Secondary**: Photo editing add-on services (20% commission)
+3. **Future**: Featured photographer placements, premium subscriptions
 
 ### Unit Economics Example
 - Average booking: £75
-- Platform commission (20%): £15
-- Photographer earnings (80%): £60
-- Target: 100 bookings/month = £1,500 monthly revenue
+- Customer pays: £82.50 (includes 10% service fee)
+- Platform revenue: £22.50 (10% from customer + 20% from photographer)
+- Photographer earnings: £60 (80% of booking)
+- Target: 100 bookings/month = £2,250 monthly revenue
 
 ### Growth Strategy
 1. **Phase 1**: Launch in one city (London)
