@@ -107,21 +107,19 @@ export default function FounderCV() {
         @media print {
           @page { 
             size: A4; 
-            margin: 0.5in 0.4in;
+            margin: 0.5in;
           }
           
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            color-adjust: exact !important;
           }
           
           html, body, #root {
             height: auto !important;
             overflow: visible !important;
-            max-width: none !important;
-            width: auto !important;
             background: #0f172a !important;
-            color: white !important;
           }
           
           .cv-page {
@@ -131,152 +129,23 @@ export default function FounderCV() {
             width: auto !important;
             padding: 0 !important;
             background: #0f172a !important;
-            color: white !important;
           }
           
           .print-wrapper {
             max-width: none !important;
-            background: #0f172a !important;
-          }
-          
-          .cv-content {
-            padding: 0 !important;
           }
           
           .no-print {
             display: none !important;
           }
           
-          .cv-section { 
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-            margin-bottom: 1rem !important;
-            background: rgba(30, 41, 59, 0.5) !important;
-            border-radius: 0.75rem !important;
-            padding: 1rem !important;
-          }
-          
           .job-card {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 0.75rem !important;
-            padding: 1rem !important;
-            border-radius: 0.75rem !important;
-          }
-          
-          .experience-section {
-            page-break-before: auto;
           }
           
           .cv-header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            padding: 1.25rem 1.5rem !important;
-            border-radius: 1rem !important;
-            margin-bottom: 0.75rem !important;
-          }
-          
-          .cv-header h1 {
-            font-size: 1.75rem !important;
-            margin-bottom: 0.4rem !important;
-          }
-          
-          .cv-header .text-xl {
-            font-size: 1.1rem !important;
-          }
-          
-          .cv-header .text-sm {
-            font-size: 0.8rem !important;
-          }
-          
-          .cv-header .gap-2 {
-            gap: 0.4rem !important;
-          }
-          
-          .bg-slate-800\/50,
-          .print-bg-light {
-            background-color: #1e293b !important;
-            background: #1e293b !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-          
-          .cv-section,
-          .job-card,
-          .skills-grid > div,
-          .earlier-career {
-            background-color: #1e293b !important;
-            background: #1e293b !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            color-adjust: exact !important;
-          }
-          
-          h2 { 
-            font-size: 1.1rem !important; 
-            margin-bottom: 0.5rem !important; 
-            color: white !important;
-          }
-          h3 { 
-            font-size: 1rem !important; 
-            color: white !important;
-            margin-bottom: 0.25rem !important;
-          }
-          p { 
-            font-size: 0.85rem !important; 
-            line-height: 1.5 !important;
-            margin-bottom: 0.5rem !important;
-          }
-          li { 
-            font-size: 0.85rem !important; 
-            line-height: 1.45 !important;
-            margin-bottom: 0.25rem !important;
-          }
-          .text-sm { font-size: 0.8rem !important; }
-          .mb-6 { margin-bottom: 1rem !important; }
-          .mb-4 { margin-bottom: 0.75rem !important; }
-          .mb-3 { margin-bottom: 0.5rem !important; }
-          .mb-2 { margin-bottom: 0.35rem !important; }
-          .py-6 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
-          .p-4 { padding: 0.75rem !important; }
-          .p-6 { padding: 1rem !important; }
-          .gap-4 { gap: 0.75rem !important; }
-          .gap-2 { gap: 0.4rem !important; }
-          .space-y-4 > * + * { margin-top: 0.75rem !important; }
-          .space-y-3 > * + * { margin-top: 0.5rem !important; }
-          .space-y-2 > * + * { margin-top: 0.35rem !important; }
-          .space-y-1 > * + * { margin-top: 0.2rem !important; }
-          
-          .rounded-xl { border-radius: 0.5rem !important; }
-          .rounded-2xl { border-radius: 0.75rem !important; }
-          
-          .text-white { color: white !important; }
-          .text-gray-300 { color: #d1d5db !important; }
-          .text-gray-400 { color: #9ca3af !important; }
-          .text-gray-500 { color: #6b7280 !important; }
-          .text-indigo-400 { color: #818cf8 !important; }
-          .text-indigo-200 { color: #c7d2fe !important; }
-          .text-indigo-100 { color: #e0e7ff !important; }
-          .text-green-400 { color: #4ade80 !important; }
-          
-          .border-indigo-500 { border-color: #6366f1 !important; }
-          .border-slate-700 { border-color: #334155 !important; }
-          .border-l-4 { border-left-width: 3px !important; }
-          
-          .skills-grid {
-            display: grid !important;
-            grid-template-columns: repeat(4, 1fr) !important;
-            gap: 0.75rem !important;
-          }
-          
-          .skills-grid > div {
-            padding: 0.75rem !important;
-          }
-          
-          .earlier-career {
-            page-break-inside: avoid !important;
           }
         }
       `}</style>
