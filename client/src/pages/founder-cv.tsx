@@ -171,6 +171,20 @@ export default function FounderCV() {
             border-radius: 1rem !important;
           }
           
+          .cv-header > div {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+          }
+          
+          .cv-header .contact-info {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: flex-end !important;
+            gap: 0.35rem !important;
+          }
+          
           .bg-slate-800\/50 {
             background: rgba(30, 41, 59, 0.5) !important;
           }
@@ -248,7 +262,7 @@ export default function FounderCV() {
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">Nigel Bautista</h1>
                   <p className="text-xl text-indigo-200 font-medium">Senior SDET / Software Engineer in Test</p>
                 </div>
-                <div className="flex flex-col gap-2 text-sm text-indigo-100">
+                <div className="contact-info flex flex-col gap-2 text-sm text-indigo-100">
                   <a href="tel:07462413044" className="flex items-center gap-2 hover:text-white transition-colors">
                     <Phone className="w-4 h-4" />
                     07462413044
