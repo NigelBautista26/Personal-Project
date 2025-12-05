@@ -35,7 +35,6 @@ import InvestorPitch from "@/pages/investor-pitch";
 import InvestorProjections from "@/pages/investor-projections";
 import FundingPlan from "@/pages/funding-plan";
 import FounderCV from "@/pages/founder-cv";
-import EmploymentAgreement from "@/pages/employment-agreement";
 
 function Router() {
   return (
@@ -71,7 +70,6 @@ function Router() {
       <Route path="/investor-projections" component={InvestorProjections} />
       <Route path="/funding-plan" component={FundingPlan} />
       <Route path="/founder-cv" component={FounderCV} />
-      <Route path="/employment-agreement" component={EmploymentAgreement} />
       <Route component={NotFound} />
     </Switch>
   );
