@@ -149,26 +149,34 @@ export default function FounderCV() {
           
           .cv-section { 
             page-break-inside: avoid;
-            margin-bottom: 1rem !important;
-            padding: 1rem !important;
+            margin-bottom: 0.6rem !important;
+            padding: 0.6rem !important;
             background: rgba(30, 41, 59, 0.5) !important;
-            border-radius: 0.75rem !important;
+            border-radius: 0.5rem !important;
           }
           
           .job-card {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 1rem !important;
-            padding: 1rem !important;
+            margin-bottom: 0.6rem !important;
+            padding: 0.6rem !important;
           }
           
           .cv-header {
             background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            padding: 1.5rem !important;
-            margin-bottom: 1.25rem !important;
-            border-radius: 1rem !important;
+            padding: 1rem !important;
+            margin-bottom: 0.75rem !important;
+            border-radius: 0.75rem !important;
+          }
+          
+          .experience-section {
+            page-break-before: avoid !important;
+          }
+          
+          .experience-section h2 {
+            page-break-after: avoid !important;
           }
           
           .cv-header > div {
@@ -189,22 +197,24 @@ export default function FounderCV() {
             background: rgba(30, 41, 59, 0.5) !important;
           }
           
-          h2 { font-size: 1.1rem !important; margin-bottom: 0.75rem !important; color: white !important; }
-          h3 { font-size: 0.95rem !important; color: white !important; }
-          p { font-size: 0.85rem !important; line-height: 1.5 !important; margin-bottom: 0.5rem !important; }
-          li { font-size: 0.8rem !important; line-height: 1.4 !important; margin-bottom: 0.25rem !important; }
-          .text-sm { font-size: 0.8rem !important; }
-          .mb-6 { margin-bottom: 1rem !important; }
-          .mb-4 { margin-bottom: 0.75rem !important; }
-          .mb-3 { margin-bottom: 0.5rem !important; }
-          .py-6 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
-          .p-4 { padding: 0.75rem !important; }
-          .p-6 { padding: 1rem !important; }
-          .gap-4 { gap: 0.75rem !important; }
-          .gap-2 { gap: 0.5rem !important; }
-          .space-y-4 > * + * { margin-top: 0.75rem !important; }
-          .space-y-3 > * + * { margin-top: 0.5rem !important; }
-          .space-y-2 > * + * { margin-top: 0.35rem !important; }
+          h2 { font-size: 0.95rem !important; margin-bottom: 0.5rem !important; color: white !important; }
+          h3 { font-size: 0.85rem !important; color: white !important; }
+          p { font-size: 0.75rem !important; line-height: 1.4 !important; margin-bottom: 0.35rem !important; }
+          li { font-size: 0.72rem !important; line-height: 1.35 !important; margin-bottom: 0.15rem !important; }
+          .text-sm { font-size: 0.7rem !important; }
+          .text-xl { font-size: 0.95rem !important; }
+          .mb-6 { margin-bottom: 0.6rem !important; }
+          .mb-4 { margin-bottom: 0.5rem !important; }
+          .mb-3 { margin-bottom: 0.35rem !important; }
+          .mb-2 { margin-bottom: 0.25rem !important; }
+          .py-6 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+          .p-4 { padding: 0.5rem !important; }
+          .p-6 { padding: 0.75rem !important; }
+          .gap-4 { gap: 0.5rem !important; }
+          .gap-2 { gap: 0.3rem !important; }
+          .space-y-4 > * + * { margin-top: 0.5rem !important; }
+          .space-y-3 > * + * { margin-top: 0.35rem !important; }
+          .space-y-2 > * + * { margin-top: 0.2rem !important; }
           
           .text-white { color: white !important; }
           .text-gray-300 { color: #d1d5db !important; }
