@@ -1,0 +1,93 @@
+Right now we’re finally at a good baseline, so from here it’s more building features than fighting infrastructure 👌
+
+Where you are
+
+✅ Login → backend dev URL works
+
+✅ Photographer with no profile goes to onboarding
+
+✅ Photographer with existing profile (Anna) goes to dashboard
+
+✅ Dashboard renders without context errors
+
+✅ snapnowApi + apiClient paths are fixed
+
+Suggested roadmap from here
+
+I’d do things in this order:
+
+1️⃣ Make the routing pattern match the Replit guide (clean + future-proof)
+
+Goal: Login only logs in, and the photographer group layout decides where to go.
+
+Concretely:
+
+login.tsx
+
+If user.role === "photographer" → router.replace("/(photographer)")
+
+Else (customer/admin) → router.replace("/(customer)") (or temporarily /)
+
+app/(photographer)/_layout.tsx
+
+On mount, call:
+
+snapnowApi.me() → confirm logged in and role === photographer
+
+snapnowApi.mePhotographer() → profile status
+
+Logic:
+
+!profile → <Redirect href="/(photographer)/onboarding" />
+
+profile.verificationStatus !== "verified" → pending screen
+
+else → <Slot /> (dashboard, bookings, earnings, etc.)
+
+That mirrors the web app and keeps all “where should a photographer land?” logic in one place.
+
+2️⃣ Give customers a proper home flow
+
+Right now customers just bounce back to the welcome screen.
+
+Next:
+
+app/(customer)/index.tsx – basic “Browse photographers” home
+
+Later:
+
+Photographer profile screen
+
+Booking flow
+
+“My bookings” screen
+
+We can stub these with static UI first and plug the real endpoints in afterwards.
+
+3️⃣ Add “bootstrap on app start” (auto-login)
+
+So when you reopen the app:
+
+Call snapnowApi.me() once on startup
+
+If logged in:
+
+If role = photographer → send into /(photographer)
+
+Else → /(customer)
+
+If not logged in → welcome screen
+
+This makes the app feel like a real product instead of a demo.
+
+4️⃣ Wire real data into dashboard / bookings / earnings
+
+Once routing is solid:
+
+Dashboard → real earnings + upcoming bookings
+
+Bookings tab → /api/bookings data
+
+Earnings tab → history from backend
+
+If you want to keep going right now, the next concrete step I’d take is Step 1: clean login + photographer layout guard.
