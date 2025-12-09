@@ -36,7 +36,7 @@ export default function MobileGuide() {
         }
       `}</style>
 
-      <div className="print-wrapper max-w-4xl mx-auto">
+      <div className="print-wrapper max-w-6xl mx-auto w-full">
         <div className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 p-4 flex items-center justify-between no-print">
           <Link href="/">
             <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer">
