@@ -1,68 +1,22 @@
-import { Printer, ArrowLeft, Code, Smartphone, Server, Database } from "lucide-react";
+import { ArrowLeft, Code, Smartphone, Server, Database } from "lucide-react";
 import { Link } from "wouter";
 
 export default function MobileGuide() {
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
-      <style>{`
-        @media print {
-          body {
-            background: white !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          .no-print { display: none !important; }
-          .print-wrapper {
-            background: white !important;
-            padding: 10px !important;
-            max-width: 100% !important;
-          }
-          pre {
-            background: #f3f4f6 !important;
-            color: #1f2937 !important;
-            border: 1px solid #d1d5db !important;
-            font-size: 9px !important;
-            white-space: pre-wrap !important;
-            word-wrap: break-word !important;
-            overflow-wrap: break-word !important;
-            max-width: 100% !important;
-          }
-          code {
-            background: #e5e7eb !important;
-            color: #1f2937 !important;
-            word-break: break-all !important;
-          }
-          h1, h2, h3, h4 { color: #111827 !important; }
-          p, li { color: #374151 !important; }
-          .section { page-break-inside: avoid; }
-        }
-      `}</style>
-
-      {/* Fixed header with download button */}
-      <div className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 p-4 no-print">
-        <div className="flex items-center justify-between gap-4">
+      {/* Header */}
+      <div className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 p-4">
+        <div className="max-w-6xl mx-auto flex items-center gap-4">
           <Link href="/">
             <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer text-sm">
               <ArrowLeft className="w-4 h-4" />
-              Back
+              Back to App
             </span>
           </Link>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors text-sm"
-            data-testid="button-download-pdf"
-          >
-            <Printer className="w-4 h-4" />
-            Download PDF
-          </button>
         </div>
       </div>
 
-      <div className="print-wrapper max-w-4xl mx-auto px-4">
+      <div className="max-w-6xl mx-auto px-6 py-8">
 
         <div className="p-6 space-y-8">
           <header className="text-center mb-8">
