@@ -1,0 +1,209 @@
+Perfect, that Replit reply finally lines up everything.
+Let’s just wire your code exactly to that spec and be done with the 404s.
+
+They told you:
+
+Base URL (for mobile):
+https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev
+
+Auth endpoints: /api/auth/login, /api/auth/register, /api/auth/me, /api/auth/logout
+
+Use cookies: credentials: 'include' → in axios this is withCredentials: true
+
+Photographer flow: use GET /api/photographers/me with 404 / status checks (we already built this into your photographer layout + onboarding).
+
+I’ll now give you full files you can paste in.
+
+1️⃣ src/api/client.ts — use dev URL + cookies
+
+Replace the entire file with this:
+
+// src/api/client.ts
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
+// Replit dev API base URL (they explicitly told you to use this)
+const API_URL =
+  "https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev";
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  withCredentials: true, // 🔥 send cookies on every request (credentials: 'include')
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Optional: bearer token support for future JWT, harmless now
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync("authToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await SecureStore.deleteItemAsync("authToken");
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+export { API_URL };
+
+
+That aligns 100% with what they just sent you.
+
+2️⃣ lib/snapnowApi.ts — match their auth + photographer pattern
+
+Now update your API wrapper to match the endpoints + cookie flow.
+Replace the whole file with:
+
+// lib/snapnowApi.ts
+
+import api from "../src/api/client";
+
+export type UserRole = "customer" | "photographer" | "admin";
+
+export interface User {
+  id: number;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  role: UserRole;
+  profilePicture?: string;
+}
+
+export type PhotographerVerificationStatus =
+  | "pending_review"
+  | "verified"
+  | "rejected";
+
+export interface PhotographerProfile {
+  id: number;
+  userId: number;
+  hourlyRate: number;
+  city: string;
+  latitude: number;
+  longitude: number;
+  bio?: string;
+  portfolio: string[];
+  verificationStatus: PhotographerVerificationStatus;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  profilePicture?: string;
+}
+
+export interface SignupData {
+  email: string;
+  password: string;
+  fullName: string;
+  role: "customer" | "photographer";
+}
+
+export const snapnowApi = {
+  /**
+   * POST /api/auth/login
+   */
+  async login(payload: { email: string; password: string }): Promise<User> {
+    const response = await api.post<User>("/api/auth/login", payload);
+    return response.data;
+  },
+
+  /**
+   * POST /api/auth/register
+   * Backend expects: { email, password, fullName, role }
+   */
+  async signup(data: SignupData): Promise<User> {
+    const response = await api.post<User>("/api/auth/register", data);
+    return response.data;
+  },
+
+  /**
+   * POST /api/auth/logout
+   */
+  async logout(): Promise<void> {
+    await api.post("/api/auth/logout");
+  },
+
+  /**
+   * GET /api/auth/me
+   * Returns null if not logged in
+   */
+  async me(): Promise<User | null> {
+    try {
+      const response = await api.get<User>("/api/auth/me");
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * GET /api/photographers/me
+   *
+   * - Returns PhotographerProfile if it exists
+   * - Returns null if there is NO profile yet (404 or empty)
+   * - Throws for other errors so layout/guards can decide
+   */
+  async mePhotographer(): Promise<PhotographerProfile | null> {
+    try {
+      const res = await api.get<PhotographerProfile | null>(
+        "/api/photographers/me"
+      );
+
+      if (!res.data) {
+        // 200 but no body → treat as "no profile yet"
+        return null;
+      }
+
+      return res.data as PhotographerProfile;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        // New photographer: no profile yet → onboarding
+        console.warn("[snapnowApi.mePhotographer] 404 → no profile yet");
+        return null;
+      }
+
+      console.warn(
+        "[snapnowApi.mePhotographer] unexpected error",
+        err?.message || err
+      );
+      throw err;
+    }
+  },
+};
+
+
+If your signup screen currently uses firstName + lastName, you can just join them into fullName before calling snapnowApi.signup later. For login this doesn’t matter.
+
+3️⃣ After these changes
+
+Save both files.
+
+Let Expo/Metro reload the app.
+
+Log in as:
+
+customer@test.com / password
+
+anna@snapnow.com / password
+
+We should now be calling:
+
+POST https://8ec47177-...janeway.replit.dev/api/auth/login
+
+
+which Replit already confirmed exists and returns 400 Bad Request when the credentials are wrong (so no more 404).
+
+If you still see an error after this, it should not be 404 anymore; it’ll be 400/401 with a JSON body. If that happens, send me the status + response.data from the console and we’ll handle whatever the backend is complaining about next.
+
+You said:
