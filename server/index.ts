@@ -5,6 +5,7 @@ import { createServer } from "http";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import pg from "pg";
+import cors from "cors";
 import { setupWebSocket } from "./realtime";
 
 const app = express();
@@ -21,6 +22,14 @@ declare module "express-session" {
     userId: string;
   }
 }
+
+// CORS configuration for mobile apps
+app.use(cors({
+  origin: true,  // Allow all origins (mobile apps)
+  credentials: true,  // Allow cookies/sessions
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+}));
 
 app.use(
   express.json({
