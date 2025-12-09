@@ -8,19 +8,305 @@ This is a 100% complete guide to convert the SnapNow web application to a React 
 
 ## Table of Contents
 
-1. [Project Setup](#1-project-setup)
-2. [Project Structure](#2-project-structure)
-3. [Core Files](#3-core-files)
-4. [Customer Screens](#4-customer-screens)
-5. [Photographer Screens](#5-photographer-screens)
-6. [Shared Components](#6-shared-components)
-7. [API Endpoints Reference](#7-api-endpoints-reference)
-8. [Design System](#8-design-system)
-9. [Demo Accounts](#9-demo-accounts)
+1. [CRITICAL: Architectural Patterns](#1-critical-architectural-patterns)
+2. [Project Setup](#2-project-setup)
+3. [Project Structure](#3-project-structure)
+4. [Core Files](#4-core-files)
+5. [Customer Screens](#5-customer-screens)
+6. [Photographer Screens](#6-photographer-screens)
+7. [Shared Components](#7-shared-components)
+8. [API Endpoints Reference](#8-api-endpoints-reference)
+9. [Design System](#9-design-system)
+10. [Demo Accounts](#10-demo-accounts)
 
 ---
 
-## 1. Project Setup
+## 1. CRITICAL: Architectural Patterns
+
+**READ THIS FIRST.** These patterns are essential for the app to work correctly.
+
+### 1.1 Authentication Flow
+
+The web app uses **session-based authentication**. For mobile, you have two options:
+
+**Option A: Session cookies (simpler)**
+```tsx
+// In axios config
+const api = axios.create({
+  baseURL: API_URL,
+  withCredentials: true,  // Send cookies with requests
+});
+```
+
+**Option B: Token-based (recommended for mobile)**
+- Store auth token in SecureStore
+- Send as Authorization header
+- Backend would need JWT support added
+
+### 1.2 Photographer Routing Decision (CRITICAL)
+
+**The login screen should NOT decide where photographers go.** This is the most common mistake.
+
+#### Why?
+The login API response only tells you:
+- `user.role` = 'photographer'
+- `hasPhotographerProfile` = true/false
+
+It does NOT tell you the `verificationStatus` (pending_review, verified, rejected). That comes from `/api/photographers/me`.
+
+#### Correct Pattern:
+
+**Step 1: Login handler - keep it simple**
+```tsx
+const handleLogin = async () => {
+  const user = await api.post('/api/auth/login', { email, password });
+  
+  // Just route to role-based entry point - nothing more
+  if (user.role === 'photographer') {
+    router.replace('/(photographer)');  // Single entry point
+  } else if (user.role === 'customer') {
+    router.replace('/(customer)');
+  } else if (user.role === 'admin') {
+    router.replace('/(admin)');
+  }
+};
+```
+
+**Step 2: Photographer layout makes the routing decision**
+```tsx
+// app/(photographer)/_layout.tsx
+import { Redirect, Slot } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
+
+export default function PhotographerLayout() {
+  const { data: profile, isLoading, error } = useQuery({
+    queryKey: ['photographer-profile'],
+    queryFn: async () => {
+      const response = await api.get('/api/photographers/me');
+      return response.data;
+    },
+  });
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  // No profile exists = needs onboarding
+  if (error || !profile) {
+    return <Redirect href="/(photographer)/onboarding" />;
+  }
+
+  // Profile exists but not verified = show pending screen
+  if (profile.verificationStatus === 'pending_review') {
+    return <Redirect href="/(photographer)/pending" />;
+  }
+
+  // Profile was rejected
+  if (profile.verificationStatus === 'rejected') {
+    return <Redirect href="/(photographer)/rejected" />;
+  }
+
+  // Verified = show normal photographer screens
+  return <Slot />;
+}
+```
+
+**Step 3: Onboarding/Pending screens also check state**
+```tsx
+// app/(photographer)/onboarding.tsx
+export default function OnboardingScreen() {
+  const { data: profile } = useQuery({
+    queryKey: ['photographer-profile'],
+    queryFn: () => api.get('/api/photographers/me').then(r => r.data),
+  });
+
+  // If profile already exists, don't show onboarding
+  if (profile) {
+    return <Redirect href="/(photographer)" />;
+  }
+
+  // Show onboarding form...
+}
+```
+
+This prevents:
+- Anna (existing photographer) from seeing onboarding again
+- Loops between screens
+- Stale state issues
+
+### 1.3 Customer Routing (Simpler)
+
+Customers don't have verification, so routing is simpler:
+
+```tsx
+// app/(customer)/_layout.tsx
+export default function CustomerLayout() {
+  return <Slot />;  // Just render customer screens
+}
+```
+
+### 1.4 Expo Router File Structure
+
+For Expo Router, use this file structure:
+
+```
+app/
+├── _layout.tsx           # Root layout (AuthProvider, QueryProvider)
+├── index.tsx             # Redirect based on auth state
+├── welcome.tsx           # Welcome screen (unauthenticated)
+├── login.tsx             # Login screen
+├── signup.tsx            # Signup screen
+├── (customer)/           # Customer group
+│   ├── _layout.tsx       # Customer layout with tabs
+│   ├── index.tsx         # Home/Explore screen
+│   ├── bookings.tsx      # Bookings list
+│   ├── booking/[id].tsx  # Booking detail
+│   ├── photographer/[id].tsx  # Photographer profile
+│   └── profile.tsx       # Customer profile
+├── (photographer)/       # Photographer group
+│   ├── _layout.tsx       # THE GUARD - checks profile & verification
+│   ├── index.tsx         # Dashboard (only if verified)
+│   ├── bookings.tsx      # Bookings list
+│   ├── booking/[id].tsx  # Booking detail
+│   ├── earnings.tsx      # Earnings screen
+│   ├── onboarding.tsx    # Onboarding (no profile yet)
+│   └── pending.tsx       # Pending verification
+```
+
+### 1.5 Root Layout with Auth Check
+
+```tsx
+// app/_layout.tsx
+import { Slot, useRouter, useSegments } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { useEffect } from 'react';
+
+export default function RootLayout() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const inAuthGroup = segments[0] === '(customer)' || segments[0] === '(photographer)';
+
+    if (!user && inAuthGroup) {
+      // Not logged in but trying to access protected route
+      router.replace('/welcome');
+    } else if (user && !inAuthGroup) {
+      // Logged in but on auth screens
+      if (user.role === 'photographer') {
+        router.replace('/(photographer)');
+      } else {
+        router.replace('/(customer)');
+      }
+    }
+  }, [user, loading, segments]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Slot />
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}
+```
+
+### 1.6 Image URL Handling
+
+All image URLs from the API are **relative paths**. Always prepend the API base URL:
+
+```tsx
+// WRONG
+<Image source={{ uri: photographer.profilePicture }} />
+
+// CORRECT
+const API_URL = 'https://snapnow-nigelbautista26.replit.app';
+<Image source={{ uri: `${API_URL}${photographer.profilePicture}` }} />
+```
+
+### 1.7 Payment Flow
+
+The web app uses Stripe with authorization holds:
+1. Customer submits booking → Payment intent created (not charged)
+2. Photographer accepts → Payment captured
+3. Photographer declines/expires → Payment cancelled
+
+For mobile, use `@stripe/stripe-react-native`:
+```tsx
+import { useStripe } from '@stripe/stripe-react-native';
+
+const { confirmPayment } = useStripe();
+
+// When booking
+const { paymentIntent } = await api.post('/api/stripe/create-payment-intent', {
+  amount: totalAmount,
+  bookingId,
+});
+
+const { error } = await confirmPayment(paymentIntent.client_secret, {
+  paymentMethodType: 'Card',
+});
+```
+
+### 1.8 Error Handling Pattern
+
+Always handle API errors consistently:
+
+```tsx
+const mutation = useMutation({
+  mutationFn: async (data) => {
+    const response = await api.post('/api/bookings', data);
+    return response.data;
+  },
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    Alert.alert('Success', 'Booking created!');
+    router.back();
+  },
+  onError: (error: any) => {
+    const message = error.response?.data?.message || 'Something went wrong';
+    Alert.alert('Error', message);
+  },
+});
+```
+
+### 1.9 Query Invalidation
+
+When data changes, invalidate related queries:
+
+```tsx
+// After photographer accepts booking
+queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
+queryClient.invalidateQueries({ queryKey: ['earnings'] });
+
+// After uploading photos
+queryClient.invalidateQueries({ queryKey: ['booking', bookingId] });
+queryClient.invalidateQueries({ queryKey: ['booking-photos', bookingId] });
+```
+
+### 1.10 Platform Fee Calculations
+
+**Customer pays:** Base price + 10% service fee
+**Photographer receives:** Base price - 20% platform commission
+
+```tsx
+const hourlyRate = 100;
+const duration = 2;
+
+const basePrice = hourlyRate * duration;        // £200
+const serviceFee = basePrice * 0.10;            // £20 (customer pays)
+const totalCustomerPays = basePrice + serviceFee; // £220
+
+const platformFee = basePrice * 0.20;           // £40 (platform takes)
+const photographerEarnings = basePrice - platformFee; // £160
+```
+
+---
+
+## 2. Project Setup
 
 ### Create Expo Project
 
