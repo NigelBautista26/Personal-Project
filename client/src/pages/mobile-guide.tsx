@@ -18,17 +18,23 @@ export default function MobileGuide() {
           .no-print { display: none !important; }
           .print-wrapper {
             background: white !important;
-            padding: 20px !important;
+            padding: 10px !important;
+            max-width: 100% !important;
           }
           pre {
             background: #f3f4f6 !important;
             color: #1f2937 !important;
             border: 1px solid #d1d5db !important;
-            font-size: 11px !important;
+            font-size: 9px !important;
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 100% !important;
           }
           code {
             background: #e5e7eb !important;
             color: #1f2937 !important;
+            word-break: break-all !important;
           }
           h1, h2, h3, h4 { color: #111827 !important; }
           p, li { color: #374151 !important; }
