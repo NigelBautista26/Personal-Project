@@ -2,7 +2,9 @@
 
 This is a 100% complete guide to convert the SnapNow web application to a React Native/Expo mobile app.
 
-**API Base URL:** `https://snapnow-nigelbautista26.replit.app`
+**API Base URL:** `https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev`
+
+> **Note:** This is the development URL. If it stops working, check with the Replit project owner for the current URL.
 
 ---
 
@@ -223,7 +225,7 @@ All image URLs from the API are **relative paths**. Always prepend the API base 
 <Image source={{ uri: photographer.profilePicture }} />
 
 // CORRECT
-const API_URL = 'https://snapnow-nigelbautista26.replit.app';
+const API_URL = 'https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev';
 <Image source={{ uri: `${API_URL}${photographer.profilePicture}` }} />
 ```
 
@@ -496,7 +498,7 @@ export default function App() {
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const API_URL = 'https://snapnow-nigelbautista26.replit.app';
+const API_URL = 'https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev';
 
 const api = axios.create({
   baseURL: API_URL,
