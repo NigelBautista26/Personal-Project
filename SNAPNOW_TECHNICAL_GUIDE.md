@@ -299,27 +299,66 @@ live_locations
 
 ## Environment Variables
 
+### Required Variables
+
+| Variable | Description | How to Get |
+|----------|-------------|------------|
+| `DATABASE_URL` | PostgreSQL connection string | Create free DB at [neon.tech](https://neon.tech) |
+| `PGHOST` | Database host | From Neon dashboard |
+| `PGPORT` | Database port (usually 5432) | From Neon dashboard |
+| `PGUSER` | Database username | From Neon dashboard |
+| `PGPASSWORD` | Database password | From Neon dashboard |
+| `PGDATABASE` | Database name | From Neon dashboard |
+| `SESSION_SECRET` | Session encryption key | Generate: `openssl rand -hex 32` |
+| `STRIPE_SECRET_KEY` | Stripe API secret | [stripe.com/dashboard](https://dashboard.stripe.com/apikeys) |
+| `STRIPE_PUBLISHABLE_KEY` | Stripe public key | [stripe.com/dashboard](https://dashboard.stripe.com/apikeys) |
+
+### Object Storage (Optional for mobile)
+| Variable | Description |
+|----------|-------------|
+| `DEFAULT_OBJECT_STORAGE_BUCKET_ID` | GCS bucket ID |
+| `PUBLIC_OBJECT_SEARCH_PATHS` | Public asset paths |
+| `PRIVATE_OBJECT_DIR` | Private upload directory |
+
+### Example .env file
 ```env
-# Database (PostgreSQL)
-DATABASE_URL=postgresql://user:pass@host:5432/db
-PGHOST=...
+# Database (get these from neon.tech)
+DATABASE_URL=postgresql://user:password@ep-xxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+PGHOST=ep-xxx.us-east-2.aws.neon.tech
 PGPORT=5432
-PGUSER=...
-PGPASSWORD=...
-PGDATABASE=...
+PGUSER=user
+PGPASSWORD=password
+PGDATABASE=neondb
 
-# Session Security
-SESSION_SECRET=your-secret-key
+# Session (generate your own)
+SESSION_SECRET=your-64-character-random-string-here
 
-# Object Storage
-DEFAULT_OBJECT_STORAGE_BUCKET_ID=...
+# Stripe (get from stripe.com dashboard)
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+
+# Object Storage (Replit-specific, replace for self-hosting)
 PUBLIC_OBJECT_SEARCH_PATHS=/bucket/public
 PRIVATE_OBJECT_DIR=/bucket/.private
-
-# Stripe
-STRIPE_SECRET_KEY=sk_...
-STRIPE_PUBLISHABLE_KEY=pk_...
 ```
+
+### Setting Up Your Own Services
+
+**1. Database (Neon - Free Tier)**
+1. Go to [neon.tech](https://neon.tech) and create account
+2. Create new project
+3. Copy connection string from dashboard
+4. Run `npm run db:push` to create tables
+
+**2. Stripe (Test Mode)**
+1. Go to [stripe.com](https://stripe.com) and create account
+2. Go to Developers > API Keys
+3. Copy publishable key and secret key
+4. Enable Connect for marketplace features
+
+**3. Image Storage (Self-hosted alternative)**
+- For mobile, consider using Cloudinary, AWS S3, or Firebase Storage
+- Update `server/routes.ts` image upload endpoints accordingly
 
 ---
 
@@ -356,7 +395,21 @@ STRIPE_PUBLISHABLE_KEY=pk_...
 
 ## Native App Conversion Guide
 
-### Recommended Approach: React Native + Expo
+### Two Approaches
+
+**Option A: Mobile app connects to existing Replit backend (Recommended)**
+- Simplest approach - just build the mobile frontend
+- Your Replit app continues to run as the API server
+- Mobile app makes HTTP requests to your Replit URL
+- No need to set up new database or services
+
+**Option B: Fully self-hosted**
+- Deploy backend to Railway, Render, or AWS
+- Set up your own Neon database
+- Configure your own Stripe account
+- More control but more setup
+
+### Recommended Stack: React Native + Expo
 
 The frontend is React-based, making React Native the natural choice.
 
@@ -364,29 +417,116 @@ The frontend is React-based, making React Native the natural choice.
 - Business logic and API calls
 - TanStack Query data fetching patterns
 - TypeScript types from `shared/schema.ts`
+- Zod validation schemas
 - Authentication flow logic
 
 #### What Needs Replacement
-| Web | React Native |
-|-----|--------------|
+| Web Component | React Native Replacement |
+|---------------|-------------------------|
 | Tailwind CSS | NativeWind or StyleSheet |
-| shadcn/ui | React Native Paper or custom |
+| shadcn/ui components | React Native Paper or custom |
 | Wouter routing | React Navigation |
 | Leaflet maps | react-native-maps |
 | Browser geolocation | expo-location |
-| File upload | expo-image-picker |
+| File input | expo-image-picker |
+| Browser cookies | AsyncStorage + tokens |
+| window.print() | expo-print or share sheet |
 
-#### Backend Considerations
-- Backend API remains unchanged
-- Update CORS settings for mobile app
-- Consider adding push notifications (Firebase)
-- May need refresh token system for mobile sessions
+### Mobile App Setup Steps
+
+```bash
+# 1. Create new Expo project
+npx create-expo-app SnapNowMobile --template blank-typescript
+
+# 2. Install dependencies
+cd SnapNowMobile
+npx expo install react-native-maps expo-location expo-image-picker
+npm install @tanstack/react-query @react-navigation/native axios
+npm install react-native-paper react-native-safe-area-context
+
+# 3. Copy shared types from this project
+cp ../Personal-Project/shared/schema.ts ./src/types/
+```
+
+### API Client for Mobile
+
+```typescript
+// src/api/client.ts
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Point to your Replit backend URL
+const API_URL = 'https://your-replit-app.replit.app';
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+});
+
+// Add auth token to requests
+api.interceptors.request.use(async (config) => {
+  const token = await AsyncStorage.getItem('authToken');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+export default api;
+
+// Example usage:
+// const photographers = await api.get('/api/photographers');
+// const user = await api.post('/api/login', { email, password });
+```
+
+### Backend Modifications for Mobile
+
+Add JWT authentication for mobile clients in `server/routes.ts`:
+
+```typescript
+// Install: npm install jsonwebtoken
+import jwt from 'jsonwebtoken';
+
+// Mobile login endpoint (returns token instead of cookie)
+app.post('/api/mobile/login', async (req, res) => {
+  const { email, password } = req.body;
+  const user = await storage.getUserByEmail(email);
+  
+  if (user && await bcrypt.compare(password, user.password)) {
+    const token = jwt.sign({ userId: user.id }, process.env.SESSION_SECRET!);
+    res.json({ token, user: { ...user, password: undefined } });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Middleware to validate mobile tokens
+const mobileAuth = (req, res, next) => {
+  const token = req.headers.authorization?.replace('Bearer ', '');
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.SESSION_SECRET!);
+      req.userId = decoded.userId;
+      next();
+    } catch {
+      res.status(401).json({ error: 'Invalid token' });
+    }
+  } else {
+    res.status(401).json({ error: 'No token provided' });
+  }
+};
+```
 
 ### Key Files to Reference
-- `shared/schema.ts` - All data types
-- `server/routes.ts` - Complete API documentation
-- `server/storage.ts` - Database operations
-- `client/src/lib/queryClient.ts` - API call patterns
+
+| File | What It Contains |
+|------|------------------|
+| `shared/schema.ts` | All TypeScript types, Drizzle schema, Zod validation |
+| `server/routes.ts` | All API endpoints with request/response handling |
+| `server/storage.ts` | Database operations (IStorage interface) |
+| `client/src/lib/queryClient.ts` | TanStack Query setup and API patterns |
+| `client/src/hooks/use-auth.ts` | Authentication hook logic |
+| `client/src/pages/` | Screen layouts and component structure |
 
 ---
 
