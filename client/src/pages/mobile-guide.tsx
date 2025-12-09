@@ -1,24 +1,50 @@
-import { ArrowLeft, Code, Smartphone, Server, Database } from "lucide-react";
+import { ArrowLeft, Code, Smartphone, Server, Database, Download } from "lucide-react";
 import { Link } from "wouter";
 
 export default function MobileGuide() {
+  const handleDownload = () => {
+    window.print();
+  };
+
   return (
     <div className="min-h-screen bg-slate-900 text-gray-100">
+      <style>{`
+        @media print {
+          body { background: white !important; }
+          .no-print { display: none !important; }
+          pre { 
+            background: #f3f4f6 !important; 
+            color: #1f2937 !important; 
+            font-size: 10px !important;
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+          }
+          h1, h2, h3, h4 { color: #111827 !important; }
+          p, li, code { color: #374151 !important; }
+          .section { page-break-inside: avoid; }
+        }
+      `}</style>
       {/* Header */}
-      <div className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 p-4">
-        <div className="max-w-6xl mx-auto flex items-center gap-4">
-          <Link href="/">
-            <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer text-sm">
-              <ArrowLeft className="w-4 h-4" />
-              Back to App
-            </span>
-          </Link>
-        </div>
+      <div className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 p-4 flex items-center justify-between w-full no-print">
+        <Link href="/">
+          <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer text-sm">
+            <ArrowLeft className="w-4 h-4" />
+            Back to App
+          </span>
+        </Link>
+        <button
+          onClick={handleDownload}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors"
+          data-testid="button-download-pdf"
+        >
+          <Download className="w-4 h-4" />
+          Download PDF
+        </button>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="w-full px-8 py-8">
 
-        <div className="p-6 space-y-8">
+        <div className="space-y-8">
           <header className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">SnapNow Mobile App</h1>
             <p className="text-xl text-indigo-400">Complete Conversion Guide for Codex</p>
