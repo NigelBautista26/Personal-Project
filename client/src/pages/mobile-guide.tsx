@@ -7,7 +7,7 @@ export default function MobileGuide() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-gray-100">
+    <div className="min-h-screen bg-slate-900 text-gray-100" style={{ minWidth: '900px' }}>
       <style>{`
         @media print {
           body {
