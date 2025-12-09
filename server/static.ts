@@ -10,6 +10,11 @@ export function serveStatic(app: Express) {
     );
   }
 
+  // Serve specific HTML files directly (before catch-all)
+  app.get("/mobile-guide.html", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "mobile-guide.html"));
+  });
+
   app.use(express.static(distPath));
 
   // fall through to index.html if the file doesn't exist
