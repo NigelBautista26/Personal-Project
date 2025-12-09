@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SnapNow Mobile Conversion Guide</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #fff;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 28px; border-bottom: 2px solid #0a0a0a; padding-bottom: 10px; }
+    h2 { font-size: 22px; margin-top: 40px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px; }
+    h3 { font-size: 18px; margin-top: 24px; color: #444; }
+    h4 { font-size: 16px; margin-top: 20px; color: #555; }
+    code { background: #f4f4f4; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+    pre {
+      background: #1a1a1a;
+      color: #f0f0f0;
+      padding: 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 14px; }
+    th { background: #f4f4f4; }
+    hr { border: none; border-top: 1px solid #eee; margin: 32px 0; }
+    .page-break { page-break-before: always; }
+    @media print {
+      body { padding: 20px; font-size: 12px; }
+      pre { font-size: 11px; padding: 12px; }
+      h1 { font-size: 24px; }
+      h2 { font-size: 18px; }
+      h3 { font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>SnapNow Mobile App - Complete Conversion Guide for Codex</h1>
+
+<h2>Overview</h2>
+<p>This guide provides everything needed to convert the SnapNow web app to a React Native/Expo mobile app. The mobile app will connect to the existing Replit backend API.</p>
+<p><strong>API Base URL:</strong> <code>https://snapnow-nigelbautista26.replit.app</code></p>
+
+<hr>
+
+<h2>Step 1: Project Setup</h2>
+
+<h3>Create New Expo Project</h3>
+<pre><code>npx create-expo-app SnapNowMobile --template blank-typescript
+cd SnapNowMobile</code></pre>
+
+<h3>Install Dependencies</h3>
+<pre><code># Navigation
+npm install @react-navigation/native @react-navigation/native-stack
+
+# Data fetching
+npm install @tanstack/react-query axios
+
+# Expo packages
+npx expo install react-native-screens react-native-safe-area-context expo-location expo-image-picker @react-native-async-storage/async-storage</code></pre>
+
+<h3>Project Structure</h3>
+<pre><code>SnapNowMobile/
+├── App.tsx
+├── src/
+│   ├── api/
+│   │   └── client.ts
+│   ├── context/
+│   │   └── AuthContext.tsx
+│   ├── screens/
+│   │   ├── WelcomeScreen.tsx
+│   │   ├── LoginScreen.tsx
+│   │   ├── SignupScreen.tsx
+│   │   ├── HomeScreen.tsx
+│   │   ├── PhotographerProfileScreen.tsx
+│   │   ├── BookingScreen.tsx
+│   │   ├── BookingsScreen.tsx
+│   │   └── BookingDetailScreen.tsx
+│   ├── components/
+│   └── types/
+│       └── index.ts</code></pre>
+
+<hr>
+
+<h2>Step 2: Core Files</h2>
+
+<h3>App.tsx</h3>
+<pre><code>import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
+import WelcomeScreen from './src/screens/WelcomeScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import SignupScreen from './src/screens/SignupScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import PhotographerProfileScreen from './src/screens/PhotographerProfileScreen';
+import BookingScreen from './src/screens/BookingScreen';
+import BookingsScreen from './src/screens/BookingsScreen';
+import BookingDetailScreen from './src/screens/BookingDetailScreen';
+
+const Stack = createNativeStackNavigator();
+const queryClient = new QueryClient();
+
+function AppNavigator() {
+  const { user, loading } = useAuth();
+  
+  if (loading) return null;
+  
+  return (
+    &lt;Stack.Navigator screenOptions={{ headerShown: false }}&gt;
+      {!user ? (
+        &lt;&gt;
+          &lt;Stack.Screen name="Welcome" component={WelcomeScreen} /&gt;
+          &lt;Stack.Screen name="Login" component={LoginScreen} /&gt;
+          &lt;Stack.Screen name="Signup" component={SignupScreen} /&gt;
+        &lt;/&gt;
+      ) : (
+        &lt;&gt;
+          &lt;Stack.Screen name="Home" component={HomeScreen} /&gt;
+          &lt;Stack.Screen name="PhotographerProfile" component={PhotographerProfileScreen} /&gt;
+          &lt;Stack.Screen name="Booking" component={BookingScreen} /&gt;
+          &lt;Stack.Screen name="Bookings" component={BookingsScreen} /&gt;
+          &lt;Stack.Screen name="BookingDetail" component={BookingDetailScreen} /&gt;
+        &lt;/&gt;
+      )}
+    &lt;/Stack.Navigator&gt;
+  );
+}
+
+export default function App() {
+  return (
+    &lt;QueryClientProvider client={queryClient}&gt;
+      &lt;AuthProvider&gt;
+        &lt;NavigationContainer&gt;
+          &lt;AppNavigator /&gt;
+        &lt;/NavigationContainer&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/QueryClientProvider&gt;
+  );
+}</code></pre>
+
+<h3>src/api/client.ts</h3>
+<pre><code>import axios from 'axios';
+
+const API_URL = 'https://snapnow-nigelbautista26.replit.app';
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000,
+  withCredentials: true,
+});
+
+export default api;
+export { API_URL };</code></pre>
+
+<h3>src/context/AuthContext.tsx</h3>
+<pre><code>import React, { createContext, useContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../api/client';
+
+interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'customer' | 'photographer' | 'admin';
+}
+
+interface AuthContextType {
+  user: User | null;
+  login: (email: string, password: string) =&gt; Promise&lt;void&gt;;
+  logout: () =&gt; Promise&lt;void&gt;;
+  loading: boolean;
+}
+
+const AuthContext = createContext&lt;AuthContextType | null&gt;(null);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState&lt;User | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    AsyncStorage.getItem('user').then(stored =&gt; {
+      if (stored) setUser(JSON.parse(stored));
+      setLoading(false);
+    });
+  }, []);
+
+  const login = async (email: string, password: string) =&gt; {
+    const res = await api.post('/api/login', { email, password });
+    const userData = res.data.user;
+    setUser(userData);
+    await AsyncStorage.setItem('user', JSON.stringify(userData));
+  };
+
+  const logout = async () =&gt; {
+    await api.post('/api/logout');
+    setUser(null);
+    await AsyncStorage.removeItem('user');
+  };
+
+  return (
+    &lt;AuthContext.Provider value={{ user, login, logout, loading }}&gt;
+      {children}
+    &lt;/AuthContext.Provider&gt;
+  );
+}
+
+export const useAuth = () =&gt; {
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be within AuthProvider');
+  return context;
+};</code></pre>
+
+<h3>src/types/index.ts</h3>
+<pre><code>export interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'customer' | 'photographer' | 'admin';
+  profileImage?: string;
+}
+
+export interface Photographer {
+  id: number;
+  userId: number;
+  bio?: string;
+  hourlyRate: number;
+  city: string;
+  latitude: number;
+  longitude: number;
+  portfolioImages: string[];
+  rating?: number;
+  reviewCount: number;
+  user?: User;
+}
+
+export interface Booking {
+  id: number;
+  customerId: number;
+  photographerId: number;
+  date: string;
+  time: string;
+  duration: number;
+  status: 'requested' | 'accepted' | 'declined' | 'completed' | 'expired';
+  totalAmount: string;
+  photoUrls: string[];
+  photographer?: Photographer;
+}
+
+export interface Review {
+  id: number;
+  bookingId: number;
+  rating: number;
+  comment: string;
+  customer?: User;
+}</code></pre>
+
+<div class="page-break"></div>
+
+<h2>Step 3: Screens</h2>
+
+<h3>src/screens/WelcomeScreen.tsx</h3>
+<pre><code>import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+export default function WelcomeScreen() {
+  const navigation = useNavigation();
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;View style={styles.content}&gt;
+        &lt;View style={styles.logoContainer}&gt;
+          &lt;Text style={styles.logoText}&gt;📸&lt;/Text&gt;
+          &lt;Text style={styles.title}&gt;SnapNow&lt;/Text&gt;
+          &lt;Text style={styles.subtitle}&gt;Find professional photographers nearby&lt;/Text&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.buttonContainer}&gt;
+          &lt;TouchableOpacity 
+            style={styles.primaryButton}
+            onPress={() =&gt; navigation.navigate('Login' as never)}
+          &gt;
+            &lt;Text style={styles.primaryButtonText}&gt;Log In&lt;/Text&gt;
+          &lt;/TouchableOpacity&gt;
+
+          &lt;TouchableOpacity 
+            style={styles.secondaryButton}
+            onPress={() =&gt; navigation.navigate('Signup' as never)}
+          &gt;
+            &lt;Text style={styles.secondaryButtonText}&gt;Create Account&lt;/Text&gt;
+          &lt;/TouchableOpacity&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  content: { flex: 1, justifyContent: 'space-between', padding: 24, paddingTop: 80, paddingBottom: 40 },
+  logoContainer: { alignItems: 'center' },
+  logoText: { fontSize: 80, marginBottom: 16 },
+  title: { fontSize: 36, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#888888', textAlign: 'center' },
+  buttonContainer: { gap: 12 },
+  primaryButton: { backgroundColor: '#ffffff', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+  primaryButtonText: { color: '#0a0a0a', fontSize: 16, fontWeight: '600' },
+  secondaryButton: { backgroundColor: 'transparent', paddingVertical: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#333333' },
+  secondaryButtonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
+});</code></pre>
+
+<h3>src/screens/LoginScreen.tsx</h3>
+<pre><code>import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../context/AuthContext';
+
+export default function LoginScreen() {
+  const navigation = useNavigation();
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () =&gt; {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter email and password');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email, password);
+    } catch (error: any) {
+      Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;View style={styles.content}&gt;
+        &lt;TouchableOpacity onPress={() =&gt; navigation.goBack()}&gt;
+          &lt;Text style={styles.backButton}&gt;← Back&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+
+        &lt;Text style={styles.title}&gt;Welcome back&lt;/Text&gt;
+        &lt;Text style={styles.subtitle}&gt;Sign in to continue&lt;/Text&gt;
+
+        &lt;View style={styles.form}&gt;
+          &lt;View style={styles.inputContainer}&gt;
+            &lt;Text style={styles.label}&gt;Email&lt;/Text&gt;
+            &lt;TextInput style={styles.input} placeholder="your@email.com" placeholderTextColor="#666" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" /&gt;
+          &lt;/View&gt;
+
+          &lt;View style={styles.inputContainer}&gt;
+            &lt;Text style={styles.label}&gt;Password&lt;/Text&gt;
+            &lt;TextInput style={styles.input} placeholder="••••••••" placeholderTextColor="#666" value={password} onChangeText={setPassword} secureTextEntry /&gt;
+          &lt;/View&gt;
+
+          &lt;TouchableOpacity style={[styles.button, loading && styles.buttonDisabled]} onPress={handleLogin} disabled={loading}&gt;
+            {loading ? &lt;ActivityIndicator color="#0a0a0a" /&gt; : &lt;Text style={styles.buttonText}&gt;Log In&lt;/Text&gt;}
+          &lt;/TouchableOpacity&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.demoContainer}&gt;
+          &lt;Text style={styles.demoTitle}&gt;Demo Accounts:&lt;/Text&gt;
+          &lt;Text style={styles.demoText}&gt;Customer: customer@test.com / password&lt;/Text&gt;
+          &lt;Text style={styles.demoText}&gt;Photographer: anna@snapnow.com / password&lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  content: { flex: 1, padding: 24 },
+  backButton: { color: '#888', fontSize: 16, marginBottom: 32 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#888888', marginBottom: 32 },
+  form: { gap: 20 },
+  inputContainer: { gap: 8 },
+  label: { color: '#ffffff', fontSize: 14, fontWeight: '500' },
+  input: { backgroundColor: '#1a1a1a', borderRadius: 12, padding: 16, color: '#ffffff', fontSize: 16, borderWidth: 1, borderColor: '#333' },
+  button: { backgroundColor: '#ffffff', paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 12 },
+  buttonDisabled: { opacity: 0.7 },
+  buttonText: { color: '#0a0a0a', fontSize: 16, fontWeight: '600' },
+  demoContainer: { marginTop: 40, padding: 16, backgroundColor: '#1a1a1a', borderRadius: 12 },
+  demoTitle: { color: '#888', fontSize: 12, marginBottom: 8 },
+  demoText: { color: '#666', fontSize: 12, marginBottom: 4 },
+});</code></pre>
+
+<div class="page-break"></div>
+
+<h3>src/screens/HomeScreen.tsx</h3>
+<pre><code>import React from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { Photographer } from '../types';
+
+export default function HomeScreen() {
+  const navigation = useNavigation();
+  const { user, logout } = useAuth();
+
+  const { data: photographers, isLoading } = useQuery({
+    queryKey: ['photographers'],
+    queryFn: async () =&gt; {
+      const res = await api.get('/api/photographers');
+      return res.data as Photographer[];
+    },
+  });
+
+  const renderPhotographer = ({ item }: { item: Photographer }) =&gt; (
+    &lt;TouchableOpacity style={styles.card} onPress={() =&gt; navigation.navigate('PhotographerProfile' as never, { id: item.id } as never)}&gt;
+      &lt;Image source={{ uri: item.user?.profileImage || 'https://via.placeholder.com/100' }} style={styles.avatar} /&gt;
+      &lt;View style={styles.cardContent}&gt;
+        &lt;Text style={styles.name}&gt;{item.user?.firstName} {item.user?.lastName}&lt;/Text&gt;
+        &lt;Text style={styles.city}&gt;📍 {item.city}&lt;/Text&gt;
+        &lt;View style={styles.ratingRow}&gt;
+          &lt;Text style={styles.rating}&gt;⭐ {item.rating?.toFixed(1) || 'New'} ({item.reviewCount} reviews)&lt;/Text&gt;
+          &lt;Text style={styles.price}&gt;£{item.hourlyRate}/hr&lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+    &lt;/TouchableOpacity&gt;
+  );
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;View style={styles.header}&gt;
+        &lt;View&gt;
+          &lt;Text style={styles.greeting}&gt;Hello, {user?.firstName} 👋&lt;/Text&gt;
+          &lt;Text style={styles.subtitle}&gt;Find your photographer&lt;/Text&gt;
+        &lt;/View&gt;
+        &lt;TouchableOpacity onPress={() =&gt; navigation.navigate('Bookings' as never)}&gt;
+          &lt;Text style={styles.bookingsButton}&gt;My Bookings&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+      &lt;/View&gt;
+
+      {isLoading ? (
+        &lt;ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} /&gt;
+      ) : (
+        &lt;FlatList data={photographers} keyExtractor={(item) =&gt; item.id.toString()} renderItem={renderPhotographer} contentContainerStyle={styles.list} showsVerticalScrollIndicator={false} /&gt;
+      )}
+
+      &lt;View style={styles.bottomNav}&gt;
+        &lt;TouchableOpacity style={styles.navItem}&gt;
+          &lt;Text style={styles.navIcon}&gt;🏠&lt;/Text&gt;
+          &lt;Text style={styles.navTextActive}&gt;Home&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+        &lt;TouchableOpacity style={styles.navItem} onPress={() =&gt; navigation.navigate('Bookings' as never)}&gt;
+          &lt;Text style={styles.navIcon}&gt;📅&lt;/Text&gt;
+          &lt;Text style={styles.navText}&gt;Bookings&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+        &lt;TouchableOpacity style={styles.navItem} onPress={logout}&gt;
+          &lt;Text style={styles.navIcon}&gt;👤&lt;/Text&gt;
+          &lt;Text style={styles.navText}&gt;Logout&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+      &lt;/View&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingBottom: 16 },
+  greeting: { fontSize: 24, fontWeight: 'bold', color: '#ffffff' },
+  subtitle: { fontSize: 14, color: '#888', marginTop: 4 },
+  bookingsButton: { color: '#888', fontSize: 14 },
+  list: { padding: 16, paddingBottom: 100 },
+  card: { flexDirection: 'row', backgroundColor: '#1a1a1a', borderRadius: 16, padding: 16, marginBottom: 12 },
+  avatar: { width: 80, height: 80, borderRadius: 12, backgroundColor: '#333' },
+  cardContent: { flex: 1, marginLeft: 16, justifyContent: 'center' },
+  name: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 4 },
+  city: { fontSize: 14, color: '#888', marginBottom: 8 },
+  ratingRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  rating: { fontSize: 13, color: '#888' },
+  price: { fontSize: 16, fontWeight: '600', color: '#ffffff' },
+  bottomNav: { flexDirection: 'row', justifyContent: 'space-around', padding: 16, borderTopWidth: 1, borderTopColor: '#222', position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0a0a0a' },
+  navItem: { alignItems: 'center' },
+  navIcon: { fontSize: 24, marginBottom: 4 },
+  navText: { color: '#666', fontSize: 12 },
+  navTextActive: { color: '#fff', fontSize: 12 },
+});</code></pre>
+
+<div class="page-break"></div>
+
+<h3>src/screens/PhotographerProfileScreen.tsx</h3>
+<pre><code>import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, FlatList } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/client';
+
+export default function PhotographerProfileScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { id } = route.params as { id: number };
+
+  const { data: photographer, isLoading } = useQuery({
+    queryKey: ['photographer', id],
+    queryFn: async () =&gt; { const res = await api.get(`/api/photographers/${id}`); return res.data; },
+  });
+
+  const { data: reviews } = useQuery({
+    queryKey: ['reviews', id],
+    queryFn: async () =&gt; { const res = await api.get(`/api/photographers/${id}/reviews`); return res.data; },
+  });
+
+  if (isLoading) return &lt;SafeAreaView style={styles.container}&gt;&lt;ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} /&gt;&lt;/SafeAreaView&gt;;
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;ScrollView showsVerticalScrollIndicator={false}&gt;
+        &lt;View style={styles.header}&gt;
+          &lt;TouchableOpacity onPress={() =&gt; navigation.goBack()}&gt;&lt;Text style={styles.backButton}&gt;← Back&lt;/Text&gt;&lt;/TouchableOpacity&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.profileSection}&gt;
+          &lt;Image source={{ uri: photographer?.user?.profileImage || 'https://via.placeholder.com/120' }} style={styles.avatar} /&gt;
+          &lt;Text style={styles.name}&gt;{photographer?.user?.firstName} {photographer?.user?.lastName}&lt;/Text&gt;
+          &lt;Text style={styles.city}&gt;📍 {photographer?.city}&lt;/Text&gt;
+          &lt;View style={styles.statsRow}&gt;
+            &lt;View style={styles.stat}&gt;
+              &lt;Text style={styles.statValue}&gt;⭐ {photographer?.rating?.toFixed(1) || 'New'}&lt;/Text&gt;
+              &lt;Text style={styles.statLabel}&gt;{photographer?.reviewCount} reviews&lt;/Text&gt;
+            &lt;/View&gt;
+            &lt;View style={styles.stat}&gt;
+              &lt;Text style={styles.statValue}&gt;£{photographer?.hourlyRate}&lt;/Text&gt;
+              &lt;Text style={styles.statLabel}&gt;per hour&lt;/Text&gt;
+            &lt;/View&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        {photographer?.bio && &lt;View style={styles.section}&gt;&lt;Text style={styles.sectionTitle}&gt;About&lt;/Text&gt;&lt;Text style={styles.bio}&gt;{photographer.bio}&lt;/Text&gt;&lt;/View&gt;}
+
+        {photographer?.portfolioImages?.length &gt; 0 && (
+          &lt;View style={styles.section}&gt;
+            &lt;Text style={styles.sectionTitle}&gt;Portfolio&lt;/Text&gt;
+            &lt;FlatList data={photographer.portfolioImages} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item, index) =&gt; index.toString()} renderItem={({ item }) =&gt; &lt;Image source={{ uri: item }} style={styles.portfolioImage} /&gt;} contentContainerStyle={{ gap: 8 }} /&gt;
+          &lt;/View&gt;
+        )}
+
+        {reviews?.length &gt; 0 && (
+          &lt;View style={styles.section}&gt;
+            &lt;Text style={styles.sectionTitle}&gt;Reviews&lt;/Text&gt;
+            {reviews.slice(0, 3).map((review: any) =&gt; (
+              &lt;View key={review.id} style={styles.reviewCard}&gt;
+                &lt;View style={styles.reviewHeader}&gt;
+                  &lt;Text style={styles.reviewerName}&gt;{review.customer?.firstName} {review.customer?.lastName}&lt;/Text&gt;
+                  &lt;Text style={styles.reviewRating}&gt;{'⭐'.repeat(review.rating)}&lt;/Text&gt;
+                &lt;/View&gt;
+                &lt;Text style={styles.reviewComment}&gt;{review.comment}&lt;/Text&gt;
+              &lt;/View&gt;
+            ))}
+          &lt;/View&gt;
+        )}
+        &lt;View style={{ height: 100 }} /&gt;
+      &lt;/ScrollView&gt;
+
+      &lt;View style={styles.footer}&gt;
+        &lt;TouchableOpacity style={styles.bookButton} onPress={() =&gt; navigation.navigate('Booking' as never, { id } as never)}&gt;
+          &lt;Text style={styles.bookButtonText}&gt;Book Session - £{photographer?.hourlyRate}/hr&lt;/Text&gt;
+        &lt;/TouchableOpacity&gt;
+      &lt;/View&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  header: { padding: 24 },
+  backButton: { color: '#888', fontSize: 16 },
+  profileSection: { alignItems: 'center', paddingHorizontal: 24, paddingBottom: 24 },
+  avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: '#333', marginBottom: 16 },
+  name: { fontSize: 24, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 },
+  city: { fontSize: 16, color: '#888', marginBottom: 16 },
+  statsRow: { flexDirection: 'row', gap: 40 },
+  stat: { alignItems: 'center' },
+  statValue: { fontSize: 18, fontWeight: '600', color: '#ffffff' },
+  statLabel: { fontSize: 12, color: '#888' },
+  section: { padding: 24, paddingTop: 0 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 },
+  bio: { fontSize: 14, color: '#aaa', lineHeight: 22 },
+  portfolioImage: { width: 150, height: 150, borderRadius: 12, backgroundColor: '#333' },
+  reviewCard: { backgroundColor: '#1a1a1a', padding: 16, borderRadius: 12, marginBottom: 12 },
+  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  reviewerName: { color: '#fff', fontWeight: '500' },
+  reviewRating: { fontSize: 12 },
+  reviewComment: { color: '#aaa', fontSize: 14 },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: '#0a0a0a', borderTopWidth: 1, borderTopColor: '#222' },
+  bookButton: { backgroundColor: '#ffffff', padding: 18, borderRadius: 12, alignItems: 'center' },
+  bookButtonText: { color: '#0a0a0a', fontSize: 16, fontWeight: '600' },
+});</code></pre>
+
+<div class="page-break"></div>
+
+<h3>src/screens/BookingScreen.tsx</h3>
+<pre><code>import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import api from '../api/client';
+
+export default function BookingScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { id } = route.params as { id: number };
+  
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [duration, setDuration] = useState(1);
+
+  const { data: photographer } = useQuery({
+    queryKey: ['photographer', id],
+    queryFn: async () =&gt; { const res = await api.get(`/api/photographers/${id}`); return res.data; },
+  });
+
+  const bookMutation = useMutation({
+    mutationFn: async () =&gt; {
+      const res = await api.post('/api/bookings', { photographerId: id, date: selectedDate, time: selectedTime, duration });
+      return res.data;
+    },
+    onSuccess: () =&gt; { Alert.alert('Success', 'Booking request sent!', [{ text: 'OK', onPress: () =&gt; navigation.navigate('Bookings' as never) }]); },
+    onError: (error: any) =&gt; { Alert.alert('Error', error.response?.data?.message || 'Could not create booking'); },
+  });
+
+  const dates = Array.from({ length: 7 }, (_, i) =&gt; {
+    const date = new Date(); date.setDate(date.getDate() + i);
+    return { value: date.toISOString().split('T')[0], day: date.toLocaleDateString('en-GB', { weekday: 'short' }), date: date.getDate() };
+  });
+
+  const times = ['09:00', '10:00', '11:00', '12:00', '14:00', '15:00', '16:00', '17:00'];
+  const hourlyRate = photographer?.hourlyRate || 0;
+  const subtotal = hourlyRate * duration;
+  const serviceFee = subtotal * 0.1;
+  const total = subtotal + serviceFee;
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;ScrollView showsVerticalScrollIndicator={false}&gt;
+        &lt;View style={styles.header}&gt;
+          &lt;TouchableOpacity onPress={() =&gt; navigation.goBack()}&gt;&lt;Text style={styles.backButton}&gt;← Back&lt;/Text&gt;&lt;/TouchableOpacity&gt;
+          &lt;Text style={styles.title}&gt;Book Session&lt;/Text&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;Text style={styles.sectionTitle}&gt;Select Date&lt;/Text&gt;
+          &lt;ScrollView horizontal showsHorizontalScrollIndicator={false}&gt;
+            &lt;View style={styles.datesRow}&gt;
+              {dates.map((d) =&gt; (
+                &lt;TouchableOpacity key={d.value} style={[styles.dateCard, selectedDate === d.value && styles.dateCardActive]} onPress={() =&gt; setSelectedDate(d.value)}&gt;
+                  &lt;Text style={[styles.dateDay, selectedDate === d.value && styles.dateTextActive]}&gt;{d.day}&lt;/Text&gt;
+                  &lt;Text style={[styles.dateNum, selectedDate === d.value && styles.dateTextActive]}&gt;{d.date}&lt;/Text&gt;
+                &lt;/TouchableOpacity&gt;
+              ))}
+            &lt;/View&gt;
+          &lt;/ScrollView&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;Text style={styles.sectionTitle}&gt;Select Time&lt;/Text&gt;
+          &lt;View style={styles.timesGrid}&gt;
+            {times.map((t) =&gt; (
+              &lt;TouchableOpacity key={t} style={[styles.timeCard, selectedTime === t && styles.timeCardActive]} onPress={() =&gt; setSelectedTime(t)}&gt;
+                &lt;Text style={[styles.timeText, selectedTime === t && styles.timeTextActive]}&gt;{t}&lt;/Text&gt;
+              &lt;/TouchableOpacity&gt;
+            ))}
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;Text style={styles.sectionTitle}&gt;Duration&lt;/Text&gt;
+          &lt;View style={styles.durationRow}&gt;
+            &lt;TouchableOpacity style={styles.durationButton} onPress={() =&gt; setDuration(Math.max(1, duration - 1))}&gt;&lt;Text style={styles.durationButtonText}&gt;-&lt;/Text&gt;&lt;/TouchableOpacity&gt;
+            &lt;Text style={styles.durationValue}&gt;{duration} hour{duration &gt; 1 ? 's' : ''}&lt;/Text&gt;
+            &lt;TouchableOpacity style={styles.durationButton} onPress={() =&gt; setDuration(Math.min(8, duration + 1))}&gt;&lt;Text style={styles.durationButtonText}&gt;+&lt;/Text&gt;&lt;/TouchableOpacity&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;Text style={styles.sectionTitle}&gt;Price Summary&lt;/Text&gt;
+          &lt;View style={styles.priceCard}&gt;
+            &lt;View style={styles.priceRow}&gt;&lt;Text style={styles.priceLabel}&gt;£{hourlyRate} × {duration} hour{duration &gt; 1 ? 's' : ''}&lt;/Text&gt;&lt;Text style={styles.priceValue}&gt;£{subtotal.toFixed(2)}&lt;/Text&gt;&lt;/View&gt;
+            &lt;View style={styles.priceRow}&gt;&lt;Text style={styles.priceLabel}&gt;Service fee (10%)&lt;/Text&gt;&lt;Text style={styles.priceValue}&gt;£{serviceFee.toFixed(2)}&lt;/Text&gt;&lt;/View&gt;
+            &lt;View style={[styles.priceRow, styles.priceTotal]}&gt;&lt;Text style={styles.priceTotalLabel}&gt;Total&lt;/Text&gt;&lt;Text style={styles.priceTotalValue}&gt;£{total.toFixed(2)}&lt;/Text&gt;&lt;/View&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+        &lt;View style={{ height: 120 }} /&gt;
+      &lt;/ScrollView&gt;
+
+      &lt;View style={styles.footer}&gt;
+        &lt;TouchableOpacity style={[styles.bookButton, (!selectedDate || !selectedTime || bookMutation.isPending) && styles.bookButtonDisabled]} onPress={() =&gt; bookMutation.mutate()} disabled={!selectedDate || !selectedTime || bookMutation.isPending}&gt;
+          {bookMutation.isPending ? &lt;ActivityIndicator color="#0a0a0a" /&gt; : &lt;Text style={styles.bookButtonText}&gt;Request Booking - £{total.toFixed(2)}&lt;/Text&gt;}
+        &lt;/TouchableOpacity&gt;
+      &lt;/View&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  header: { padding: 24 },
+  backButton: { color: '#888', fontSize: 16, marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#ffffff' },
+  section: { paddingHorizontal: 24, marginBottom: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#ffffff', marginBottom: 12 },
+  datesRow: { flexDirection: 'row', gap: 8 },
+  dateCard: { width: 60, padding: 12, borderRadius: 12, backgroundColor: '#1a1a1a', alignItems: 'center' },
+  dateCardActive: { backgroundColor: '#ffffff' },
+  dateDay: { color: '#888', fontSize: 12, marginBottom: 4 },
+  dateNum: { color: '#fff', fontSize: 18, fontWeight: '600' },
+  dateTextActive: { color: '#0a0a0a' },
+  timesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  timeCard: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, backgroundColor: '#1a1a1a' },
+  timeCardActive: { backgroundColor: '#ffffff' },
+  timeText: { color: '#fff', fontSize: 14 },
+  timeTextActive: { color: '#0a0a0a' },
+  durationRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
+  durationButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center' },
+  durationButtonText: { color: '#fff', fontSize: 24 },
+  durationValue: { color: '#fff', fontSize: 18, fontWeight: '600', minWidth: 80, textAlign: 'center' },
+  priceCard: { backgroundColor: '#1a1a1a', borderRadius: 12, padding: 16 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  priceLabel: { color: '#888', fontSize: 14 },
+  priceValue: { color: '#fff', fontSize: 14 },
+  priceTotal: { borderTopWidth: 1, borderTopColor: '#333', paddingTop: 12, marginTop: 8, marginBottom: 0 },
+  priceTotalLabel: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  priceTotalValue: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: '#0a0a0a', borderTopWidth: 1, borderTopColor: '#222' },
+  bookButton: { backgroundColor: '#ffffff', padding: 18, borderRadius: 12, alignItems: 'center' },
+  bookButtonDisabled: { opacity: 0.5 },
+  bookButtonText: { color: '#0a0a0a', fontSize: 16, fontWeight: '600' },
+});</code></pre>
+
+<div class="page-break"></div>
+
+<h3>src/screens/BookingsScreen.tsx</h3>
+<pre><code>import React from 'react';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/client';
+import { Booking } from '../types';
+
+export default function BookingsScreen() {
+  const navigation = useNavigation();
+
+  const { data: bookings, isLoading } = useQuery({
+    queryKey: ['bookings'],
+    queryFn: async () =&gt; { const res = await api.get('/api/bookings'); return res.data as Booking[]; },
+  });
+
+  const getStatusColor = (status: string) =&gt; {
+    switch (status) {
+      case 'accepted': return '#22c55e';
+      case 'completed': return '#3b82f6';
+      case 'requested': return '#f59e0b';
+      case 'declined': case 'expired': return '#ef4444';
+      default: return '#888';
+    }
+  };
+
+  const renderBooking = ({ item }: { item: Booking }) =&gt; (
+    &lt;TouchableOpacity style={styles.card} onPress={() =&gt; navigation.navigate('BookingDetail' as never, { id: item.id } as never)}&gt;
+      &lt;View style={styles.cardHeader}&gt;
+        &lt;Text style={styles.photographerName}&gt;{item.photographer?.user?.firstName} {item.photographer?.user?.lastName}&lt;/Text&gt;
+        &lt;View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) + '20' }]}&gt;
+          &lt;Text style={[styles.statusText, { color: getStatusColor(item.status) }]}&gt;{item.status}&lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+      &lt;Text style={styles.date}&gt;📅 {item.date} at {item.time}&lt;/Text&gt;
+      &lt;Text style={styles.duration}&gt;⏱ {item.duration} hour(s) • £{item.totalAmount}&lt;/Text&gt;
+      {item.photoUrls?.length &gt; 0 && &lt;Text style={styles.photos}&gt;📷 {item.photoUrls.length} photos delivered&lt;/Text&gt;}
+    &lt;/TouchableOpacity&gt;
+  );
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;View style={styles.header}&gt;
+        &lt;TouchableOpacity onPress={() =&gt; navigation.goBack()}&gt;&lt;Text style={styles.backButton}&gt;← Back&lt;/Text&gt;&lt;/TouchableOpacity&gt;
+        &lt;Text style={styles.title}&gt;My Bookings&lt;/Text&gt;
+      &lt;/View&gt;
+
+      {isLoading ? (
+        &lt;ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} /&gt;
+      ) : bookings?.length === 0 ? (
+        &lt;View style={styles.empty}&gt;
+          &lt;Text style={styles.emptyText}&gt;No bookings yet&lt;/Text&gt;
+          &lt;TouchableOpacity style={styles.findButton} onPress={() =&gt; navigation.navigate('Home' as never)}&gt;
+            &lt;Text style={styles.findButtonText}&gt;Find a Photographer&lt;/Text&gt;
+          &lt;/TouchableOpacity&gt;
+        &lt;/View&gt;
+      ) : (
+        &lt;FlatList data={bookings} keyExtractor={(item) =&gt; item.id.toString()} renderItem={renderBooking} contentContainerStyle={styles.list} /&gt;
+      )}
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  header: { padding: 24 },
+  backButton: { color: '#888', fontSize: 16, marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#ffffff' },
+  list: { padding: 16 },
+  card: { backgroundColor: '#1a1a1a', borderRadius: 16, padding: 20, marginBottom: 12 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  photographerName: { fontSize: 18, fontWeight: '600', color: '#ffffff' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  statusText: { fontSize: 12, fontWeight: '500', textTransform: 'capitalize' },
+  date: { color: '#aaa', fontSize: 14, marginBottom: 4 },
+  duration: { color: '#888', fontSize: 14 },
+  photos: { color: '#22c55e', fontSize: 14, marginTop: 8 },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyText: { color: '#888', fontSize: 16, marginBottom: 16 },
+  findButton: { backgroundColor: '#ffffff', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  findButtonText: { color: '#0a0a0a', fontWeight: '600' },
+});</code></pre>
+
+<div class="page-break"></div>
+
+<h3>src/screens/BookingDetailScreen.tsx</h3>
+<pre><code>import React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Image, ActivityIndicator, FlatList, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/client';
+
+const { width } = Dimensions.get('window');
+
+export default function BookingDetailScreen() {
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { id } = route.params as { id: number };
+
+  const { data: booking, isLoading } = useQuery({
+    queryKey: ['booking', id],
+    queryFn: async () =&gt; { const res = await api.get(`/api/bookings/${id}`); return res.data; },
+  });
+
+  const getStatusColor = (status: string) =&gt; {
+    switch (status) {
+      case 'accepted': return '#22c55e';
+      case 'completed': return '#3b82f6';
+      case 'requested': return '#f59e0b';
+      case 'declined': case 'expired': return '#ef4444';
+      default: return '#888';
+    }
+  };
+
+  if (isLoading) return &lt;SafeAreaView style={styles.container}&gt;&lt;ActivityIndicator size="large" color="#fff" style={{ marginTop: 40 }} /&gt;&lt;/SafeAreaView&gt;;
+
+  return (
+    &lt;SafeAreaView style={styles.container}&gt;
+      &lt;ScrollView showsVerticalScrollIndicator={false}&gt;
+        &lt;View style={styles.header}&gt;&lt;TouchableOpacity onPress={() =&gt; navigation.goBack()}&gt;&lt;Text style={styles.backButton}&gt;← Back&lt;/Text&gt;&lt;/TouchableOpacity&gt;&lt;/View&gt;
+
+        &lt;View style={styles.statusSection}&gt;
+          &lt;View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking?.status) + '20' }]}&gt;
+            &lt;Text style={[styles.statusText, { color: getStatusColor(booking?.status) }]}&gt;{booking?.status}&lt;/Text&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;View style={styles.photographerCard}&gt;
+            &lt;Image source={{ uri: booking?.photographer?.user?.profileImage || 'https://via.placeholder.com/60' }} style={styles.avatar} /&gt;
+            &lt;View&gt;
+              &lt;Text style={styles.photographerName}&gt;{booking?.photographer?.user?.firstName} {booking?.photographer?.user?.lastName}&lt;/Text&gt;
+              &lt;Text style={styles.photographerCity}&gt;📍 {booking?.photographer?.city}&lt;/Text&gt;
+            &lt;/View&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        &lt;View style={styles.section}&gt;
+          &lt;Text style={styles.sectionTitle}&gt;Booking Details&lt;/Text&gt;
+          &lt;View style={styles.detailsCard}&gt;
+            &lt;View style={styles.detailRow}&gt;&lt;Text style={styles.detailLabel}&gt;Date&lt;/Text&gt;&lt;Text style={styles.detailValue}&gt;{booking?.date}&lt;/Text&gt;&lt;/View&gt;
+            &lt;View style={styles.detailRow}&gt;&lt;Text style={styles.detailLabel}&gt;Time&lt;/Text&gt;&lt;Text style={styles.detailValue}&gt;{booking?.time}&lt;/Text&gt;&lt;/View&gt;
+            &lt;View style={styles.detailRow}&gt;&lt;Text style={styles.detailLabel}&gt;Duration&lt;/Text&gt;&lt;Text style={styles.detailValue}&gt;{booking?.duration} hour(s)&lt;/Text&gt;&lt;/View&gt;
+            &lt;View style={[styles.detailRow, { borderBottomWidth: 0 }]}&gt;&lt;Text style={styles.detailLabel}&gt;Total Paid&lt;/Text&gt;&lt;Text style={styles.detailValueBold}&gt;£{booking?.totalAmount}&lt;/Text&gt;&lt;/View&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+
+        {booking?.photoUrls?.length &gt; 0 && (
+          &lt;View style={styles.section}&gt;
+            &lt;Text style={styles.sectionTitle}&gt;Your Photos ({booking.photoUrls.length})&lt;/Text&gt;
+            &lt;FlatList data={booking.photoUrls} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item, index) =&gt; index.toString()} renderItem={({ item }) =&gt; &lt;Image source={{ uri: item }} style={styles.photo} /&gt;} contentContainerStyle={{ gap: 8 }} /&gt;
+          &lt;/View&gt;
+        )}
+        &lt;View style={{ height: 40 }} /&gt;
+      &lt;/ScrollView&gt;
+    &lt;/SafeAreaView&gt;
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  header: { padding: 24 },
+  backButton: { color: '#888', fontSize: 16 },
+  statusSection: { alignItems: 'center', marginBottom: 24 },
+  statusBadge: { paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
+  statusText: { fontSize: 16, fontWeight: '600', textTransform: 'capitalize' },
+  section: { paddingHorizontal: 24, marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 12 },
+  photographerCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1a1a1a', padding: 16, borderRadius: 12, gap: 16 },
+  avatar: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#333' },
+  photographerName: { fontSize: 18, fontWeight: '600', color: '#ffffff', marginBottom: 4 },
+  photographerCity: { fontSize: 14, color: '#888' },
+  detailsCard: { backgroundColor: '#1a1a1a', borderRadius: 12, padding: 16 },
+  detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#333' },
+  detailLabel: { color: '#888', fontSize: 14 },
+  detailValue: { color: '#fff', fontSize: 14 },
+  detailValueBold: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  photo: { width: width - 64, height: (width - 64) * 0.75, borderRadius: 12, backgroundColor: '#333' },
+});</code></pre>
+
+<hr>
+
+<h2>Step 4: Run the App</h2>
+<pre><code># Start Expo
+npx expo start --clear
+
+# Scan QR code with Expo Go app on your phone</code></pre>
+
+<hr>
+
+<h2>API Reference</h2>
+
+<table>
+  <tr><th>Endpoint</th><th>Method</th><th>Description</th></tr>
+  <tr><td>/api/register</td><td>POST</td><td>Create account</td></tr>
+  <tr><td>/api/login</td><td>POST</td><td>Login</td></tr>
+  <tr><td>/api/logout</td><td>POST</td><td>Logout</td></tr>
+  <tr><td>/api/user</td><td>GET</td><td>Get current user</td></tr>
+  <tr><td>/api/photographers</td><td>GET</td><td>List photographers</td></tr>
+  <tr><td>/api/photographers/:id</td><td>GET</td><td>Get photographer</td></tr>
+  <tr><td>/api/photographers/:id/reviews</td><td>GET</td><td>Get reviews</td></tr>
+  <tr><td>/api/bookings</td><td>GET</td><td>Get user bookings</td></tr>
+  <tr><td>/api/bookings/:id</td><td>GET</td><td>Get booking detail</td></tr>
+  <tr><td>/api/bookings</td><td>POST</td><td>Create booking</td></tr>
+</table>
+
+<hr>
+
+<h2>Demo Accounts</h2>
+<ul>
+  <li><strong>Customer:</strong> customer@test.com / password</li>
+  <li><strong>Photographer:</strong> anna@snapnow.com / password</li>
+</ul>
+
+<hr>
+
+<h2>Design System</h2>
+<table>
+  <tr><th>Element</th><th>Color</th></tr>
+  <tr><td>Background</td><td>#0a0a0a</td></tr>
+  <tr><td>Cards</td><td>#1a1a1a</td></tr>
+  <tr><td>Border</td><td>#333333</td></tr>
+  <tr><td>Text Primary</td><td>#ffffff</td></tr>
+  <tr><td>Text Secondary</td><td>#888888</td></tr>
+  <tr><td>Success</td><td>#22c55e</td></tr>
+  <tr><td>Warning</td><td>#f59e0b</td></tr>
+  <tr><td>Error</td><td>#ef4444</td></tr>
+  <tr><td>Primary Button</td><td>#ffffff bg, #0a0a0a text</td></tr>
+</table>
+
+</body>
+</html>
