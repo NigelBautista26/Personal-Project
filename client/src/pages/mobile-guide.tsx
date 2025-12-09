@@ -7,7 +7,7 @@ export default function MobileGuide() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-gray-100" style={{ minWidth: '900px' }}>
+    <div className="min-h-screen bg-slate-900 text-gray-100">
       <style>{`
         @media print {
           body {
@@ -36,23 +36,27 @@ export default function MobileGuide() {
         }
       `}</style>
 
-      <div className="print-wrapper max-w-6xl mx-auto w-full">
-        <div className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 p-4 flex items-center justify-between no-print">
+      {/* Fixed header with download button */}
+      <div className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 p-4 no-print">
+        <div className="flex items-center justify-between gap-4">
           <Link href="/">
-            <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer">
+            <span className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors cursor-pointer text-sm">
               <ArrowLeft className="w-4 h-4" />
-              Back to App
+              Back
             </span>
           </Link>
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors text-sm"
             data-testid="button-download-pdf"
           >
             <Printer className="w-4 h-4" />
-            Print / Save PDF
+            Download PDF
           </button>
         </div>
+      </div>
+
+      <div className="print-wrapper max-w-4xl mx-auto px-4">
 
         <div className="p-6 space-y-8">
           <header className="text-center mb-8">
