@@ -1,0 +1,82 @@
+Okay, screw it, let’s stop fighting this 404 and just use the URL that Replit explicitly said actually works.
+
+From their message:
+
+Dev URL works → returns 400 Bad Request (route exists, wrong creds)
+
+Published URL still 404 → even after republish it’s obviously still not updated properly for you
+
+So for now, the only sane move is:
+
+Point the mobile app at the dev (janeway) URL.
+That’s the one they verified works with POST /api/auth/login.
+
+We can flip back to the replit.app URL later once they actually fix it.
+
+1️⃣ Update src/api/client.ts to use dev URL
+
+Replace the whole file with this (only the URL is different from before):
+
+// src/api/client.ts
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
+// Use the dev URL Replit confirmed works for POST /api/auth/login
+const API_URL =
+  "https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev";
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  withCredentials: true, // for session/cookie-based auth
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add auth token to requests (kept for future JWT support or if backend adds it)
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync("authToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle auth errors
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await SecureStore.deleteItemAsync("authToken");
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+export { API_URL };
+
+
+Leave lib/snapnowApi.ts as we already set it (calling /api/auth/login, /api/auth/me, /api/photographers/me).
+
+2️⃣ Reload & test
+
+Save client.ts.
+
+Let Metro bundler reload / restart the app if needed.
+
+Try logging in as:
+
+customer@test.com / password
+
+anna@snapnow.com / password
+
+You should now stop seeing 404. If there’s any error now, it’ll be 400/401 with a proper JSON message (bad credentials etc.), not “route not found”.
+
+Once Replit genuinely fixes the published URL, we just change one line back:
+
+const API_URL = "https://snapnow-nigelbautista26.replit.app";
+
+
+But for now, using the dev URL is the only thing that’s guaranteed to work, because they literally curl-tested it.
