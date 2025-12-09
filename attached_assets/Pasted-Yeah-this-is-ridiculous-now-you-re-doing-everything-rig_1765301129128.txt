@@ -1,0 +1,495 @@
+Yeah, this is ridiculous now – you’re doing everything right and it keeps throwing the same useless [AxiosError: 404] at you.
+
+At this point I need to see what URL the app is actually calling, because that 404 means “the path you hit doesn’t exist on that host”, and we’ve changed the host twice now.
+
+Let’s hard-log the full request details from the login screen so we can see:
+
+the exact URL
+
+the baseURL
+
+the method
+
+the status
+
+the response body
+
+and stop guessing.
+
+1️⃣ First, lock in the correct API files
+src/api/client.ts — make sure it’s exactly this
+// src/api/client.ts
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+
+// Replit dev API base URL (they explicitly told you to use this)
+const API_URL =
+  "https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev";
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  withCredentials: true, // send cookies on every request (credentials: 'include')
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync("authToken");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await SecureStore.deleteItemAsync("authToken");
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+export { API_URL };
+
+lib/snapnowApi.ts — make sure it’s this
+// lib/snapnowApi.ts
+
+import api from "../src/api/client";
+
+export type UserRole = "customer" | "photographer" | "admin";
+
+export interface User {
+  id: number;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  fullName?: string;
+  role: UserRole;
+  profilePicture?: string;
+}
+
+export type PhotographerVerificationStatus =
+  | "pending_review"
+  | "verified"
+  | "rejected";
+
+export interface PhotographerProfile {
+  id: number;
+  userId: number;
+  hourlyRate: number;
+  city: string;
+  latitude: number;
+  longitude: number;
+  bio?: string;
+  portfolio: string[];
+  verificationStatus: PhotographerVerificationStatus;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  profilePicture?: string;
+}
+
+export interface SignupData {
+  email: string;
+  password: string;
+  fullName: string;
+  role: "customer" | "photographer";
+}
+
+export const snapnowApi = {
+  async login(payload: { email: string; password: string }): Promise<User> {
+    const response = await api.post<User>("/api/auth/login", payload);
+    return response.data;
+  },
+
+  async signup(data: SignupData): Promise<User> {
+    const response = await api.post<User>("/api/auth/register", data);
+    return response.data;
+  },
+
+  async logout(): Promise<void> {
+    await api.post("/api/auth/logout");
+  },
+
+  async me(): Promise<User | null> {
+    try {
+      const response = await api.get<User>("/api/auth/me");
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  async mePhotographer(): Promise<PhotographerProfile | null> {
+    try {
+      const res = await api.get<PhotographerProfile | null>(
+        "/api/photographers/me"
+      );
+
+      if (!res.data) {
+        return null;
+      }
+
+      return res.data as PhotographerProfile;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        console.warn("[snapnowApi.mePhotographer] 404 → no profile yet");
+        return null;
+      }
+
+      console.warn(
+        "[snapnowApi.mePhotographer] unexpected error",
+        err?.message || err
+      );
+      throw err;
+    }
+  },
+};
+
+2️⃣ Now, update login.tsx to log everything about the error
+
+Here’s a full app/login.tsx with the only real change being the catch block – I’m keeping your UI exactly as you had it:
+
+// app/login.tsx
+import { useNavigation } from "@react-navigation/native";
+import { router } from "expo-router";
+import {
+  AlertCircle,
+  ArrowLeft,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+} from "lucide-react-native";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import PhotoBackgroundTmp from "@/components/PhotoBackgroundTmp";
+import { snapnowApi } from "@/lib/snapnowApi";
+
+const PRIMARY = "#2563EB";
+
+export default function LoginScreen() {
+  const navigation = useNavigation<any>();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
+
+  const validateForm = () => {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Please enter your email address";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!password) {
+      newErrors.password = "Please enter your password";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const clearError = (field: "email" | "password") => {
+    if (!errors[field]) return;
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+  };
+
+  const handleLogin = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+
+    try {
+      const user = await snapnowApi.login({ email, password });
+
+      if (user.role === "photographer") {
+        router.replace("/(photographer)");
+      } else {
+        // TODO: wire customer/admin groups later
+        router.replace("/");
+      }
+    } catch (error: any) {
+      console.error("[login] error details", {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        // axios request config
+        url: error?.config?.url,
+        baseURL: error?.config?.baseURL,
+        method: error?.config?.method,
+      });
+
+      const backendMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message;
+
+      Alert.alert(
+        "Login failed",
+        backendMessage || "Invalid email or password"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <View style={styles.root}>
+      <PhotoBackgroundTmp />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.contentWrapper}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+        >
+          <View style={styles.centerWrapper}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity
+                onPress={() => router.replace("/")}
+                style={styles.backButton}
+                testID="button-back"
+              >
+                <ArrowLeft size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.card}>
+              <View style={styles.titleBlock}>
+                <Text style={styles.title}>Welcome back</Text>
+                <Text style={styles.subtitle}>
+                  Please enter your details to sign in.
+                </Text>
+              </View>
+
+              {/* Email */}
+              <View style={styles.section}>
+                <Text style={styles.label}>Email address</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputIcon}>
+                    <Mail size={20} color="#9ca3af" />
+                  </View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      errors.email && styles.inputErrorBorder,
+                    ]}
+                    placeholder="Enter your email"
+                    placeholderTextColor="#6b7280"
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      clearError("email");
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    testID="input-email"
+                  />
+                </View>
+                {errors.email && (
+                  <View style={styles.errorRow}>
+                    <AlertCircle size={16} color="#fca5a5" />
+                    <Text style={styles.errorText}>{errors.email}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Password */}
+              <View style={styles.section}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <View style={styles.inputIcon}>
+                    <Lock size={20} color="#9ca3af" />
+                  </View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      styles.inputWithRightIcon,
+                      errors.password && styles.inputErrorBorder,
+                    ]}
+                    placeholder="••••••••"
+                    placeholderTextColor="#6b7280"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      clearError("password");
+                    }}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    testID="input-password"
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword((prev) => !prev)}
+                    style={styles.passwordToggle}
+                    hitSlop={10}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#9ca3af" />
+                    ) : (
+                      <Eye size={20} color="#9ca3af" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {errors.password && (
+                  <View style={styles.errorRow}>
+                    <AlertCircle size={16} color="#fca5a5" />
+                    <Text style={styles.errorText}>{errors.password}</Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity
+                activeOpacity={0.95}
+                onPress={handleLogin}
+                disabled={isLoading}
+                style={[
+                  styles.submitButton,
+                  isLoading && styles.submitButtonDisabled,
+                ]}
+                testID="button-login"
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Sign in</Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>
+                  {"Don't have an account? "}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate("Signup")}
+                  hitSlop={10}
+                >
+                  <Text style={styles.footerLink}>Sign up</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#000000" },
+  contentWrapper: { flex: 1, position: "relative" },
+  scrollContainer: { flexGrow: 1, paddingHorizontal: 24, paddingVertical: 32 },
+  centerWrapper: { flexGrow: 1, justifyContent: "center" },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    zIndex: 2,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 9999,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    borderWidth: 1,
+    borderColor: "rgba(148,163,184,0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  card: {
+    alignSelf: "center",
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 32,
+    padding: 20,
+    backgroundColor: "rgba(0,0,0,0.76)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    zIndex: 2,
+  },
+  titleBlock: { marginBottom: 20 },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  subtitle: { fontSize: 14, color: "#9ca3af" },
+  section: { marginBottom: 14 },
+  label: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    marginBottom: 8,
+    fontWeight: "500",
+  },
+  inputWrapper: { position: "relative", justifyContent: "center" },
+  inputIcon: { position: "absolute", left: 12, zIndex: 1 },
+  input: {
+    height: 48,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(148,163,184,0.5)",
+    paddingLeft: 40,
+    paddingRight: 12,
+    color: "#FFFFFF",
+    backgroundColor: "rgba(15,15,20,0.9)",
+    fontSize: 14,
+  },
+  inputWithRightIcon: { paddingRight: 40 },
+  inputErrorBorder: { borderColor: "#f97373" },
+  passwordToggle: { position: "absolute", right: 12 },
+  errorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    gap: 4,
+  } as any,
+  errorText: { color: "#fca5a5", fontSize: 12 },
+  submitButton: {
+    marginTop: 8,
+    height: 54,
+    borderRadius: 22,
+    backgroundColor: PRIMARY,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  submitButtonDisabled: { opacity: 0.7 },
+  submitButtonText: { color: "#FFFFFF", fontSize: 17, fontWeight: "700" },
+  footer: {
+    marginTop: 16,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  footerText: { fontSize: 13, color: "#d1d5db" },
+  footerLink: {
+    fontSize: 13,
+    color: "#FFFFFF",
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
+});
