@@ -28,6 +28,7 @@ export default function PhotographerOnboardingScreen() {
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -54,6 +55,7 @@ export default function PhotographerOnboardingScreen() {
   });
 
   const handleFinishLater = async () => {
+    setLoggingOut(true);
     await logout();
   };
 
@@ -215,9 +217,16 @@ export default function PhotographerOnboardingScreen() {
               <TouchableOpacity
                 style={styles.finishLaterButton}
                 onPress={handleFinishLater}
+                disabled={loggingOut}
               >
-                <LogOut size={18} color="#9ca3af" style={styles.finishLaterIcon} />
-                <Text style={styles.finishLaterText}>Finish later</Text>
+                {loggingOut ? (
+                  <ActivityIndicator size="small" color="#9ca3af" />
+                ) : (
+                  <>
+                    <LogOut size={18} color="#9ca3af" style={styles.finishLaterIcon} />
+                    <Text style={styles.finishLaterText}>Finish later</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
