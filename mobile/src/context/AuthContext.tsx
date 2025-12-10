@@ -16,7 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_FLAG_KEY = 'snapnow_authenticated_v2';
+const AUTH_FLAG_KEY = 'snapnow_authenticated_v3';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
