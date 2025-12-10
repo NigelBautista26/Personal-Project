@@ -28,7 +28,7 @@ export default function PhotographerLayout() {
     );
   }
 
-  if (!photographerProfile || !photographerProfile.id) {
+  if (!user.hasPhotographerProfile || !photographerProfile || !photographerProfile.id) {
     return <PhotographerOnboardingScreen />;
   }
 

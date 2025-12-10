@@ -80,7 +80,7 @@ export default function PhotographerDashboardScreen() {
               <Star size={20} color="#fbbf24" />
             </View>
             <Text style={styles.statValue}>
-              {photographerProfile?.rating?.toFixed(1) || 'N/A'}
+              {photographerProfile?.rating != null ? Number(photographerProfile.rating).toFixed(1) : 'N/A'}
             </Text>
             <Text style={styles.statLabel}>Rating</Text>
           </View>
