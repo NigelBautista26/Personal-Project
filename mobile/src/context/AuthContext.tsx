@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 import { snapnowApi, User, PhotographerProfile } from '../api/snapnowApi';
 
 interface AuthContextType {
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    router.replace('/');
     try {
       await snapnowApi.logout();
     } catch {

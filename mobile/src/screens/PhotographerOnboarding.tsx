@@ -10,7 +10,6 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { MapPin, DollarSign, Instagram, Globe, FileText, LogOut, Camera } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
@@ -55,10 +54,9 @@ export default function PhotographerOnboardingScreen() {
     },
   });
 
-  const handleFinishLater = () => {
+  const handleFinishLater = async () => {
     setLoggingOut(true);
-    router.dismissAll();
-    router.replace('/');
+    await logout();
   };
 
   const useCurrentLocation = async () => {
