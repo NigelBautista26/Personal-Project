@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { QueryProvider } from '../src/context/QueryProvider';
@@ -9,14 +9,20 @@ const PRIMARY_COLOR = '#2563eb';
 
 function RootNavigator() {
   const { user, isLoading } = useAuth();
-  const previousUserRef = useRef(user);
+  const segments = useSegments();
+  const wasAuthenticatedRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && previousUserRef.current && !user) {
+    if (isLoading) return;
+
+    const inProtectedRoute = segments[0] === '(photographer)' || segments[0] === '(customer)';
+    
+    if (!user && inProtectedRoute && wasAuthenticatedRef.current) {
       router.replace('/');
     }
-    previousUserRef.current = user;
-  }, [user, isLoading]);
+    
+    wasAuthenticatedRef.current = !!user;
+  }, [user, isLoading, segments]);
 
   if (isLoading) {
     return (

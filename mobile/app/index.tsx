@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
-import { router, Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
 import { useAuth } from '../src/context/AuthContext';
@@ -9,6 +9,16 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
+
+  React.useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if (user.role === 'photographer') {
+        router.replace('/(photographer)');
+      } else {
+        router.replace('/(customer)');
+      }
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   if (isLoading) {
     return (
@@ -19,11 +29,11 @@ export default function WelcomeScreen() {
   }
 
   if (isAuthenticated && user) {
-    if (user.role === 'photographer') {
-      return <Redirect href="/(photographer)" />;
-    } else {
-      return <Redirect href="/(customer)" />;
-    }
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
   }
 
   return (
