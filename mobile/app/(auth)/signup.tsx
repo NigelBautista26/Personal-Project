@@ -17,7 +17,15 @@ import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react-n
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
+const PRIMARY_COLOR = '#6366f1';
+
 type Role = 'customer' | 'photographer';
+
+interface FormErrors {
+  fullName?: string;
+  email?: string;
+  password?: string;
+}
 
 export default function SignupScreen() {
   const { register } = useAuth();
@@ -27,12 +35,35 @@ export default function SignupScreen() {
   const [role, setRole] = useState<Role>('customer');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const validateForm = () => {
+    const newErrors: FormErrors = {};
+
+    if (!fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    } else if (fullName.trim().length < 2) {
+      newErrors.fullName = 'Name must be at least 2 characters';
+    }
+
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSignup = async () => {
-    if (!fullName.trim() || !email.trim() || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     try {
@@ -46,6 +77,12 @@ export default function SignupScreen() {
       Alert.alert('Signup failed', error.response?.data?.message || 'Could not create account');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const clearError = (field: keyof FormErrors) => {
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: undefined });
     }
   };
 
@@ -99,47 +136,58 @@ export default function SignupScreen() {
               <View style={styles.form}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Full name</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, errors.fullName && styles.inputWrapperError]}>
                     <User size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your name"
                       placeholderTextColor="#6b7280"
                       value={fullName}
-                      onChangeText={setFullName}
+                      onChangeText={(text) => {
+                        setFullName(text);
+                        clearError('fullName');
+                      }}
                       autoCapitalize="words"
                       testID="input-fullname"
                     />
                   </View>
+                  {errors.fullName && <Text style={styles.errorText}>{errors.fullName}</Text>}
                 </View>
 
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Email</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, errors.email && styles.inputWrapperError]}>
                     <Mail size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
                       placeholderTextColor="#6b7280"
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        clearError('email');
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       testID="input-email"
                     />
                   </View>
+                  {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
                 </View>
 
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Password</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
                     <Lock size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 6 chars)"
                       placeholderTextColor="#6b7280"
                       value={password}
-                      onChangeText={setPassword}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        clearError('password');
+                      }}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       testID="input-password"
@@ -155,12 +203,14 @@ export default function SignupScreen() {
                       )}
                     </TouchableOpacity>
                   </View>
+                  {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
                 </View>
 
                 <TouchableOpacity
                   style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                   onPress={handleSignup}
                   disabled={loading}
+                  activeOpacity={0.9}
                   testID="button-submit"
                 >
                   {loading ? (
@@ -186,7 +236,7 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#000' },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
@@ -224,38 +274,49 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
   },
   roleButtonActive: {
-    backgroundColor: '#6366f1',
-    borderColor: '#6366f1',
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
   },
   roleText: { fontSize: 14, fontWeight: '500', color: '#9ca3af' },
   roleTextActive: { color: '#fff' },
-  form: { gap: 16 },
+  form: { gap: 20 },
   inputContainer: { gap: 8 },
   label: { fontSize: 14, fontWeight: '500', color: '#fff' },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
-  inputIcon: { position: 'absolute', left: 16, zIndex: 1 },
-  input: {
-    flex: 1,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    padding: 16,
-    paddingLeft: 48,
-    color: '#fff',
-    fontSize: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  eyeIcon: { position: 'absolute', right: 16 },
+  inputWrapperError: {
+    borderColor: '#ef4444',
+  },
+  inputIcon: { marginLeft: 16 },
+  input: {
+    flex: 1,
+    padding: 16,
+    paddingLeft: 12,
+    color: '#fff',
+    fontSize: 16,
+  },
+  eyeIcon: { padding: 16 },
+  errorText: { color: '#fca5a5', fontSize: 12, marginTop: 4 },
   submitButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: PRIMARY_COLOR,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },
   footerText: { color: '#9ca3af', fontSize: 14 },
-  footerLink: { color: '#6366f1', fontSize: 14, fontWeight: '600' },
+  footerLink: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: '600' },
 });

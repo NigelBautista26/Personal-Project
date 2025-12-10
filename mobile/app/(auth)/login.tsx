@@ -17,6 +17,8 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
+const PRIMARY_COLOR = '#6366f1';
+
 export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -27,14 +29,19 @@ export default function LoginScreen() {
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
+    
     if (!email.trim()) {
-      newErrors.email = 'Please enter your email address';
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = 'Please enter a valid email address';
     }
+    
     if (!password) {
-      newErrors.password = 'Please enter your password';
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -79,19 +86,22 @@ export default function LoginScreen() {
 
             <View style={styles.card}>
               <Text style={styles.title}>Welcome back</Text>
-              <Text style={styles.subtitle}>Sign in to continue</Text>
+              <Text style={styles.subtitle}>Sign in to your account</Text>
 
               <View style={styles.form}>
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Email</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, errors.email && styles.inputWrapperError]}>
                     <Mail size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
-                      style={[styles.input, errors.email && styles.inputError]}
+                      style={styles.input}
                       placeholder="Enter your email"
                       placeholderTextColor="#6b7280"
                       value={email}
-                      onChangeText={setEmail}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        if (errors.email) setErrors({ ...errors, email: undefined });
+                      }}
                       keyboardType="email-address"
                       autoCapitalize="none"
                       testID="input-email"
@@ -102,14 +112,17 @@ export default function LoginScreen() {
 
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Password</Text>
-                  <View style={styles.inputWrapper}>
+                  <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
                     <Lock size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
-                      style={[styles.input, errors.password && styles.inputError]}
+                      style={styles.input}
                       placeholder="Enter your password"
                       placeholderTextColor="#6b7280"
                       value={password}
-                      onChangeText={setPassword}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        if (errors.password) setErrors({ ...errors, password: undefined });
+                      }}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
                       testID="input-password"
@@ -132,6 +145,7 @@ export default function LoginScreen() {
                   style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                   onPress={handleLogin}
                   disabled={loading}
+                  activeOpacity={0.9}
                   testID="button-submit"
                 >
                   {loading ? (
@@ -157,7 +171,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#000' },
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
@@ -181,35 +195,44 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 8 },
   subtitle: { fontSize: 16, color: '#9ca3af', marginBottom: 24 },
-  form: { gap: 16 },
+  form: { gap: 20 },
   inputContainer: { gap: 8 },
   label: { fontSize: 14, fontWeight: '500', color: '#fff' },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', position: 'relative' },
-  inputIcon: { position: 'absolute', left: 16, zIndex: 1 },
-  input: {
-    flex: 1,
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.1)',
     borderRadius: 12,
-    padding: 16,
-    paddingLeft: 48,
-    color: '#fff',
-    fontSize: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  inputError: { borderColor: '#ef4444' },
-  eyeIcon: { position: 'absolute', right: 16 },
-  errorText: { color: '#fca5a5', fontSize: 12 },
+  inputWrapperError: {
+    borderColor: '#ef4444',
+  },
+  inputIcon: { marginLeft: 16 },
+  input: {
+    flex: 1,
+    padding: 16,
+    paddingLeft: 12,
+    color: '#fff',
+    fontSize: 16,
+  },
+  eyeIcon: { padding: 16 },
+  errorText: { color: '#fca5a5', fontSize: 12, marginTop: 4 },
   submitButton: {
-    backgroundColor: '#6366f1',
+    backgroundColor: PRIMARY_COLOR,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#fff', fontSize: 18, fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 16 },
   footerText: { color: '#9ca3af', fontSize: 14 },
-  footerLink: { color: '#6366f1', fontSize: 14, fontWeight: '600' },
+  footerLink: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: '600' },
 });
