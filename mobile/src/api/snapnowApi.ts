@@ -1,0 +1,153 @@
+import api from './client';
+
+export type UserRole = 'customer' | 'photographer' | 'admin';
+
+export interface User {
+  id: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  profileImageUrl?: string;
+  role: UserRole;
+  createdAt: string;
+  hasPhotographerProfile?: boolean;
+}
+
+export type VerificationStatus = 'pending_review' | 'verified' | 'rejected';
+
+export interface PhotographerProfile {
+  id: number;
+  userId: string;
+  hourlyRate: number;
+  city: string;
+  latitude: number;
+  longitude: number;
+  bio?: string;
+  portfolio: string[];
+  verificationStatus: VerificationStatus;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  profilePicture?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+export interface Booking {
+  id: number;
+  customerId: string;
+  photographerId: number;
+  sessionDate: string;
+  sessionTime: string;
+  duration: number;
+  location: string;
+  latitude: number;
+  longitude: number;
+  notes?: string;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'expired' | 'declined';
+  totalAmount: number;
+  platformFee: number;
+  photographerEarnings: number;
+  stripePaymentIntentId?: string;
+  createdAt: string;
+  photographer?: PhotographerProfile & { user?: User };
+  customer?: User;
+  photoUrls?: string[];
+}
+
+export interface Earning {
+  id: number;
+  photographerId: number;
+  bookingId: number;
+  amount: number;
+  status: 'held' | 'pending' | 'paid';
+  createdAt: string;
+}
+
+export const snapnowApi = {
+  async login(payload: { email: string; password: string }): Promise<User> {
+    const response = await api.post<User>('/api/auth/login', payload);
+    return response.data;
+  },
+
+  async register(payload: { email: string; password: string; fullName: string; role: UserRole }): Promise<User> {
+    const response = await api.post<User>('/api/auth/register', payload);
+    return response.data;
+  },
+
+  async logout(): Promise<void> {
+    await api.post('/api/auth/logout');
+  },
+
+  async me(): Promise<User | null> {
+    try {
+      const response = await api.get<User>('/api/auth/me');
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  async mePhotographer(): Promise<PhotographerProfile | null> {
+    try {
+      const response = await api.get<PhotographerProfile>('/api/photographers/me');
+      return response.data;
+    } catch (error: any) {
+      if (error?.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async createPhotographerProfile(data: {
+    hourlyRate: number;
+    city: string;
+    latitude: number;
+    longitude: number;
+    bio?: string;
+    instagramUrl: string;
+    websiteUrl?: string;
+  }): Promise<PhotographerProfile> {
+    const response = await api.post<PhotographerProfile>('/api/photographers', data);
+    return response.data;
+  },
+
+  async getPhotographers(params?: { city?: string; lat?: number; lng?: number; radius?: number }): Promise<PhotographerProfile[]> {
+    const response = await api.get<PhotographerProfile[]>('/api/photographers', { params });
+    return response.data;
+  },
+
+  async getPhotographer(id: number): Promise<PhotographerProfile> {
+    const response = await api.get<PhotographerProfile>(`/api/photographers/${id}`);
+    return response.data;
+  },
+
+  async getBookings(): Promise<Booking[]> {
+    const response = await api.get<Booking[]>('/api/bookings');
+    return response.data;
+  },
+
+  async getBooking(id: number): Promise<Booking> {
+    const response = await api.get<Booking>(`/api/bookings/${id}`);
+    return response.data;
+  },
+
+  async createBooking(data: {
+    photographerId: number;
+    sessionDate: string;
+    sessionTime: string;
+    duration: number;
+    location: string;
+    latitude: number;
+    longitude: number;
+    notes?: string;
+  }): Promise<Booking> {
+    const response = await api.post<Booking>('/api/bookings', data);
+    return response.data;
+  },
+
+  async getEarnings(): Promise<Earning[]> {
+    const response = await api.get<Earning[]>('/api/earnings');
+    return response.data;
+  },
+};
