@@ -55,12 +55,10 @@ export default function PhotographerOnboardingScreen() {
     },
   });
 
-  const handleFinishLater = async () => {
+  const handleFinishLater = () => {
     setLoggingOut(true);
+    router.dismissAll();
     router.replace('/');
-    setTimeout(async () => {
-      await logout();
-    }, 100);
   };
 
   const useCurrentLocation = async () => {
