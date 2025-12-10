@@ -3,7 +3,7 @@ import { Animated, Dimensions, Image, StyleSheet, View } from "react-native";
 
 const { width } = Dimensions.get("window");
 
-const ROW_COUNT = 7;
+const ROW_COUNT = 5;
 const TILE_SPACING = 16;
 const TILE_SIZE = (width - TILE_SPACING * 4) / 3;
 const ROW_HEIGHT = TILE_SIZE + 10;
@@ -76,15 +76,7 @@ export default function PhotoBackground() {
   const rows = useMemo(buildRows, []);
   const translateXs = useRef(rows.map(() => new Animated.Value(0))).current;
 
-  useEffect(() => {
-    STOCK_IMAGES.forEach((img) => {
-      const resolved = Image.resolveAssetSource(img);
-      if (resolved?.uri) {
-        Image.prefetch(resolved.uri);
-      }
-    });
-  }, []);
-
+  
   useEffect(() => {
     const animations = rows.map((row, index) =>
       Animated.loop(
