@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
-import { MapPin, DollarSign, Instagram, Globe, FileText } from 'lucide-react-native';
+import { MapPin, DollarSign, Instagram, Globe, FileText, LogOut } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { snapnowApi } from '../api/snapnowApi';
 import { useAuth } from '../context/AuthContext';
@@ -21,7 +21,7 @@ import PhotoBackground from '../components/PhotoBackground';
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerOnboardingScreen() {
-  const { refreshPhotographerProfile } = useAuth();
+  const { refreshPhotographerProfile, logout } = useAuth();
   const [hourlyRate, setHourlyRate] = useState('');
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
@@ -53,6 +53,23 @@ export default function PhotographerOnboardingScreen() {
       Alert.alert('Error', error.message || 'Failed to create profile');
     },
   });
+
+  const handleFinishLater = () => {
+    Alert.alert(
+      'Finish Later',
+      'Your account is saved. You can log back in anytime to finish setup.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log out',
+          onPress: async () => {
+            await logout();
+            router.replace('/');
+          },
+        },
+      ]
+    );
+  };
 
   const useCurrentLocation = async () => {
     setLocationLoading(true);
@@ -205,6 +222,14 @@ export default function PhotographerOnboardingScreen() {
               <Text style={styles.disclaimer}>
                 Your profile will be reviewed by our team before you can start accepting bookings. This usually takes 24-48 hours.
               </Text>
+
+              <TouchableOpacity
+                style={styles.finishLaterButton}
+                onPress={handleFinishLater}
+              >
+                <LogOut size={18} color="#9ca3af" />
+                <Text style={styles.finishLaterText}>Finish later</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -270,6 +295,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
     marginTop: 8,
+  },
+  finishLaterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    marginTop: 16,
     marginBottom: 40,
+  },
+  finishLaterText: {
+    color: '#9ca3af',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
