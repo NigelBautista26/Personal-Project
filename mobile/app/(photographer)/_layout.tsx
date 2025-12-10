@@ -12,12 +12,16 @@ const PRIMARY_COLOR = '#2563eb';
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user } = useAuth();
 
-  if (isLoading || !user || user.role !== 'photographer') {
+  if (isLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
+  }
+
+  if (!user || user.role !== 'photographer') {
+    return null;
   }
 
   if (!photographerProfile) {
