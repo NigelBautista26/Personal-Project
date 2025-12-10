@@ -54,21 +54,9 @@ export default function PhotographerOnboardingScreen() {
     },
   });
 
-  const handleFinishLater = () => {
-    Alert.alert(
-      'Finish Later',
-      'Your account is saved. You can log back in anytime to finish setup.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          },
-        },
-      ]
-    );
+  const handleFinishLater = async () => {
+    await logout();
+    router.replace('/');
   };
 
   const useCurrentLocation = async () => {
@@ -227,7 +215,7 @@ export default function PhotographerOnboardingScreen() {
                 style={styles.finishLaterButton}
                 onPress={handleFinishLater}
               >
-                <LogOut size={18} color="#9ca3af" />
+                <LogOut size={18} color="#9ca3af" style={styles.finishLaterIcon} />
                 <Text style={styles.finishLaterText}>Finish later</Text>
               </TouchableOpacity>
             </View>
@@ -252,9 +240,9 @@ const styles = StyleSheet.create({
   header: { marginBottom: 24 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 8 },
   subtitle: { fontSize: 16, color: '#9ca3af', lineHeight: 24 },
-  form: { gap: 20 },
-  inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '500', color: '#fff' },
+  form: {},
+  inputGroup: { marginBottom: 20 },
+  label: { fontSize: 14, fontWeight: '500', color: '#fff', marginBottom: 8 },
   inputWrapper: { position: 'relative' },
   inputIcon: { position: 'absolute', left: 16, top: 18, zIndex: 1 },
   input: {
@@ -274,9 +262,11 @@ const styles = StyleSheet.create({
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     alignSelf: 'flex-start',
     marginTop: 8,
+  },
+  locationButtonIcon: {
+    marginRight: 8,
   },
   locationButtonText: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: '500' },
   coordsText: { color: '#22c55e', fontSize: 12, marginTop: 4 },
@@ -300,10 +290,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 16,
     marginTop: 16,
     marginBottom: 40,
+  },
+  finishLaterIcon: {
+    marginRight: 8,
   },
   finishLaterText: {
     color: '#9ca3af',
