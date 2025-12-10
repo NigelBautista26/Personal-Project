@@ -17,7 +17,7 @@ import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
-const PRIMARY_COLOR = '#6366f1';
+const PRIMARY_COLOR = '#2563eb';
 
 export default function LoginScreen() {
   const { login } = useAuth();

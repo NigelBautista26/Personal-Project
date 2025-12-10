@@ -17,7 +17,7 @@ import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react-n
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
-const PRIMARY_COLOR = '#6366f1';
+const PRIMARY_COLOR = '#2563eb';
 
 type Role = 'customer' | 'photographer';
 

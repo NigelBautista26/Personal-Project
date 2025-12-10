@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Home, Calendar, User } from 'lucide-react-native';
 
-const PRIMARY_COLOR = '#6366f1';
+const PRIMARY_COLOR = '#2563eb';
 
 export default function CustomerLayout() {
   return (
@@ -10,7 +10,7 @@ export default function CustomerLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#000',
-          borderTopColor: 'rgba(99,102,241,0.2)',
+          borderTopColor: 'rgba(37,99,235,0.3)',
           borderTopWidth: 1,
           paddingBottom: 8,
           paddingTop: 8,

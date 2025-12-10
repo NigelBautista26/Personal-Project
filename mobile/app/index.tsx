@@ -1,11 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
 import { useAuth } from '../src/context/AuthContext';
 
-const PRIMARY_COLOR = '#6366f1';
+const PRIMARY_COLOR = '#2563eb';
 
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
@@ -36,7 +36,11 @@ export default function WelcomeScreen() {
         
         <View style={styles.centerContent}>
           <View style={styles.logoContainer}>
-            <View style={styles.logoIcon} />
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logoImage}
+              resizeMode="cover"
+            />
           </View>
           <Text style={styles.tagline}>
             Get professional photos,{'\n'}anytime & anywhere you travel.
@@ -108,13 +112,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.15,
     shadowRadius: 40,
+    overflow: 'hidden',
   },
-  logoIcon: {
+  logoImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 24,
-    backgroundColor: PRIMARY_COLOR,
-    opacity: 0.8,
   },
   tagline: {
     fontSize: 18,
