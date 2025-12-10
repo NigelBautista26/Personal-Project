@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import { snapnowApi, User, PhotographerProfile } from '../api/snapnowApi';
 
 interface AuthContextType {
@@ -15,23 +16,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const AUTH_FLAG_KEY = 'snapnow_authenticated';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [photographerProfile, setPhotographerProfile] = useState<PhotographerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const refreshUser = async () => {
-    try {
-      const currentUser = await snapnowApi.me();
-      setUser(currentUser);
-      if (currentUser?.role === 'photographer') {
-        await refreshPhotographerProfile();
-      }
-    } catch {
-      setUser(null);
-      setPhotographerProfile(null);
-    }
-  };
 
   const refreshPhotographerProfile = async () => {
     try {
@@ -42,17 +32,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await snapnowApi.me();
+      setUser(currentUser);
+      if (currentUser?.role === 'photographer') {
+        await refreshPhotographerProfile();
+      } else {
+        setPhotographerProfile(null);
+      }
+    } catch {
+      setUser(null);
+      setPhotographerProfile(null);
+      await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
+    }
+  };
+
   useEffect(() => {
     const init = async () => {
       setIsLoading(true);
-      await refreshUser();
-      setIsLoading(false);
+      try {
+        const wasAuthenticated = await SecureStore.getItemAsync(AUTH_FLAG_KEY);
+        if (wasAuthenticated === 'true') {
+          await refreshUser();
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
     init();
   }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
     const loggedInUser = await snapnowApi.login({ email, password });
+    await SecureStore.setItemAsync(AUTH_FLAG_KEY, 'true');
     setUser(loggedInUser);
     if (loggedInUser.role === 'photographer') {
       await refreshPhotographerProfile();
@@ -62,12 +77,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (email: string, password: string, fullName: string, role: 'customer' | 'photographer'): Promise<User> => {
     const newUser = await snapnowApi.register({ email, password, fullName, role });
+    await SecureStore.setItemAsync(AUTH_FLAG_KEY, 'true');
     setUser(newUser);
     return newUser;
   };
 
   const logout = async () => {
-    await snapnowApi.logout();
+    try {
+      await snapnowApi.logout();
+    } catch {
+    }
+    await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
     setUser(null);
     setPhotographerProfile(null);
   };
