@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs } from 'expo-router';
 import { router } from 'expo-router';
@@ -12,14 +12,14 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user } = useAuth();
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && !hasRedirected && (!user || user.role !== 'photographer')) {
-      setHasRedirected(true);
+    if (!isLoading && !hasRedirectedRef.current && (!user || user.role !== 'photographer')) {
+      hasRedirectedRef.current = true;
       router.replace('/');
     }
-  }, [isLoading, user, hasRedirected]);
+  }, [isLoading, user]);
 
   if (isLoading) {
     return (
