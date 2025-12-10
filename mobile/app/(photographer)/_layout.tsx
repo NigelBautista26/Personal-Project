@@ -84,9 +84,6 @@ export default function PhotographerLayout() {
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
-      <Tabs.Screen name="onboarding" options={{ href: null }} />
-      <Tabs.Screen name="pending" options={{ href: null }} />
-      <Tabs.Screen name="rejected" options={{ href: null }} />
     </Tabs>
   );
 }
