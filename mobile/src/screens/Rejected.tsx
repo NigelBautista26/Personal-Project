@@ -5,9 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
-import { router } from 'expo-router';
 import { XCircle, LogOut, Mail } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import PhotoBackground from '../components/PhotoBackground';
@@ -17,22 +15,8 @@ const PRIMARY_COLOR = '#2563eb';
 export default function RejectedScreen() {
   const { logout } = useAuth();
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (

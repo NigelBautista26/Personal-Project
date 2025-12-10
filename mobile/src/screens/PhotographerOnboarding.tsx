@@ -10,9 +10,8 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
 import * as Location from 'expo-location';
-import { MapPin, DollarSign, Instagram, Globe, FileText, LogOut } from 'lucide-react-native';
+import { MapPin, DollarSign, Instagram, Globe, FileText, LogOut, Camera } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { snapnowApi } from '../api/snapnowApi';
 import { useAuth } from '../context/AuthContext';
@@ -56,7 +55,6 @@ export default function PhotographerOnboardingScreen() {
 
   const handleFinishLater = async () => {
     await logout();
-    router.replace('/');
   };
 
   const useCurrentLocation = async () => {
@@ -93,9 +91,12 @@ export default function PhotographerOnboardingScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.card}>
             <View style={styles.header}>
+              <View style={styles.iconContainer}>
+                <Camera size={32} color={PRIMARY_COLOR} />
+              </View>
               <Text style={styles.title}>Complete Your Profile</Text>
               <Text style={styles.subtitle}>
-                Set up your photographer profile to start accepting bookings
+                Set up your profile and submit your portfolio for review. Once approved, customers will be able to book you.
               </Text>
             </View>
 
@@ -237,9 +238,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  header: { marginBottom: 24 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#9ca3af', lineHeight: 24 },
+  header: { marginBottom: 24, alignItems: 'center' },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(37, 99, 235, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  title: { fontSize: 24, fontWeight: '700', color: '#fff', marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: '#9ca3af', lineHeight: 22, textAlign: 'center' },
   form: {},
   inputGroup: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '500', color: '#fff', marginBottom: 8 },

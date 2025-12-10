@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
+import { router } from 'expo-router';
 import { Home, Calendar, DollarSign, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import PhotographerOnboardingScreen from '../../src/screens/PhotographerOnboarding';
@@ -11,6 +12,14 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user } = useAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && !hasRedirected && (!user || user.role !== 'photographer')) {
+      setHasRedirected(true);
+      router.replace('/');
+    }
+  }, [isLoading, user, hasRedirected]);
 
   if (isLoading) {
     return (
@@ -21,7 +30,11 @@ export default function PhotographerLayout() {
   }
 
   if (!user || user.role !== 'photographer') {
-    return <Redirect href="/" />;
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
   }
 
   if (!photographerProfile) {

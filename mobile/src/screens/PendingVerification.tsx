@@ -5,9 +5,7 @@ import {
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
-import { router } from 'expo-router';
 import { Clock, LogOut, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import PhotoBackground from '../components/PhotoBackground';
@@ -21,22 +19,8 @@ export default function PendingVerificationScreen() {
     await refreshPhotographerProfile();
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
