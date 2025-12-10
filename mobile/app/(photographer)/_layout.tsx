@@ -22,15 +22,15 @@ export default function PhotographerLayout() {
   }
 
   if (!photographerProfile) {
-    return <Redirect href="/(photographer)/onboarding" />;
+    return <Redirect href="/photographer-onboarding" />;
   }
 
   if (photographerProfile.verificationStatus === 'pending_review') {
-    return <Redirect href="/(photographer)/pending" />;
+    return <Redirect href="/photographer-pending" />;
   }
 
   if (photographerProfile.verificationStatus === 'rejected') {
-    return <Redirect href="/(photographer)/rejected" />;
+    return <Redirect href="/photographer-rejected" />;
   }
 
   return (
@@ -91,8 +91,8 @@ export default function PhotographerLayout() {
 const styles = StyleSheet.create({
   loading: {
     flex: 1,
-    backgroundColor: '#0a0a0a',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#0a0a0a',
   },
 });
