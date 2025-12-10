@@ -6,15 +6,17 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { Clock, LogOut, CheckCircle } from 'lucide-react-native';
 import { useAuth } from '../src/context/AuthContext';
+import PhotoBackground from '../src/components/PhotoBackground';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PendingVerificationScreen() {
-  const { logout, refreshPhotographerProfile } = useAuth();
+  const { user, isLoading, logout, refreshPhotographerProfile } = useAuth();
 
   const handleRefresh = async () => {
     await refreshPhotographerProfile();
@@ -38,59 +40,76 @@ export default function PendingVerificationScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Clock size={64} color="#f59e0b" />
-        </View>
-
-        <Text style={styles.title}>Application Under Review</Text>
-        <Text style={styles.subtitle}>
-          Thank you for signing up as a photographer! Our team is reviewing your application.
-        </Text>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>What happens next?</Text>
-          <View style={styles.infoItem}>
-            <CheckCircle size={20} color="#22c55e" />
-            <Text style={styles.infoText}>We'll review your Instagram portfolio</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <CheckCircle size={20} color="#22c55e" />
-            <Text style={styles.infoText}>Verify your photography experience</Text>
-          </View>
-          <View style={styles.infoItem}>
-            <CheckCircle size={20} color="#22c55e" />
-            <Text style={styles.infoText}>Approve your profile within 24-48 hours</Text>
-          </View>
-        </View>
-
-        <Text style={styles.note}>
-          You'll receive a notification once your profile is approved and you can start accepting bookings.
-        </Text>
-
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={handleRefresh}
-        >
-          <Text style={styles.refreshButtonText}>Check Status</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <LogOut size={18} color="#ef4444" />
-          <Text style={styles.logoutText}>Log out</Text>
-        </TouchableOpacity>
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
-    </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/" />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <PhotoBackground />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <Clock size={64} color="#f59e0b" />
+          </View>
+
+          <Text style={styles.title}>Application Under Review</Text>
+          <Text style={styles.subtitle}>
+            Thank you for signing up as a photographer! Our team is reviewing your application.
+          </Text>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>What happens next?</Text>
+            <View style={styles.infoItem}>
+              <CheckCircle size={20} color="#22c55e" />
+              <Text style={styles.infoText}>We'll review your Instagram portfolio</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <CheckCircle size={20} color="#22c55e" />
+              <Text style={styles.infoText}>Verify your photography experience</Text>
+            </View>
+            <View style={styles.infoItem}>
+              <CheckCircle size={20} color="#22c55e" />
+              <Text style={styles.infoText}>Approve your profile within 24-48 hours</Text>
+            </View>
+          </View>
+
+          <Text style={styles.note}>
+            You'll receive a notification once your profile is approved and you can start accepting bookings.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.refreshButton}
+            onPress={handleRefresh}
+          >
+            <Text style={styles.refreshButtonText}>Check Status</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <LogOut size={18} color="#ef4444" />
+            <Text style={styles.logoutText}>Log out</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#000' },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  safeArea: { flex: 1 },
   content: {
     flex: 1,
     padding: 24,

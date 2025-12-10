@@ -10,17 +10,18 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import * as Location from 'expo-location';
 import { MapPin, DollarSign, Instagram, Globe, FileText } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { snapnowApi } from '../src/api/snapnowApi';
 import { useAuth } from '../src/context/AuthContext';
+import PhotoBackground from '../src/components/PhotoBackground';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerOnboardingScreen() {
-  const { refreshPhotographerProfile } = useAuth();
+  const { user, isLoading, refreshPhotographerProfile } = useAuth();
   const [hourlyRate, setHourlyRate] = useState('');
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
@@ -81,137 +82,167 @@ export default function PhotographerOnboardingScreen() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/" />;
+  }
+
+  if (user.role !== 'photographer') {
+    return <Redirect href="/(customer)" />;
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Complete Your Profile</Text>
-          <Text style={styles.subtitle}>
-            Set up your photographer profile to start accepting bookings
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <PhotoBackground />
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.card}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Complete Your Profile</Text>
+              <Text style={styles.subtitle}>
+                Set up your photographer profile to start accepting bookings
+              </Text>
+            </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Hourly Rate (£)</Text>
-            <View style={styles.inputWrapper}>
-              <DollarSign size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. 75"
-                placeholderTextColor="#6b7280"
-                value={hourlyRate}
-                onChangeText={setHourlyRate}
-                keyboardType="numeric"
-              />
+            <View style={styles.form}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Hourly Rate (£)</Text>
+                <View style={styles.inputWrapper}>
+                  <DollarSign size={20} color="#6b7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. 75"
+                    placeholderTextColor="#6b7280"
+                    value={hourlyRate}
+                    onChangeText={setHourlyRate}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>City</Text>
+                <View style={styles.inputWrapper}>
+                  <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. London"
+                    placeholderTextColor="#6b7280"
+                    value={city}
+                    onChangeText={setCity}
+                  />
+                </View>
+                <TouchableOpacity
+                  style={styles.locationButton}
+                  onPress={useCurrentLocation}
+                  disabled={locationLoading}
+                >
+                  {locationLoading ? (
+                    <ActivityIndicator size="small" color={PRIMARY_COLOR} />
+                  ) : (
+                    <>
+                      <MapPin size={16} color={PRIMARY_COLOR} />
+                      <Text style={styles.locationButtonText}>Use Current Location</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                {coords && (
+                  <Text style={styles.coordsText}>Location set ✓</Text>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Bio (optional)</Text>
+                <View style={styles.inputWrapper}>
+                  <FileText size={20} color="#6b7280" style={[styles.inputIcon, { top: 16 }]} />
+                  <TextInput
+                    style={[styles.input, styles.textArea]}
+                    placeholder="Tell clients about yourself..."
+                    placeholderTextColor="#6b7280"
+                    value={bio}
+                    onChangeText={setBio}
+                    multiline
+                    numberOfLines={4}
+                    textAlignVertical="top"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Instagram URL (required for verification)</Text>
+                <View style={styles.inputWrapper}>
+                  <Instagram size={20} color="#e1306c" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="https://instagram.com/yourprofile"
+                    placeholderTextColor="#6b7280"
+                    value={instagramUrl}
+                    onChangeText={setInstagramUrl}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Website URL (optional)</Text>
+                <View style={styles.inputWrapper}>
+                  <Globe size={20} color={PRIMARY_COLOR} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="https://yourwebsite.com"
+                    placeholderTextColor="#6b7280"
+                    value={websiteUrl}
+                    onChangeText={setWebsiteUrl}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.submitButton, createMutation.isPending && styles.submitButtonDisabled]}
+                onPress={() => createMutation.mutate()}
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit for Review</Text>
+                )}
+              </TouchableOpacity>
+
+              <Text style={styles.disclaimer}>
+                Your profile will be reviewed by our team before you can start accepting bookings. This usually takes 24-48 hours.
+              </Text>
             </View>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>City</Text>
-            <View style={styles.inputWrapper}>
-              <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. London"
-                placeholderTextColor="#6b7280"
-                value={city}
-                onChangeText={setCity}
-              />
-            </View>
-            <TouchableOpacity
-              style={styles.locationButton}
-              onPress={useCurrentLocation}
-              disabled={locationLoading}
-            >
-              {locationLoading ? (
-                <ActivityIndicator size="small" color={PRIMARY_COLOR} />
-              ) : (
-                <>
-                  <MapPin size={16} color={PRIMARY_COLOR} />
-                  <Text style={styles.locationButtonText}>Use Current Location</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            {coords && (
-              <Text style={styles.coordsText}>Location set ✓</Text>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Bio (optional)</Text>
-            <View style={styles.inputWrapper}>
-              <FileText size={20} color="#6b7280" style={[styles.inputIcon, { top: 16 }]} />
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Tell clients about yourself..."
-                placeholderTextColor="#6b7280"
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Instagram URL (required for verification)</Text>
-            <View style={styles.inputWrapper}>
-              <Instagram size={20} color="#e1306c" style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="https://instagram.com/yourprofile"
-                placeholderTextColor="#6b7280"
-                value={instagramUrl}
-                onChangeText={setInstagramUrl}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Website URL (optional)</Text>
-            <View style={styles.inputWrapper}>
-              <Globe size={20} color={PRIMARY_COLOR} style={styles.inputIcon} />
-              <TextInput
-                style={styles.input}
-                placeholder="https://yourwebsite.com"
-                placeholderTextColor="#6b7280"
-                value={websiteUrl}
-                onChangeText={setWebsiteUrl}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.submitButton, createMutation.isPending && styles.submitButtonDisabled]}
-            onPress={() => createMutation.mutate()}
-            disabled={createMutation.isPending}
-          >
-            {createMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>Submit for Review</Text>
-            )}
-          </TouchableOpacity>
-
-          <Text style={styles.disclaimer}>
-            Your profile will be reviewed by our team before you can start accepting bookings. This usually takes 24-48 hours.
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#000' },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  safeArea: { flex: 1 },
   content: { flex: 1, padding: 24 },
-  header: { marginBottom: 32 },
+  card: {
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  header: { marginBottom: 24 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff', marginBottom: 8 },
   subtitle: { fontSize: 16, color: '#9ca3af', lineHeight: 24 },
   form: { gap: 20 },

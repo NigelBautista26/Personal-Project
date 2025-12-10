@@ -6,15 +6,17 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { XCircle, LogOut, Mail } from 'lucide-react-native';
 import { useAuth } from '../src/context/AuthContext';
+import PhotoBackground from '../src/components/PhotoBackground';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function RejectedScreen() {
-  const { logout } = useAuth();
+  const { user, isLoading, logout } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -34,48 +36,65 @@ export default function RejectedScreen() {
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <XCircle size={64} color="#ef4444" />
-        </View>
-
-        <Text style={styles.title}>Application Not Approved</Text>
-        <Text style={styles.subtitle}>
-          Unfortunately, we couldn't approve your photographer application at this time.
-        </Text>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>Common reasons for rejection:</Text>
-          <Text style={styles.infoText}>• Incomplete portfolio on Instagram</Text>
-          <Text style={styles.infoText}>• Unable to verify photography experience</Text>
-          <Text style={styles.infoText}>• Profile information needs updates</Text>
-        </View>
-
-        <Text style={styles.note}>
-          If you believe this was a mistake or have questions, please contact our support team.
-        </Text>
-
-        <TouchableOpacity style={styles.contactButton}>
-          <Mail size={20} color="#fff" />
-          <Text style={styles.contactButtonText}>Contact Support</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-        >
-          <LogOut size={18} color="#ef4444" />
-          <Text style={styles.logoutText}>Log out</Text>
-        </TouchableOpacity>
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
-    </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return <Redirect href="/" />;
+  }
+
+  return (
+    <View style={styles.container}>
+      <PhotoBackground />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.content}>
+          <View style={styles.iconContainer}>
+            <XCircle size={64} color="#ef4444" />
+          </View>
+
+          <Text style={styles.title}>Application Not Approved</Text>
+          <Text style={styles.subtitle}>
+            Unfortunately, we couldn't approve your photographer application at this time.
+          </Text>
+
+          <View style={styles.infoCard}>
+            <Text style={styles.infoTitle}>Common reasons for rejection:</Text>
+            <Text style={styles.infoText}>• Incomplete portfolio on Instagram</Text>
+            <Text style={styles.infoText}>• Unable to verify photography experience</Text>
+            <Text style={styles.infoText}>• Profile information needs updates</Text>
+          </View>
+
+          <Text style={styles.note}>
+            If you believe this was a mistake or have questions, please contact our support team.
+          </Text>
+
+          <TouchableOpacity style={styles.contactButton}>
+            <Mail size={20} color="#fff" />
+            <Text style={styles.contactButtonText}>Contact Support</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <LogOut size={18} color="#ef4444" />
+            <Text style={styles.logoutText}>Log out</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#000' },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  safeArea: { flex: 1 },
   content: {
     flex: 1,
     padding: 24,
