@@ -23,7 +23,7 @@
     "expo-secure-store": "~15.0.8",
     "expo-splash-screen": "~0.31.0",
     "expo-status-bar": "~3.0.9",
-    "lucide-react-native": "^0.460.0",
+    "lucide-react-native": "^0.469.0",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
