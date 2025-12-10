@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Stack, router, useSegments } from 'expo-router';
+import React from 'react';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { QueryProvider } from '../src/context/QueryProvider';
@@ -8,21 +8,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 const PRIMARY_COLOR = '#2563eb';
 
 function RootNavigator() {
-  const { user, isLoading } = useAuth();
-  const segments = useSegments();
-  const wasAuthenticatedRef = useRef(false);
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inProtectedRoute = segments[0] === '(photographer)' || segments[0] === '(customer)';
-    
-    if (!user && inProtectedRoute && wasAuthenticatedRef.current) {
-      router.replace('/');
-    }
-    
-    wasAuthenticatedRef.current = !!user;
-  }, [user, isLoading, segments]);
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (

@@ -21,7 +21,11 @@ export default function PhotographerLayout() {
   }
 
   if (!user || user.role !== 'photographer') {
-    return null;
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
   }
 
   if (!photographerProfile) {
