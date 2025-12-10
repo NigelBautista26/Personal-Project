@@ -6,21 +6,16 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
-import { router, Redirect } from 'expo-router';
-import { Clock, LogOut, CheckCircle } from 'lucide-react-native';
-import { useAuth } from '../src/context/AuthContext';
-import PhotoBackground from '../src/components/PhotoBackground';
+import { router } from 'expo-router';
+import { XCircle, LogOut, Mail } from 'lucide-react-native';
+import { useAuth } from '../context/AuthContext';
+import PhotoBackground from '../components/PhotoBackground';
 
 const PRIMARY_COLOR = '#2563eb';
 
-export default function PendingVerificationScreen() {
-  const { user, isLoading, logout, refreshPhotographerProfile } = useAuth();
-
-  const handleRefresh = async () => {
-    await refreshPhotographerProfile();
-  };
+export default function RejectedScreen() {
+  const { logout } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -40,57 +35,34 @@ export default function PendingVerificationScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
-  }
-
-  if (!user) {
-    return <Redirect href="/" />;
-  }
-
   return (
     <View style={styles.container}>
       <PhotoBackground />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <Clock size={64} color="#f59e0b" />
+            <XCircle size={64} color="#ef4444" />
           </View>
 
-          <Text style={styles.title}>Application Under Review</Text>
+          <Text style={styles.title}>Application Not Approved</Text>
           <Text style={styles.subtitle}>
-            Thank you for signing up as a photographer! Our team is reviewing your application.
+            Unfortunately, we couldn't approve your photographer application at this time.
           </Text>
 
           <View style={styles.infoCard}>
-            <Text style={styles.infoTitle}>What happens next?</Text>
-            <View style={styles.infoItem}>
-              <CheckCircle size={20} color="#22c55e" />
-              <Text style={styles.infoText}>We'll review your Instagram portfolio</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <CheckCircle size={20} color="#22c55e" />
-              <Text style={styles.infoText}>Verify your photography experience</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <CheckCircle size={20} color="#22c55e" />
-              <Text style={styles.infoText}>Approve your profile within 24-48 hours</Text>
-            </View>
+            <Text style={styles.infoTitle}>Common reasons for rejection:</Text>
+            <Text style={styles.infoText}>• Incomplete portfolio on Instagram</Text>
+            <Text style={styles.infoText}>• Unable to verify photography experience</Text>
+            <Text style={styles.infoText}>• Profile information needs updates</Text>
           </View>
 
           <Text style={styles.note}>
-            You'll receive a notification once your profile is approved and you can start accepting bookings.
+            If you believe this was a mistake or have questions, please contact our support team.
           </Text>
 
-          <TouchableOpacity
-            style={styles.refreshButton}
-            onPress={handleRefresh}
-          >
-            <Text style={styles.refreshButtonText}>Check Status</Text>
+          <TouchableOpacity style={styles.contactButton}>
+            <Mail size={20} color="#fff" />
+            <Text style={styles.contactButtonText}>Contact Support</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -108,7 +80,6 @@ export default function PendingVerificationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  centered: { justifyContent: 'center', alignItems: 'center' },
   safeArea: { flex: 1 },
   content: {
     flex: 1,
@@ -120,7 +91,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: 'rgba(245,158,11,0.1)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
@@ -154,16 +125,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 16,
   },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
   infoText: {
     fontSize: 14,
     color: '#d1d5db',
-    flex: 1,
+    marginBottom: 8,
+    lineHeight: 22,
   },
   note: {
     fontSize: 14,
@@ -172,14 +138,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 32,
   },
-  refreshButton: {
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: PRIMARY_COLOR,
     paddingVertical: 16,
-    paddingHorizontal: 48,
+    paddingHorizontal: 32,
     borderRadius: 12,
     marginBottom: 16,
   },
-  refreshButtonText: {
+  contactButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',

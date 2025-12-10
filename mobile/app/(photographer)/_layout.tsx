@@ -3,6 +3,9 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, Redirect } from 'expo-router';
 import { Home, Calendar, DollarSign, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import PhotographerOnboardingScreen from '../../src/screens/PhotographerOnboarding';
+import PendingVerificationScreen from '../../src/screens/PendingVerification';
+import RejectedScreen from '../../src/screens/Rejected';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -22,15 +25,15 @@ export default function PhotographerLayout() {
   }
 
   if (!photographerProfile) {
-    return <Redirect href="/photographer-onboarding" />;
+    return <PhotographerOnboardingScreen />;
   }
 
   if (photographerProfile.verificationStatus === 'pending_review') {
-    return <Redirect href="/photographer-pending" />;
+    return <PendingVerificationScreen />;
   }
 
   if (photographerProfile.verificationStatus === 'rejected') {
-    return <Redirect href="/photographer-rejected" />;
+    return <RejectedScreen />;
   }
 
   return (

@@ -10,18 +10,18 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { router, Redirect } from 'expo-router';
+import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { MapPin, DollarSign, Instagram, Globe, FileText } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
-import { snapnowApi } from '../src/api/snapnowApi';
-import { useAuth } from '../src/context/AuthContext';
-import PhotoBackground from '../src/components/PhotoBackground';
+import { snapnowApi } from '../api/snapnowApi';
+import { useAuth } from '../context/AuthContext';
+import PhotoBackground from '../components/PhotoBackground';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerOnboardingScreen() {
-  const { user, isLoading, refreshPhotographerProfile } = useAuth();
+  const { refreshPhotographerProfile } = useAuth();
   const [hourlyRate, setHourlyRate] = useState('');
   const [city, setCity] = useState('');
   const [bio, setBio] = useState('');
@@ -48,7 +48,6 @@ export default function PhotographerOnboardingScreen() {
     },
     onSuccess: async () => {
       await refreshPhotographerProfile();
-      router.replace('/photographer-pending');
     },
     onError: (error: any) => {
       Alert.alert('Error', error.message || 'Failed to create profile');
@@ -81,22 +80,6 @@ export default function PhotographerOnboardingScreen() {
       setLocationLoading(false);
     }
   };
-
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
-  }
-
-  if (!user) {
-    return <Redirect href="/" />;
-  }
-
-  if (user.role !== 'photographer') {
-    return <Redirect href="/(customer)" />;
-  }
 
   return (
     <View style={styles.container}>
@@ -232,7 +215,6 @@ export default function PhotographerOnboardingScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
-  centered: { justifyContent: 'center', alignItems: 'center' },
   safeArea: { flex: 1 },
   content: { flex: 1, padding: 24 },
   card: {
