@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
 import { useAuth } from '../src/context/AuthContext';
@@ -9,20 +9,6 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
-  const [hasCheckedAuth, setHasCheckedAuth] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isLoading && !hasCheckedAuth) {
-      setHasCheckedAuth(true);
-      if (isAuthenticated && user) {
-        if (user.role === 'photographer') {
-          router.replace('/(photographer)');
-        } else {
-          router.replace('/(customer)');
-        }
-      }
-    }
-  }, [isLoading, isAuthenticated, user, hasCheckedAuth]);
 
   if (isLoading) {
     return (
@@ -30,6 +16,14 @@ export default function WelcomeScreen() {
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
+  }
+
+  if (isAuthenticated && user) {
+    if (user.role === 'photographer') {
+      return <Redirect href="/(photographer)" />;
+    } else {
+      return <Redirect href="/(customer)" />;
+    }
   }
 
   return (
@@ -125,7 +119,6 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   buttons: {
-    gap: 16,
     marginBottom: 32,
   },
   primaryButton: {
@@ -137,6 +130,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
+    marginBottom: 16,
   },
   primaryButtonText: {
     color: '#fff',
