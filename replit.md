@@ -182,6 +182,16 @@ Preferred communication style: Simple, everyday language.
   - Founder & Innovation Roadmap section for startup prototype work
   - Print-to-PDF functionality with proper A4 formatting and page breaks
 
+- **Mobile App (React Native/Expo)** (Dec 2025): Complete mobile app in `/mobile` folder:
+  - Expo Router for file-based navigation
+  - Custom PhotoBackground component with animated scrolling stock images
+  - Session-based authentication (cookies) with SecureStore flag for persistence
+  - Customer screens: Home (photographer discovery), Bookings, Profile
+  - Photographer screens: Dashboard, Bookings, Earnings, Profile with verification flow
+  - Photographer onboarding: Collects hourly rate, location, Instagram (required), website
+  - Verification flow routing: onboarding → pending → dashboard (based on verification status)
+  - Run with `cd mobile && npm install && npx expo start`
+
 **Demo Accounts:**
 - Customer: customer@test.com / password
 - Photographer: anna@snapnow.com / password
