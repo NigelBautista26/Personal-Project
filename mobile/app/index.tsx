@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
@@ -9,21 +9,25 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const [hasCheckedAuth, setHasCheckedAuth] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
-      if (user.role === 'photographer') {
-        router.replace('/(photographer)');
-      } else {
-        router.replace('/(customer)');
+    if (!isLoading && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+      if (isAuthenticated && user) {
+        if (user.role === 'photographer') {
+          router.replace('/(photographer)');
+        } else {
+          router.replace('/(customer)');
+        }
       }
     }
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading, isAuthenticated, user, hasCheckedAuth]);
 
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Text style={styles.loadingText}>Loading...</Text>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
   }
@@ -82,10 +86,6 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingText: {
-    color: '#fff',
-    fontSize: 18,
   },
   content: {
     flex: 1,

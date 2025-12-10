@@ -16,7 +16,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AUTH_FLAG_KEY = 'snapnow_authenticated';
+const AUTH_FLAG_KEY = 'snapnow_authenticated_v2';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -54,7 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const wasAuthenticated = await SecureStore.getItemAsync(AUTH_FLAG_KEY);
         if (wasAuthenticated === 'true') {
-          await refreshUser();
+          try {
+            await refreshUser();
+          } catch {
+            await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
+            setUser(null);
+            setPhotographerProfile(null);
+          }
         }
       } catch {
         setUser(null);
