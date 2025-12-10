@@ -116,14 +116,14 @@ export default function PhotographerDashboardScreen() {
               >
                 <View style={styles.bookingDate}>
                   <Text style={styles.bookingDay}>
-                    {new Date(booking.sessionDate).getDate()}
+                    {new Date(booking.scheduledDate).getDate()}
                   </Text>
                   <Text style={styles.bookingMonth}>
-                    {new Date(booking.sessionDate).toLocaleDateString('en-GB', { month: 'short' })}
+                    {new Date(booking.scheduledDate).toLocaleDateString('en-GB', { month: 'short' })}
                   </Text>
                 </View>
                 <View style={styles.bookingInfo}>
-                  <Text style={styles.bookingTime}>{booking.sessionTime}</Text>
+                  <Text style={styles.bookingTime}>{booking.scheduledTime}</Text>
                   <Text style={styles.bookingLocation} numberOfLines={1}>
                     {booking.location}
                   </Text>

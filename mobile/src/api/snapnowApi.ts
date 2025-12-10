@@ -35,23 +35,19 @@ export interface PhotographerProfile {
 export interface Booking {
   id: number;
   customerId: string;
-  photographerId: number;
-  sessionDate: string;
-  sessionTime: string;
+  photographerId: string;
+  scheduledDate: string;
+  scheduledTime: string;
   duration: number;
   location: string;
-  latitude: number;
-  longitude: number;
-  notes?: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'expired' | 'declined';
-  totalAmount: number;
-  platformFee: number;
-  photographerEarnings: number;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'expired' | 'declined' | 'in_progress';
+  totalAmount: string;
+  platformFee: string;
+  photographerEarnings: string;
   stripePaymentIntentId?: string;
   createdAt: string;
   photographer?: PhotographerProfile & { user?: User };
   customer?: User;
-  photoUrls?: string[];
 }
 
 export interface Earning {
@@ -133,14 +129,11 @@ export const snapnowApi = {
   },
 
   async createBooking(data: {
-    photographerId: number;
-    sessionDate: string;
-    sessionTime: string;
+    photographerId: string;
+    scheduledDate: string;
+    scheduledTime: string;
     duration: number;
     location: string;
-    latitude: number;
-    longitude: number;
-    notes?: string;
   }): Promise<Booking> {
     const response = await api.post<Booking>('/api/bookings', data);
     return response.data;

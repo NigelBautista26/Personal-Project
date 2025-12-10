@@ -105,11 +105,11 @@ export default function PhotographerBookingsScreen() {
                 <View style={styles.bookingDetails}>
                   <View style={styles.detailRow}>
                     <Calendar size={16} color="#9ca3af" />
-                    <Text style={styles.detailText}>{formatDate(booking.sessionDate)}</Text>
+                    <Text style={styles.detailText}>{formatDate(booking.scheduledDate)}</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <Clock size={16} color="#9ca3af" />
-                    <Text style={styles.detailText}>{booking.sessionTime} ({booking.duration}h)</Text>
+                    <Text style={styles.detailText}>{booking.scheduledTime} ({booking.duration}h)</Text>
                   </View>
                   <View style={styles.detailRow}>
                     <MapPin size={16} color="#9ca3af" />

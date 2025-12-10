@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
@@ -10,7 +10,16 @@ const PRIMARY_COLOR = '#2563eb';
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
 
-  
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && user) {
+      if (user.role === 'photographer') {
+        router.replace('/(photographer)');
+      } else {
+        router.replace('/(customer)');
+      }
+    }
+  }, [isLoading, isAuthenticated, user]);
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -19,7 +28,14 @@ export default function WelcomeScreen() {
     );
   }
 
-  
+  if (isAuthenticated && user) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <PhotoBackground />

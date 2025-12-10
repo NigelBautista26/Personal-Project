@@ -1,9 +1,36 @@
-import { Tabs } from 'expo-router';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Tabs, router } from 'expo-router';
 import { Home, Calendar, User } from 'lucide-react-native';
+import { useAuth } from '../../src/context/AuthContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function CustomerLayout() {
+  const { user, isLoading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isLoading, isAuthenticated]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -48,3 +75,12 @@ export default function CustomerLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+});
