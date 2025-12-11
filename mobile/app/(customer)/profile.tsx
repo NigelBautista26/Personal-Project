@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 140,
-    backgroundColor: 'rgba(30, 58, 138, 0.35)',
+    backgroundColor: 'rgba(37, 99, 235, 0.20)',
   },
   avatarContainer: {
     position: 'absolute',
