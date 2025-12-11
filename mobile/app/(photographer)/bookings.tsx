@@ -222,7 +222,11 @@ export default function PhotographerBookingsScreen() {
     </TouchableOpacity>
   );
 
-  const renderEditingRequestCard = (request: EditingRequest, borderColor: string = 'rgba(255,255,255,0.1)') => (
+  const renderEditingRequestCard = (
+    request: EditingRequest, 
+    borderColor: string = 'rgba(255,255,255,0.1)',
+    options: { showRevisionUpload?: boolean } = {}
+  ) => (
     <View
       key={request.id}
       style={[styles.bookingCard, { borderColor }]}
@@ -293,6 +297,16 @@ export default function PhotographerBookingsScreen() {
             )}
           </ScrollView>
         </View>
+      )}
+
+      {options.showRevisionUpload && (
+        <TouchableOpacity 
+          style={[styles.uploadButton, { backgroundColor: '#f97316' }]}
+          onPress={() => router.push(`/(photographer)/booking/${request.bookingId}`)}
+        >
+          <RefreshCw size={18} color="#fff" />
+          <Text style={styles.uploadButtonText}>Upload Revised Photos</Text>
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -384,7 +398,7 @@ export default function PhotographerBookingsScreen() {
               undefined,
               '#f97316'
             )}
-            {revisionRequests.map(request => renderEditingRequestCard(request, 'rgba(249, 115, 22, 0.3)'))}
+            {revisionRequests.map(request => renderEditingRequestCard(request, 'rgba(249, 115, 22, 0.3)', { showRevisionUpload: true }))}
           </View>
         )}
 
