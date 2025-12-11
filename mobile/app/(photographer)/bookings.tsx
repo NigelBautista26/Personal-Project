@@ -396,7 +396,8 @@ export default function PhotographerBookingsScreen() {
               'Revisions Requested',
               revisionRequests.length,
               undefined,
-              '#f97316'
+              '#f97316',
+              'Customer has requested changes to these edits.'
             )}
             {revisionRequests.map(request => renderEditingRequestCard(request, 'rgba(249, 115, 22, 0.3)', { showRevisionUpload: true }))}
           </View>
@@ -425,7 +426,8 @@ export default function PhotographerBookingsScreen() {
               'Awaiting Customer Approval',
               awaitingApprovalRequests.length,
               undefined,
-              '#eab308'
+              '#eab308',
+              'These edits have been delivered and are waiting for customer to approve.'
             )}
             {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(234, 179, 8, 0.3)'))}
           </View>
