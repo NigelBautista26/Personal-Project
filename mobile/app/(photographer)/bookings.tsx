@@ -23,7 +23,7 @@ import {
   Check,
   X,
   Palette,
-  Images as ImagesIcon,
+  ImageIcon,
   RefreshCw,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
@@ -312,7 +312,7 @@ export default function PhotographerBookingsScreen() {
         {photosToShow && photosToShow.length > 0 && (
           <View style={styles.photosPreview}>
             <View style={styles.photosLabel}>
-              <ImagesIcon size={14} color="#9ca3af" />
+              <ImageIcon size={14} color="#9ca3af" />
               <Text style={styles.photosLabelText}>
                 {photosLabel} ({photosToShow.length})
               </Text>
