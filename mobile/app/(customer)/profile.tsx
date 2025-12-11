@@ -59,38 +59,36 @@ export default function CustomerProfileScreen() {
           </View>
         </View>
 
-        {/* Menu items in glass panel */}
+        {/* Menu items - no card wrapper, directly on background */}
         <View style={styles.menuContainer}>
-          <View style={styles.glassPanel}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity 
-                key={item.label} 
-                style={[
-                  styles.menuItem,
-                  index !== menuItems.length - 1 && styles.menuItemBorder
-                ]}
-                onPress={item.onPress}
-                testID={`button-${item.label.toLowerCase().replace(' ', '-')}`}
-              >
-                <View style={styles.menuItemLeft}>
-                  <item.icon 
-                    size={20} 
-                    color={item.isDestructive ? '#ef4444' : '#9ca3af'} 
-                  />
-                  <Text style={[
-                    styles.menuItemText, 
-                    item.isDestructive && styles.menuItemTextDestructive
-                  ]}>
-                    {item.label}
-                  </Text>
-                </View>
-                <ChevronRight size={16} color="rgba(107, 114, 128, 0.5)" />
-              </TouchableOpacity>
-            ))}
-          </View>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity 
+              key={item.label} 
+              style={[
+                styles.menuItem,
+                index !== menuItems.length - 1 && styles.menuItemBorder
+              ]}
+              onPress={item.onPress}
+              testID={`button-${item.label.toLowerCase().replace(' ', '-')}`}
+            >
+              <View style={styles.menuItemLeft}>
+                <item.icon 
+                  size={20} 
+                  color={item.isDestructive ? '#ef4444' : '#6b7280'} 
+                />
+                <Text style={[
+                  styles.menuItemText, 
+                  item.isDestructive && styles.menuItemTextDestructive
+                ]}>
+                  {item.label}
+                </Text>
+              </View>
+              <ChevronRight size={16} color="rgba(107, 114, 128, 0.4)" />
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {/* SnapNow Member Card */}
+        {/* SnapNow Member Card - subtle styling */}
         <View style={styles.memberCardContainer}>
           <View style={styles.memberCard}>
             <View style={styles.memberIcon}>
@@ -117,7 +115,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   
   headerContainer: {
-    height: 160,
+    height: 140,
     position: 'relative',
   },
   headerGradient: {
@@ -125,104 +123,95 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 160,
-    backgroundColor: 'rgba(30, 58, 138, 0.4)',
+    height: 140,
+    backgroundColor: 'rgba(30, 58, 138, 0.35)',
   },
   avatarContainer: {
     position: 'absolute',
-    bottom: -48,
+    bottom: -56,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
   avatar: { 
-    width: 96, 
-    height: 96, 
-    borderRadius: 48, 
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: '#1a1a1a',
+    width: 88, 
+    height: 88, 
+    borderRadius: 44, 
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: '#0a0a0a',
     backgroundColor: '#1a1a1a',
   },
   avatarPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: '#1a1a1a',
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: '#0a0a0a',
   },
-  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 2 },
   email: { fontSize: 14, color: '#6b7280' },
   
   menuContainer: {
-    marginTop: 72,
-    paddingHorizontal: 24,
-  },
-  glassPanel: {
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden',
+    marginTop: 80,
+    paddingHorizontal: 20,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 18,
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   menuItemLeft: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 12,
+    gap: 14,
   },
   menuItemText: { fontSize: 15, fontWeight: '500', color: '#fff' },
   menuItemTextDestructive: { color: '#ef4444' },
   
   memberCardContainer: {
-    paddingHorizontal: 24,
-    marginTop: 24,
+    paddingHorizontal: 20,
+    marginTop: 28,
   },
   memberCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     padding: 16,
-    backgroundColor: 'rgba(37,99,235,0.1)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(37,99,235,0.2)',
+    backgroundColor: 'rgba(37,99,235,0.08)',
+    borderRadius: 14,
+    borderWidth: 0,
   },
   memberIcon: {
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: 'rgba(37,99,235,0.2)',
+    backgroundColor: 'rgba(37,99,235,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 14,
   },
   memberContent: {
     flex: 1,
   },
   memberTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#fff',
     marginBottom: 4,
   },
   memberSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6b7280',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   memberLink: {
     fontSize: 13,
