@@ -90,7 +90,6 @@ export default function PhotographerLayout() {
         name="booking/[id]"
         options={{
           href: null,
-          tabBarButton: () => null,
         }}
       />
     </Tabs>
