@@ -16,20 +16,21 @@ export interface User {
 export type VerificationStatus = 'pending_review' | 'verified' | 'rejected';
 
 export interface PhotographerProfile {
-  id: number;
+  id: string;
   userId: string;
-  hourlyRate: number;
-  city: string;
-  latitude: number;
-  longitude: number;
+  hourlyRate: string | number;
+  city?: string;
+  latitude: string | number;
+  longitude: string | number;
   bio?: string;
-  portfolio: string[];
+  portfolio?: string[];
+  portfolioImages?: string[];
   verificationStatus: VerificationStatus;
   instagramUrl?: string;
   websiteUrl?: string;
   profilePicture?: string;
   profileImageUrl?: string;
-  rating?: number;
+  rating?: string | number | null;
   reviewCount?: number;
   fullName?: string;
   location?: string;
@@ -38,7 +39,7 @@ export interface PhotographerProfile {
 }
 
 export interface Booking {
-  id: number;
+  id: string;
   customerId: string;
   photographerId: string;
   scheduledDate: string;
@@ -53,20 +54,27 @@ export interface Booking {
   createdAt: string;
   photographer?: PhotographerProfile & { user?: User };
   customer?: User;
+  meetingLatitude?: string | null;
+  meetingLongitude?: string | null;
+  meetingNotes?: string | null;
 }
 
 export interface Earning {
-  id: number;
-  photographerId: number;
-  bookingId: number;
-  amount: number;
+  id: string;
+  photographerId: string;
+  bookingId: string;
+  grossAmount: string;
+  platformFee: string;
+  netAmount: string;
   status: 'held' | 'pending' | 'paid';
   createdAt: string;
+  releasedAt?: string | null;
+  paidAt?: string | null;
 }
 
 export interface EditingRequest {
-  id: number;
-  bookingId: number;
+  id: string;
+  bookingId: string;
   status: 'requested' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'revision_requested' | 'declined';
   photoCount?: number;
   totalAmount: string;
@@ -241,15 +249,15 @@ export const snapnowApi = {
   },
 
   // Live location sharing methods
-  async updateLiveLocation(bookingId: number, data: { latitude: number; longitude: number; accuracy: number; userType: 'customer' | 'photographer' }): Promise<void> {
+  async updateLiveLocation(bookingId: string, data: { latitude: number; longitude: number; accuracy: number; userType: 'customer' | 'photographer' }): Promise<void> {
     await api.post(`/api/bookings/${bookingId}/live-location`, data);
   },
 
-  async deleteLiveLocation(bookingId: number): Promise<void> {
+  async deleteLiveLocation(bookingId: string): Promise<void> {
     await api.delete(`/api/bookings/${bookingId}/live-location`);
   },
 
-  async getOtherPartyLocation(bookingId: number, userType: 'customer' | 'photographer'): Promise<{ latitude: string; longitude: string; updatedAt: string } | null> {
+  async getOtherPartyLocation(bookingId: string, userType: 'customer' | 'photographer'): Promise<{ latitude: string; longitude: string; updatedAt: string } | null> {
     try {
       const endpoint = userType === 'customer'
         ? `/api/bookings/${bookingId}/photographer-location`
