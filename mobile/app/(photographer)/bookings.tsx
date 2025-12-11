@@ -106,6 +106,13 @@ export default function PhotographerBookingsScreen() {
     },
   });
 
+  const dismissMutation = useMutation({
+    mutationFn: (bookingId: string) => snapnowApi.dismissBooking(bookingId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
+    },
+  });
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -505,7 +512,19 @@ export default function PhotographerBookingsScreen() {
               '#ef4444'
             )}
             {!collapsedSections.declined && (
-              declinedBookings.map(booking => renderBookingCard(booking))
+              declinedBookings.map(booking => (
+                <View key={booking.id} style={styles.declinedBookingWrapper}>
+                  {renderBookingCard(booking)}
+                  <TouchableOpacity
+                    style={styles.dismissButton}
+                    onPress={() => dismissMutation.mutate(String(booking.id))}
+                    disabled={dismissMutation.isPending}
+                  >
+                    <X size={16} color="#71717a" />
+                    <Text style={styles.dismissButtonText}>Dismiss</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
             )}
           </View>
         )}
@@ -695,4 +714,20 @@ const styles = StyleSheet.create({
   },
   emptyStateTitle: { fontSize: 20, fontWeight: '600', color: '#fff', marginTop: 16 },
   emptyStateText: { fontSize: 14, color: '#9ca3af', textAlign: 'center', marginTop: 8 },
+  
+  declinedBookingWrapper: {
+    marginBottom: 8,
+  },
+  dismissButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    gap: 6,
+    marginTop: -8,
+    marginHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  dismissButtonText: { color: '#71717a', fontSize: 13 },
 });
