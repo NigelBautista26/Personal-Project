@@ -87,11 +87,12 @@ export default function PhotographerDashboardScreen() {
     return new Date(b.scheduledDate).toDateString() === today;
   });
 
+  const earningsArray = Array.isArray(earnings) ? earnings : [];
   const weekStart = new Date();
   weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-  const weekEarnings = (earnings || [])
+  const weekEarnings = earningsArray
     .filter(e => new Date(e.createdAt) >= weekStart)
-    .reduce((sum, e) => sum + e.amount, 0);
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
 
   const getImageUrl = () => {
     const url = photographerProfile?.profileImageUrl || photographerProfile?.profilePicture;
