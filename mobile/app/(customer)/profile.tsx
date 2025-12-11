@@ -7,15 +7,12 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Dimensions,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function CustomerProfileScreen() {
   const { user, logout } = useAuth();
@@ -42,25 +39,14 @@ export default function CustomerProfileScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header with layered gradients */}
+          {/* Header with simulated gradient - layered views */}
           <View style={styles.headerContainer}>
-            {/* Base gradient - transitions to background */}
-            <LinearGradient
-              colors={['#0f172a', '#111827', '#0d0f14']}
-              locations={[0, 0.5, 1]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={styles.baseGradient}
-            />
-            
-            {/* Subtle blue accent glow */}
-            <LinearGradient
-              colors={['rgba(37,99,235,0.25)', 'rgba(59,130,246,0.12)', 'transparent']}
-              locations={[0, 0.5, 1]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={styles.accentGradient}
-            />
+            {/* Dark blue base */}
+            <View style={styles.headerBase} />
+            {/* Lighter overlay at top */}
+            <View style={styles.headerTopOverlay} />
+            {/* Fade to background at bottom */}
+            <View style={styles.headerBottomFade} />
             
             {/* Avatar positioned at bottom of header */}
             <View style={styles.avatarContainer}>
@@ -137,23 +123,34 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   
   headerContainer: {
-    height: 180,
+    height: 160,
     position: 'relative',
     overflow: 'hidden',
   },
-  baseGradient: {
+  headerBase: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 180,
+    height: 160,
+    backgroundColor: '#111827',
   },
-  accentGradient: {
+  headerTopOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 140,
+    height: 80,
+    backgroundColor: 'rgba(30, 58, 138, 0.3)',
+  },
+  headerBottomFade: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    backgroundColor: '#0d0f14',
+    opacity: 0.9,
   },
   avatarContainer: {
     position: 'absolute',
@@ -161,6 +158,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
+    zIndex: 10,
   },
   avatar: { 
     width: 88, 
