@@ -124,7 +124,7 @@ export const snapnowApi = {
   },
 
   async getBookings(): Promise<Booking[]> {
-    const response = await api.get<Booking[]>('/api/bookings');
+    const response = await api.get<Booking[]>('/api/customer/bookings');
     return response.data;
   },
 
