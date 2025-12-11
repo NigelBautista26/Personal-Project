@@ -225,91 +225,109 @@ export default function PhotographerBookingsScreen() {
   const renderEditingRequestCard = (
     request: EditingRequest, 
     borderColor: string = 'rgba(255,255,255,0.1)',
-    options: { showRevisionUpload?: boolean } = {}
-  ) => (
-    <View
-      key={request.id}
-      style={[styles.bookingCard, { borderColor }]}
-      testID={`card-editing-${request.id}`}
-    >
-      <View style={styles.bookingHeader}>
-        <View style={styles.customerInfo}>
-          <View style={[styles.customerAvatar, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-            {request.booking?.customer?.profileImageUrl ? (
-              <Image 
-                source={{ uri: getImageUrl(request.booking.customer.profileImageUrl)! }} 
-                style={styles.customerAvatarImage} 
-              />
-            ) : (
-              <Palette size={20} color="#8b5cf6" />
-            )}
-          </View>
-          <View style={styles.customerDetails}>
-            <Text style={styles.customerName}>
-              {request.booking?.customer?.fullName || 'Customer'}
-            </Text>
-            <Text style={styles.bookingMeta}>
-              {request.photoCount} photo{request.photoCount && request.photoCount > 1 ? 's' : ''}
-              {request.revisionCount ? ` • Revision #${request.revisionCount + 1}` : ''}
-            </Text>
-            {request.booking?.scheduledDate && (
-              <Text style={styles.bookingLocation}>
-                Session: {formatDate(request.booking.scheduledDate)}
-              </Text>
-            )}
-          </View>
-        </View>
-        <View style={styles.earningsContainer}>
-          <Text style={[styles.earnings, { color: '#8b5cf6' }]}>
-            £{parseFloat(request.photographerEarnings || '0').toFixed(2)}
-          </Text>
-          <Text style={styles.earningsLabel}>earnings</Text>
-        </View>
-      </View>
+    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean } = {}
+  ) => {
+    const isDelivered = options.isAwaitingApproval || options.isApproved;
+    const photosToShow = isDelivered && request.editedPhotoUrls?.length 
+      ? request.editedPhotoUrls 
+      : request.requestedPhotoUrls;
+    const photosLabel = isDelivered ? 'Your delivered edits' : 'Photos to edit';
 
-      {request.customerNotes && (
-        <View style={styles.notesContainer}>
-          <Text style={styles.notesLabel}>Customer notes:</Text>
-          <Text style={styles.notesText}>{request.customerNotes}</Text>
-        </View>
-      )}
-
-      {request.requestedPhotoUrls && request.requestedPhotoUrls.length > 0 && (
-        <View style={styles.photosPreview}>
-          <View style={styles.photosLabel}>
-            <Images size={14} color="#9ca3af" />
-            <Text style={styles.photosLabelText}>
-              Photos to edit ({request.requestedPhotoUrls.length})
-            </Text>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosList}>
-            {request.requestedPhotoUrls.slice(0, 4).map((url, idx) => (
-              <Image 
-                key={idx}
-                source={{ uri: getImageUrl(url)! }}
-                style={styles.photoThumb}
-              />
-            ))}
-            {request.requestedPhotoUrls.length > 4 && (
-              <View style={styles.morePhotos}>
-                <Text style={styles.morePhotosText}>+{request.requestedPhotoUrls.length - 4}</Text>
+    return (
+      <View
+        key={request.id}
+        style={[styles.bookingCard, { borderColor }]}
+        testID={`card-editing-${request.id}`}
+      >
+        <View style={styles.bookingHeader}>
+          <View style={styles.customerInfo}>
+            <View style={[styles.customerAvatar, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
+              {request.booking?.customer?.profileImageUrl ? (
+                <Image 
+                  source={{ uri: getImageUrl(request.booking.customer.profileImageUrl)! }} 
+                  style={styles.customerAvatarImage} 
+                />
+              ) : (
+                <Palette size={20} color="#8b5cf6" />
+              )}
+            </View>
+            <View style={styles.customerDetails}>
+              <View style={styles.customerNameRow}>
+                <Text style={styles.customerName}>
+                  {request.booking?.customer?.fullName || 'Customer'}
+                </Text>
+                {options.isAwaitingApproval && (
+                  <View style={styles.awaitingBadge}>
+                    <Text style={styles.awaitingBadgeText}>Awaiting Approval</Text>
+                  </View>
+                )}
               </View>
-            )}
-          </ScrollView>
+              <Text style={styles.bookingMeta}>
+                {request.photoCount} photo{request.photoCount && request.photoCount > 1 ? 's' : ''}{isDelivered ? ' edited' : ''}
+                {request.revisionCount && !isDelivered ? ` • Revision #${request.revisionCount + 1}` : ''}
+              </Text>
+              {options.isAwaitingApproval && (
+                <Text style={styles.paymentNote}>Payment on approval</Text>
+              )}
+              {!isDelivered && request.booking?.scheduledDate && (
+                <Text style={styles.bookingLocation}>
+                  Session: {formatDate(request.booking.scheduledDate)}
+                </Text>
+              )}
+            </View>
+          </View>
+          <View style={styles.earningsContainer}>
+            <Text style={[styles.earnings, { color: options.isApproved ? '#22c55e' : '#8b5cf6' }]}>
+              £{parseFloat(request.photographerEarnings || '0').toFixed(2)}
+            </Text>
+            <Text style={styles.earningsLabel}>{options.isApproved ? 'earned' : 'earnings'}</Text>
+          </View>
         </View>
-      )}
 
-      {options.showRevisionUpload && (
-        <TouchableOpacity 
-          style={[styles.uploadButton, { backgroundColor: '#f97316' }]}
-          onPress={() => router.push(`/(photographer)/booking/${request.bookingId}`)}
-        >
-          <RefreshCw size={18} color="#fff" />
-          <Text style={styles.uploadButtonText}>Upload Revised Photos</Text>
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+        {!isDelivered && request.customerNotes && (
+          <View style={styles.notesContainer}>
+            <Text style={styles.notesLabel}>Customer notes:</Text>
+            <Text style={styles.notesText}>{request.customerNotes}</Text>
+          </View>
+        )}
+
+        {photosToShow && photosToShow.length > 0 && (
+          <View style={styles.photosPreview}>
+            <View style={styles.photosLabel}>
+              <Images size={14} color="#9ca3af" />
+              <Text style={styles.photosLabelText}>
+                {photosLabel} ({photosToShow.length})
+              </Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosList}>
+              {photosToShow.slice(0, 4).map((url, idx) => (
+                <Image 
+                  key={idx}
+                  source={{ uri: getImageUrl(url)! }}
+                  style={styles.photoThumb}
+                />
+              ))}
+              {photosToShow.length > 4 && (
+                <View style={styles.morePhotos}>
+                  <Text style={styles.morePhotosText}>+{photosToShow.length - 4}</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        )}
+
+        {options.showRevisionUpload && (
+          <TouchableOpacity 
+            style={[styles.uploadButton, { backgroundColor: '#f97316' }]}
+            onPress={() => router.push(`/(photographer)/booking/${request.bookingId}`)}
+          >
+            <RefreshCw size={18} color="#fff" />
+            <Text style={styles.uploadButtonText}>Upload Revised Photos</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   if (bookingsLoading) {
     return (
@@ -429,7 +447,7 @@ export default function PhotographerBookingsScreen() {
               '#eab308',
               'These edits have been delivered and are waiting for customer to approve.'
             )}
-            {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(234, 179, 8, 0.3)'))}
+            {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(234, 179, 8, 0.3)', { isAwaitingApproval: true }))}
           </View>
         )}
 
@@ -444,7 +462,7 @@ export default function PhotographerBookingsScreen() {
               '#22c55e'
             )}
             {!collapsedSections.approvedEdits && (
-              approvedEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(34, 197, 94, 0.3)'))
+              approvedEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(34, 197, 94, 0.3)', { isApproved: true }))
             )}
           </View>
         )}
@@ -554,7 +572,18 @@ const styles = StyleSheet.create({
   },
   customerAvatarImage: { width: 48, height: 48, borderRadius: 24 },
   customerDetails: { flex: 1 },
+  customerNameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   customerName: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  awaitingBadge: {
+    backgroundColor: 'rgba(20, 184, 166, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(20, 184, 166, 0.5)',
+  },
+  awaitingBadgeText: { fontSize: 10, color: '#14b8a6', fontWeight: '600' },
+  paymentNote: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
   bookingMeta: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   bookingLocation: { fontSize: 13, color: '#9ca3af', marginTop: 1 },
   earningsContainer: { alignItems: 'flex-end' },
