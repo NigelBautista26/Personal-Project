@@ -380,7 +380,13 @@ export default function CustomerBookingsScreen() {
           testID={`card-completed-${booking.id}`}
         >
           <View style={styles.cardHeader}>
-            <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.avatarSmall} />
+            <View style={[styles.avatarSmallWrapper, styles.avatarPrimary]}>
+              {getPhotographerImage(booking) ? (
+                <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.avatarSmallImage} />
+              ) : (
+                <User size={20} color={PRIMARY_COLOR} />
+              )}
+            </View>
             <View style={styles.bookingInfo}>
               <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
               <Text style={styles.bookingDetails}>
@@ -471,7 +477,13 @@ export default function CustomerBookingsScreen() {
   const renderExpiredCard = (booking: Booking) => (
     <View key={booking.id} style={styles.expiredCard}>
       <View style={styles.cardHeader}>
-        <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={[styles.avatarSmall, styles.avatarGray]} />
+        <View style={[styles.avatarSmallWrapper, styles.avatarOrange]}>
+          {getPhotographerImage(booking) ? (
+            <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.avatarSmallImage} />
+          ) : (
+            <User size={20} color="#fb923c" />
+          )}
+        </View>
         <View style={styles.bookingInfo}>
           <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
           <Text style={styles.bookingDetails}>
@@ -495,7 +507,7 @@ export default function CustomerBookingsScreen() {
           style={styles.dismissButton}
           onPress={() => dismissBookingMutation.mutate(booking.id)}
         >
-          <X size={16} color="#6b7280" />
+          <X size={16} color="#71717a" />
         </TouchableOpacity>
       </View>
     </View>
@@ -942,7 +954,18 @@ const styles = StyleSheet.create({
   },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#1a1a1a', marginRight: 12 },
   avatarSmall: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1a1a1a', marginRight: 12 },
+  avatarSmallWrapper: { 
+    width: 40, 
+    height: 40, 
+    borderRadius: 20, 
+    marginRight: 12, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  avatarSmallImage: { width: 40, height: 40 },
   avatarRing: { borderWidth: 2, borderColor: 'rgba(59, 130, 246, 0.3)' },
+  avatarPrimary: { backgroundColor: 'rgba(37, 99, 235, 0.2)' },
   avatarGray: { opacity: 0.6 },
   bookingInfo: { flex: 1, gap: 2 },
   photographerName: { fontSize: 15, fontWeight: '600', color: '#fff' },
@@ -979,40 +1002,44 @@ const styles = StyleSheet.create({
   },
   completedActions: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 8 },
   viewPhotosButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: 'transparent',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(37, 99, 235, 0.3)',
+    borderColor: 'rgba(37, 99, 235, 0.5)',
   },
-  viewPhotosText: { color: PRIMARY_COLOR, fontSize: 13, fontWeight: '600' },
+  viewPhotosText: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: '500' },
   reviewedBadge: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 4,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(34, 197, 94, 0.3)',
   },
-  reviewedText: { color: '#22c55e', fontSize: 13, fontWeight: '500' },
-  starsRow: { flexDirection: 'row', gap: 2 },
+  reviewedText: { color: '#4ade80', fontSize: 14, fontWeight: '500' },
+  starsRow: { flexDirection: 'row', marginLeft: 4 },
   leaveReviewButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    backgroundColor: '#eab308',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: '#f59e0b',
     borderRadius: 8,
   },
-  leaveReviewText: { color: '#0a0a0a', fontSize: 13, fontWeight: '600' },
+  leaveReviewText: { color: '#fff', fontSize: 14, fontWeight: '500' },
   
   editingStatusCard: {
     flexDirection: 'row',
@@ -1052,28 +1079,36 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: 8,
   },
+  avatarOrange: {
+    backgroundColor: 'rgba(249, 115, 22, 0.2)',
+  },
   expiredBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     backgroundColor: 'rgba(249, 115, 22, 0.2)',
     borderRadius: 12,
   },
-  expiredBadgeText: { color: '#f97316', fontSize: 11, fontWeight: '500' },
-  expiredActions: { flexDirection: 'row', marginTop: 12, gap: 8 },
+  expiredBadgeText: { color: '#fb923c', fontSize: 11, fontWeight: '500' },
+  expiredActions: { flexDirection: 'row', marginTop: 12, paddingTop: 8, gap: 8 },
   bookAgainButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
   bookAgainText: { color: '#fff', fontSize: 14, fontWeight: '500' },
-  dismissButton: { padding: 10, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 8 },
+  dismissButton: { 
+    paddingHorizontal: 10, 
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
+    borderRadius: 8,
+  },
   expiredNote: { fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 18 },
   
   cameraIconWrapper: { position: 'relative' },
