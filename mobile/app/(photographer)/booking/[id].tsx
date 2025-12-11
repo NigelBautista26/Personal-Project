@@ -34,7 +34,7 @@ export default function PhotographerBookingDetailScreen() {
 
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ['booking', id],
-    queryFn: () => snapnowApi.getBooking(Number(id)),
+    queryFn: () => snapnowApi.getBooking(id!),
     enabled: !!id,
   });
 

@@ -149,7 +149,7 @@ export const snapnowApi = {
     return response.data;
   },
 
-  async getBooking(id: number): Promise<Booking> {
+  async getBooking(id: string): Promise<Booking> {
     const response = await api.get<Booking>(`/api/bookings/${id}`);
     return response.data;
   },
@@ -165,7 +165,7 @@ export const snapnowApi = {
     return response.data;
   },
 
-  async updateBookingStatus(bookingId: number, status: string): Promise<Booking> {
+  async updateBookingStatus(bookingId: string, status: string): Promise<Booking> {
     const response = await api.patch<Booking>(`/api/bookings/${bookingId}/status`, { status });
     return response.data;
   },

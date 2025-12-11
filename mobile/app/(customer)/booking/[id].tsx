@@ -21,7 +21,7 @@ export default function BookingDetailScreen() {
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
-    queryFn: () => snapnowApi.getBooking(Number(id)),
+    queryFn: () => snapnowApi.getBooking(id!),
     enabled: !!id,
   });
 
