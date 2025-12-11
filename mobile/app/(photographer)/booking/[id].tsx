@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus, Camera } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
@@ -499,9 +499,8 @@ export default function PhotographerBookingDetailScreen() {
               onPress={handleSaveDelivery}
               disabled={uploadingPhotos.length === 0}
             >
-              <Camera size={20} color="#fff" />
               <Text style={styles.deliverButtonText}>
-                Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
+                📷 Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>
           </View>

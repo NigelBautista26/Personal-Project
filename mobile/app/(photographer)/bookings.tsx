@@ -23,7 +23,6 @@ import {
   Check,
   X,
   Palette,
-  Camera,
   RefreshCw,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
@@ -312,9 +311,8 @@ export default function PhotographerBookingsScreen() {
         {photosToShow && photosToShow.length > 0 && (
           <View style={styles.photosPreview}>
             <View style={styles.photosLabel}>
-              <Camera size={14} color="#9ca3af" />
               <Text style={styles.photosLabelText}>
-                {photosLabel} ({photosToShow.length})
+                📷 {photosLabel} ({photosToShow.length})
               </Text>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosList}>
