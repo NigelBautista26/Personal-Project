@@ -244,9 +244,9 @@ export default function CustomerMapScreen() {
       >
         {/* Photographer Markers */}
         {filteredPhotographers.map((photographer, index) => {
-          const lat = Number(photographer.latitude);
-          const lng = Number(photographer.longitude);
-          if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+          const lat = parseFloat(String(photographer.latitude));
+          const lng = parseFloat(String(photographer.longitude));
+          if (isNaN(lat) || isNaN(lng)) return null;
           
           const coords = getOffsetCoordinates(filteredPhotographers, index);
           const isAvailable = photographer.sessionState === 'available';
@@ -260,6 +260,7 @@ export default function CustomerMapScreen() {
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
+              tracksViewChanges={false}
             >
               <View style={styles.photographerMarker}>
                 <Image
@@ -267,7 +268,7 @@ export default function CustomerMapScreen() {
                   style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
                 />
                 <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
+                  <Text style={styles.photographerMarkerPriceText}>£{parseFloat(String(photographer.hourlyRate)).toFixed(0)}</Text>
                 </View>
               </View>
             </Marker>
