@@ -263,13 +263,16 @@ export default function CustomerBookingsScreen() {
 
   const handleViewPhotos = async (bookingId: string, booking: any) => {
     try {
-      const data = await apiClient<{photos: string[], message?: string}>(`/api/bookings/${bookingId}/photos`);
-      if (data.photos && data.photos.length > 0) {
-        setSelectedBookingPhotos({ ...data, booking });
+      const data = await apiClient<{photos: string[], message?: string} | null>(`/api/bookings/${bookingId}/photos`);
+      if (data && data.photos && data.photos.length > 0) {
+        setSelectedBookingPhotos({ photos: data.photos, message: data.message, booking });
         setViewingPhotoIndex(0);
+      } else {
+        Alert.alert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.');
       }
     } catch (e) {
       console.error('Failed to load photos:', e);
+      Alert.alert('Error', 'Failed to load photos. Please try again.');
     }
   };
 
