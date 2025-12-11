@@ -7,9 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
-import { router } from 'expo-router';
 import { User, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
@@ -23,22 +21,8 @@ export default function CustomerProfileScreen() {
     return `${API_URL}${path}`;
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/');
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
