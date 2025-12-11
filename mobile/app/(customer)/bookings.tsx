@@ -251,7 +251,7 @@ export default function CustomerBookingsScreen() {
     if (photos.length === 0) return;
     
     if (photos.length === 1) {
-      await Linking.openURL(photos[0]);
+      await Linking.openURL(getImageUrl(photos[0]));
       return;
     }
     
@@ -268,7 +268,7 @@ export default function CustomerBookingsScreen() {
         { 
           text: startIndex === 0 ? 'Start Downloading' : 'Next Photo', 
           onPress: async () => {
-            await Linking.openURL(photos[startIndex]);
+            await Linking.openURL(getImageUrl(photos[startIndex]));
             setTimeout(() => handleDownloadPhotos(photos, startIndex + 1), 1000);
           }
         },
@@ -745,7 +745,7 @@ export default function CustomerBookingsScreen() {
             <>
               <View style={styles.mainPhotoContainer}>
                 <Image 
-                  source={{ uri: selectedBookingPhotos.photos[viewingPhotoIndex] }} 
+                  source={{ uri: getImageUrl(selectedBookingPhotos.photos[viewingPhotoIndex]) }} 
                   style={styles.mainPhoto}
                   resizeMode="contain"
                 />
@@ -782,7 +782,7 @@ export default function CustomerBookingsScreen() {
                       idx === viewingPhotoIndex && styles.thumbnailActive
                     ]}
                   >
-                    <Image source={{ uri: photo }} style={styles.thumbnailImage} />
+                    <Image source={{ uri: getImageUrl(photo) }} style={styles.thumbnailImage} />
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -862,7 +862,7 @@ export default function CustomerBookingsScreen() {
                 viewingOriginalIndex !== null ? (
                   <View style={styles.compareMainPhotoContainer}>
                     <Image
-                      source={{ uri: viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex] }}
+                      source={{ uri: getImageUrl(viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex]) }}
                       style={styles.compareMainPhoto}
                       resizeMode="contain"
                     />
@@ -900,7 +900,7 @@ export default function CustomerBookingsScreen() {
                         <View style={[styles.compareThumbnailNumber, { backgroundColor: '#52525b' }]}>
                           <Text style={styles.compareThumbnailNumberText}>{idx + 1}</Text>
                         </View>
-                        <Image source={{ uri: url }} style={styles.compareThumbnailImage} />
+                        <Image source={{ uri: getImageUrl(url) }} style={styles.compareThumbnailImage} />
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -932,7 +932,7 @@ export default function CustomerBookingsScreen() {
               {editedPhotoIndex !== null && viewingEditedPhotos ? (
                 <View style={[styles.compareMainPhotoContainer, { borderColor: '#8b5cf6' }]}>
                   <Image
-                    source={{ uri: viewingEditedPhotos.photos[editedPhotoIndex] }}
+                    source={{ uri: getImageUrl(viewingEditedPhotos.photos[editedPhotoIndex]) }}
                     style={styles.compareMainPhoto}
                     resizeMode="contain"
                   />
@@ -970,7 +970,7 @@ export default function CustomerBookingsScreen() {
                       <View style={[styles.compareThumbnailNumber, { backgroundColor: '#7c3aed' }]}>
                         <Text style={styles.compareThumbnailNumberText}>{index + 1}</Text>
                       </View>
-                      <Image source={{ uri: photo }} style={styles.compareThumbnailImage} />
+                      <Image source={{ uri: getImageUrl(photo) }} style={styles.compareThumbnailImage} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
