@@ -31,8 +31,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const profile = await snapnowApi.mePhotographer();
       setPhotographerProfile(profile);
-    } catch {
-      setPhotographerProfile(null);
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        setUser(null);
+        setPhotographerProfile(null);
+        await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
+      } else {
+        setPhotographerProfile(null);
+      }
     } finally {
       setIsProfileLoading(false);
     }
@@ -41,8 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     try {
       const currentUser = await snapnowApi.me();
+      if (!currentUser) {
+        setUser(null);
+        setPhotographerProfile(null);
+        await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
+        return;
+      }
       setUser(currentUser);
-      if (currentUser?.role === 'photographer') {
+      if (currentUser.role === 'photographer') {
         await refreshPhotographerProfile();
       } else {
         setPhotographerProfile(null);
