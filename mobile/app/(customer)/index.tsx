@@ -168,26 +168,15 @@ export default function CustomerMapScreen() {
   };
 
   const filteredPhotographers = useMemo(() => {
-    if (!photographers) {
-      console.log('[DEBUG] No photographers data');
-      return [];
-    }
-    console.log('[DEBUG] Total photographers:', photographers.length);
-    const filtered = photographers.filter((p) => {
+    if (!photographers || photographers.length === 0) return [];
+    
+    return photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
-      if (isNaN(pLat) || isNaN(pLng)) {
-        console.log('[DEBUG] Invalid coords for', p.id, p.latitude, p.longitude);
-        return false;
-      }
+      if (Number.isNaN(pLat) || Number.isNaN(pLng)) return false;
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
       return distance <= 50;
     });
-    console.log('[DEBUG] Filtered photographers:', filtered.length, 'for city:', selectedCity.name);
-    if (filtered.length > 0) {
-      console.log('[DEBUG] First photographer:', filtered[0].id, filtered[0].latitude, filtered[0].longitude);
-    }
-    return filtered;
   }, [photographers, selectedCity]);
 
   const photoSpots = useMemo(() => {
@@ -246,19 +235,21 @@ export default function CustomerMapScreen() {
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={region}
-        mapType={mapType}
+        mapType={Platform.OS === 'ios' ? (mapType === 'satellite' ? 'satellite' : 'mutedStandard') : mapType}
         customMapStyle={Platform.OS === 'android' && mapType === 'standard' ? darkMapStyle : undefined}
         showsUserLocation={true}
         showsMyLocationButton={false}
         userInterfaceStyle="dark"
         testID="map-view"
       >
-        {/* Photographer Markers with offset for overlapping */}
+        {/* Photographer Markers */}
         {filteredPhotographers.map((photographer, index) => {
+          const lat = Number(photographer.latitude);
+          const lng = Number(photographer.longitude);
+          if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
+          
           const coords = getOffsetCoordinates(filteredPhotographers, index);
-          if (!coords.lat || !coords.lng || isNaN(coords.lat) || isNaN(coords.lng)) {
-            return null;
-          }
+          
           return (
             <Marker
               key={`photographer-${photographer.id}`}
