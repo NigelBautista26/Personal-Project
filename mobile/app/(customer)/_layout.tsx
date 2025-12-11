@@ -72,6 +72,24 @@ export default function CustomerLayout() {
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="photographer/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="book/[id]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="booking/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

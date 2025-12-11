@@ -85,10 +85,10 @@ export default function PhotographerDetailScreen() {
 
         <View style={styles.content}>
           <View style={styles.headerSection}>
-            <Text style={styles.name}>Photographer</Text>
+            <Text style={styles.name}>{photographer.fullName || 'Photographer'}</Text>
             <View style={styles.locationRow}>
               <MapPin size={16} color="#9ca3af" />
-              <Text style={styles.location}>{photographer.city}</Text>
+              <Text style={styles.location}>{photographer.city || photographer.location}</Text>
             </View>
           </View>
 

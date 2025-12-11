@@ -28,8 +28,13 @@ export interface PhotographerProfile {
   instagramUrl?: string;
   websiteUrl?: string;
   profilePicture?: string;
+  profileImageUrl?: string;
   rating?: number;
   reviewCount?: number;
+  fullName?: string;
+  location?: string;
+  sessionState?: 'available' | 'in_session' | 'offline';
+  nextAvailableAt?: string | null;
 }
 
 export interface Booking {
