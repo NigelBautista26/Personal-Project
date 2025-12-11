@@ -11,14 +11,19 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, isProfileLoading, user, isAuthenticated } = useAuth();
+  const [hasCheckedAuth, setHasCheckedAuth] = React.useState(false);
 
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !user)) {
-      router.replace('/');
+    if (!isLoading) {
+      if (!isAuthenticated || !user) {
+        router.replace('/');
+      } else {
+        setHasCheckedAuth(true);
+      }
     }
   }, [isLoading, isAuthenticated, user]);
 
-  if (isLoading || isProfileLoading) {
+  if (isLoading || isProfileLoading || !hasCheckedAuth) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
