@@ -69,8 +69,17 @@ export default function CustomerBookingsScreen() {
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
-  const [viewingEditedPhotos, setViewingEditedPhotos] = useState<{photos: string[], bookingId: string, status: string} | null>(null);
-  const [editedPhotoIndex, setEditedPhotoIndex] = useState(0);
+  const [viewingEditedPhotos, setViewingEditedPhotos] = useState<{
+    photos: string[];
+    bookingId: string;
+    requestId: string;
+    status: string;
+    requestedPhotoUrls: string[] | null;
+  } | null>(null);
+  const [editedPhotoIndex, setEditedPhotoIndex] = useState<number | null>(null);
+  const [viewingOriginalIndex, setViewingOriginalIndex] = useState<number | null>(null);
+  const [showRevisionInput, setShowRevisionInput] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState('');
 
   const { data: bookings, isLoading } = useQuery({
     queryKey: ['customer-bookings'],
@@ -188,6 +197,55 @@ export default function CustomerBookingsScreen() {
       Alert.alert('Error', error.message || 'Failed to send editing request');
     },
   });
+
+  const completeEditingMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return apiClient(`/api/editing-requests/${requestId}/complete`, { method: 'PATCH' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
+      Alert.alert('Approved!', 'You have approved the edited photos.');
+      setViewingEditedPhotos(null);
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to approve edits');
+    },
+  });
+
+  const requestRevisionMutation = useMutation({
+    mutationFn: async ({ requestId, revisionNotes }: { requestId: string; revisionNotes: string }) => {
+      return apiClient(`/api/editing-requests/${requestId}/request-revision`, { 
+        method: 'POST',
+        body: { revisionNotes },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
+      Alert.alert('Request Sent', 'Your revision request has been sent to the photographer.');
+      setViewingEditedPhotos(null);
+      setShowRevisionInput(false);
+      setRevisionNotes('');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to request revision');
+    },
+  });
+
+  const handleViewEditedPhotos = (bookingId: string, editingRequest: EditingRequestInfo) => {
+    if (editingRequest?.editedPhotos && editingRequest.editedPhotos.length > 0) {
+      setViewingEditedPhotos({
+        photos: editingRequest.editedPhotos,
+        bookingId,
+        requestId: editingRequest.id,
+        status: editingRequest.status,
+        requestedPhotoUrls: editingRequest.requestedPhotoUrls,
+      });
+      setEditedPhotoIndex(null);
+      setViewingOriginalIndex(null);
+      setShowRevisionInput(false);
+      setRevisionNotes('');
+    }
+  };
 
   const handleDownloadPhotos = async (photos: string[], startIndex: number = 0) => {
     if (photos.length === 0) return;
@@ -414,7 +472,7 @@ export default function CustomerBookingsScreen() {
         <View style={styles.completedActions}>
           <TouchableOpacity 
             style={styles.viewPhotosButton}
-            onPress={() => handleViewPhotos(booking.id, booking)}
+            onPress={() => handleViewPhotos(String(booking.id), booking)}
           >
             <Images size={14} color={PRIMARY_COLOR} />
             <Text style={styles.viewPhotosText}>View Photos</Text>
@@ -424,7 +482,7 @@ export default function CustomerBookingsScreen() {
             <TouchableOpacity 
               style={styles.leaveReviewButton}
               onPress={() => {
-                setReviewingBookingId(booking.id);
+                setReviewingBookingId(String(booking.id));
                 setReviewRating(5);
                 setReviewComment('');
               }}
@@ -469,14 +527,7 @@ export default function CustomerBookingsScreen() {
              editingRequest.editedPhotos && editingRequest.editedPhotos.length > 0 && (
               <TouchableOpacity 
                 style={styles.viewEditedButton}
-                onPress={() => {
-                  setViewingEditedPhotos({
-                    photos: editingRequest.editedPhotos!,
-                    bookingId: booking.id,
-                    status: editingRequest.status
-                  });
-                  setEditedPhotoIndex(0);
-                }}
+                onPress={() => handleViewEditedPhotos(String(booking.id), editingRequest)}
               >
                 <Images size={12} color="#fff" />
                 <Text style={styles.viewEditedText}>View Edited</Text>
@@ -519,7 +570,7 @@ export default function CustomerBookingsScreen() {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.dismissButton}
-          onPress={() => dismissBookingMutation.mutate(booking.id)}
+          onPress={() => dismissBookingMutation.mutate(String(booking.id))}
         >
           <X size={16} color="#71717a" />
         </TouchableOpacity>
@@ -736,6 +787,282 @@ export default function CustomerBookingsScreen() {
                 ))}
               </ScrollView>
             </>
+          )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Compare Photos Modal (Edited Photos) */}
+      <Modal
+        visible={!!viewingEditedPhotos}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setViewingEditedPhotos(null);
+          setShowRevisionInput(false);
+          setRevisionNotes('');
+          setViewingOriginalIndex(null);
+          setEditedPhotoIndex(null);
+        }}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalTitleRow}>
+              <Images size={20} color="#8b5cf6" />
+              <Text style={styles.modalTitle}>Compare Photos</Text>
+              {viewingEditedPhotos?.status === 'delivered' && (
+                <View style={[styles.statusBadge, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>
+                  <Text style={[styles.statusBadgeText, { color: '#eab308' }]}>Review</Text>
+                </View>
+              )}
+              {viewingEditedPhotos?.status === 'completed' && (
+                <View style={[styles.statusBadge, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
+                  <Text style={[styles.statusBadgeText, { color: '#22c55e' }]}>Approved</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity 
+              onPress={() => {
+                setViewingEditedPhotos(null);
+                setShowRevisionInput(false);
+                setRevisionNotes('');
+                setViewingOriginalIndex(null);
+                setEditedPhotoIndex(null);
+              }} 
+              style={styles.modalCloseButton}
+            >
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Download All Button */}
+          <View style={styles.downloadAllContainer}>
+            <TouchableOpacity 
+              style={[styles.downloadAllButton, { backgroundColor: '#8b5cf6' }]}
+              onPress={() => handleDownloadPhotos(viewingEditedPhotos?.photos || [])}
+            >
+              <Download size={16} color="#fff" />
+              <Text style={styles.downloadAllText}>Download All Photos</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            {/* Original Photos Section */}
+            <View style={styles.compareSection}>
+              <View style={styles.compareSectionHeader}>
+                <View style={[styles.compareDot, { backgroundColor: '#71717a' }]} />
+                <Text style={[styles.compareSectionTitle, { color: '#a1a1aa' }]}>Original Photos</Text>
+                {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
+                  <Text style={styles.compareCount}>({viewingEditedPhotos.requestedPhotoUrls.length})</Text>
+                ) : (
+                  <Text style={styles.compareCount}>(not available)</Text>
+                )}
+              </View>
+              
+              {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 ? (
+                viewingOriginalIndex !== null ? (
+                  <View style={styles.compareMainPhotoContainer}>
+                    <Image
+                      source={{ uri: viewingEditedPhotos.requestedPhotoUrls[viewingOriginalIndex] }}
+                      style={styles.compareMainPhoto}
+                      resizeMode="contain"
+                    />
+                    {viewingEditedPhotos.requestedPhotoUrls.length > 1 && (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.navArrow, styles.navArrowLeft]}
+                          onPress={() => setViewingOriginalIndex(i => i !== null && i > 0 ? i - 1 : (viewingEditedPhotos.requestedPhotoUrls?.length || 1) - 1)}
+                        >
+                          <ChevronLeft size={20} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.navArrow, styles.navArrowRight]}
+                          onPress={() => setViewingOriginalIndex(i => i !== null && i < (viewingEditedPhotos.requestedPhotoUrls?.length || 1) - 1 ? i + 1 : 0)}
+                        >
+                          <ChevronRight size={20} color="#fff" />
+                        </TouchableOpacity>
+                      </>
+                    )}
+                    <TouchableOpacity
+                      style={styles.allButton}
+                      onPress={() => setViewingOriginalIndex(null)}
+                    >
+                      <Text style={styles.allButtonText}>All</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.compareThumbnailRow}>
+                    {viewingEditedPhotos.requestedPhotoUrls.map((url, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        onPress={() => setViewingOriginalIndex(idx)}
+                        style={[styles.compareThumbnail, { borderColor: '#52525b' }]}
+                      >
+                        <View style={[styles.compareThumbnailNumber, { backgroundColor: '#52525b' }]}>
+                          <Text style={styles.compareThumbnailNumberText}>{idx + 1}</Text>
+                        </View>
+                        <Image source={{ uri: url }} style={styles.compareThumbnailImage} />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )
+              ) : (
+                <View style={styles.notAvailableBox}>
+                  <Text style={styles.notAvailableText}>Original photos not saved for older requests</Text>
+                </View>
+              )}
+            </View>
+
+            {/* VS Divider */}
+            {viewingEditedPhotos?.requestedPhotoUrls && viewingEditedPhotos.requestedPhotoUrls.length > 0 && (
+              <View style={styles.vsDivider}>
+                <View style={styles.vsLine} />
+                <Text style={styles.vsText}>vs</Text>
+                <View style={styles.vsLine} />
+              </View>
+            )}
+
+            {/* Edited Photos Section */}
+            <View style={styles.compareSection}>
+              <View style={styles.compareSectionHeader}>
+                <View style={[styles.compareDot, { backgroundColor: '#8b5cf6' }]} />
+                <Text style={[styles.compareSectionTitle, { color: '#a78bfa' }]}>Edited Photos</Text>
+                <Text style={[styles.compareCount, { color: '#7c3aed' }]}>({viewingEditedPhotos?.photos.length || 0})</Text>
+              </View>
+              
+              {editedPhotoIndex !== null && viewingEditedPhotos ? (
+                <View style={[styles.compareMainPhotoContainer, { borderColor: '#8b5cf6' }]}>
+                  <Image
+                    source={{ uri: viewingEditedPhotos.photos[editedPhotoIndex] }}
+                    style={styles.compareMainPhoto}
+                    resizeMode="contain"
+                  />
+                  {viewingEditedPhotos.photos.length > 1 && (
+                    <>
+                      <TouchableOpacity
+                        style={[styles.navArrow, styles.navArrowLeft]}
+                        onPress={() => setEditedPhotoIndex(i => i !== null && i > 0 ? i - 1 : viewingEditedPhotos.photos.length - 1)}
+                      >
+                        <ChevronLeft size={20} color="#fff" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.navArrow, styles.navArrowRight]}
+                        onPress={() => setEditedPhotoIndex(i => i !== null && i < viewingEditedPhotos.photos.length - 1 ? i + 1 : 0)}
+                      >
+                        <ChevronRight size={20} color="#fff" />
+                      </TouchableOpacity>
+                    </>
+                  )}
+                  <TouchableOpacity
+                    style={styles.allButton}
+                    onPress={() => setEditedPhotoIndex(null)}
+                  >
+                    <Text style={styles.allButtonText}>All</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.compareThumbnailRow}>
+                  {viewingEditedPhotos?.photos.map((photo, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => setEditedPhotoIndex(index)}
+                      style={[styles.compareThumbnail, { borderColor: 'rgba(139, 92, 246, 0.5)' }]}
+                    >
+                      <View style={[styles.compareThumbnailNumber, { backgroundColor: '#7c3aed' }]}>
+                        <Text style={styles.compareThumbnailNumberText}>{index + 1}</Text>
+                      </View>
+                      <Image source={{ uri: photo }} style={styles.compareThumbnailImage} />
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+            
+            <View style={{ height: 20 }} />
+          </ScrollView>
+
+          {/* Approval Actions - Only show for 'delivered' status */}
+          {viewingEditedPhotos?.status === 'delivered' && !showRevisionInput && (
+            <View style={styles.approvalActions}>
+              <Text style={styles.approvalPrompt}>Happy with these edits?</Text>
+              <View style={styles.approvalButtons}>
+                <TouchableOpacity
+                  style={styles.changesButton}
+                  onPress={() => setShowRevisionInput(true)}
+                >
+                  <MessageSquare size={14} color="#f97316" />
+                  <Text style={styles.changesButtonText}>Changes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.approveButton}
+                  onPress={() => {
+                    if (viewingEditedPhotos?.requestId) {
+                      completeEditingMutation.mutate(viewingEditedPhotos.requestId);
+                    }
+                  }}
+                  disabled={completeEditingMutation.isPending}
+                >
+                  {completeEditingMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Check size={14} color="#fff" />
+                      <Text style={styles.approveButtonText}>Approve</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Revision Input */}
+          {showRevisionInput && viewingEditedPhotos?.requestId && (
+            <View style={styles.revisionInputSection}>
+              <Text style={styles.revisionPrompt}>What changes would you like?</Text>
+              <TextInput
+                style={styles.revisionInput}
+                value={revisionNotes}
+                onChangeText={setRevisionNotes}
+                placeholder="Describe the changes..."
+                placeholderTextColor="#52525b"
+                multiline
+                numberOfLines={2}
+              />
+              {!revisionNotes.trim() && (
+                <Text style={styles.revisionHint}>Please describe the changes you need</Text>
+              )}
+              <View style={styles.revisionButtons}>
+                <TouchableOpacity
+                  style={styles.revisionCancelButton}
+                  onPress={() => {
+                    setShowRevisionInput(false);
+                    setRevisionNotes('');
+                  }}
+                >
+                  <Text style={styles.revisionCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.revisionSubmitButton,
+                    !revisionNotes.trim() && styles.revisionSubmitDisabled
+                  ]}
+                  onPress={() => {
+                    if (viewingEditedPhotos?.requestId && revisionNotes.trim()) {
+                      requestRevisionMutation.mutate({
+                        requestId: viewingEditedPhotos.requestId,
+                        revisionNotes: revisionNotes.trim(),
+                      });
+                    }
+                  }}
+                  disabled={!revisionNotes.trim() || requestRevisionMutation.isPending}
+                >
+                  {requestRevisionMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.revisionSubmitText}>Send Request</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           )}
         </SafeAreaView>
       </Modal>
@@ -1273,4 +1600,185 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   submitReviewText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  statusBadgeText: { fontSize: 11, fontWeight: '500' },
+  
+  compareSection: {
+    padding: 12,
+  },
+  compareSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  compareDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  compareSectionTitle: { fontSize: 12, fontWeight: '600' },
+  compareCount: { fontSize: 12, color: '#52525b' },
+  
+  compareMainPhotoContainer: {
+    aspectRatio: 1,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderWidth: 1,
+    borderColor: '#52525b',
+    position: 'relative',
+  },
+  compareMainPhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  allButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 4,
+  },
+  allButtonText: { color: '#fff', fontSize: 12 },
+  
+  compareThumbnailRow: {
+    flexDirection: 'row',
+    paddingBottom: 4,
+  },
+  compareThumbnail: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    marginRight: 6,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  compareThumbnailNumber: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  compareThumbnailNumberText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  compareThumbnailImage: { width: '100%', height: '100%' },
+  
+  notAvailableBox: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(63, 63, 70, 0.3)',
+    borderWidth: 1,
+    borderColor: '#3f3f46',
+  },
+  notAvailableText: { color: '#52525b', fontSize: 12, textAlign: 'center' },
+  
+  vsDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 2,
+  },
+  vsLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  vsText: { color: '#52525b', fontSize: 10 },
+  
+  approvalActions: {
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  approvalPrompt: { color: '#9ca3af', fontSize: 12, textAlign: 'center', marginBottom: 8 },
+  approvalButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  changesButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(249, 115, 22, 0.5)',
+    backgroundColor: 'transparent',
+  },
+  changesButtonText: { color: '#f97316', fontSize: 12, fontWeight: '500' },
+  approveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#16a34a',
+  },
+  approveButtonText: { color: '#fff', fontSize: 12, fontWeight: '500' },
+  
+  revisionInputSection: {
+    padding: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(249, 115, 22, 0.05)',
+  },
+  revisionPrompt: { color: '#fff', fontSize: 12, fontWeight: '500', marginBottom: 8 },
+  revisionInput: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(249, 115, 22, 0.3)',
+    borderRadius: 8,
+    padding: 10,
+    color: '#fff',
+    fontSize: 14,
+    minHeight: 60,
+  },
+  revisionHint: { color: 'rgba(249, 115, 22, 0.7)', fontSize: 10, marginTop: 4, marginBottom: 8 },
+  revisionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  revisionCancelButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3f3f46',
+    backgroundColor: 'transparent',
+  },
+  revisionCancelText: { color: '#fff', fontSize: 12 },
+  revisionSubmitButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#f97316',
+  },
+  revisionSubmitDisabled: {
+    backgroundColor: 'rgba(249, 115, 22, 0.3)',
+  },
+  revisionSubmitText: { color: '#fff', fontSize: 12, fontWeight: '500' },
 });
