@@ -27,6 +27,15 @@ const LONDON_REGION: Region = {
   longitudeDelta: 0.15,
 };
 
+const PHOTO_SPOTS = [
+  { id: 1, name: 'Tower Bridge', latitude: 51.5055, longitude: -0.0754, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=100' },
+  { id: 2, name: 'Big Ben', latitude: 51.5007, longitude: -0.1246, image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=100' },
+  { id: 3, name: 'London Eye', latitude: 51.5033, longitude: -0.1195, image: 'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=100' },
+  { id: 4, name: 'Buckingham Palace', latitude: 51.5014, longitude: -0.1419, image: 'https://images.unsplash.com/photo-1587056753321-c3fef73bfc71?w=100' },
+  { id: 5, name: 'St Pauls Cathedral', latitude: 51.5138, longitude: -0.0984, image: 'https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=100' },
+  { id: 6, name: 'Trafalgar Square', latitude: 51.5080, longitude: -0.1281, image: 'https://images.unsplash.com/photo-1533929736562-4937a4a16203?w=100' },
+];
+
 const darkMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
@@ -133,6 +142,23 @@ export default function CustomerMapScreen() {
             </Marker>
           );
         })}
+        {PHOTO_SPOTS.map((spot) => (
+          <Marker
+            key={`spot-${spot.id}`}
+            coordinate={{
+              latitude: spot.latitude,
+              longitude: spot.longitude,
+            }}
+            testID={`marker-spot-${spot.id}`}
+          >
+            <View style={styles.spotMarker}>
+              <Image
+                source={{ uri: spot.image }}
+                style={styles.spotImage}
+              />
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
       {/* Location Header */}
@@ -235,7 +261,7 @@ const styles = StyleSheet.create({
   controls: {
     position: 'absolute',
     right: 16,
-    bottom: 160,
+    bottom: 120,
     gap: 12,
   },
   controlButton: {
@@ -250,14 +276,14 @@ const styles = StyleSheet.create({
   },
   bottomCard: {
     position: 'absolute',
-    bottom: 100,
+    bottom: 16,
     left: 16,
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(20,20,20,0.95)',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     shadowColor: '#000',
@@ -267,26 +293,39 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   cardIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 10,
     backgroundColor: 'rgba(37,99,235,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   cardContent: {
     flex: 1,
   },
   cardTitle: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 1,
   },
   cardSubtitle: {
     color: '#6b7280',
-    fontSize: 13,
+    fontSize: 12,
+  },
+  spotMarker: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+    backgroundColor: '#1a1a1a',
+  },
+  spotImage: {
+    width: '100%',
+    height: '100%',
   },
   markerContainer: {
     alignItems: 'center',
