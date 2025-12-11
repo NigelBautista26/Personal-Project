@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -8,14 +8,6 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function CustomerLayout() {
   const { user, isLoading, isAuthenticated } = useAuth();
-  const hasRedirected = useRef(false);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated && !hasRedirected.current) {
-      hasRedirected.current = true;
-      router.replace('/');
-    }
-  }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -26,7 +18,7 @@ export default function CustomerLayout() {
   }
 
   if (!isAuthenticated || !user) {
-    return null;
+    return <Redirect href="/" />;
   }
 
   return (

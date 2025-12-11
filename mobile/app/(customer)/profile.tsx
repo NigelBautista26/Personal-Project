@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
 import { User, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
 
-const PRIMARY_COLOR = '#2563eb';
-
 export default function CustomerProfileScreen() {
   const { user, logout } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const getImageUrl = (path?: string) => {
     if (!path) return null;
@@ -27,19 +22,8 @@ export default function CustomerProfileScreen() {
   };
 
   const handleLogout = async () => {
-    setIsLoggingOut(true);
     await logout();
-    router.replace('/');
   };
-
-  if (isLoggingOut) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-        <Text style={styles.loadingText}>Logging out...</Text>
-      </View>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -96,17 +80,6 @@ export default function CustomerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    color: '#9ca3af',
-    fontSize: 16,
-  },
   header: { padding: 20, paddingBottom: 0 },
   title: { fontSize: 28, fontWeight: '700', color: '#fff' },
   content: { flex: 1, padding: 20 },
