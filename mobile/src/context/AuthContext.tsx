@@ -90,16 +90,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
-    setUser(null);
-    setPhotographerProfile(null);
     try {
       await snapnowApi.logout();
     } catch {
     }
-    setTimeout(() => {
-      router.replace('/');
-    }, 100);
+    await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
+    setUser(null);
+    setPhotographerProfile(null);
   };
 
   return (

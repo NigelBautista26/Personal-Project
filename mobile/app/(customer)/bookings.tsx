@@ -59,7 +59,7 @@ export default function CustomerBookingsScreen() {
           </View>
         ) : (
           <View style={styles.bookingsList}>
-            {bookings.map((booking) => (
+            {(bookings || []).map((booking) => (
               <TouchableOpacity
                 key={booking.id}
                 style={styles.bookingCard}
