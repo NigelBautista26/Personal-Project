@@ -68,25 +68,31 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: numbe
   ],
 };
 
-const getOffsetPhotographers = (photographers: PhotographerProfile[]) => {
-  const OFFSET = 0.0008;
-  const locationCounts: { [key: string]: number } = {};
+const getOffsetCoordinates = (photographers: PhotographerProfile[], index: number) => {
+  const p = photographers[index];
+  const lat = Number(p.latitude);
+  const lng = Number(p.longitude);
+  if (isNaN(lat) || isNaN(lng)) return { lat, lng };
   
-  return photographers.map((p) => {
-    const lat = Number(p.latitude);
-    const lng = Number(p.longitude);
-    if (isNaN(lat) || isNaN(lng)) return { ...p, offsetLat: lat, offsetLng: lng };
-    
-    const key = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
-    const count = locationCounts[key] || 0;
-    locationCounts[key] = count + 1;
-    
-    const angle = (count * 72) * (Math.PI / 180);
-    const offsetLat = lat + (count > 0 ? OFFSET * Math.cos(angle) : 0);
-    const offsetLng = lng + (count > 0 ? OFFSET * Math.sin(angle) : 0);
-    
-    return { ...p, offsetLat, offsetLng };
-  });
+  const OFFSET = 0.002;
+  let sameLocationCount = 0;
+  
+  for (let i = 0; i < index; i++) {
+    const other = photographers[i];
+    const otherLat = Number(other.latitude);
+    const otherLng = Number(other.longitude);
+    if (Math.abs(otherLat - lat) < 0.001 && Math.abs(otherLng - lng) < 0.001) {
+      sameLocationCount++;
+    }
+  }
+  
+  if (sameLocationCount === 0) return { lat, lng };
+  
+  const angle = (sameLocationCount * 60) * (Math.PI / 180);
+  return {
+    lat: lat + OFFSET * Math.cos(angle),
+    lng: lng + OFFSET * Math.sin(angle),
+  };
 };
 
 const darkMapStyle = [
@@ -163,14 +169,13 @@ export default function CustomerMapScreen() {
 
   const filteredPhotographers = useMemo(() => {
     if (!photographers) return [];
-    const filtered = photographers.filter((p) => {
+    return photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
       if (isNaN(pLat) || isNaN(pLng)) return false;
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
       return distance <= 50;
     });
-    return getOffsetPhotographers(filtered);
   }, [photographers, selectedCity]);
 
   const photoSpots = useMemo(() => {
@@ -236,14 +241,15 @@ export default function CustomerMapScreen() {
         testID="map-view"
       >
         {/* Photographer Markers with offset for overlapping */}
-        {filteredPhotographers.map((photographer: any) => {
-          if (!photographer.offsetLat || !photographer.offsetLng) return null;
+        {filteredPhotographers.map((photographer, index) => {
+          const coords = getOffsetCoordinates(filteredPhotographers, index);
+          if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
           return (
             <Marker
               key={photographer.id}
               coordinate={{
-                latitude: photographer.offsetLat,
-                longitude: photographer.offsetLng,
+                latitude: coords.lat,
+                longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
