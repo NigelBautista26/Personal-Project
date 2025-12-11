@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,12 +22,12 @@ import {
   Upload,
   Check,
   X,
-  DollarSign,
-  MessageSquare,
   Palette,
+  Images,
+  RefreshCw,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
-import { snapnowApi } from '../../src/api/snapnowApi';
+import { snapnowApi, EditingRequest } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
@@ -51,7 +51,24 @@ export default function PhotographerBookingsScreen() {
     enabled: !!photographerProfile?.id,
   });
 
+  const { data: editingRequests = [] } = useQuery({
+    queryKey: ['photographer-editing-requests', photographerProfile?.id],
+    queryFn: () => snapnowApi.getPhotographerEditingRequests(photographerProfile!.id.toString()),
+    enabled: !!photographerProfile?.id,
+  });
+
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
+  const editingRequestsArray = Array.isArray(editingRequests) ? editingRequests : [];
+
+  const { pendingEditingRequests, activeEditingRequests, revisionRequests, awaitingApprovalRequests, approvedEditingRequests } = useMemo(() => ({
+    pendingEditingRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'requested'),
+    activeEditingRequests: editingRequestsArray.filter((r: EditingRequest) => 
+      r.status === 'accepted' || r.status === 'in_progress'
+    ),
+    revisionRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'revision_requested'),
+    awaitingApprovalRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'delivered'),
+    approvedEditingRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'completed'),
+  }), [editingRequestsArray]);
 
   const getSessionEndTime = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
@@ -205,6 +222,81 @@ export default function PhotographerBookingsScreen() {
     </TouchableOpacity>
   );
 
+  const renderEditingRequestCard = (request: EditingRequest, borderColor: string = 'rgba(255,255,255,0.1)') => (
+    <View
+      key={request.id}
+      style={[styles.bookingCard, { borderColor }]}
+      testID={`card-editing-${request.id}`}
+    >
+      <View style={styles.bookingHeader}>
+        <View style={styles.customerInfo}>
+          <View style={[styles.customerAvatar, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
+            {request.booking?.customer?.profileImageUrl ? (
+              <Image 
+                source={{ uri: getImageUrl(request.booking.customer.profileImageUrl)! }} 
+                style={styles.customerAvatarImage} 
+              />
+            ) : (
+              <Palette size={20} color="#8b5cf6" />
+            )}
+          </View>
+          <View style={styles.customerDetails}>
+            <Text style={styles.customerName}>
+              {request.booking?.customer?.fullName || 'Customer'}
+            </Text>
+            <Text style={styles.bookingMeta}>
+              {request.photoCount} photo{request.photoCount && request.photoCount > 1 ? 's' : ''}
+              {request.revisionCount ? ` • Revision #${request.revisionCount + 1}` : ''}
+            </Text>
+            {request.booking?.scheduledDate && (
+              <Text style={styles.bookingLocation}>
+                Session: {formatDate(request.booking.scheduledDate)}
+              </Text>
+            )}
+          </View>
+        </View>
+        <View style={styles.earningsContainer}>
+          <Text style={[styles.earnings, { color: '#8b5cf6' }]}>
+            £{parseFloat(request.photographerEarnings || '0').toFixed(2)}
+          </Text>
+          <Text style={styles.earningsLabel}>earnings</Text>
+        </View>
+      </View>
+
+      {request.customerNotes && (
+        <View style={styles.notesContainer}>
+          <Text style={styles.notesLabel}>Customer notes:</Text>
+          <Text style={styles.notesText}>{request.customerNotes}</Text>
+        </View>
+      )}
+
+      {request.requestedPhotoUrls && request.requestedPhotoUrls.length > 0 && (
+        <View style={styles.photosPreview}>
+          <View style={styles.photosLabel}>
+            <Images size={14} color="#9ca3af" />
+            <Text style={styles.photosLabelText}>
+              Photos to edit ({request.requestedPhotoUrls.length})
+            </Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosList}>
+            {request.requestedPhotoUrls.slice(0, 4).map((url, idx) => (
+              <Image 
+                key={idx}
+                source={{ uri: getImageUrl(url)! }}
+                style={styles.photoThumb}
+              />
+            ))}
+            {request.requestedPhotoUrls.length > 4 && (
+              <View style={styles.morePhotos}>
+                <Text style={styles.morePhotosText}>+{request.requestedPhotoUrls.length - 4}</Text>
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+
   if (bookingsLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -218,7 +310,6 @@ export default function PhotographerBookingsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>My Bookings</Text>
           <Text style={styles.subtitle}>Manage your upcoming photo sessions</Text>
@@ -255,6 +346,48 @@ export default function PhotographerBookingsScreen() {
           </View>
         )}
 
+        {/* Pending Editing Requests */}
+        {pendingEditingRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <Palette size={20} color="#8b5cf6" />,
+              'Editing Requests',
+              pendingEditingRequests.length,
+              undefined,
+              '#8b5cf6'
+            )}
+            {pendingEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(139, 92, 246, 0.3)'))}
+          </View>
+        )}
+
+        {/* Active Editing (In Progress) */}
+        {activeEditingRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <Palette size={20} color="#3b82f6" />,
+              'Editing In Progress',
+              activeEditingRequests.length,
+              undefined,
+              '#3b82f6'
+            )}
+            {activeEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(59, 130, 246, 0.3)'))}
+          </View>
+        )}
+
+        {/* Revisions Requested */}
+        {revisionRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <RefreshCw size={20} color="#f97316" />,
+              'Revisions Requested',
+              revisionRequests.length,
+              undefined,
+              '#f97316'
+            )}
+            {revisionRequests.map(request => renderEditingRequestCard(request, 'rgba(249, 115, 22, 0.3)'))}
+          </View>
+        )}
+
         {/* Ready for Photos */}
         {readyForPhotos.length > 0 && (
           <View style={styles.section}>
@@ -267,6 +400,36 @@ export default function PhotographerBookingsScreen() {
               'These sessions are complete. Upload photos to finalize and get paid.'
             )}
             {readyForPhotos.map(booking => renderBookingCard(booking, { showUploadButton: true }))}
+          </View>
+        )}
+
+        {/* Awaiting Customer Approval */}
+        {awaitingApprovalRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <Clock size={20} color="#eab308" />,
+              'Awaiting Customer Approval',
+              awaitingApprovalRequests.length,
+              undefined,
+              '#eab308'
+            )}
+            {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(234, 179, 8, 0.3)'))}
+          </View>
+        )}
+
+        {/* Approved Edits */}
+        {approvedEditingRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <Check size={20} color="#22c55e" />,
+              'Approved Edits',
+              approvedEditingRequests.length,
+              'approvedEdits',
+              '#22c55e'
+            )}
+            {!collapsedSections.approvedEdits && (
+              approvedEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(34, 197, 94, 0.3)'))
+            )}
           </View>
         )}
 
@@ -303,7 +466,7 @@ export default function PhotographerBookingsScreen() {
         )}
 
         {/* Empty State */}
-        {bookingsArray.length === 0 && (
+        {bookingsArray.length === 0 && editingRequestsArray.length === 0 && (
           <View style={styles.emptyStateContainer}>
             <Calendar size={64} color="#6b7280" />
             <Text style={styles.emptyStateTitle}>No bookings yet</Text>
@@ -425,6 +588,36 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   acceptButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+
+  notesContainer: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+  },
+  notesLabel: { fontSize: 12, color: '#9ca3af', marginBottom: 4 },
+  notesText: { fontSize: 14, color: '#fff' },
+
+  photosPreview: { marginTop: 12 },
+  photosLabel: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  photosLabelText: { fontSize: 13, color: '#9ca3af' },
+  photosList: { flexDirection: 'row' },
+  photoThumb: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  morePhotos: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  morePhotosText: { fontSize: 14, color: '#9ca3af', fontWeight: '600' },
 
   emptyStateContainer: {
     alignItems: 'center',

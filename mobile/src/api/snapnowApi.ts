@@ -64,6 +64,22 @@ export interface Earning {
   createdAt: string;
 }
 
+export interface EditingRequest {
+  id: number;
+  bookingId: number;
+  status: 'requested' | 'accepted' | 'in_progress' | 'delivered' | 'completed' | 'revision_requested' | 'declined';
+  photoCount?: number;
+  totalAmount: string;
+  platformFee: string;
+  photographerEarnings: string;
+  customerNotes?: string;
+  requestedPhotoUrls?: string[];
+  editedPhotoUrls?: string[];
+  revisionCount?: number;
+  createdAt: string;
+  booking?: Booking;
+}
+
 export const snapnowApi = {
   async login(payload: { email: string; password: string }): Promise<User> {
     const response = await api.post<User>('/api/auth/login', payload);
@@ -161,6 +177,11 @@ export const snapnowApi = {
 
   async getPhotographerEarnings(photographerId: string): Promise<Earning[]> {
     const response = await api.get<Earning[]>(`/api/earnings/photographer/${photographerId}`);
+    return response.data;
+  },
+
+  async getPhotographerEditingRequests(photographerId: string): Promise<EditingRequest[]> {
+    const response = await api.get<EditingRequest[]>(`/api/editing-requests/photographer/${photographerId}`);
     return response.data;
   },
 };
