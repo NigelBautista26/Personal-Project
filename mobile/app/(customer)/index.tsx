@@ -12,11 +12,12 @@ import {
   FlatList,
   TextInput,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
@@ -53,16 +54,17 @@ const darkMapStyle = [
   { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
   { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.country', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'administrative.locality', elementType: 'labels', stylers: [{ visibility: 'on' }] },
   { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#161b22' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#21262d' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#21262d' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1f2e' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1f2937' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1f2937' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#1a1f2e' }] },
   { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c1929' }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4f5b66' }] },
 ];
-
-const lightMapStyle: any[] = [];
 
 const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
   const R = 6371;
@@ -80,14 +82,13 @@ export default function CustomerMapScreen() {
   const [selectedCity, setSelectedCity] = useState<City>(DEFAULT_CITY);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapStyle, setMapStyle] = useState<'dark' | 'light'>('dark');
+  const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   const { data: photographers, isLoading } = useQuery({
     queryKey: ['photographers'],
     queryFn: () => snapnowApi.getPhotographers(),
   });
-
 
   useEffect(() => {
     (async () => {
@@ -107,8 +108,8 @@ export default function CustomerMapScreen() {
       mapRef.current.animateToRegion({
         latitude: selectedCity.lat,
         longitude: selectedCity.lng,
-        latitudeDelta: 0.15,
-        longitudeDelta: 0.15,
+        latitudeDelta: 0.12,
+        longitudeDelta: 0.12,
       }, 500);
     }
   }, [selectedCity]);
@@ -156,11 +157,13 @@ export default function CustomerMapScreen() {
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       }, 500);
+    } else {
+      Alert.alert('Location', 'Unable to get your location. Please enable location services.');
     }
   };
 
-  const toggleMapStyle = () => {
-    setMapStyle(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleMapType = () => {
+    setMapType(prev => prev === 'standard' ? 'satellite' : 'standard');
   };
 
   const handlePhotographerPress = (photographer: PhotographerProfile) => {
@@ -170,8 +173,8 @@ export default function CustomerMapScreen() {
   const region: Region = {
     latitude: selectedCity.lat,
     longitude: selectedCity.lng,
-    latitudeDelta: 0.15,
-    longitudeDelta: 0.15,
+    latitudeDelta: 0.12,
+    longitudeDelta: 0.12,
   };
 
   return (
@@ -179,9 +182,10 @@ export default function CustomerMapScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={PROVIDER_GOOGLE}
         initialRegion={region}
-        customMapStyle={mapStyle === 'dark' ? darkMapStyle : lightMapStyle}
+        mapType={mapType}
+        customMapStyle={mapType === 'standard' ? darkMapStyle : undefined}
         showsUserLocation={true}
         showsMyLocationButton={false}
         testID="map-view"
@@ -211,30 +215,43 @@ export default function CustomerMapScreen() {
                     <Text style={styles.markerPriceText}>£{photographer.hourlyRate}</Text>
                   </View>
                 </View>
-                <View style={styles.markerArrow} />
+                <View style={[
+                  styles.markerArrow,
+                  photographer.sessionState === 'available' && styles.markerArrowAvailable
+                ]} />
               </View>
             </Marker>
           );
         })}
       </MapView>
 
-      {/* Location Header */}
+      {/* Location Header - Two separate buttons like web */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.locationButton} 
           onPress={() => setShowCitySelector(true)}
           testID="button-change-location"
         >
-          <MapPin size={16} color="#fff" />
+          <MapPin size={18} color="#fff" />
           <Text style={styles.locationText}>{selectedCity.name}</Text>
-          <Text style={styles.changeText}>Change</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.changeButton}
+          onPress={() => setShowCitySelector(true)}
+          testID="button-change-city"
+        >
+          <Text style={styles.changeButtonText}>Change</Text>
         </TouchableOpacity>
       </View>
 
       {/* Map Controls */}
       <View style={styles.controls}>
-        <TouchableOpacity style={styles.controlButton} onPress={toggleMapStyle} testID="button-layers">
-          <Layers size={20} color="#fff" />
+        <TouchableOpacity 
+          style={[styles.controlButton, mapType === 'satellite' && styles.controlButtonActive]} 
+          onPress={toggleMapType} 
+          testID="button-layers"
+        >
+          <Layers size={20} color={mapType === 'satellite' ? PRIMARY_COLOR : '#fff'} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.controlButton} onPress={centerOnUser} testID="button-locate">
           <Navigation size={20} color="#fff" />
@@ -270,61 +287,88 @@ export default function CustomerMapScreen() {
       <Modal
         visible={showCitySelector}
         animationType="slide"
-        transparent={true}
+        presentationStyle="pageSheet"
         onRequestClose={() => setShowCitySelector(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <SafeAreaView style={styles.modalSafeArea}>
-              {/* Modal Header */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Select City</Text>
-                <TouchableOpacity 
-                  onPress={() => setShowCitySelector(false)} 
-                  style={styles.closeButton}
-                  testID="button-close-city-selector"
-                >
-                  <X size={24} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Search Input */}
-              <View style={styles.searchContainer}>
-                <Search size={18} color="#6b7280" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search cities..."
-                  placeholderTextColor="#6b7280"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  testID="input-search-city"
-                />
-              </View>
-
-              {/* City List */}
-              <FlatList
-                data={filteredCities}
-                keyExtractor={(item) => item.name}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={styles.cityItem}
-                    onPress={() => handleCitySelect(item)}
-                    testID={`button-city-${item.name.toLowerCase()}`}
-                  >
-                    <View style={styles.cityInfo}>
-                      <Text style={styles.cityName}>{item.name}</Text>
-                      <Text style={styles.cityCountry}>{item.country}</Text>
-                    </View>
-                    {selectedCity.name === item.name && (
-                      <Check size={20} color={PRIMARY_COLOR} />
-                    )}
-                  </TouchableOpacity>
-                )}
-                showsVerticalScrollIndicator={false}
-              />
-            </SafeAreaView>
+        <SafeAreaView style={styles.modalContainer}>
+          {/* Modal Header */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select City</Text>
+            <TouchableOpacity 
+              onPress={() => setShowCitySelector(false)} 
+              style={styles.closeButton}
+              testID="button-close-city-selector"
+            >
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
           </View>
-        </View>
+
+          {/* Search Input */}
+          <View style={styles.searchContainer}>
+            <Search size={18} color="#6b7280" />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search cities..."
+              placeholderTextColor="#6b7280"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus={false}
+              testID="input-search-city"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <X size={18} color="#6b7280" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Use Current Location */}
+          <TouchableOpacity 
+            style={styles.currentLocationButton}
+            onPress={() => {
+              if (userLocation) {
+                const nearestCity = POPULAR_CITIES.reduce((prev, curr) => {
+                  const prevDist = getDistanceKm(userLocation.latitude, userLocation.longitude, prev.lat, prev.lng);
+                  const currDist = getDistanceKm(userLocation.latitude, userLocation.longitude, curr.lat, curr.lng);
+                  return currDist < prevDist ? curr : prev;
+                });
+                handleCitySelect(nearestCity);
+              } else {
+                Alert.alert('Location', 'Unable to get your location.');
+              }
+            }}
+          >
+            <Crosshair size={20} color={PRIMARY_COLOR} />
+            <Text style={styles.currentLocationText}>Use Current Location</Text>
+          </TouchableOpacity>
+
+          {/* Popular Cities Section */}
+          <Text style={styles.sectionTitle}>Popular Destinations</Text>
+
+          {/* City List */}
+          <FlatList
+            data={filteredCities}
+            keyExtractor={(item) => item.name}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.cityItem}
+                onPress={() => handleCitySelect(item)}
+                testID={`button-city-${item.name.toLowerCase().replace(' ', '-')}`}
+              >
+                <MapPin size={18} color="#6b7280" />
+                <View style={styles.cityInfo}>
+                  <Text style={styles.cityName}>{item.name}</Text>
+                  <Text style={styles.cityCountry}>{item.country}</Text>
+                </View>
+                {selectedCity.name === item.name && (
+                  <Check size={20} color={PRIMARY_COLOR} />
+                )}
+              </TouchableOpacity>
+            )}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 40 }}
+          />
+        </SafeAreaView>
       </Modal>
     </View>
   );
@@ -345,15 +389,18 @@ const styles = StyleSheet.create({
     top: 60,
     left: 16,
     right: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
@@ -361,12 +408,19 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 15,
-    flex: 1,
   },
-  changeText: {
+  changeButton: {
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  changeButtonText: {
     color: PRIMARY_COLOR,
     fontWeight: '600',
-    fontSize: 13,
+    fontSize: 14,
   },
   controls: {
     position: 'absolute',
@@ -378,11 +432,15 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.85)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+  },
+  controlButtonActive: {
+    borderColor: PRIMARY_COLOR,
+    backgroundColor: 'rgba(37,99,235,0.2)',
   },
   bottomCard: {
     position: 'absolute',
@@ -391,9 +449,9 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(20,20,20,0.95)',
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: 'rgba(15,15,15,0.95)',
+    borderRadius: 16,
+    padding: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
     shadowColor: '#000',
@@ -403,26 +461,26 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   cardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: 'rgba(37,99,235,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   cardContent: {
     flex: 1,
   },
   cardTitle: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
-    marginBottom: 1,
+    marginBottom: 2,
   },
   cardSubtitle: {
     color: '#6b7280',
-    fontSize: 12,
+    fontSize: 13,
   },
   markerContainer: {
     alignItems: 'center',
@@ -476,6 +534,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#374151',
     marginTop: -1,
   },
+  markerArrowAvailable: {
+    borderTopColor: PRIMARY_COLOR,
+  },
   loadingOverlay: {
     position: 'absolute',
     top: 0,
@@ -486,19 +547,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#111',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-  },
-  modalSafeArea: {
-    flex: 1,
+    backgroundColor: '#0a0a0f',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -520,8 +571,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
-    margin: 16,
-    marginTop: 8,
+    marginHorizontal: 16,
+    marginTop: 12,
     paddingHorizontal: 14,
     borderRadius: 12,
     gap: 10,
@@ -532,12 +583,39 @@ const styles = StyleSheet.create({
     fontSize: 15,
     paddingVertical: 14,
   },
+  currentLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 14,
+    backgroundColor: 'rgba(37,99,235,0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,235,0.2)',
+  },
+  currentLocationText: {
+    color: PRIMARY_COLOR,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    color: '#6b7280',
+    fontSize: 13,
+    fontWeight: '600',
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   cityItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 14,
     paddingHorizontal: 16,
+    gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.06)',
   },
