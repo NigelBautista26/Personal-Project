@@ -8,9 +8,11 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { User, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
+import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
+
+const PRIMARY_COLOR = '#2563eb';
 
 export default function CustomerProfileScreen() {
   const { user, logout } = useAuth();
@@ -25,14 +27,17 @@ export default function CustomerProfileScreen() {
     await logout();
   };
 
+  const menuItems = [
+    { icon: User, label: 'Account Details', onPress: () => {} },
+    { icon: Shield, label: 'Security', onPress: () => {} },
+    { icon: Settings, label: 'Preferences', onPress: () => {} },
+    { icon: HelpCircle, label: 'Support', onPress: () => {} },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileCard}>
+        <View style={styles.profileSection}>
           {user?.profileImageUrl ? (
             <Image
               source={{ uri: getImageUrl(user.profileImageUrl) }}
@@ -40,7 +45,7 @@ export default function CustomerProfileScreen() {
             />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <User size={40} color="#6b7280" />
+              <User size={48} color="#6b7280" />
             </View>
           )}
           <Text style={styles.name}>{user?.fullName || 'User'}</Text>
@@ -48,31 +53,51 @@ export default function CustomerProfileScreen() {
         </View>
 
         <View style={styles.menuSection}>
-          <TouchableOpacity style={styles.menuItem} testID="button-settings">
-            <View style={styles.menuItemLeft}>
-              <Settings size={20} color="#9ca3af" />
-              <Text style={styles.menuItemText}>Settings</Text>
-            </View>
-            <ChevronRight size={20} color="#6b7280" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} testID="button-help">
-            <View style={styles.menuItemLeft}>
-              <HelpCircle size={20} color="#9ca3af" />
-              <Text style={styles.menuItemText}>Help & Support</Text>
-            </View>
-            <ChevronRight size={20} color="#6b7280" />
-          </TouchableOpacity>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity 
+              key={item.label} 
+              style={[
+                styles.menuItem,
+                index === menuItems.length - 1 && styles.menuItemLast
+              ]}
+              onPress={item.onPress}
+              testID={`button-${item.label.toLowerCase().replace(' ', '-')}`}
+            >
+              <View style={styles.menuItemLeft}>
+                <item.icon size={20} color="#9ca3af" />
+                <Text style={styles.menuItemText}>{item.label}</Text>
+              </View>
+              <ChevronRight size={18} color="#4b5563" />
+            </TouchableOpacity>
+          ))}
         </View>
 
         <TouchableOpacity
-          style={styles.logoutButton}
+          style={styles.logoutItem}
           onPress={handleLogout}
           testID="button-logout"
         >
-          <LogOut size={20} color="#ef4444" />
-          <Text style={styles.logoutText}>Log out</Text>
+          <View style={styles.menuItemLeft}>
+            <LogOut size={20} color="#ef4444" />
+            <Text style={styles.logoutText}>Log Out</Text>
+          </View>
+          <ChevronRight size={18} color="#4b5563" />
         </TouchableOpacity>
+
+        <View style={styles.memberCard}>
+          <View style={styles.memberIcon}>
+            <Shield size={24} color={PRIMARY_COLOR} />
+          </View>
+          <View style={styles.memberContent}>
+            <Text style={styles.memberTitle}>SnapNow Member</Text>
+            <Text style={styles.memberSubtitle}>Book photographers anywhere you travel.</Text>
+            <TouchableOpacity>
+              <Text style={styles.memberLink}>Explore Features</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -80,57 +105,101 @@ export default function CustomerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  header: { padding: 20, paddingBottom: 0 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  content: { flex: 1, padding: 20 },
-  profileCard: {
+  content: { flex: 1 },
+  profileSection: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 24,
-    borderWidth: 1,
+    paddingTop: 40,
+    paddingBottom: 32,
+  },
+  avatar: { 
+    width: 120, 
+    height: 120, 
+    borderRadius: 60, 
+    marginBottom: 16,
+    borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 16 },
   avatarPlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.05)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-  },
-  name: { fontSize: 20, fontWeight: '600', color: '#fff', marginBottom: 4 },
-  email: { fontSize: 14, color: '#9ca3af' },
-  menuSection: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1,
+    borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
+  },
+  name: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  email: { fontSize: 14, color: '#6b7280' },
+  menuSection: {
+    paddingHorizontal: 20,
+    marginBottom: 8,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
-  menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  menuItemText: { fontSize: 16, color: '#fff' },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ef4444',
+  menuItemLast: {
+    borderBottomWidth: 0,
   },
-  logoutText: { fontSize: 16, fontWeight: '600', color: '#ef4444' },
+  menuItemLeft: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 14,
+  },
+  menuItemText: { fontSize: 16, color: '#fff' },
+  logoutItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  logoutText: { fontSize: 16, color: '#ef4444' },
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    margin: 20,
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: 'rgba(37,99,235,0.1)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(37,99,235,0.2)',
+  },
+  memberIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: 'rgba(37,99,235,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  memberContent: {
+    flex: 1,
+  },
+  memberTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  memberSubtitle: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginBottom: 8,
+  },
+  memberLink: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ef4444',
+  },
 });
