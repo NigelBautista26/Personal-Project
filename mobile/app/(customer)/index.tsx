@@ -249,6 +249,7 @@ export default function CustomerMapScreen() {
           if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
           
           const coords = getOffsetCoordinates(filteredPhotographers, index);
+          const isAvailable = photographer.sessionState === 'available';
           
           return (
             <Marker
@@ -259,10 +260,17 @@ export default function CustomerMapScreen() {
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              title={photographer.fullName || 'Photographer'}
-              description={`£${photographer.hourlyRate}/hr`}
-              pinColor={photographer.sessionState === 'available' ? '#22c55e' : '#3b82f6'}
-            />
+            >
+              <View style={styles.photographerMarker}>
+                <Image
+                  source={{ uri: getImageUrl(photographer) }}
+                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
+                />
+                <View style={styles.photographerMarkerPrice}>
+                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
+                </View>
+              </View>
+            </Marker>
           );
         })}
 
@@ -610,6 +618,36 @@ const styles = StyleSheet.create({
   spotImage: {
     width: '100%',
     height: '100%',
+  },
+  photographerMarker: {
+    width: 50,
+    height: 56,
+    alignItems: 'center',
+  },
+  photographerMarkerAvailable: {
+    // Green glow effect handled by border
+  },
+  photographerMarkerImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 3,
+    borderColor: '#3b82f6',
+    backgroundColor: '#1a1a1a',
+  },
+  photographerMarkerPrice: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: -8,
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  photographerMarkerPriceText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
   },
   loadingOverlay: {
     position: 'absolute',
