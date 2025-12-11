@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   photographerProfile: PhotographerProfile | null;
   isLoading: boolean;
+  isProfileLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<User>;
   register: (email: string, password: string, fullName: string, role: 'customer' | 'photographer') => Promise<User>;
@@ -23,13 +24,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [photographerProfile, setPhotographerProfile] = useState<PhotographerProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
 
   const refreshPhotographerProfile = async () => {
+    setIsProfileLoading(true);
     try {
       const profile = await snapnowApi.mePhotographer();
       setPhotographerProfile(profile);
     } catch {
       setPhotographerProfile(null);
+    } finally {
+      setIsProfileLoading(false);
     }
   };
 
@@ -106,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         photographerProfile,
         isLoading,
+        isProfileLoading,
         isAuthenticated: !!user,
         login,
         register,

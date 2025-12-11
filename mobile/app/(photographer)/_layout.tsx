@@ -10,7 +10,7 @@ import RejectedScreen from '../../src/screens/Rejected';
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
-  const { photographerProfile, isLoading, user, isAuthenticated } = useAuth();
+  const { photographerProfile, isLoading, isProfileLoading, user, isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || !user)) {
@@ -18,7 +18,7 @@ export default function PhotographerLayout() {
     }
   }, [isLoading, isAuthenticated, user]);
 
-  if (isLoading || !isAuthenticated || !user || user.role !== 'photographer') {
+  if (isLoading || isProfileLoading || !isAuthenticated || !user || user.role !== 'photographer') {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
