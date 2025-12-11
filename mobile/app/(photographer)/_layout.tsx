@@ -13,20 +13,12 @@ export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && (!isAuthenticated || !user)) {
       router.replace('/');
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, user]);
 
-  if (isLoading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
-  }
-
-  if (!isAuthenticated || !user || user.role !== 'photographer') {
+  if (isLoading || !isAuthenticated || !user || user.role !== 'photographer') {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
