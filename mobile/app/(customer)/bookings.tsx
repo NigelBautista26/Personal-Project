@@ -23,7 +23,7 @@ export default function CustomerBookingsScreen() {
     queryFn: () => snapnowApi.getBookings(),
   });
 
-  const allBookings = bookings || [];
+  const allBookings = Array.isArray(bookings) ? bookings : [];
   
   const upcomingBookings = allBookings.filter(b => b.status === 'confirmed');
   const awaitingPhotos = allBookings.filter(b => b.status === 'photos_pending' || b.status === 'in_progress');
@@ -41,6 +41,19 @@ export default function CustomerBookingsScreen() {
     return `${API_URL}${path}`;
   };
 
+  const getPhotographerName = (booking: Booking) => {
+    return (booking as any).photographerName || 
+           booking.photographer?.user?.fullName || 
+           booking.photographer?.fullName || 
+           'Photographer';
+  };
+
+  const getPhotographerImage = (booking: Booking) => {
+    return (booking as any).photographerProfileImage || 
+           booking.photographer?.profileImageUrl || 
+           booking.photographer?.profilePicture;
+  };
+
   const renderBookingCard = (booking: Booking) => (
     <TouchableOpacity
       key={booking.id}
@@ -49,15 +62,15 @@ export default function CustomerBookingsScreen() {
       testID={`card-booking-${booking.id}`}
     >
       <Image
-        source={{ uri: getImageUrl(booking.photographerProfileImage) }}
+        source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
         style={styles.photographerAvatar}
       />
       <View style={styles.bookingInfo}>
-        <Text style={styles.photographerName}>{booking.photographerName || 'Photographer'}</Text>
+        <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
         <Text style={styles.bookingDetails}>
           {formatDate(booking.scheduledDate)} · {booking.location}
         </Text>
-        {booking.status === 'photos_pending' && (
+        {(booking.status === 'photos_pending' || booking.status === 'in_progress') && (
           <View style={styles.statusRow}>
             <Clock size={12} color="#6b7280" />
             <Text style={styles.statusText}>Your photographer is uploading your photos...</Text>

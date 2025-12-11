@@ -45,7 +45,7 @@ export interface Booking {
   scheduledTime: string;
   duration: number;
   location: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'expired' | 'declined' | 'in_progress';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'expired' | 'declined' | 'in_progress' | 'photos_pending';
   totalAmount: string;
   platformFee: string;
   photographerEarnings: string;
