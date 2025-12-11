@@ -68,8 +68,8 @@ export default function CustomerBookingsScreen() {
   });
 
   const allBookings = Array.isArray(bookings) ? bookings : [];
-  const completedBookingIds = allBookings.filter(b => b.status === 'completed').map(b => b.id);
-  const photographerIds = Array.from(new Set(allBookings.filter(b => b.status === 'completed').map((b: any) => b.photographerId)));
+  const completedBookingIds = allBookings.filter(b => b.status === 'completed').map(b => String(b.id));
+  const photographerIds = Array.from(new Set(allBookings.filter(b => b.status === 'completed').map((b: any) => String(b.photographerId))));
 
   const { data: reviewInfoMap = {} } = useQuery<Record<string, ReviewInfo>>({
     queryKey: ['bookingReviewInfo', completedBookingIds],
@@ -369,8 +369,9 @@ export default function CustomerBookingsScreen() {
   );
 
   const renderCompletedCard = (booking: Booking) => {
-    const reviewInfo = reviewInfoMap[booking.id];
-    const editingRequest = editingRequestsMap[booking.id];
+    const bookingIdStr = String(booking.id);
+    const reviewInfo = reviewInfoMap[bookingIdStr];
+    const editingRequest = editingRequestsMap[bookingIdStr];
     
     return (
       <View key={booking.id} style={styles.completedCard}>

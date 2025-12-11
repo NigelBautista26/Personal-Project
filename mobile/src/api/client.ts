@@ -80,4 +80,29 @@ export const clearSessionCookie = async () => {
   await SecureStore.deleteItemAsync(COOKIE_KEY);
 };
 
+// Generic API client function for direct calls
+export async function apiClient<T>(
+  endpoint: string,
+  options?: { method?: string; body?: any }
+): Promise<T> {
+  const method = options?.method || 'GET';
+  const url = endpoint.startsWith('http') ? endpoint : endpoint;
+  
+  if (method === 'GET') {
+    const response = await api.get<T>(url);
+    return response.data;
+  } else if (method === 'POST') {
+    const response = await api.post<T>(url, options?.body);
+    return response.data;
+  } else if (method === 'PUT') {
+    const response = await api.put<T>(url, options?.body);
+    return response.data;
+  } else if (method === 'DELETE') {
+    const response = await api.delete<T>(url);
+    return response.data;
+  }
+  
+  throw new Error(`Unsupported method: ${method}`);
+}
+
 export default api;
