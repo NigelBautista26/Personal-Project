@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
-import { Home, Calendar, User } from 'lucide-react-native';
+import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 
 const PRIMARY_COLOR = '#2563eb';
@@ -46,7 +46,7 @@ export default function CustomerLayout() {
         tabBarActiveTintColor: PRIMARY_COLOR,
         tabBarInactiveTintColor: '#9ca3af',
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
         },
       }}
@@ -54,8 +54,22 @@ export default function CustomerLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          title: 'Map',
+          tabBarIcon: ({ color, size }) => <Map size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="photographers"
+        options={{
+          title: 'Photographers',
+          tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="spots"
+        options={{
+          title: 'Spots',
+          tabBarIcon: ({ color, size }) => <Camera size={size} color={color} />,
         }}
       />
       <Tabs.Screen

@@ -1,39 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  TextInput,
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Dimensions,
+  Platform,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Search, MapPin, Star } from 'lucide-react-native';
+import { MapPin, Users, ChevronRight, Layers, Navigation } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
-import { useAuth } from '../../src/context/AuthContext';
 
+const { width, height } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
 
-export default function CustomerHomeScreen() {
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState('');
+const LONDON_REGION: Region = {
+  latitude: 51.5074,
+  longitude: -0.1278,
+  latitudeDelta: 0.15,
+  longitudeDelta: 0.15,
+};
+
+const darkMapStyle = [
+  { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#161b22' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#21262d' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#21262d' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4f5b66' }] },
+];
+
+export default function CustomerMapScreen() {
+  const mapRef = useRef<MapView>(null);
   const [selectedCity] = useState('London');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [region, setRegion] = useState<Region>(LONDON_REGION);
 
   const { data: photographers, isLoading } = useQuery({
     queryKey: ['photographers'],
     queryFn: () => snapnowApi.getPhotographers(),
   });
 
-  const filteredPhotographers = photographers?.filter(
-    (p) =>
-      p.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.bio?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      }
+    })();
+  }, []);
 
   const getImageUrl = (photographer: PhotographerProfile) => {
     const path = photographer.profileImageUrl || photographer.profilePicture;
@@ -41,272 +71,283 @@ export default function CustomerHomeScreen() {
     if (path.startsWith('http')) return path;
     return `${API_URL}${path}`;
   };
-  
-  const getStatusInfo = (photographer: PhotographerProfile) => {
-    if (photographer.sessionState === 'in_session') {
-      return { color: '#eab308', text: 'In Session' };
-    } else if (photographer.sessionState === 'available') {
-      return { color: '#22c55e', text: 'Available Now' };
+
+  const availablePhotographers = photographers?.filter(
+    (p) => p.sessionState === 'available'
+  ) || [];
+
+  const centerOnUser = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion({
+        ...userLocation,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      }, 500);
     }
-    return { color: '#6b7280', text: 'Offline' };
+  };
+
+  const handlePhotographerPress = (photographer: PhotographerProfile) => {
+    router.push(`/(customer)/photographer/${photographer.id}`);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Find Photographers</Text>
-        <Text style={styles.subtitle}>Professional photographers near you</Text>
-      </View>
-
-      <View style={styles.searchRow}>
-        <TouchableOpacity style={styles.cityButton} testID="button-change-city">
-          <MapPin size={16} color={PRIMARY_COLOR} />
-          <Text style={styles.cityText}>{selectedCity}</Text>
-        </TouchableOpacity>
-        <View style={styles.searchContainer}>
-          <Search size={16} color="#6b7280" style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search photographers..."
-            placeholderTextColor="#6b7280"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            testID="input-search"
-          />
-        </View>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {isLoading ? (
-          <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
-        ) : (
-          <>
-            <Text style={styles.resultCount}>
-              {filteredPhotographers?.length || 0} photographer{filteredPhotographers?.length !== 1 ? 's' : ''} in {selectedCity}
-            </Text>
-
-            {filteredPhotographers?.length === 0 ? (
-              <View style={styles.emptyState}>
-                <View style={styles.emptyIcon}>
-                  <Search size={32} color="#6b7280" />
+    <View style={styles.container}>
+      <MapView
+        ref={mapRef}
+        style={styles.map}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        initialRegion={LONDON_REGION}
+        onRegionChangeComplete={setRegion}
+        customMapStyle={darkMapStyle}
+        showsUserLocation={true}
+        showsMyLocationButton={false}
+        testID="map-view"
+      >
+        {photographers?.map((photographer) => {
+          if (!photographer.latitude || !photographer.longitude) return null;
+          return (
+            <Marker
+              key={photographer.id}
+              coordinate={{
+                latitude: Number(photographer.latitude),
+                longitude: Number(photographer.longitude),
+              }}
+              onPress={() => handlePhotographerPress(photographer)}
+              testID={`marker-photographer-${photographer.id}`}
+            >
+              <View style={styles.markerContainer}>
+                <View style={[
+                  styles.markerBubble,
+                  photographer.sessionState === 'available' && styles.markerAvailable
+                ]}>
+                  <Image
+                    source={{ uri: getImageUrl(photographer) }}
+                    style={styles.markerImage}
+                  />
+                  <View style={styles.markerPrice}>
+                    <Text style={styles.markerPriceText}>£{photographer.hourlyRate}</Text>
+                  </View>
                 </View>
-                <Text style={styles.emptyTitle}>No photographers found</Text>
-                <Text style={styles.emptyText}>
-                  {searchQuery ? 'Try a different search term' : 'Try selecting a different city'}
-                </Text>
+                <View style={styles.markerArrow} />
               </View>
-            ) : (
-              <View style={styles.list}>
-                {filteredPhotographers?.map((photographer) => (
-                  <TouchableOpacity
-                    key={photographer.id}
-                    style={styles.card}
-                    onPress={() => router.push(`/(customer)/photographer/${photographer.id}`)}
-                    testID={`card-photographer-${photographer.id}`}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.cardImageContainer}>
-                      <Image
-                        source={{ uri: getImageUrl(photographer) }}
-                        style={styles.cardImage}
-                      />
-                      <View style={[
-                        styles.statusDot,
-                        { backgroundColor: getStatusInfo(photographer).color }
-                      ]} />
-                    </View>
-                    
-                    <View style={styles.cardContent}>
-                      <View style={styles.cardHeader}>
-                        <View style={styles.cardInfo}>
-                          <Text style={styles.cardName} numberOfLines={1}>
-                            {photographer.fullName || 'Photographer'}
-                          </Text>
-                          <View style={styles.locationRow}>
-                            <MapPin size={12} color="#6b7280" />
-                            <Text style={styles.locationText} numberOfLines={1}>
-                              {photographer.city || 'Unknown location'}
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={styles.priceContainer}>
-                          <Text style={styles.price}>£{photographer.hourlyRate}</Text>
-                          <Text style={styles.priceLabel}>HOURLY</Text>
-                        </View>
-                      </View>
+            </Marker>
+          );
+        })}
+      </MapView>
 
-                      <View style={styles.cardFooter}>
-                        <View style={styles.ratingContainer}>
-                          <Star size={12} color="#eab308" fill="#eab308" />
-                          <Text style={styles.ratingValue}>
-                            {photographer.rating != null ? Number(photographer.rating).toFixed(1) : '5.0'}
-                          </Text>
-                          <Text style={styles.reviewCount}>
-                            ({photographer.reviewCount || 0})
-                          </Text>
-                        </View>
-                        <Text style={[
-                          styles.availableText, 
-                          { color: getStatusInfo(photographer).color }
-                        ]}>
-                          {getStatusInfo(photographer).text}
-                        </Text>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+      {/* Location Header */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.locationButton} testID="button-change-location">
+          <MapPin size={16} color="#fff" />
+          <Text style={styles.locationText}>{selectedCity}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.changeButton} testID="button-change-city">
+          <Text style={styles.changeText}>Change</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Map Controls */}
+      <View style={styles.controls}>
+        <TouchableOpacity style={styles.controlButton} testID="button-layers">
+          <Layers size={20} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.controlButton} onPress={centerOnUser} testID="button-locate">
+          <Navigation size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Bottom Card */}
+      <TouchableOpacity
+        style={styles.bottomCard}
+        onPress={() => router.push('/(customer)/photographers')}
+        activeOpacity={0.9}
+        testID="button-browse-photographers"
+      >
+        <View style={styles.cardIcon}>
+          <Users size={24} color={PRIMARY_COLOR} />
+        </View>
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle}>
+            {isLoading ? 'Loading...' : `${availablePhotographers.length} Photographers Available`}
+          </Text>
+          <Text style={styles.cardSubtitle}>Browse photographers in {selectedCity}</Text>
+        </View>
+        <ChevronRight size={20} color="#6b7280" />
+      </TouchableOpacity>
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+        </View>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
-  header: { 
-    padding: 20, 
-    paddingTop: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#fff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#6b7280' },
-  searchRow: {
+  map: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  header: {
+    position: 'absolute',
+    top: 60,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
   },
-  cityButton: {
+  locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 48,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     paddingHorizontal: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    paddingVertical: 12,
     borderRadius: 24,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  cityText: { color: '#fff', fontWeight: '500', fontSize: 14 },
-  searchContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  searchIcon: { marginRight: 8 },
-  searchInput: {
-    flex: 1,
+  locationText: {
     color: '#fff',
+    fontWeight: '600',
     fontSize: 14,
   },
-  content: { flex: 1, paddingHorizontal: 20 },
-  loader: { marginTop: 60 },
-  resultCount: { 
-    color: '#6b7280', 
-    fontSize: 14, 
-    marginTop: 8,
-    marginBottom: 16,
+  changeButton: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  emptyState: { 
-    alignItems: 'center', 
-    marginTop: 60,
-    paddingHorizontal: 20,
+  changeText: {
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
+    fontSize: 14,
   },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+  controls: {
+    position: 'absolute',
+    right: 16,
+    bottom: 160,
+    gap: 12,
+  },
+  controlButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  emptyTitle: { color: '#fff', fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  emptyText: { color: '#6b7280', fontSize: 14, textAlign: 'center' },
-  list: { gap: 12, paddingBottom: 100 },
-  card: {
+  bottomCard: {
+    position: 'absolute',
+    bottom: 100,
+    left: 16,
+    right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    backgroundColor: 'rgba(20,20,20,0.95)',
     borderRadius: 16,
+    padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.1)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  cardImageContainer: {
-    position: 'relative',
-  },
-  cardImage: {
-    width: 64,
-    height: 64,
+  cardIcon: {
+    width: 48,
+    height: 48,
     borderRadius: 12,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: 'rgba(37,99,235,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  statusDot: {
+  cardContent: {
+    flex: 1,
+  },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  cardSubtitle: {
+    color: '#6b7280',
+    fontSize: 13,
+  },
+  markerContainer: {
+    alignItems: 'center',
+  },
+  markerBubble: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1a1a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#374151',
+    overflow: 'hidden',
+  },
+  markerAvailable: {
+    borderColor: PRIMARY_COLOR,
+    shadowColor: PRIMARY_COLOR,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+  },
+  markerImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  markerPrice: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 16,
-    height: 16,
+    bottom: -4,
+    backgroundColor: PRIMARY_COLOR,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#0a0a0a',
   },
-  cardContent: { flex: 1 },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardInfo: { flex: 1, marginRight: 12 },
-  cardName: { 
-    fontSize: 16, 
-    fontWeight: '700', 
+  markerPriceText: {
     color: '#fff',
-    marginBottom: 4,
+    fontSize: 10,
+    fontWeight: '700',
   },
-  locationRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 4,
+  markerArrow: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: '#374151',
+    marginTop: -1,
   },
-  locationText: { color: '#6b7280', fontSize: 12 },
-  priceContainer: { alignItems: 'flex-end' },
-  price: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  priceLabel: { 
-    fontSize: 10, 
-    color: '#6b7280', 
-    letterSpacing: 1,
-    marginTop: 2,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingValue: { fontSize: 12, fontWeight: '700', color: '#fff' },
-  reviewCount: { fontSize: 12, color: '#6b7280' },
-  availableText: { 
-    fontSize: 10, 
-    fontWeight: '500', 
-    color: '#22c55e',
   },
 });
