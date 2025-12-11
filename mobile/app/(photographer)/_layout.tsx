@@ -87,9 +87,10 @@ export default function PhotographerLayout() {
         }}
       />
       <Tabs.Screen
-        name="booking"
+        name="booking/[id]"
         options={{
           href: null,
+          tabBarButton: () => null,
         }}
       />
     </Tabs>
