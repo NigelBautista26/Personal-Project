@@ -49,13 +49,15 @@ export default function PhotographerDashboardScreen() {
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
 
   const { data: bookings } = useQuery({
-    queryKey: ['photographer-bookings'],
-    queryFn: () => snapnowApi.getBookings(),
+    queryKey: ['photographer-bookings', photographerProfile?.id],
+    queryFn: () => snapnowApi.getPhotographerBookings(photographerProfile!.id.toString()),
+    enabled: !!photographerProfile?.id,
   });
 
   const { data: earnings } = useQuery({
-    queryKey: ['photographer-earnings'],
-    queryFn: () => snapnowApi.getEarnings(),
+    queryKey: ['photographer-earnings', photographerProfile?.id],
+    queryFn: () => snapnowApi.getPhotographerEarnings(photographerProfile!.id.toString()),
+    enabled: !!photographerProfile?.id,
   });
 
   const toggleAvailabilityMutation = useMutation({

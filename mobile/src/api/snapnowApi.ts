@@ -128,6 +128,11 @@ export const snapnowApi = {
     return response.data;
   },
 
+  async getPhotographerBookings(photographerId: string): Promise<Booking[]> {
+    const response = await api.get<Booking[]>(`/api/bookings/photographer/${photographerId}`);
+    return response.data;
+  },
+
   async getBooking(id: number): Promise<Booking> {
     const response = await api.get<Booking>(`/api/bookings/${id}`);
     return response.data;
@@ -144,8 +149,18 @@ export const snapnowApi = {
     return response.data;
   },
 
+  async updateBookingStatus(bookingId: number, status: string): Promise<Booking> {
+    const response = await api.patch<Booking>(`/api/bookings/${bookingId}/status`, { status });
+    return response.data;
+  },
+
   async getEarnings(): Promise<Earning[]> {
     const response = await api.get<Earning[]>('/api/earnings');
+    return response.data;
+  },
+
+  async getPhotographerEarnings(photographerId: string): Promise<Earning[]> {
+    const response = await api.get<Earning[]>(`/api/earnings/photographer/${photographerId}`);
     return response.data;
   },
 };

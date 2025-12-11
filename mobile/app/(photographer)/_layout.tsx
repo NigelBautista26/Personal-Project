@@ -86,6 +86,12 @@ export default function PhotographerLayout() {
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="booking"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
