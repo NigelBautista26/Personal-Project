@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   content: { flex: 1 },
   
   headerContainer: {
-    height: 192,
+    height: 160,
     position: 'relative',
   },
   headerGradient: {
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 192,
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    height: 160,
+    backgroundColor: 'rgba(30, 58, 138, 0.4)',
   },
   avatarContainer: {
     position: 'absolute',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   email: { fontSize: 14, color: '#6b7280' },
   
   menuContainer: {
-    marginTop: 80,
+    marginTop: 72,
     paddingHorizontal: 24,
   },
   glassPanel: {
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   memberLink: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: PRIMARY_COLOR,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#ef4444',
   },
 });
