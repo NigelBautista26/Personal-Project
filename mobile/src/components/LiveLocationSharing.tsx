@@ -141,7 +141,8 @@ export function LiveLocationSharing({
       hasAutoStarted.current = true;
       startSharing();
     }
-  }, [isWithinWindow, isSharing, permissionDenied, startSharing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWithinWindow]);
 
   useEffect(() => {
     return () => {
