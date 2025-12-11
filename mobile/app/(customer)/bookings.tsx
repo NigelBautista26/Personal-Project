@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Calendar, Clock, Camera, X, ChevronRight, Star, Eye } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
 
@@ -78,6 +78,21 @@ export default function CustomerBookingsScreen() {
            booking.photographer?.profilePicture;
   };
 
+  const renderStars = (rating: number) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <Star
+          key={i}
+          size={12}
+          color="#eab308"
+          fill={i <= rating ? "#eab308" : "transparent"}
+        />
+      );
+    }
+    return stars;
+  };
+
   const renderUpcomingCard = (booking: Booking) => (
     <TouchableOpacity
       key={booking.id}
@@ -95,10 +110,7 @@ export default function CustomerBookingsScreen() {
           {formatDate(booking.scheduledDate)} · {booking.location}
         </Text>
       </View>
-      <View style={styles.priceSection}>
-        <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
-        <ChevronRight size={16} color="#6b7280" />
-      </View>
+      <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
     </TouchableOpacity>
   );
 
@@ -135,49 +147,81 @@ export default function CustomerBookingsScreen() {
   );
 
   const renderCompletedCard = (booking: Booking) => {
-    const hasReview = (booking as any).hasReview || (booking as any).reviewRating;
-    const reviewRating = (booking as any).reviewRating || 5;
+    const bookingData = booking as any;
+    const hasReview = bookingData.hasReview || bookingData.reviewRating;
+    const reviewRating = bookingData.reviewRating || 0;
+    const editingStatus = bookingData.editingStatus;
+    const editingAmount = bookingData.editingAmount;
+    const revisionCount = bookingData.revisionCount;
     
     return (
-      <TouchableOpacity
-        key={booking.id}
-        style={styles.completedCard}
-        onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
-        testID={`card-completed-${booking.id}`}
-      >
-        <View style={styles.cardHeader}>
-          <Image
-            source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
-            style={styles.avatar}
-          />
-          <View style={styles.bookingInfo}>
-            <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
-            <Text style={styles.bookingDetails}>
-              {formatDate(booking.scheduledDate)} · {booking.location}
-            </Text>
-          </View>
-          <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
-        </View>
-        
-        <View style={styles.completedActions}>
-          <TouchableOpacity style={styles.viewPhotosButton}>
-            <Eye size={14} color={PRIMARY_COLOR} />
-            <Text style={styles.viewPhotosText}>View Photos</Text>
-          </TouchableOpacity>
-          
-          {hasReview ? (
-            <View style={styles.reviewedBadge}>
-              <Star size={12} color="#eab308" fill="#eab308" />
-              <Text style={styles.reviewedText}>Reviewed</Text>
-              <Text style={styles.reviewRating}>{reviewRating.toFixed(1)}</Text>
+      <View key={booking.id} style={styles.completedCard}>
+        <TouchableOpacity
+          style={styles.cardContent}
+          onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
+          testID={`card-completed-${booking.id}`}
+        >
+          <View style={styles.cardHeader}>
+            <Image
+              source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
+              style={styles.avatar}
+            />
+            <View style={styles.bookingInfo}>
+              <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
+              <Text style={styles.bookingDetails}>
+                {formatDate(booking.scheduledDate)} - {booking.location}
+              </Text>
             </View>
-          ) : (
-            <TouchableOpacity style={styles.leaveReviewButton}>
-              <Text style={styles.leaveReviewText}>Leave Review</Text>
+            <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
+          </View>
+          
+          <View style={styles.completedActions}>
+            <TouchableOpacity style={styles.viewPhotosButton}>
+              <Eye size={14} color={PRIMARY_COLOR} />
+              <Text style={styles.viewPhotosText}>View Photos</Text>
             </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
+            
+            {hasReview ? (
+              <View style={styles.reviewedBadge}>
+                <Check size={12} color="#22c55e" />
+                <Text style={styles.reviewedText}>Reviewed</Text>
+                <View style={styles.starsRow}>
+                  {renderStars(reviewRating)}
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.leaveReviewButton}>
+                <Star size={14} color="#0a0a0a" />
+                <Text style={styles.leaveReviewText}>Leave Review</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </TouchableOpacity>
+        
+        {editingStatus && (
+          <View style={styles.editingStatusCard}>
+            <View style={styles.editingIconWrapper}>
+              <Palette size={16} color="#a855f7" />
+            </View>
+            <View style={styles.editingInfo}>
+              <Text style={styles.editingTitle}>
+                {editingStatus === 'delivered' ? 'Edited Photos Ready' : 
+                 editingStatus === 'in_progress' ? 'Revisions In Progress' :
+                 editingStatus === 'completed' ? 'Editing Complete' : 
+                 'Editing Requested'}
+              </Text>
+              <Text style={styles.editingAmount}>
+                £{editingAmount}
+                {revisionCount > 0 && ` • Revision #${revisionCount}`}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.viewEditedButton}>
+              <Eye size={12} color="#fff" />
+              <Text style={styles.viewEditedText}>View Edited</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -265,10 +309,7 @@ export default function CustomerBookingsScreen() {
             {/* Completed Sessions */}
             {completedBookings.length > 0 && (
               <View style={styles.section}>
-                <View style={styles.sectionHeader}>
-                  <Camera size={16} color="#fff" />
-                  <Text style={styles.sectionTitle}>Completed Sessions</Text>
-                </View>
+                <Text style={styles.sectionTitleLarge}>Completed Sessions</Text>
                 {completedBookings.map(renderCompletedCard)}
               </View>
             )}
@@ -324,6 +365,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  sectionTitleLarge: { fontSize: 18, fontWeight: '700', color: '#fff', marginBottom: 16 },
   emptySection: {
     alignItems: 'center',
     paddingVertical: 24,
@@ -360,7 +402,6 @@ const styles = StyleSheet.create({
   bookingInfo: { flex: 1, gap: 2 },
   photographerName: { fontSize: 15, fontWeight: '600', color: '#fff' },
   bookingDetails: { fontSize: 13, color: '#6b7280' },
-  priceSection: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   bookingPrice: { fontSize: 15, fontWeight: '700', color: '#fff' },
   
   awaitingCard: {
@@ -381,6 +422,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  cardContent: {},
   photoPreviewGrid: {
     flexDirection: 'row',
     gap: 8,
@@ -404,7 +446,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     padding: 14,
-    marginBottom: 8,
+    marginBottom: 12,
   },
   completedActions: {
     flexDirection: 'row',
@@ -417,7 +459,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     backgroundColor: 'rgba(37, 99, 235, 0.15)',
     borderRadius: 8,
   },
@@ -425,21 +467,57 @@ const styles = StyleSheet.create({
   reviewedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: 'rgba(234, 179, 8, 0.15)',
-    borderRadius: 8,
-  },
-  reviewedText: { color: '#eab308', fontSize: 12, fontWeight: '500' },
-  reviewRating: { color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 2 },
-  leaveReviewButton: {
+    gap: 6,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
     borderRadius: 8,
   },
-  leaveReviewText: { color: '#fff', fontSize: 13, fontWeight: '500' },
+  reviewedText: { color: '#22c55e', fontSize: 13, fontWeight: '500' },
+  starsRow: { flexDirection: 'row', gap: 2 },
+  leaveReviewButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    backgroundColor: '#eab308',
+    borderRadius: 8,
+  },
+  leaveReviewText: { color: '#0a0a0a', fontSize: 13, fontWeight: '600' },
+  
+  editingStatusCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(168, 85, 247, 0.2)',
+  },
+  editingIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  editingInfo: { flex: 1 },
+  editingTitle: { fontSize: 14, fontWeight: '600', color: '#fff' },
+  editingAmount: { fontSize: 12, color: '#9ca3af' },
+  viewEditedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#22c55e',
+    borderRadius: 6,
+  },
+  viewEditedText: { color: '#fff', fontSize: 12, fontWeight: '600' },
   
   expiredCard: {
     backgroundColor: 'rgba(255,255,255,0.03)',
