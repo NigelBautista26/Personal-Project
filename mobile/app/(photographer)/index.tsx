@@ -30,8 +30,8 @@ export default function PhotographerDashboardScreen() {
   const confirmedBookings = bookings?.filter(b => b.status === 'confirmed') || [];
   const completedBookings = bookings?.filter(b => b.status === 'completed') || [];
 
-  const totalEarnings = earnings?.reduce((sum, e) => sum + e.amount, 0) || 0;
-  const availableEarnings = earnings?.filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0) || 0;
+  const totalEarnings = (earnings || []).reduce((sum, e) => sum + e.amount, 0);
+  const availableEarnings = (earnings || []).filter(e => e.status === 'pending').reduce((sum, e) => sum + e.amount, 0);
 
   return (
     <SafeAreaView style={styles.container}>
