@@ -8,20 +8,46 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
-import { User, Settings, Camera, Instagram, Globe, LogOut, ChevronRight, Star } from 'lucide-react-native';
+import { 
+  ArrowLeft, 
+  Camera, 
+  Star, 
+  MapPin, 
+  ChevronRight, 
+  MessageSquare, 
+  Palette,
+  LogOut,
+  Edit,
+} from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerProfileScreen() {
   const { user, photographerProfile, logout } = useAuth();
 
-  const getImageUrl = (path?: string) => {
+  const getImageUrl = (path?: string | null) => {
     if (!path) return null;
     if (path.startsWith('http')) return path;
     return `${API_URL}${path}`;
   };
+
+  const profileImageUrl = getImageUrl(
+    photographerProfile?.profileImageUrl || photographerProfile?.profilePicture || user?.profileImageUrl
+  );
+
+  const coverImageUrl = getImageUrl(
+    photographerProfile?.portfolioImages?.[0] || photographerProfile?.profileImageUrl
+  );
+
+  const portfolioImages = photographerProfile?.portfolioImages || [];
+  const rating = photographerProfile?.rating ? parseFloat(photographerProfile.rating.toString()) : null;
+  const reviewCount = photographerProfile?.reviewCount || 0;
 
   const handleLogout = () => {
     Alert.alert(
@@ -43,94 +69,153 @@ export default function PhotographerProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
-      </View>
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileCard}>
-          {photographerProfile?.profilePicture || user?.profileImageUrl ? (
-            <Image
-              source={{ uri: getImageUrl(photographerProfile?.profilePicture || user?.profileImageUrl) }}
-              style={styles.avatar}
+        {/* Cover Photo with Profile */}
+        <View style={styles.coverSection}>
+          {coverImageUrl ? (
+            <Image 
+              source={{ uri: coverImageUrl }} 
+              style={styles.coverImage}
+              blurRadius={2}
             />
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Camera size={40} color="#6b7280" />
-            </View>
+            <View style={styles.coverPlaceholder} />
           )}
-          <Text style={styles.name}>{user?.fullName || 'Photographer'}</Text>
-          <Text style={styles.city}>{photographerProfile?.city}</Text>
+          
+          {/* Overlay Gradient */}
+          <View style={styles.coverOverlay} />
 
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>£{photographerProfile?.hourlyRate}</Text>
-              <Text style={styles.statLabel}>/hour</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.stat}>
-              <View style={styles.ratingRow}>
-                <Star size={16} color="#fbbf24" fill="#fbbf24" />
-                <Text style={styles.statValue}>
-                  {photographerProfile?.rating?.toFixed(1) || 'New'}
-                </Text>
+          {/* Back Button */}
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={20} color="#fff" />
+          </TouchableOpacity>
+
+          {/* Edit Button */}
+          <TouchableOpacity style={styles.editButton}>
+            <Edit size={14} color="#fff" />
+            <Text style={styles.editButtonText}>Edit</Text>
+          </TouchableOpacity>
+
+          {/* Profile Picture Overlay */}
+          <View style={styles.profilePictureContainer}>
+            {profileImageUrl ? (
+              <Image source={{ uri: profileImageUrl }} style={styles.profilePicture} />
+            ) : (
+              <View style={styles.profilePicturePlaceholder}>
+                <Camera size={40} color="#6b7280" />
               </View>
-              <Text style={styles.statLabel}>
-                {photographerProfile?.reviewCount || 0} reviews
-              </Text>
-            </View>
+            )}
+            <TouchableOpacity style={styles.cameraButton}>
+              <Camera size={14} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          {/* Rating Badge */}
+          <View style={styles.ratingBadge}>
+            <Star size={12} color="#fbbf24" fill="#fbbf24" />
+            <Text style={styles.ratingBadgeText}>
+              {rating ? rating.toFixed(1) : 'New'}
+            </Text>
+            {reviewCount > 0 && (
+              <Text style={styles.ratingBadgeCount}>({reviewCount})</Text>
+            )}
           </View>
         </View>
 
-        {photographerProfile?.bio && (
-          <View style={styles.bioCard}>
-            <Text style={styles.bioTitle}>About</Text>
-            <Text style={styles.bioText}>{photographerProfile.bio}</Text>
+        {/* Profile Info */}
+        <View style={styles.profileInfo}>
+          <Text style={styles.profileName}>{user?.fullName || 'Photographer'}</Text>
+          <View style={styles.locationRow}>
+            <MapPin size={14} color="#9ca3af" />
+            <Text style={styles.locationText}>
+              @{photographerProfile?.city || photographerProfile?.location || 'No location set'}
+            </Text>
+          </View>
+          {photographerProfile?.bio && (
+            <Text style={styles.bio}>{photographerProfile.bio}</Text>
+          )}
+        </View>
+
+        {/* Portfolio Section */}
+        {portfolioImages.length > 0 && (
+          <View style={styles.portfolioSection}>
+            <Text style={styles.sectionTitle}>Portfolio</Text>
+            <View style={styles.portfolioGrid}>
+              {portfolioImages.slice(0, 9).map((imageUrl: string, index: number) => (
+                <TouchableOpacity key={index} style={styles.portfolioItem}>
+                  <Image 
+                    source={{ uri: getImageUrl(imageUrl)! }} 
+                    style={styles.portfolioImage}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         )}
 
+        {/* Menu Items */}
         <View style={styles.menuSection}>
-          {photographerProfile?.instagramUrl && (
-            <View style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <Instagram size={20} color="#e1306c" />
-                <Text style={styles.menuItemText}>Instagram</Text>
-              </View>
-              <Text style={styles.menuItemValue} numberOfLines={1}>
-                {photographerProfile.instagramUrl.replace('https://instagram.com/', '@')}
-              </Text>
-            </View>
-          )}
-
-          {photographerProfile?.websiteUrl && (
-            <View style={styles.menuItem}>
-              <View style={styles.menuItemLeft}>
-                <Globe size={20} color="#6366f1" />
-                <Text style={styles.menuItemText}>Website</Text>
-              </View>
-              <Text style={styles.menuItemValue} numberOfLines={1}>
-                {photographerProfile.websiteUrl.replace('https://', '')}
-              </Text>
-            </View>
-          )}
-
-          <TouchableOpacity style={styles.menuItem} testID="button-settings">
+          {/* Customer Reviews */}
+          <TouchableOpacity style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Settings size={20} color="#9ca3af" />
-              <Text style={styles.menuItemText}>Settings</Text>
+              <View style={[styles.menuIcon, { backgroundColor: 'rgba(37,99,235,0.2)' }]}>
+                <MessageSquare size={20} color={PRIMARY_COLOR} />
+              </View>
+              <View>
+                <Text style={styles.menuItemTitle}>Customer Reviews</Text>
+                <View style={styles.menuItemSubtitle}>
+                  <Star size={12} color="#fbbf24" fill="#fbbf24" />
+                  <Text style={styles.menuItemSubtitleText}>
+                    {rating ? `${rating.toFixed(1)} (${reviewCount})` : 'No reviews yet'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <ChevronRight size={20} color="#6b7280" />
+          </TouchableOpacity>
+
+          {/* Photo Editing Service */}
+          <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: 'rgba(168,85,247,0.2)' }]}>
+                <Palette size={20} color="#a855f7" />
+              </View>
+              <View>
+                <Text style={styles.menuItemTitle}>Photo Editing Service</Text>
+                <View style={styles.menuItemSubtitle}>
+                  {photographerProfile?.editingEnabled ? (
+                    <>
+                      <View style={styles.activeBadge}>
+                        <Text style={styles.activeBadgeText}>Active</Text>
+                      </View>
+                      <Text style={styles.menuItemSubtitleText}>
+                        £{photographerProfile?.editingRatePerPhoto}/photo
+                      </Text>
+                    </>
+                  ) : (
+                    <Text style={styles.menuItemSubtitleText}>Not enabled</Text>
+                  )}
+                </View>
+              </View>
             </View>
             <ChevronRight size={20} color="#6b7280" />
           </TouchableOpacity>
         </View>
 
+        {/* Logout Button */}
         <TouchableOpacity
           style={styles.logoutButton}
           onPress={handleLogout}
           testID="button-logout"
         >
-          <LogOut size={20} color="#ef4444" />
-          <Text style={styles.logoutText}>Log out</Text>
+          <LogOut size={18} color="#ef4444" />
+          <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -138,75 +223,176 @@ export default function PhotographerProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
-  header: { padding: 20, paddingBottom: 0 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
-  content: { flex: 1, padding: 20 },
-  profileCard: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+  content: { flex: 1 },
+
+  coverSection: {
+    height: 200,
+    position: 'relative',
   },
-  avatar: { width: 100, height: 100, borderRadius: 50, marginBottom: 16 },
-  avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  coverImage: {
+    width: '100%',
+    height: '100%',
+  },
+  coverPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#1a1a1a',
+  },
+  coverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  backButton: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
-  name: { fontSize: 24, fontWeight: '600', color: '#fff', marginBottom: 4 },
-  city: { fontSize: 16, color: '#9ca3af', marginBottom: 20 },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  stat: { alignItems: 'center', paddingHorizontal: 24 },
-  statDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.1)' },
-  statValue: { fontSize: 20, fontWeight: '600', color: '#fff' },
-  statLabel: { fontSize: 12, color: '#9ca3af', marginTop: 4 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  bioCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+  editButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  bioTitle: { fontSize: 14, fontWeight: '600', color: '#9ca3af', marginBottom: 8 },
-  bioText: { fontSize: 14, color: '#d1d5db', lineHeight: 22 },
-  menuSection: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+  editButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
+  
+  profilePictureContainer: {
+    position: 'absolute',
+    bottom: -40,
+    left: 20,
+  },
+  profilePicture: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: '#0a0a0a',
+  },
+  profilePicturePlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#1a1a1a',
+    borderWidth: 3,
+    borderColor: '#0a0a0a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: PRIMARY_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0a0a0a',
+  },
+  ratingBadge: {
+    position: 'absolute',
+    bottom: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  ratingBadgeText: { fontSize: 14, fontWeight: '700', color: '#fbbf24' },
+  ratingBadgeCount: { fontSize: 12, color: '#9ca3af' },
+
+  profileInfo: {
+    padding: 20,
+    paddingTop: 52,
+  },
+  profileName: { fontSize: 24, fontWeight: '700', color: '#fff' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  locationText: { fontSize: 14, color: '#9ca3af' },
+  bio: { fontSize: 14, color: '#d1d5db', lineHeight: 22, marginTop: 12 },
+
+  portfolioSection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 12 },
+  portfolioGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  portfolioItem: {
+    width: (SCREEN_WIDTH - 48) / 3,
+    aspectRatio: 1,
+    borderRadius: 8,
     overflow: 'hidden',
+  },
+  portfolioImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  menuSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
     padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   menuItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  menuItemText: { fontSize: 16, color: '#fff' },
-  menuItemValue: { fontSize: 14, color: '#9ca3af', maxWidth: 150 },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuItemTitle: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  menuItemSubtitle: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  menuItemSubtitleText: { fontSize: 13, color: '#9ca3af' },
+  activeBadge: {
+    backgroundColor: 'rgba(34,197,94,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginRight: 4,
+  },
+  activeBadgeText: { fontSize: 11, fontWeight: '600', color: '#22c55e' },
+
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    padding: 16,
+    marginHorizontal: 20,
+    paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ef4444',
-    marginBottom: 40,
+    borderColor: 'rgba(239,68,68,0.3)',
+    backgroundColor: 'rgba(239,68,68,0.1)',
   },
-  logoutText: { fontSize: 16, fontWeight: '600', color: '#ef4444' },
+  logoutText: { fontSize: 15, fontWeight: '600', color: '#ef4444' },
 });

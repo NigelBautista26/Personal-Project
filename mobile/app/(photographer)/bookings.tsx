@@ -22,12 +22,13 @@ import {
   Upload,
   Check,
   X,
-  Image as ImageIcon,
   DollarSign,
+  MessageSquare,
+  Palette,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { snapnowApi } from '../../src/api/snapnowApi';
-import { API_URL } from '../../src/api/client'; // For image URLs
+import { API_URL } from '../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -52,13 +53,33 @@ export default function PhotographerBookingsScreen() {
 
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
 
+  const getSessionEndTime = (booking: any) => {
+    const sessionDate = new Date(booking.scheduledDate);
+    const timeParts = (booking.scheduledTime || '12:00').replace(/[AP]M/i, '').trim().split(':');
+    const hours = parseInt(timeParts[0]) || 12;
+    const minutes = parseInt(timeParts[1]) || 0;
+    const isPM = (booking.scheduledTime || '').toLowerCase().includes('pm');
+    sessionDate.setHours(isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours, minutes);
+    sessionDate.setHours(sessionDate.getHours() + (booking.duration || 1));
+    return sessionDate;
+  };
+
+  const now = new Date();
   const pendingBookings = bookingsArray.filter(b => b.status === 'pending');
-  const upcomingBookings = bookingsArray.filter(b => 
-    b.status === 'confirmed' && new Date(b.scheduledDate) >= new Date()
-  );
-  const readyForPhotos = bookingsArray.filter(b => b.status === 'photos_pending');
+  const upcomingBookings = bookingsArray.filter(b => {
+    if (b.status !== 'confirmed') return false;
+    const sessionEnd = getSessionEndTime(b);
+    return sessionEnd >= now;
+  });
+  const readyForPhotos = bookingsArray.filter(b => {
+    if (b.status !== 'confirmed') return false;
+    const sessionEnd = getSessionEndTime(b);
+    return sessionEnd < now;
+  });
   const completedBookings = bookingsArray.filter(b => b.status === 'completed');
-  const declinedBookings = bookingsArray.filter(b => b.status === 'declined' || b.status === 'cancelled');
+  const declinedBookings = bookingsArray.filter(b => 
+    (b.status === 'declined' || b.status === 'cancelled') && !b.dismissedAt
+  );
 
   const updateBookingMutation = useMutation({
     mutationFn: ({ bookingId, status }: { bookingId: number; status: string }) => 
@@ -70,7 +91,7 @@ export default function PhotographerBookingsScreen() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const getImageUrl = (url?: string | null) => {
@@ -84,28 +105,39 @@ export default function PhotographerBookingsScreen() {
     title: string,
     count: number,
     sectionKey?: string,
-    color?: string
+    color?: string,
+    description?: string
   ) => (
-    <TouchableOpacity
-      style={styles.sectionHeader}
-      onPress={() => sectionKey && toggleSection(sectionKey)}
-      disabled={!sectionKey}
-    >
-      <View style={styles.sectionTitleRow}>
-        {icon}
-        <Text style={[styles.sectionTitle, color ? { color } : null]}>
-          {title} ({count})
-        </Text>
-      </View>
-      {sectionKey && (
-        collapsedSections[sectionKey] ? 
-          <ChevronRight size={20} color="#9ca3af" /> : 
-          <ChevronDown size={20} color="#9ca3af" />
-      )}
-    </TouchableOpacity>
+    <View style={styles.sectionHeaderContainer}>
+      <TouchableOpacity
+        style={styles.sectionHeader}
+        onPress={() => sectionKey && toggleSection(sectionKey)}
+        disabled={!sectionKey}
+      >
+        <View style={styles.sectionTitleRow}>
+          {icon}
+          <Text style={[styles.sectionTitle, color ? { color } : null]}>
+            {title} ({count})
+          </Text>
+        </View>
+        {sectionKey && (
+          collapsedSections[sectionKey] ? 
+            <ChevronRight size={20} color="#9ca3af" /> : 
+            <ChevronDown size={20} color="#9ca3af" />
+        )}
+      </TouchableOpacity>
+      {description && <Text style={styles.sectionDescription}>{description}</Text>}
+    </View>
   );
 
-  const renderBookingCard = (booking: any, showActions: boolean = false, showUploadButton: boolean = false) => (
+  const renderBookingCard = (
+    booking: any, 
+    options: { 
+      showActions?: boolean; 
+      showUploadButton?: boolean;
+      showEarnings?: boolean;
+    } = {}
+  ) => (
     <TouchableOpacity
       key={booking.id}
       style={styles.bookingCard}
@@ -124,22 +156,25 @@ export default function PhotographerBookingsScreen() {
               <User size={20} color="#9ca3af" />
             )}
           </View>
-          <View>
+          <View style={styles.customerDetails}>
             <Text style={styles.customerName}>
               {booking.customer?.fullName || 'Customer'}
             </Text>
             <Text style={styles.bookingMeta}>
-              {formatDate(booking.scheduledDate)} • {booking.location}
+              {formatDate(booking.scheduledDate)}
             </Text>
+            <Text style={styles.bookingLocation}>{booking.location}</Text>
           </View>
         </View>
-        <View style={styles.earningsContainer}>
-          <Text style={styles.earnings}>£{booking.photographerEarnings}</Text>
-          <Text style={styles.earningsLabel}>earnings</Text>
-        </View>
+        {options.showEarnings !== false && (
+          <View style={styles.earningsContainer}>
+            <Text style={styles.earnings}>£{parseFloat(booking.photographerEarnings || 0).toFixed(2)}</Text>
+            <Text style={styles.earningsLabel}>earnings</Text>
+          </View>
+        )}
       </View>
 
-      {showUploadButton && (
+      {options.showUploadButton && (
         <TouchableOpacity 
           style={styles.uploadButton}
           onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
@@ -149,7 +184,7 @@ export default function PhotographerBookingsScreen() {
         </TouchableOpacity>
       )}
 
-      {showActions && (
+      {options.showActions && (
         <View style={styles.actionButtons}>
           <TouchableOpacity 
             style={styles.declineButton}
@@ -198,7 +233,7 @@ export default function PhotographerBookingsScreen() {
           )}
           {upcomingBookings.length === 0 ? (
             <View style={styles.emptyCard}>
-              <Calendar size={32} color="#6b7280" />
+              <Calendar size={40} color="#6b7280" />
               <Text style={styles.emptyText}>No upcoming sessions</Text>
             </View>
           ) : (
@@ -216,10 +251,7 @@ export default function PhotographerBookingsScreen() {
               undefined,
               '#f59e0b'
             )}
-            <Text style={styles.sectionDescription}>
-              These customers are waiting for your response
-            </Text>
-            {pendingBookings.map(booking => renderBookingCard(booking, true))}
+            {pendingBookings.map(booking => renderBookingCard(booking, { showActions: true }))}
           </View>
         )}
 
@@ -231,12 +263,10 @@ export default function PhotographerBookingsScreen() {
               'Ready for Photos',
               readyForPhotos.length,
               undefined,
-              '#f97316'
+              '#f97316',
+              'These sessions are complete. Upload photos to finalize and get paid.'
             )}
-            <Text style={styles.sectionDescription}>
-              These sessions are complete. Upload photos to finalize and get paid.
-            </Text>
-            {readyForPhotos.map(booking => renderBookingCard(booking, false, true))}
+            {readyForPhotos.map(booking => renderBookingCard(booking, { showUploadButton: true }))}
           </View>
         )}
 
@@ -272,7 +302,7 @@ export default function PhotographerBookingsScreen() {
           </View>
         )}
 
-        {/* Empty State - No bookings at all */}
+        {/* Empty State */}
         {bookingsArray.length === 0 && (
           <View style={styles.emptyStateContainer}>
             <Calendar size={64} color="#6b7280" />
@@ -294,20 +324,20 @@ const styles = StyleSheet.create({
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { flex: 1 },
   
-  header: { padding: 20, paddingBottom: 8 },
-  title: { fontSize: 28, fontWeight: '700', color: '#fff' },
+  header: { padding: 20, paddingTop: 12, paddingBottom: 8 },
+  title: { fontSize: 24, fontWeight: '700', color: '#fff' },
   subtitle: { fontSize: 14, color: '#9ca3af', marginTop: 4 },
 
   section: { paddingHorizontal: 20, marginBottom: 24 },
+  sectionHeaderContainer: { marginBottom: 12 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
   },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginLeft: 8 },
-  sectionDescription: { fontSize: 13, color: '#9ca3af', marginBottom: 12, marginTop: -4 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  sectionDescription: { fontSize: 13, color: '#9ca3af', marginTop: 4 },
 
   emptyCard: {
     alignItems: 'center',
@@ -332,20 +362,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  customerInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  customerInfo: { flexDirection: 'row', alignItems: 'flex-start', flex: 1 },
   customerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     overflow: 'hidden',
   },
-  customerAvatarImage: { width: 44, height: 44, borderRadius: 22 },
+  customerAvatarImage: { width: 48, height: 48, borderRadius: 24 },
+  customerDetails: { flex: 1 },
   customerName: { fontSize: 16, fontWeight: '600', color: '#fff' },
-  bookingMeta: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  bookingMeta: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  bookingLocation: { fontSize: 13, color: '#9ca3af', marginTop: 1 },
   earningsContainer: { alignItems: 'flex-end' },
   earnings: { fontSize: 18, fontWeight: '700', color: '#22c55e' },
   earningsLabel: { fontSize: 11, color: '#9ca3af' },
