@@ -737,57 +737,63 @@ export default function CustomerBookingsScreen() {
             })()}
           </View>
           
-          {selectedBookingPhotos?.message && (
-            <Text style={styles.modalMessage}>{selectedBookingPhotos.message}</Text>
-          )}
-          
-          {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
-            <>
-              <View style={styles.mainPhotoContainer}>
-                <Image 
-                  source={{ uri: getImageUrl(selectedBookingPhotos.photos[viewingPhotoIndex]) }} 
-                  style={styles.mainPhoto}
-                  resizeMode="contain"
-                />
-                {selectedBookingPhotos.photos.length > 1 && (
-                  <>
-                    <TouchableOpacity 
-                      style={[styles.navArrow, styles.navArrowLeft]}
-                      onPress={() => setViewingPhotoIndex(i => i > 0 ? i - 1 : selectedBookingPhotos.photos.length - 1)}
-                    >
-                      <ChevronLeft size={24} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.navArrow, styles.navArrowRight]}
-                      onPress={() => setViewingPhotoIndex(i => i < selectedBookingPhotos.photos.length - 1 ? i + 1 : 0)}
-                    >
-                      <ChevronRight size={24} color="#fff" />
-                    </TouchableOpacity>
-                  </>
-                )}
-                <View style={styles.photoCounter}>
-                  <Text style={styles.photoCounterText}>
-                    {viewingPhotoIndex + 1} / {selectedBookingPhotos.photos.length}
-                  </Text>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
+            {selectedBookingPhotos?.message && (
+              <Text style={styles.modalMessage}>{selectedBookingPhotos.message}</Text>
+            )}
+            
+            {selectedBookingPhotos && selectedBookingPhotos.photos.length > 0 && (
+              <>
+                <View style={styles.mainPhotoWrapper}>
+                  <View style={styles.mainPhotoInner}>
+                    <Image 
+                      source={{ uri: getImageUrl(selectedBookingPhotos.photos[viewingPhotoIndex]) }} 
+                      style={styles.mainPhoto}
+                      resizeMode="contain"
+                    />
+                    {selectedBookingPhotos.photos.length > 1 && (
+                      <>
+                        <TouchableOpacity 
+                          style={[styles.navArrow, styles.navArrowLeft]}
+                          onPress={() => setViewingPhotoIndex(i => i > 0 ? i - 1 : selectedBookingPhotos.photos.length - 1)}
+                        >
+                          <ChevronLeft size={24} color="#fff" />
+                        </TouchableOpacity>
+                        <TouchableOpacity 
+                          style={[styles.navArrow, styles.navArrowRight]}
+                          onPress={() => setViewingPhotoIndex(i => i < selectedBookingPhotos.photos.length - 1 ? i + 1 : 0)}
+                        >
+                          <ChevronRight size={24} color="#fff" />
+                        </TouchableOpacity>
+                      </>
+                    )}
+                    <View style={styles.photoCounter}>
+                      <Text style={styles.photoCounterText}>
+                        {viewingPhotoIndex + 1} / {selectedBookingPhotos.photos.length}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-              
-              <ScrollView horizontal style={styles.thumbnailContainer} showsHorizontalScrollIndicator={false}>
-                {selectedBookingPhotos.photos.map((photo, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    onPress={() => setViewingPhotoIndex(idx)}
-                    style={[
-                      styles.thumbnail,
-                      idx === viewingPhotoIndex && styles.thumbnailActive
-                    ]}
-                  >
-                    <Image source={{ uri: getImageUrl(photo) }} style={styles.thumbnailImage} />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
-          )}
+                
+                <View style={styles.thumbnailSection}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+                    {selectedBookingPhotos.photos.map((photo, idx) => (
+                      <TouchableOpacity
+                        key={idx}
+                        onPress={() => setViewingPhotoIndex(idx)}
+                        style={[
+                          styles.thumbnail,
+                          idx === viewingPhotoIndex && styles.thumbnailActive
+                        ]}
+                      >
+                        <Image source={{ uri: getImageUrl(photo) }} style={styles.thumbnailImage} />
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </>
+            )}
+          </ScrollView>
         </SafeAreaView>
       </Modal>
 
@@ -1477,10 +1483,26 @@ const styles = StyleSheet.create({
   modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   modalCloseButton: { padding: 8 },
-  modalMessage: { color: '#9ca3af', fontSize: 14, paddingHorizontal: 16, paddingTop: 12 },
+  modalMessage: { color: '#9ca3af', fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
   
-  mainPhotoContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  mainPhotoWrapper: { 
+    paddingHorizontal: 16, 
+    paddingTop: 16,
+  },
+  mainPhotoInner: {
+    position: 'relative',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#18181b',
+  },
+  mainPhotoContainer: { justifyContent: 'center', alignItems: 'center', position: 'relative' },
   mainPhoto: { width: SCREEN_WIDTH - 32, height: SCREEN_WIDTH - 32, borderRadius: 12 },
+  thumbnailSection: {
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    marginTop: 16,
+  },
   navArrow: {
     position: 'absolute',
     width: 40,
