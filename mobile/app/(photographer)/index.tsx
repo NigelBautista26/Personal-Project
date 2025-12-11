@@ -271,6 +271,25 @@ export default function PhotographerDashboardScreen() {
                 showsUserLocation
                 showsMyLocationButton={false}
               >
+                {/* Photographer's registered location marker */}
+                {photographerProfile?.latitude && photographerProfile?.longitude && (
+                  <Marker
+                    coordinate={{
+                      latitude: Number(photographerProfile.latitude),
+                      longitude: Number(photographerProfile.longitude),
+                    }}
+                    title="Your Location"
+                    description={photographerProfile?.city || 'Registered location'}
+                  >
+                    <View style={styles.myLocationMarker}>
+                      <View style={styles.myLocationMarkerInner}>
+                        <MapPin size={16} color="#fff" />
+                      </View>
+                    </View>
+                  </Marker>
+                )}
+
+                {/* Upcoming booking markers */}
                 {upcomingBookingsWithLocation.map(booking => (
                   <Marker
                     key={booking.id}
@@ -302,6 +321,10 @@ export default function PhotographerDashboardScreen() {
 
               {/* Legend */}
               <View style={styles.mapLegend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: '#2563eb' }]} />
+                  <Text style={styles.legendText}>You</Text>
+                </View>
                 <View style={styles.legendItem}>
                   <View style={[styles.legendDot, { backgroundColor: '#22c55e' }]} />
                   <Text style={styles.legendText}>Today</Text>
@@ -517,6 +540,25 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   legendDot: { width: 12, height: 12, borderRadius: 6 },
   legendText: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
+  myLocationMarker: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myLocationMarkerInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#2563eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   bookingMarker: {
     width: 24,
     height: 24,
