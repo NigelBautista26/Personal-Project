@@ -168,14 +168,26 @@ export default function CustomerMapScreen() {
   };
 
   const filteredPhotographers = useMemo(() => {
-    if (!photographers) return [];
-    return photographers.filter((p) => {
+    if (!photographers) {
+      console.log('[DEBUG] No photographers data');
+      return [];
+    }
+    console.log('[DEBUG] Total photographers:', photographers.length);
+    const filtered = photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
-      if (isNaN(pLat) || isNaN(pLng)) return false;
+      if (isNaN(pLat) || isNaN(pLng)) {
+        console.log('[DEBUG] Invalid coords for', p.id, p.latitude, p.longitude);
+        return false;
+      }
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
       return distance <= 50;
     });
+    console.log('[DEBUG] Filtered photographers:', filtered.length, 'for city:', selectedCity.name);
+    if (filtered.length > 0) {
+      console.log('[DEBUG] First photographer:', filtered[0].id, filtered[0].latitude, filtered[0].longitude);
+    }
+    return filtered;
   }, [photographers, selectedCity]);
 
   const photoSpots = useMemo(() => {
@@ -232,47 +244,34 @@ export default function CustomerMapScreen() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        provider={PROVIDER_GOOGLE}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={region}
         mapType={mapType}
-        customMapStyle={mapType === 'standard' ? darkMapStyle : undefined}
+        customMapStyle={Platform.OS === 'android' && mapType === 'standard' ? darkMapStyle : undefined}
         showsUserLocation={true}
         showsMyLocationButton={false}
+        userInterfaceStyle="dark"
         testID="map-view"
       >
         {/* Photographer Markers with offset for overlapping */}
         {filteredPhotographers.map((photographer, index) => {
           const coords = getOffsetCoordinates(filteredPhotographers, index);
-          if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
+          if (!coords.lat || !coords.lng || isNaN(coords.lat) || isNaN(coords.lng)) {
+            return null;
+          }
           return (
             <Marker
-              key={photographer.id}
+              key={`photographer-${photographer.id}`}
               coordinate={{
                 latitude: coords.lat,
                 longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-            >
-              <View style={styles.markerContainer}>
-                <View style={[
-                  styles.markerBubble,
-                  photographer.sessionState === 'available' && styles.markerAvailable
-                ]}>
-                  <Image
-                    source={{ uri: getImageUrl(photographer) }}
-                    style={styles.markerImage}
-                  />
-                  <View style={styles.markerPrice}>
-                    <Text style={styles.markerPriceText}>£{photographer.hourlyRate}</Text>
-                  </View>
-                </View>
-                <View style={[
-                  styles.markerArrow,
-                  photographer.sessionState === 'available' && styles.markerArrowAvailable
-                ]} />
-              </View>
-            </Marker>
+              title={photographer.fullName || 'Photographer'}
+              description={`£${photographer.hourlyRate}/hr`}
+              pinColor={photographer.sessionState === 'available' ? '#22c55e' : '#3b82f6'}
+            />
           );
         })}
 
