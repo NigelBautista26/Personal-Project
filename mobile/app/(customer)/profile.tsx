@@ -13,6 +13,7 @@ import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
+const BG_COLOR = '#0a0a0f';
 
 export default function CustomerProfileScreen() {
   const { user, logout } = useAuth();
@@ -39,17 +40,10 @@ export default function CustomerProfileScreen() {
     <View style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header with simulated gradient - layered views */}
-          <View style={styles.headerContainer}>
-            {/* Dark blue base */}
-            <View style={styles.headerBase} />
-            {/* Lighter overlay at top */}
-            <View style={styles.headerTopOverlay} />
-            {/* Fade to background at bottom */}
-            <View style={styles.headerBottomFade} />
-            
-            {/* Avatar positioned at bottom of header */}
-            <View style={styles.avatarContainer}>
+          {/* Simple clean header */}
+          <View style={styles.headerSection}>
+            {/* Avatar and user info */}
+            <View style={styles.profileSection}>
               {user?.profileImageUrl ? (
                 <Image
                   source={{ uri: getImageUrl(user.profileImageUrl) }}
@@ -57,7 +51,7 @@ export default function CustomerProfileScreen() {
                 />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <User size={48} color="#6b7280" />
+                  <User size={40} color="#6b7280" />
                 </View>
               )}
               <Text style={styles.name} testID="text-username">{user?.fullName || 'Guest'}</Text>
@@ -65,7 +59,7 @@ export default function CustomerProfileScreen() {
             </View>
           </View>
 
-          {/* Menu items - no card wrapper, directly on background */}
+          {/* Menu items */}
           <View style={styles.menuContainer}>
             {menuItems.map((item, index) => (
               <TouchableOpacity 
@@ -94,7 +88,7 @@ export default function CustomerProfileScreen() {
             ))}
           </View>
 
-          {/* SnapNow Member Card - subtle styling */}
+          {/* SnapNow Member Card */}
           <View style={styles.memberCardContainer}>
             <View style={styles.memberCard}>
               <View style={styles.memberIcon}>
@@ -118,73 +112,42 @@ export default function CustomerProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d0f14' },
+  container: { flex: 1, backgroundColor: BG_COLOR },
   safeArea: { flex: 1 },
   content: { flex: 1 },
   
-  headerContainer: {
-    height: 160,
-    position: 'relative',
-    overflow: 'hidden',
+  headerSection: {
+    paddingTop: 20,
+    paddingBottom: 24,
   },
-  headerBase: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 160,
-    backgroundColor: '#111827',
-  },
-  headerTopOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    backgroundColor: 'rgba(30, 58, 138, 0.3)',
-  },
-  headerBottomFade: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-    backgroundColor: '#0d0f14',
-    opacity: 0.9,
-  },
-  avatarContainer: {
-    position: 'absolute',
-    bottom: -48,
-    left: 0,
-    right: 0,
+  profileSection: {
     alignItems: 'center',
-    zIndex: 10,
   },
   avatar: { 
-    width: 88, 
-    height: 88, 
-    borderRadius: 44, 
-    marginBottom: 12,
+    width: 80, 
+    height: 80, 
+    borderRadius: 40, 
+    marginBottom: 16,
     borderWidth: 3,
-    borderColor: '#0d0f14',
-    backgroundColor: '#1f2937',
+    borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#1a1a1f',
   },
   avatarPlaceholder: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    backgroundColor: '#1f2937',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#1a1a1f',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
     borderWidth: 3,
-    borderColor: '#0d0f14',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 2 },
+  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4 },
   email: { fontSize: 14, color: '#6b7280' },
   
   menuContainer: {
-    marginTop: 72,
+    marginTop: 16,
     paddingHorizontal: 20,
   },
   menuItem: {
@@ -207,7 +170,7 @@ const styles = StyleSheet.create({
   
   memberCardContainer: {
     paddingHorizontal: 20,
-    marginTop: 28,
+    marginTop: 24,
   },
   memberCard: {
     flexDirection: 'row',
@@ -215,7 +178,6 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: 'rgba(37,99,235,0.08)',
     borderRadius: 14,
-    borderWidth: 0,
   },
   memberIcon: {
     width: 44,
