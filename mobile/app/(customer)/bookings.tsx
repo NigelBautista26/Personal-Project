@@ -51,10 +51,20 @@ interface EditingServiceInfo {
   description: string | null;
 }
 
+interface PhotoDelivery {
+  id: string;
+  bookingId: string;
+  photographerId: string;
+  photos: string[];
+  message?: string;
+  deliveredAt: string;
+  downloadedAt?: string;
+}
+
 export default function CustomerBookingsScreen() {
   const queryClient = useQueryClient();
   
-  const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<{photos: string[], message?: string, booking?: any} | null>(null);
+  const [selectedBookingPhotos, setSelectedBookingPhotos] = useState<(PhotoDelivery & { booking?: any }) | null>(null);
   const [viewingPhotoIndex, setViewingPhotoIndex] = useState(0);
   const [reviewingBookingId, setReviewingBookingId] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
@@ -263,9 +273,9 @@ export default function CustomerBookingsScreen() {
 
   const handleViewPhotos = async (bookingId: string, booking: any) => {
     try {
-      const data = await apiClient<{photos: string[], message?: string} | null>(`/api/bookings/${bookingId}/photos`);
+      const data = await apiClient<PhotoDelivery | null>(`/api/bookings/${bookingId}/photos`);
       if (data && data.photos && data.photos.length > 0) {
-        setSelectedBookingPhotos({ photos: data.photos, message: data.message, booking });
+        setSelectedBookingPhotos({ ...data, booking });
         setViewingPhotoIndex(0);
       } else {
         Alert.alert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.');
@@ -626,8 +636,10 @@ export default function CustomerBookingsScreen() {
             
             {/* Request Editing button - show if photographer offers editing and no existing request */}
             {selectedBookingPhotos?.booking && (() => {
-              const service = editingServicesMap[(selectedBookingPhotos.booking as any).photographerId];
-              const existingRequest = editingRequestsMap[selectedBookingPhotos.booking.id];
+              const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
+              const bookingId = String(selectedBookingPhotos.booking.id);
+              const service = editingServicesMap[photographerId];
+              const existingRequest = editingRequestsMap[bookingId];
               if (service?.isEnabled && !existingRequest) {
                 const estimatedCost = service.pricingModel === 'flat' 
                   ? parseFloat(service.flatRate || '0')
