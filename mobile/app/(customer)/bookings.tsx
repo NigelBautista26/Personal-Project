@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { Calendar, MapPin, Clock, Camera, X, ChevronRight } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, ChevronRight, Star, Eye } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
 
@@ -25,10 +25,34 @@ export default function CustomerBookingsScreen() {
 
   const allBookings = Array.isArray(bookings) ? bookings : [];
   
-  const upcomingBookings = allBookings.filter(b => b.status === 'confirmed');
-  const awaitingPhotos = allBookings.filter(b => b.status === 'photos_pending' || b.status === 'in_progress');
+  const hasSessionEnded = (booking: Booking) => {
+    const sessionDate = new Date(booking.scheduledDate);
+    const scheduledTime = booking.scheduledTime || '';
+    const timeMatch = scheduledTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const isPM = timeMatch[3]?.toUpperCase() === 'PM';
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      sessionDate.setHours(hours, minutes, 0, 0);
+    }
+    const sessionEndTime = new Date(sessionDate.getTime() + (booking.duration || 1) * 60 * 60 * 1000);
+    return new Date() > sessionEndTime;
+  };
+
+  const upcomingBookings = allBookings.filter(b => 
+    b.status === 'pending' || (b.status === 'confirmed' && !hasSessionEnded(b))
+  );
+  const awaitingPhotos = allBookings.filter(b => 
+    (b.status === 'confirmed' && hasSessionEnded(b)) || 
+    b.status === 'photos_pending' || 
+    b.status === 'in_progress'
+  );
   const completedBookings = allBookings.filter(b => b.status === 'completed');
-  const expiredBookings = allBookings.filter(b => b.status === 'expired' || b.status === 'declined' || b.status === 'cancelled');
+  const expiredBookings = allBookings.filter(b => 
+    b.status === 'expired' || b.status === 'declined' || b.status === 'cancelled'
+  );
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -54,7 +78,7 @@ export default function CustomerBookingsScreen() {
            booking.photographer?.profilePicture;
   };
 
-  const renderBookingCard = (booking: Booking) => (
+  const renderUpcomingCard = (booking: Booking) => (
     <TouchableOpacity
       key={booking.id}
       style={styles.bookingCard}
@@ -63,19 +87,13 @@ export default function CustomerBookingsScreen() {
     >
       <Image
         source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
-        style={styles.photographerAvatar}
+        style={styles.avatar}
       />
       <View style={styles.bookingInfo}>
         <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
         <Text style={styles.bookingDetails}>
           {formatDate(booking.scheduledDate)} · {booking.location}
         </Text>
-        {(booking.status === 'photos_pending' || booking.status === 'in_progress') && (
-          <View style={styles.statusRow}>
-            <Clock size={12} color="#6b7280" />
-            <Text style={styles.statusText}>Your photographer is uploading your photos...</Text>
-          </View>
-        )}
       </View>
       <View style={styles.priceSection}>
         <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
@@ -84,30 +102,108 @@ export default function CustomerBookingsScreen() {
     </TouchableOpacity>
   );
 
-  const renderSection = (title: string, icon: React.ReactNode, bookingsList: Booking[], emptyText?: string) => {
-    if (bookingsList.length === 0 && !emptyText) return null;
+  const renderAwaitingPhotosCard = (booking: Booking) => (
+    <View key={booking.id} style={styles.awaitingCard}>
+      <View style={styles.progressBar} />
+      <View style={styles.cardPadding}>
+        <View style={styles.cardHeader}>
+          <Image
+            source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
+            style={[styles.avatar, styles.avatarRing]}
+          />
+          <View style={styles.bookingInfo}>
+            <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
+            <Text style={styles.bookingDetails}>
+              {formatDate(booking.scheduledDate)} - {booking.location}
+            </Text>
+          </View>
+          <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
+        </View>
+        
+        <View style={styles.photoPreviewGrid}>
+          {['#3b82f6', '#f59e0b', '#10b981', '#6366f1'].map((color, i) => (
+            <View key={i} style={[styles.photoPlaceholder, { backgroundColor: color + '40' }]} />
+          ))}
+        </View>
+        
+        <View style={styles.uploadingRow}>
+          <Clock size={14} color="#6b7280" />
+          <Text style={styles.uploadingText}>Your photographer is uploading your photos...</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderCompletedCard = (booking: Booking) => {
+    const hasReview = (booking as any).hasReview || (booking as any).reviewRating;
+    const reviewRating = (booking as any).reviewRating || 5;
     
     return (
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          {icon}
-          <Text style={styles.sectionTitle}>{title}</Text>
-        </View>
-        {bookingsList.length === 0 ? (
-          <View style={styles.emptySection}>
-            <Text style={styles.emptySectionText}>{emptyText}</Text>
-            {title === 'Upcoming Sessions' && (
-              <TouchableOpacity onPress={() => router.push('/(customer)/photographers')}>
-                <Text style={styles.findLink}>Find a photographer</Text>
-              </TouchableOpacity>
-            )}
+      <TouchableOpacity
+        key={booking.id}
+        style={styles.completedCard}
+        onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
+        testID={`card-completed-${booking.id}`}
+      >
+        <View style={styles.cardHeader}>
+          <Image
+            source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
+            style={styles.avatar}
+          />
+          <View style={styles.bookingInfo}>
+            <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
+            <Text style={styles.bookingDetails}>
+              {formatDate(booking.scheduledDate)} · {booking.location}
+            </Text>
           </View>
-        ) : (
-          bookingsList.map(renderBookingCard)
-        )}
-      </View>
+          <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
+        </View>
+        
+        <View style={styles.completedActions}>
+          <TouchableOpacity style={styles.viewPhotosButton}>
+            <Eye size={14} color={PRIMARY_COLOR} />
+            <Text style={styles.viewPhotosText}>View Photos</Text>
+          </TouchableOpacity>
+          
+          {hasReview ? (
+            <View style={styles.reviewedBadge}>
+              <Star size={12} color="#eab308" fill="#eab308" />
+              <Text style={styles.reviewedText}>Reviewed</Text>
+              <Text style={styles.reviewRating}>{reviewRating.toFixed(1)}</Text>
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.leaveReviewButton}>
+              <Text style={styles.leaveReviewText}>Leave Review</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </TouchableOpacity>
     );
   };
+
+  const renderExpiredCard = (booking: Booking) => (
+    <View key={booking.id} style={styles.expiredCard}>
+      <View style={styles.cardHeader}>
+        <Image
+          source={{ uri: getImageUrl(getPhotographerImage(booking)) }}
+          style={[styles.avatar, styles.avatarGray]}
+        />
+        <View style={styles.bookingInfo}>
+          <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
+          <Text style={styles.bookingDetails}>
+            {formatDate(booking.scheduledDate)} · {booking.location}
+          </Text>
+        </View>
+        <TouchableOpacity style={styles.dismissButton}>
+          <X size={16} color="#6b7280" />
+        </TouchableOpacity>
+      </View>
+      
+      <TouchableOpacity style={styles.bookAgainButton}>
+        <Text style={styles.bookAgainText}>Book Again</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -133,25 +229,51 @@ export default function CustomerBookingsScreen() {
           </View>
         ) : (
           <>
-            {renderSection(
-              'Upcoming Sessions',
-              <Calendar size={16} color="#fff" />,
-              upcomingBookings,
-              'No upcoming bookings'
+            {/* Upcoming Sessions */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Calendar size={16} color="#fff" />
+                <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
+              </View>
+              {upcomingBookings.length === 0 ? (
+                <View style={styles.emptySection}>
+                  <Calendar size={32} color="#6b7280" style={{ marginBottom: 8 }} />
+                  <Text style={styles.emptySectionText}>No upcoming bookings</Text>
+                  <TouchableOpacity onPress={() => router.push('/(customer)/photographers')}>
+                    <Text style={styles.findLink}>Find a photographer</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                upcomingBookings.map(renderUpcomingCard)
+              )}
+            </View>
+            
+            {/* Awaiting Photos */}
+            {awaitingPhotos.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.cameraIconWrapper}>
+                    <Camera size={16} color="#3b82f6" />
+                    <View style={styles.pulseDot} />
+                  </View>
+                  <Text style={styles.sectionTitle}>Awaiting Photos</Text>
+                </View>
+                {awaitingPhotos.map(renderAwaitingPhotosCard)}
+              </View>
             )}
             
-            {renderSection(
-              'Awaiting Photos',
-              <Camera size={16} color="#fff" />,
-              awaitingPhotos
+            {/* Completed Sessions */}
+            {completedBookings.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Camera size={16} color="#fff" />
+                  <Text style={styles.sectionTitle}>Completed Sessions</Text>
+                </View>
+                {completedBookings.map(renderCompletedCard)}
+              </View>
             )}
             
-            {renderSection(
-              'Completed Sessions',
-              <Camera size={16} color="#fff" />,
-              completedBookings
-            )}
-            
+            {/* Expired Requests */}
             {expiredBookings.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
@@ -161,7 +283,7 @@ export default function CustomerBookingsScreen() {
                 <Text style={styles.expiredNote}>
                   These requests expired before the photographer could respond. Your card was not charged.
                 </Text>
-                {expiredBookings.map(renderBookingCard)}
+                {expiredBookings.map(renderExpiredCard)}
               </View>
             )}
           </>
@@ -194,89 +316,167 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   exploreButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  section: {
-    marginTop: 20,
-  },
+  section: { marginTop: 24 },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     marginBottom: 12,
   },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
-  },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#fff' },
   emptySection: {
     alignItems: 'center',
-    paddingVertical: 20,
+    paddingVertical: 24,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
   },
-  emptySectionText: {
-    color: '#6b7280',
-    fontSize: 14,
-  },
-  findLink: {
-    color: PRIMARY_COLOR,
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 8,
-  },
+  emptySectionText: { color: '#6b7280', fontSize: 14, marginBottom: 4 },
+  findLink: { color: PRIMARY_COLOR, fontSize: 14, fontWeight: '500' },
+  
   bookingCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     marginBottom: 8,
   },
-  photographerAvatar: {
+  avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
     backgroundColor: '#1a1a1a',
     marginRight: 12,
   },
-  bookingInfo: {
+  avatarRing: {
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  avatarGray: {
+    opacity: 0.6,
+  },
+  bookingInfo: { flex: 1, gap: 2 },
+  photographerName: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  bookingDetails: { fontSize: 13, color: '#6b7280' },
+  priceSection: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  bookingPrice: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  
+  awaitingCard: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: 3,
+    backgroundColor: '#3b82f6',
+  },
+  cardPadding: { padding: 14 },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  photoPreviewGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  photoPlaceholder: {
     flex: 1,
-    gap: 2,
+    height: 48,
+    borderRadius: 8,
   },
-  photographerName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#fff',
+  uploadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  bookingDetails: {
-    fontSize: 13,
-    color: '#6b7280',
+  uploadingText: { fontSize: 13, color: '#6b7280', fontStyle: 'italic' },
+  
+  completedCard: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 14,
+    marginBottom: 8,
   },
-  statusRow: {
+  completedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    gap: 8,
+  },
+  viewPhotosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderRadius: 8,
+  },
+  viewPhotosText: { color: PRIMARY_COLOR, fontSize: 13, fontWeight: '600' },
+  reviewedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: 'rgba(234, 179, 8, 0.15)',
+    borderRadius: 8,
   },
-  statusText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontStyle: 'italic',
+  reviewedText: { color: '#eab308', fontSize: 12, fontWeight: '500' },
+  reviewRating: { color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 2 },
+  leaveReviewButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 8,
   },
-  priceSection: {
-    flexDirection: 'row',
+  leaveReviewText: { color: '#fff', fontSize: 13, fontWeight: '500' },
+  
+  expiredCard: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 14,
+    marginBottom: 8,
+  },
+  dismissButton: {
+    padding: 8,
+  },
+  bookAgainButton: {
+    marginTop: 12,
+    paddingVertical: 10,
     alignItems: 'center',
-    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 8,
   },
-  bookingPrice: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  bookAgainText: { color: '#fff', fontSize: 14, fontWeight: '500' },
   expiredNote: {
     fontSize: 12,
     color: '#6b7280',
     marginBottom: 12,
     lineHeight: 18,
+  },
+  
+  cameraIconWrapper: {
+    position: 'relative',
+  },
+  pulseDot: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#3b82f6',
   },
 });
