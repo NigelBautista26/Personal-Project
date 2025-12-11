@@ -18,7 +18,15 @@ export default function PhotographerLayout() {
     }
   }, [isLoading, isAuthenticated, user]);
 
-  if (isLoading || isProfileLoading || !isAuthenticated || !user || user.role !== 'photographer') {
+  if (isLoading || isProfileLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated || !user || user.role !== 'photographer') {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
