@@ -18,6 +18,7 @@ import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Uplo
 import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
+import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -312,6 +313,18 @@ export default function PhotographerBookingDetailScreen() {
             </View>
           </View>
         </View>
+
+        {booking.status === 'confirmed' && !hasSessionEnded && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Live Location</Text>
+            <LiveLocationSharing
+              bookingId={booking.id}
+              scheduledDate={booking.scheduledDate}
+              scheduledTime={booking.scheduledTime}
+              userType="photographer"
+            />
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Session Details</Text>

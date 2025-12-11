@@ -239,4 +239,25 @@ export const snapnowApi = {
     const response = await api.post<Booking>('/api/bookings', data);
     return response.data;
   },
+
+  // Live location sharing methods
+  async updateLiveLocation(bookingId: number, data: { latitude: number; longitude: number; accuracy: number; userType: 'customer' | 'photographer' }): Promise<void> {
+    await api.post(`/api/bookings/${bookingId}/live-location`, data);
+  },
+
+  async deleteLiveLocation(bookingId: number): Promise<void> {
+    await api.delete(`/api/bookings/${bookingId}/live-location`);
+  },
+
+  async getOtherPartyLocation(bookingId: number, userType: 'customer' | 'photographer'): Promise<{ latitude: string; longitude: string; updatedAt: string } | null> {
+    try {
+      const endpoint = userType === 'customer'
+        ? `/api/bookings/${bookingId}/photographer-location`
+        : `/api/bookings/${bookingId}/live-location`;
+      const response = await api.get(endpoint);
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
 };

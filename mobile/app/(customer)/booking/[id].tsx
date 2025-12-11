@@ -12,6 +12,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
+import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -143,6 +144,18 @@ export default function BookingDetailScreen() {
                 </TouchableOpacity>
               </View>
             </View>
+          </View>
+        )}
+
+        {booking.status === 'confirmed' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Live Location</Text>
+            <LiveLocationSharing
+              bookingId={booking.id}
+              scheduledDate={booking.scheduledDate}
+              scheduledTime={booking.scheduledTime}
+              userType="customer"
+            />
           </View>
         )}
 
