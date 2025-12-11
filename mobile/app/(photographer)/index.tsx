@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   Image,
   Platform,
   Dimensions,
+  Alert,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { 
@@ -49,6 +51,17 @@ export default function PhotographerDashboardScreen() {
   const queryClient = useQueryClient();
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+
+  // Request location permissions on mount
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        setLocationPermission(true);
+      }
+    })();
+  }, []);
 
   const { data: bookings } = useQuery({
     queryKey: ['photographer-bookings', photographerProfile?.id],
@@ -268,8 +281,9 @@ export default function PhotographerDashboardScreen() {
                 mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
                 customMapStyle={Platform.OS === 'android' ? darkMapStyle : undefined}
                 initialRegion={mapCenter}
-                showsUserLocation
+                showsUserLocation={locationPermission}
                 showsMyLocationButton={false}
+                userLocationAnnotationTitle="Your live location"
               >
                 {/* Photographer's registered location marker */}
                 {photographerProfile?.latitude && photographerProfile?.longitude && (
