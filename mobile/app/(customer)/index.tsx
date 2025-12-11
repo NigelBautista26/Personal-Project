@@ -49,6 +49,46 @@ const POPULAR_CITIES: City[] = [
 
 const DEFAULT_CITY = POPULAR_CITIES[0];
 
+const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: number; longitude: number; image: string }[] } = {
+  London: [
+    { id: 1, name: 'Tower Bridge', latitude: 51.5055, longitude: -0.0754, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=100' },
+    { id: 2, name: 'Big Ben', latitude: 51.5007, longitude: -0.1246, image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=100' },
+    { id: 3, name: 'London Eye', latitude: 51.5033, longitude: -0.1195, image: 'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=100' },
+    { id: 4, name: 'Buckingham Palace', latitude: 51.5014, longitude: -0.1419, image: 'https://images.unsplash.com/photo-1587056753321-c3fef73bfc71?w=100' },
+  ],
+  Paris: [
+    { id: 1, name: 'Eiffel Tower', latitude: 48.8584, longitude: 2.2945, image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=100' },
+    { id: 2, name: 'Louvre Museum', latitude: 48.8606, longitude: 2.3376, image: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=100' },
+    { id: 3, name: 'Notre Dame', latitude: 48.8530, longitude: 2.3499, image: 'https://images.unsplash.com/photo-1478391679764-b2d8b3cd1e94?w=100' },
+  ],
+  'New York': [
+    { id: 1, name: 'Statue of Liberty', latitude: 40.6892, longitude: -74.0445, image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=100' },
+    { id: 2, name: 'Central Park', latitude: 40.7829, longitude: -73.9654, image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=100' },
+    { id: 3, name: 'Brooklyn Bridge', latitude: 40.7061, longitude: -73.9969, image: 'https://images.unsplash.com/photo-1496588152823-86ff7695e68f?w=100' },
+  ],
+};
+
+const getOffsetPhotographers = (photographers: PhotographerProfile[]) => {
+  const OFFSET = 0.0008;
+  const locationCounts: { [key: string]: number } = {};
+  
+  return photographers.map((p) => {
+    const lat = Number(p.latitude);
+    const lng = Number(p.longitude);
+    if (isNaN(lat) || isNaN(lng)) return { ...p, offsetLat: lat, offsetLng: lng };
+    
+    const key = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+    const count = locationCounts[key] || 0;
+    locationCounts[key] = count + 1;
+    
+    const angle = (count * 72) * (Math.PI / 180);
+    const offsetLat = lat + (count > 0 ? OFFSET * Math.cos(angle) : 0);
+    const offsetLng = lng + (count > 0 ? OFFSET * Math.sin(angle) : 0);
+    
+    return { ...p, offsetLat, offsetLng };
+  });
+};
+
 const darkMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
@@ -123,14 +163,19 @@ export default function CustomerMapScreen() {
 
   const filteredPhotographers = useMemo(() => {
     if (!photographers) return [];
-    return photographers.filter((p) => {
+    const filtered = photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
       if (isNaN(pLat) || isNaN(pLng)) return false;
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
       return distance <= 50;
     });
+    return getOffsetPhotographers(filtered);
   }, [photographers, selectedCity]);
+
+  const photoSpots = useMemo(() => {
+    return PHOTO_SPOTS[selectedCity.name] || [];
+  }, [selectedCity.name]);
 
   const availablePhotographers = filteredPhotographers.filter(
     (p) => p.sessionState === 'available'
@@ -190,14 +235,15 @@ export default function CustomerMapScreen() {
         showsMyLocationButton={false}
         testID="map-view"
       >
-        {filteredPhotographers.map((photographer) => {
-          if (!photographer.latitude || !photographer.longitude) return null;
+        {/* Photographer Markers with offset for overlapping */}
+        {filteredPhotographers.map((photographer: any) => {
+          if (!photographer.offsetLat || !photographer.offsetLng) return null;
           return (
             <Marker
               key={photographer.id}
               coordinate={{
-                latitude: Number(photographer.latitude),
-                longitude: Number(photographer.longitude),
+                latitude: photographer.offsetLat,
+                longitude: photographer.offsetLng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
@@ -223,6 +269,25 @@ export default function CustomerMapScreen() {
             </Marker>
           );
         })}
+
+        {/* Photo Spot Markers */}
+        {photoSpots.map((spot) => (
+          <Marker
+            key={`spot-${spot.id}`}
+            coordinate={{
+              latitude: spot.latitude,
+              longitude: spot.longitude,
+            }}
+            testID={`marker-spot-${spot.id}`}
+          >
+            <View style={styles.spotMarker}>
+              <Image
+                source={{ uri: spot.image }}
+                style={styles.spotImage}
+              />
+            </View>
+          </Marker>
+        ))}
       </MapView>
 
       {/* Location Header - Two separate buttons like web */}
@@ -536,6 +601,19 @@ const styles = StyleSheet.create({
   },
   markerArrowAvailable: {
     borderTopColor: PRIMARY_COLOR,
+  },
+  spotMarker: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+    backgroundColor: '#1a1a1a',
+  },
+  spotImage: {
+    width: '100%',
+    height: '100%',
   },
   loadingOverlay: {
     position: 'absolute',
