@@ -32,68 +32,77 @@ export default function CustomerProfileScreen() {
     { icon: Shield, label: 'Security', onPress: () => {} },
     { icon: Settings, label: 'Preferences', onPress: () => {} },
     { icon: HelpCircle, label: 'Support', onPress: () => {} },
+    { icon: LogOut, label: 'Log Out', onPress: handleLogout, isDestructive: true },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileSection}>
-          {user?.profileImageUrl ? (
-            <Image
-              source={{ uri: getImageUrl(user.profileImageUrl) }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <User size={48} color="#6b7280" />
-            </View>
-          )}
-          <Text style={styles.name}>{user?.fullName || 'User'}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
-        </View>
-
-        <View style={styles.menuSection}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity 
-              key={item.label} 
-              style={[
-                styles.menuItem,
-                index === menuItems.length - 1 && styles.menuItemLast
-              ]}
-              onPress={item.onPress}
-              testID={`button-${item.label.toLowerCase().replace(' ', '-')}`}
-            >
-              <View style={styles.menuItemLeft}>
-                <item.icon size={20} color="#9ca3af" />
-                <Text style={styles.menuItemText}>{item.label}</Text>
+        {/* Header with gradient background */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerGradient} />
+          
+          {/* Avatar positioned at bottom of header */}
+          <View style={styles.avatarContainer}>
+            {user?.profileImageUrl ? (
+              <Image
+                source={{ uri: getImageUrl(user.profileImageUrl) }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <User size={48} color="#6b7280" />
               </View>
-              <ChevronRight size={18} color="#4b5563" />
-            </TouchableOpacity>
-          ))}
+            )}
+            <Text style={styles.name} testID="text-username">{user?.fullName || 'Guest'}</Text>
+            <Text style={styles.email} testID="text-email">{user?.email || ''}</Text>
+          </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.logoutItem}
-          onPress={handleLogout}
-          testID="button-logout"
-        >
-          <View style={styles.menuItemLeft}>
-            <LogOut size={20} color="#ef4444" />
-            <Text style={styles.logoutText}>Log Out</Text>
+        {/* Menu items in glass panel */}
+        <View style={styles.menuContainer}>
+          <View style={styles.glassPanel}>
+            {menuItems.map((item, index) => (
+              <TouchableOpacity 
+                key={item.label} 
+                style={[
+                  styles.menuItem,
+                  index !== menuItems.length - 1 && styles.menuItemBorder
+                ]}
+                onPress={item.onPress}
+                testID={`button-${item.label.toLowerCase().replace(' ', '-')}`}
+              >
+                <View style={styles.menuItemLeft}>
+                  <item.icon 
+                    size={20} 
+                    color={item.isDestructive ? '#ef4444' : '#9ca3af'} 
+                  />
+                  <Text style={[
+                    styles.menuItemText, 
+                    item.isDestructive && styles.menuItemTextDestructive
+                  ]}>
+                    {item.label}
+                  </Text>
+                </View>
+                <ChevronRight size={16} color="rgba(107, 114, 128, 0.5)" />
+              </TouchableOpacity>
+            ))}
           </View>
-          <ChevronRight size={18} color="#4b5563" />
-        </TouchableOpacity>
+        </View>
 
-        <View style={styles.memberCard}>
-          <View style={styles.memberIcon}>
-            <Shield size={24} color={PRIMARY_COLOR} />
-          </View>
-          <View style={styles.memberContent}>
-            <Text style={styles.memberTitle}>SnapNow Member</Text>
-            <Text style={styles.memberSubtitle}>Book photographers anywhere you travel.</Text>
-            <TouchableOpacity>
-              <Text style={styles.memberLink}>Explore Features</Text>
-            </TouchableOpacity>
+        {/* SnapNow Member Card */}
+        <View style={styles.memberCardContainer}>
+          <View style={styles.memberCard}>
+            <View style={styles.memberIcon}>
+              <Shield size={24} color={PRIMARY_COLOR} />
+            </View>
+            <View style={styles.memberContent}>
+              <Text style={styles.memberTitle}>SnapNow Member</Text>
+              <Text style={styles.memberSubtitle}>Book photographers anywhere you travel.</Text>
+              <TouchableOpacity>
+                <Text style={styles.memberLink}>Explore Features</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
@@ -106,68 +115,86 @@ export default function CustomerProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   content: { flex: 1 },
-  profileSection: {
+  
+  headerContainer: {
+    height: 192,
+    position: 'relative',
+  },
+  headerGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 192,
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+  },
+  avatarContainer: {
+    position: 'absolute',
+    bottom: -48,
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    paddingTop: 40,
-    paddingBottom: 32,
   },
   avatar: { 
-    width: 120, 
-    height: 120, 
-    borderRadius: 60, 
+    width: 96, 
+    height: 96, 
+    borderRadius: 48, 
     marginBottom: 16,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 4,
+    borderColor: '#1a1a1a',
+    backgroundColor: '#1a1a1a',
   },
   avatarPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    borderWidth: 3,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 4,
+    borderColor: '#1a1a1a',
   },
-  name: { fontSize: 22, fontWeight: '700', color: '#fff', marginBottom: 4 },
+  name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 4 },
   email: { fontSize: 14, color: '#6b7280' },
-  menuSection: {
-    paddingHorizontal: 20,
-    marginBottom: 8,
+  
+  menuContainer: {
+    marginTop: 80,
+    paddingHorizontal: 24,
+  },
+  glassPanel: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  menuItemBorder: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  menuItemLast: {
-    borderBottomWidth: 0,
   },
   menuItemLeft: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    gap: 14,
+    gap: 12,
   },
-  menuItemText: { fontSize: 16, color: '#fff' },
-  logoutItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+  menuItemText: { fontSize: 15, fontWeight: '500', color: '#fff' },
+  menuItemTextDestructive: { color: '#ef4444' },
+  
+  memberCardContainer: {
+    paddingHorizontal: 24,
+    marginTop: 24,
   },
-  logoutText: { fontSize: 16, color: '#ef4444' },
   memberCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    margin: 20,
-    marginTop: 24,
     padding: 16,
     backgroundColor: 'rgba(37,99,235,0.1)',
     borderRadius: 16,
@@ -175,31 +202,31 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(37,99,235,0.2)',
   },
   memberIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(37,99,235,0.15)',
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: 'rgba(37,99,235,0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 14,
+    marginRight: 16,
   },
   memberContent: {
     flex: 1,
   },
   memberTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#fff',
     marginBottom: 4,
   },
   memberSubtitle: {
-    fontSize: 13,
-    color: '#9ca3af',
-    marginBottom: 8,
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
   },
   memberLink: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#ef4444',
+    fontSize: 12,
+    fontWeight: '700',
+    color: PRIMARY_COLOR,
   },
 });
