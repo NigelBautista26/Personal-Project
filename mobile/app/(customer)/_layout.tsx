@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
@@ -8,9 +8,11 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function CustomerLayout() {
   const { user, isLoading, isAuthenticated } = useAuth();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !hasRedirected.current) {
+      hasRedirected.current = true;
       router.replace('/');
     }
   }, [isLoading, isAuthenticated]);
@@ -24,11 +26,7 @@ export default function CustomerLayout() {
   }
 
   if (!isAuthenticated || !user) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
+    return null;
   }
 
   return (
