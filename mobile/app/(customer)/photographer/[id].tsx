@@ -96,7 +96,7 @@ export default function PhotographerDetailScreen() {
             <View style={styles.stat}>
               <Star size={18} color="#fbbf24" fill="#fbbf24" />
               <Text style={styles.statValue}>
-                {photographer.rating?.toFixed(1) || 'New'}
+                {photographer.rating != null ? Number(photographer.rating).toFixed(1) : 'New'}
               </Text>
               <Text style={styles.statLabel}>
                 ({photographer.reviewCount || 0} reviews)

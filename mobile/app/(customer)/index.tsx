@@ -86,7 +86,7 @@ export default function CustomerHomeScreen() {
                     <View style={styles.ratingContainer}>
                       <Star size={14} color="#fbbf24" fill="#fbbf24" />
                       <Text style={styles.rating}>
-                        {photographer.rating?.toFixed(1) || 'New'}
+                        {photographer.rating != null ? Number(photographer.rating).toFixed(1) : 'New'}
                       </Text>
                     </View>
                     <Text style={styles.price}>£{photographer.hourlyRate}/hr</Text>
