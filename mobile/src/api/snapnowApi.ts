@@ -184,4 +184,59 @@ export const snapnowApi = {
     const response = await api.get<EditingRequest[]>(`/api/editing-requests/photographer/${photographerId}`);
     return response.data;
   },
+
+  // Photo delivery methods
+  async getPhotoDelivery(bookingId: string): Promise<{ id: string; photos: string[]; message?: string } | null> {
+    try {
+      const response = await api.get(`/api/bookings/${bookingId}/photos`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  async getUploadUrl(): Promise<{ uploadURL: string; objectPath: string }> {
+    const response = await api.post('/api/objects/upload');
+    return response.data;
+  },
+
+  async addPhotoToDelivery(bookingId: string, imageUrl: string): Promise<{ photos: string[] }> {
+    const response = await api.post(`/api/bookings/${bookingId}/photos/upload`, { imageUrl });
+    return response.data;
+  },
+
+  async savePhotoDelivery(bookingId: string, message?: string): Promise<void> {
+    await api.post(`/api/bookings/${bookingId}/photos`, { message });
+  },
+
+  async dismissBooking(bookingId: string): Promise<void> {
+    await api.post(`/api/bookings/${bookingId}/dismiss`);
+  },
+
+  // Stripe payment methods
+  async getStripeConfig(): Promise<{ configured: boolean; publishableKey?: string }> {
+    const response = await api.get('/api/stripe/config');
+    return response.data;
+  },
+
+  async createPaymentIntent(amount: number, photographerName: string): Promise<{ clientSecret: string; paymentIntentId: string }> {
+    const response = await api.post('/api/stripe/create-payment-intent', { amount, photographerName });
+    return response.data;
+  },
+
+  async cancelPaymentIntent(paymentIntentId: string): Promise<void> {
+    await api.post('/api/stripe/cancel-payment-intent', { paymentIntentId });
+  },
+
+  async createBookingWithPayment(data: {
+    photographerId: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    duration: number;
+    location: string;
+    stripePaymentIntentId?: string;
+  }): Promise<Booking> {
+    const response = await api.post<Booking>('/api/bookings', data);
+    return response.data;
+  },
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,28 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  Image,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus, Images } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
-import api from '../../../src/api/client';
+import api, { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerBookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  
+  // Photo upload state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
+  const [uploadMessage, setUploadMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ['booking', id],
@@ -27,15 +37,23 @@ export default function PhotographerBookingDetailScreen() {
     enabled: !!id,
   });
 
+  // Fetch existing photo delivery
+  const { data: existingDelivery } = useQuery({
+    queryKey: ['photo-delivery', id],
+    queryFn: () => snapnowApi.getPhotoDelivery(id!),
+    enabled: !!id && (booking?.status === 'photos_pending' || booking?.status === 'completed'),
+  });
+
   const confirmMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.patch(`/api/bookings/${id}/confirm`);
+      const response = await api.patch(`/api/bookings/${id}/status`, { status: 'confirmed' });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
       refetch();
-      Alert.alert('Success', 'Booking confirmed!');
+      Alert.alert('Success', 'Booking confirmed! Payment has been captured.');
     },
     onError: (error: any) => {
       Alert.alert('Error', error.response?.data?.error || 'Failed to confirm booking');
@@ -44,13 +62,13 @@ export default function PhotographerBookingDetailScreen() {
 
   const declineMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.patch(`/api/bookings/${id}/decline`);
+      const response = await api.patch(`/api/bookings/${id}/status`, { status: 'cancelled' });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
       router.back();
-      Alert.alert('Booking Declined', 'The booking has been declined.');
+      Alert.alert('Booking Declined', 'The booking has been declined and payment authorization released.');
     },
     onError: (error: any) => {
       Alert.alert('Error', error.response?.data?.error || 'Failed to decline booking');
@@ -59,12 +77,13 @@ export default function PhotographerBookingDetailScreen() {
 
   const completeMutation = useMutation({
     mutationFn: async () => {
-      const response = await api.patch(`/api/bookings/${id}/complete`);
+      const response = await api.patch(`/api/bookings/${id}/status`, { status: 'completed' });
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['photographer-earnings'] });
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
       refetch();
       Alert.alert('Success', 'Session marked as complete!');
     },
@@ -106,15 +125,95 @@ export default function PhotographerBookingDetailScreen() {
     );
   };
 
+  // Photo upload functions
+  const handleOpenUploadModal = () => {
+    if (existingDelivery?.photos) {
+      setUploadingPhotos(existingDelivery.photos);
+      setUploadMessage(existingDelivery.message || '');
+    }
+    setShowUploadModal(true);
+  };
+
+  const handlePickImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Needed', 'Please allow access to your photo library to upload photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setIsUploading(true);
+      try {
+        for (const asset of result.assets) {
+          // Get upload URL
+          const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
+          
+          // Upload the file
+          const response = await fetch(asset.uri);
+          const blob = await response.blob();
+          
+          await fetch(uploadURL, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'image/jpeg' },
+            body: blob,
+          });
+
+          // Add to delivery
+          const delivery = await snapnowApi.addPhotoToDelivery(id!, objectPath);
+          setUploadingPhotos(delivery.photos || []);
+        }
+        Alert.alert('Success', `${result.assets.length} photo(s) uploaded!`);
+      } catch (error) {
+        console.error('Upload error:', error);
+        Alert.alert('Upload Failed', 'Could not upload photos. Please try again.');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleSaveDelivery = async () => {
+    try {
+      await snapnowApi.savePhotoDelivery(id!, uploadMessage || undefined);
+      queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
+      refetch();
+      setShowUploadModal(false);
+      Alert.alert('Photos Delivered', 'Your photos have been sent to the customer!');
+    } catch (error) {
+      Alert.alert('Error', 'Could not save photo delivery.');
+    }
+  };
+
+  const getImageUrl = (url: string) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${API_URL}${url}`;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return '#22c55e';
       case 'pending': return '#f59e0b';
       case 'completed': return '#6366f1';
+      case 'photos_pending': return '#2563eb';
       case 'cancelled':
       case 'declined':
       case 'expired': return '#ef4444';
       default: return '#6b7280';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'photos_pending': return 'Ready for Photos';
+      default: return status.charAt(0).toUpperCase() + status.slice(1);
     }
   };
 
@@ -154,7 +253,26 @@ export default function PhotographerBookingDetailScreen() {
   }
 
   const isPending = booking.status === 'pending';
-  const isConfirmed = booking.status === 'confirmed';
+  
+  // Compute if session has ended (confirmed booking with past date/time)
+  const hasSessionEnded = () => {
+    if (booking.status !== 'confirmed') return false;
+    const sessionDate = new Date(booking.scheduledDate);
+    const timeMatch = booking.scheduledTime?.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const minutes = parseInt(timeMatch[2]);
+      const isPM = timeMatch[3]?.toUpperCase() === 'PM';
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      sessionDate.setHours(hours, minutes, 0, 0);
+    }
+    const sessionEndTime = new Date(sessionDate.getTime() + (booking.duration || 1) * 60 * 60 * 1000);
+    return new Date() > sessionEndTime;
+  };
+  
+  const isConfirmed = booking.status === 'confirmed' && !hasSessionEnded();
+  const isPhotosPending = (booking.status === 'confirmed' && hasSessionEnded()) || booking.status === 'photos_pending';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -168,9 +286,9 @@ export default function PhotographerBookingDetailScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statusCard}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+          <View style={[styles.statusBadge, { backgroundColor: (isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status)) + '20' }]}>
+            <Text style={[styles.statusText, { color: isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status) }]}>
+              {isPhotosPending ? 'Ready for Photos' : getStatusLabel(booking.status)}
             </Text>
           </View>
           <Text style={styles.earnings}>£{booking.photographerEarnings}</Text>
@@ -291,6 +409,91 @@ export default function PhotographerBookingDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {isPhotosPending && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.uploadButton}
+            onPress={handleOpenUploadModal}
+            testID="button-upload-photos"
+          >
+            <Upload size={20} color="#fff" />
+            <Text style={styles.uploadButtonText}>Upload Photos</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Photo Upload Modal */}
+      <Modal
+        visible={showUploadModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowUploadModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowUploadModal(false)}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Deliver Photos</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <Text style={styles.photoCountLabel}>Photos ({uploadingPhotos.length})</Text>
+            
+            <View style={styles.photoGrid}>
+              {uploadingPhotos.map((photo, idx) => (
+                <View key={idx} style={styles.photoItem}>
+                  <Image 
+                    source={{ uri: getImageUrl(photo) || photo }} 
+                    style={styles.photoImage} 
+                  />
+                </View>
+              ))}
+              
+              <TouchableOpacity 
+                style={styles.addPhotoButton}
+                onPress={handlePickImages}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator color={PRIMARY_COLOR} />
+                ) : (
+                  <>
+                    <Plus size={24} color={PRIMARY_COLOR} />
+                    <Text style={styles.addPhotoText}>Add</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.messageLabel}>Message to Customer (optional)</Text>
+            <TextInput
+              style={styles.messageInput}
+              placeholder="Add a personal note..."
+              placeholderTextColor="#6b7280"
+              value={uploadMessage}
+              onChangeText={setUploadMessage}
+              multiline
+              numberOfLines={3}
+            />
+          </ScrollView>
+
+          <View style={styles.modalFooter}>
+            <TouchableOpacity
+              style={[styles.deliverButton, uploadingPhotos.length === 0 && styles.deliverButtonDisabled]}
+              onPress={handleSaveDelivery}
+              disabled={uploadingPhotos.length === 0}
+            >
+              <Images size={20} color="#fff" />
+              <Text style={styles.deliverButtonText}>
+                Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -424,4 +627,84 @@ const styles = StyleSheet.create({
     backgroundColor: PRIMARY_COLOR,
   },
   completeButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  uploadButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  uploadButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  
+  // Modal styles
+  modalContainer: { flex: 1, backgroundColor: '#0a0a0a' },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  modalTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
+  modalContent: { flex: 1, padding: 20 },
+  photoCountLabel: { fontSize: 14, color: '#9ca3af', marginBottom: 12 },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  photoItem: {
+    width: '31%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  photoImage: { width: '100%', height: '100%' },
+  addPhotoButton: {
+    width: '31%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addPhotoText: { fontSize: 12, color: PRIMARY_COLOR, marginTop: 4 },
+  messageLabel: { fontSize: 14, color: '#9ca3af', marginBottom: 8 },
+  messageInput: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+    color: '#fff',
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  modalFooter: {
+    padding: 16,
+    paddingBottom: 32,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  deliverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#22c55e',
+  },
+  deliverButtonDisabled: {
+    backgroundColor: '#374151',
+  },
+  deliverButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 });
