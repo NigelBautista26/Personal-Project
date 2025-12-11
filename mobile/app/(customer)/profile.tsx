@@ -111,7 +111,7 @@ export default function CustomerProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0a0a0a' },
+  container: { flex: 1, backgroundColor: '#0d0f14' },
   content: { flex: 1 },
   
   headerContainer: {
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     borderRadius: 44, 
     marginBottom: 12,
     borderWidth: 3,
-    borderColor: '#0a0a0a',
+    borderColor: '#0d0f14',
     backgroundColor: '#1a1a1a',
   },
   avatarPlaceholder: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     borderWidth: 3,
-    borderColor: '#0a0a0a',
+    borderColor: '#0d0f14',
   },
   name: { fontSize: 20, fontWeight: '700', color: '#fff', marginBottom: 2 },
   email: { fontSize: 14, color: '#6b7280' },
