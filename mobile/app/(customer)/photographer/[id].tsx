@@ -24,7 +24,7 @@ export default function PhotographerDetailScreen() {
 
   const { data: photographer, isLoading, error } = useQuery({
     queryKey: ['photographer', id],
-    queryFn: () => snapnowApi.getPhotographer(Number(id)),
+    queryFn: () => snapnowApi.getPhotographer(id!),
     enabled: !!id,
   });
 

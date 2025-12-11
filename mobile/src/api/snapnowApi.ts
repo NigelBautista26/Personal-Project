@@ -134,7 +134,7 @@ export const snapnowApi = {
     return response.data;
   },
 
-  async getPhotographer(id: number): Promise<PhotographerProfile> {
+  async getPhotographer(id: string): Promise<PhotographerProfile> {
     const response = await api.get<PhotographerProfile>(`/api/photographers/${id}`);
     return response.data;
   },
