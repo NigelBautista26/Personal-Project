@@ -153,6 +153,7 @@ export default function PhotographerBookingsScreen() {
       showActions?: boolean; 
       showUploadButton?: boolean;
       showEarnings?: boolean;
+      showManagePhotos?: boolean;
     } = {}
   ) => (
     <TouchableOpacity
@@ -219,6 +220,16 @@ export default function PhotographerBookingsScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {options.showManagePhotos && (
+        <TouchableOpacity 
+          style={styles.managePhotosButton}
+          onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
+        >
+          <Upload size={16} color="#2563eb" />
+          <Text style={styles.managePhotosButtonText}>Manage Photos</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 
@@ -277,7 +288,7 @@ export default function PhotographerBookingsScreen() {
             </View>
           </View>
           <View style={styles.earningsContainer}>
-            <Text style={[styles.earnings, { color: options.isApproved ? '#22c55e' : '#8b5cf6' }]}>
+            <Text style={[styles.earnings, { color: options.isApproved ? '#22c55e' : '#38bdf8' }]}>
               £{parseFloat(request.photographerEarnings || '0').toFixed(2)}
             </Text>
             <Text style={styles.earningsLabel}>{options.isApproved ? 'earned' : 'earnings'}</Text>
@@ -425,11 +436,11 @@ export default function PhotographerBookingsScreen() {
         {readyForPhotos.length > 0 && (
           <View style={styles.section}>
             {renderSectionHeader(
-              <Upload size={20} color="#f97316" />,
+              <Upload size={20} color="#2563eb" />,
               'Ready for Photos',
               readyForPhotos.length,
               undefined,
-              '#f97316',
+              '#2563eb',
               'These sessions are complete. Upload photos to finalize and get paid.'
             )}
             {readyForPhotos.map(booking => renderBookingCard(booking, { showUploadButton: true }))}
@@ -440,14 +451,14 @@ export default function PhotographerBookingsScreen() {
         {awaitingApprovalRequests.length > 0 && (
           <View style={styles.section}>
             {renderSectionHeader(
-              <Clock size={20} color="#eab308" />,
+              <Clock size={20} color="#0f766e" />,
               'Awaiting Customer Approval',
               awaitingApprovalRequests.length,
               undefined,
-              '#eab308',
+              '#0f766e',
               'These edits have been delivered and are waiting for customer to approve.'
             )}
-            {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(234, 179, 8, 0.3)', { isAwaitingApproval: true }))}
+            {awaitingApprovalRequests.map(request => renderEditingRequestCard(request, 'rgba(13, 148, 136, 0.35)', { isAwaitingApproval: true }))}
           </View>
         )}
 
@@ -478,7 +489,7 @@ export default function PhotographerBookingsScreen() {
               '#22c55e'
             )}
             {!collapsedSections.completedSessions && (
-              completedBookings.map(booking => renderBookingCard(booking))
+              completedBookings.map(booking => renderBookingCard(booking, { showManagePhotos: true }))
             )}
           </View>
         )}
@@ -594,7 +605,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f97316',
+    backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 12,
     marginTop: 16,
@@ -633,6 +644,19 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   acceptButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+
+  managePhotosButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#2563eb',
+    marginTop: 16,
+    gap: 6,
+  },
+  managePhotosButtonText: { color: '#2563eb', fontSize: 14, fontWeight: '600' },
 
   notesContainer: {
     backgroundColor: 'rgba(139, 92, 246, 0.1)',
