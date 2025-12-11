@@ -131,7 +131,7 @@ export default function CustomerBookingsScreen() {
           <Text style={styles.uploadingText}>Your photographer is uploading your photos...</Text>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   const renderCompletedCard = (booking: Booking) => {
