@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
 import { BookingChat } from '../../../src/components/BookingChat';
