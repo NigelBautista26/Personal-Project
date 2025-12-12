@@ -60,7 +60,7 @@ export default function PhotographerProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.dismissAll();
+            // Navigation is handled by AuthContext - it will redirect to login
           },
         },
       ]
