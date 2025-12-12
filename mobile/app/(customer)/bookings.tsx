@@ -13,6 +13,7 @@ import {
   Dimensions,
   Alert,
   Share,
+  RefreshControl,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -80,10 +81,13 @@ export default function CustomerBookingsScreen() {
   const [viewingOriginalIndex, setViewingOriginalIndex] = useState<number | null>(null);
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { data: bookings, isLoading } = useQuery({
+  const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
     queryFn: () => snapnowApi.getBookings(),
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
+    refetchOnWindowFocus: true,
   });
 
   const allBookings = Array.isArray(bookings) ? bookings : [];
@@ -588,7 +592,22 @@ export default function CustomerBookingsScreen() {
         <Text style={styles.subtitle}>View and manage your photo sessions</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={async () => {
+              setIsRefreshing(true);
+              await refetch();
+              setIsRefreshing(false);
+            }}
+            tintColor={PRIMARY_COLOR}
+            colors={[PRIMARY_COLOR]}
+          />
+        }
+      >
         {isLoading ? (
           <ActivityIndicator size="large" color={PRIMARY_COLOR} style={styles.loader} />
         ) : allBookings.length === 0 ? (
