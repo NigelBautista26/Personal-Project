@@ -18,7 +18,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User, MapPin } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL, apiClient } from '../../src/api/client';
 
@@ -394,23 +394,73 @@ export default function CustomerBookingsScreen() {
     }
   };
 
-  const renderUpcomingCard = (booking: Booking) => (
-    <TouchableOpacity
-      key={booking.id}
-      style={styles.bookingCard}
-      onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
-      testID={`card-booking-${booking.id}`}
-    >
-      <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.avatar} />
-      <View style={styles.bookingInfo}>
-        <Text style={styles.photographerName}>{getPhotographerName(booking)}</Text>
-        <Text style={styles.bookingDetails}>
-          {formatDate(booking.scheduledDate)} · {booking.location}
-        </Text>
-      </View>
-      <Text style={styles.bookingPrice}>£{booking.totalAmount}</Text>
-    </TouchableOpacity>
-  );
+  const formatFullDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
+  const getStatusBadgeStyle = (status: string) => {
+    switch (status) {
+      case 'confirmed': return { bg: 'rgba(34, 197, 94, 0.2)', text: '#22c55e' };
+      case 'pending': return { bg: 'rgba(251, 191, 36, 0.2)', text: '#fbbf24' };
+      default: return { bg: 'rgba(107, 114, 128, 0.2)', text: '#9ca3af' };
+    }
+  };
+
+  const renderUpcomingCard = (booking: Booking) => {
+    const statusStyle = getStatusBadgeStyle(booking.status);
+    
+    return (
+      <TouchableOpacity
+        key={booking.id}
+        style={styles.upcomingCard}
+        onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
+        testID={`card-booking-${booking.id}`}
+      >
+        {/* Header with avatar, name, badge */}
+        <View style={styles.upcomingHeader}>
+          <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.upcomingAvatar} />
+          <View style={styles.upcomingInfo}>
+            <Text style={styles.upcomingName}>{getPhotographerName(booking)}</Text>
+            <Text style={styles.upcomingDuration}>{booking.duration} hour{Number(booking.duration) > 1 ? 's' : ''}</Text>
+          </View>
+          <View style={styles.upcomingBadgeRow}>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+              <Text style={[styles.statusBadgeText, { color: statusStyle.text }]}>{booking.status}</Text>
+            </View>
+            <ChevronRight size={20} color="#6b7280" />
+          </View>
+        </View>
+
+        {/* Booking details with icons */}
+        <View style={styles.upcomingDetails}>
+          <View style={styles.upcomingDetailRow}>
+            <Calendar size={14} color="#9ca3af" />
+            <Text style={styles.upcomingDetailText}>{formatFullDate(booking.scheduledDate)}</Text>
+          </View>
+          <View style={styles.upcomingDetailRow}>
+            <Clock size={14} color="#9ca3af" />
+            <Text style={styles.upcomingDetailText}>{booking.scheduledTime}</Text>
+          </View>
+          <View style={styles.upcomingDetailRow}>
+            <MapPin size={14} color="#9ca3af" />
+            <Text style={styles.upcomingDetailText}>{booking.location}</Text>
+          </View>
+        </View>
+
+        {/* Total */}
+        <View style={styles.upcomingTotal}>
+          <Text style={styles.upcomingTotalLabel}>Total</Text>
+          <Text style={styles.upcomingTotalAmount}>£{parseFloat(booking.totalAmount as any).toFixed(2)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderAwaitingPhotosCard = (booking: Booking) => (
     <View key={booking.id} style={styles.awaitingCard}>
@@ -1322,6 +1372,83 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     marginBottom: 8,
+  },
+  upcomingCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 12,
+  },
+  upcomingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  upcomingAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#1a1a1a',
+    marginRight: 12,
+  },
+  upcomingInfo: {
+    flex: 1,
+  },
+  upcomingName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  upcomingDuration: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginTop: 2,
+  },
+  upcomingBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  upcomingDetails: {
+    marginTop: 16,
+    gap: 8,
+  },
+  upcomingDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  upcomingDetailText: {
+    fontSize: 14,
+    color: '#e5e7eb',
+  },
+  upcomingTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  upcomingTotalLabel: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  upcomingTotalAmount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
   },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#1a1a1a', marginRight: 12 },
   avatarSmall: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#1a1a1a', marginRight: 12 },
