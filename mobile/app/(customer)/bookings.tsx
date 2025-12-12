@@ -302,9 +302,11 @@ export default function CustomerBookingsScreen() {
   // Active sessions - currently happening (use sessionPhase from backend)
   const activeSessions = allBookings.filter((b: any) => b.sessionPhase === 'in_progress');
   
-  // Upcoming bookings - pending or confirmed but not yet started
+  // Pending requests - waiting for photographer response
+  const pendingBookings = allBookings.filter((b: any) => b.status === 'pending');
+  
+  // Upcoming bookings - confirmed but not yet started (no longer includes pending)
   const upcomingBookings = allBookings.filter((b: any) => {
-    if (b.status === 'pending') return true;
     if (b.status !== 'confirmed') return false;
     // Use sessionPhase if available
     if (b.sessionPhase) {
@@ -775,19 +777,45 @@ export default function CustomerBookingsScreen() {
               </View>
             )}
 
+            {/* Pending Requests */}
+            {pendingBookings.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Clock size={16} color="#f59e0b" />
+                  <Text style={[styles.sectionTitle, { color: '#f59e0b' }]}>Pending Requests</Text>
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countBadgeText}>{pendingBookings.length}</Text>
+                  </View>
+                </View>
+                <Text style={styles.pendingNote}>
+                  Waiting for photographer to accept your booking request.
+                </Text>
+                {pendingBookings.map(renderUpcomingCard)}
+              </View>
+            )}
+
             {/* Upcoming Sessions */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Calendar size={16} color="#fff" />
-                <Text style={styles.sectionTitle}>Upcoming Sessions</Text>
+                <Calendar size={16} color="#22c55e" />
+                <Text style={[styles.sectionTitle, { color: '#22c55e' }]}>Upcoming Sessions</Text>
+                {upcomingBookings.length > 0 && (
+                  <View style={[styles.countBadge, { backgroundColor: 'rgba(34,197,94,0.2)' }]}>
+                    <Text style={[styles.countBadgeText, { color: '#22c55e' }]}>{upcomingBookings.length}</Text>
+                  </View>
+                )}
               </View>
-              {upcomingBookings.length === 0 ? (
+              {upcomingBookings.length === 0 && pendingBookings.length === 0 ? (
                 <View style={styles.emptySection}>
                   <Calendar size={32} color="#6b7280" style={{ marginBottom: 8 }} />
                   <Text style={styles.emptySectionText}>No upcoming bookings</Text>
                   <TouchableOpacity onPress={() => router.push('/(customer)/photographers')}>
                     <Text style={styles.findLink}>Find a photographer</Text>
                   </TouchableOpacity>
+                </View>
+              ) : upcomingBookings.length === 0 ? (
+                <View style={styles.emptySection}>
+                  <Text style={styles.emptySectionText}>No confirmed sessions yet</Text>
                 </View>
               ) : (
                 upcomingBookings.map(renderUpcomingCard)
@@ -1832,6 +1860,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   expiredNote: { fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 18 },
+  pendingNote: { fontSize: 13, color: '#9ca3af', marginBottom: 12, lineHeight: 18 },
+  countBadge: {
+    backgroundColor: 'rgba(245,158,11,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
   
   cameraIconWrapper: { position: 'relative' },
   pulseDot: {
