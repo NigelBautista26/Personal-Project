@@ -293,58 +293,71 @@ export default function BookingScreen() {
                 <Text style={styles.sectionTitle}>Date & Time</Text>
               </View>
               
-              {/* Date - Horizontal Scroll */}
-              <Text style={styles.pickerLabel}>Date</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalPickerScroll}
-              >
-                {dateOptions.map((date) => {
-                  const d = new Date(date.value);
-                  const isSelected = selectedDate === date.value;
-                  return (
-                    <TouchableOpacity
-                      key={date.value}
-                      style={[styles.horizontalPickerItem, isSelected && styles.horizontalPickerItemActive]}
-                      onPress={() => setSelectedDate(date.value)}
+              <View style={styles.wheelPickerRow}>
+                {/* Date Wheel */}
+                <View style={styles.wheelPickerColumn}>
+                  <Text style={styles.wheelPickerLabel}>Date</Text>
+                  <View style={styles.wheelPickerContainer}>
+                    <ScrollView 
+                      style={styles.wheelPickerScroll}
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                      snapToInterval={44}
+                      decelerationRate="fast"
                     >
-                      <Text style={[styles.horizontalPickerText, isSelected && styles.horizontalPickerTextActive]}>
-                        {date.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+                      {dateOptions.map((date) => {
+                        const isSelected = selectedDate === date.value;
+                        return (
+                          <TouchableOpacity
+                            key={date.value}
+                            style={[styles.wheelPickerItem, isSelected && styles.wheelPickerItemActive]}
+                            onPress={() => setSelectedDate(date.value)}
+                          >
+                            <Text style={[styles.wheelPickerText, isSelected && styles.wheelPickerTextActive]}>
+                              {date.label}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                </View>
 
-              {/* Time - Horizontal Scroll */}
-              <Text style={[styles.pickerLabel, { marginTop: 16 }]}>Time</Text>
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                style={styles.horizontalPickerScroll}
-              >
-                {[
-                  '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
-                  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
-                  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
-                  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
-                  '22:00', '22:30', '23:00', '23:30'
-                ].map((time) => {
-                  const isSelected = selectedTime === time;
-                  return (
-                    <TouchableOpacity
-                      key={time}
-                      style={[styles.horizontalPickerItem, isSelected && styles.horizontalPickerItemActive]}
-                      onPress={() => setSelectedTime(time)}
+                {/* Time Wheel */}
+                <View style={styles.wheelPickerColumn}>
+                  <Text style={styles.wheelPickerLabel}>Time</Text>
+                  <View style={styles.wheelPickerContainer}>
+                    <ScrollView 
+                      style={styles.wheelPickerScroll}
+                      showsVerticalScrollIndicator={false}
+                      nestedScrollEnabled={true}
+                      snapToInterval={44}
+                      decelerationRate="fast"
                     >
-                      <Text style={[styles.horizontalPickerText, isSelected && styles.horizontalPickerTextActive]}>
-                        {formatTime12h(time)}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+                      {[
+                        '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+                        '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+                        '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+                        '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
+                        '22:00', '22:30', '23:00', '23:30'
+                      ].map((time) => {
+                        const isSelected = selectedTime === time;
+                        return (
+                          <TouchableOpacity
+                            key={time}
+                            style={[styles.wheelPickerItem, isSelected && styles.wheelPickerItemActive]}
+                            onPress={() => setSelectedTime(time)}
+                          >
+                            <Text style={[styles.wheelPickerText, isSelected && styles.wheelPickerTextActive]}>
+                              {formatTime12h(time)}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                </View>
+              </View>
             </View>
 
             {/* Meeting Location */}
@@ -1098,24 +1111,37 @@ const styles = StyleSheet.create({
   amPmText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
   amPmTextActive: { color: '#fff', fontWeight: '600' },
 
-  // Horizontal Picker Styles
-  pickerLabel: { fontSize: 13, color: '#9ca3af', marginBottom: 8, marginTop: 4 },
-  horizontalPickerScroll: { marginHorizontal: -16 },
-  horizontalPickerItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    marginHorizontal: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8,
+  // Wheel Picker Styles
+  wheelPickerRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  wheelPickerColumn: {
+    flex: 1,
+  },
+  wheelPickerLabel: { fontSize: 13, color: '#9ca3af', marginBottom: 8 },
+  wheelPickerContainer: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
   },
-  horizontalPickerItemActive: {
+  wheelPickerScroll: {
+    height: 132,
+  },
+  wheelPickerItem: {
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  wheelPickerItemActive: {
     backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
   },
-  horizontalPickerText: { fontSize: 14, color: '#fff' },
-  horizontalPickerTextActive: { color: '#fff', fontWeight: '600' },
+  wheelPickerText: { fontSize: 15, color: '#9ca3af' },
+  wheelPickerTextActive: { color: '#fff', fontWeight: '600' },
 
   // Inline Date Picker Styles
   inlineDateScroll: { marginTop: 8 },
