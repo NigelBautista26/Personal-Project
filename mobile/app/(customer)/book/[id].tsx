@@ -294,68 +294,77 @@ export default function BookingScreen() {
               </View>
               
               <View style={styles.wheelPickerRow}>
-                {/* Date Wheel */}
+                {/* Date Picker */}
                 <View style={styles.wheelPickerColumn}>
                   <Text style={styles.wheelPickerLabel}>Date</Text>
-                  <View style={styles.wheelPickerContainer}>
-                    <ScrollView 
-                      style={styles.wheelPickerScroll}
-                      showsVerticalScrollIndicator={false}
-                      nestedScrollEnabled={true}
-                      snapToInterval={48}
-                      decelerationRate="fast"
+                  <View style={styles.spinnerContainer}>
+                    <TouchableOpacity 
+                      style={styles.spinnerArrow}
+                      onPress={() => {
+                        const currentIdx = dateOptions.findIndex(d => d.value === selectedDate);
+                        if (currentIdx > 0) setSelectedDate(dateOptions[currentIdx - 1].value);
+                      }}
                     >
-                      {dateOptions.map((date) => {
-                        const isSelected = selectedDate === date.value;
-                        return (
-                          <TouchableOpacity
-                            key={date.value}
-                            style={[styles.wheelPickerItem, isSelected && styles.wheelPickerItemActive]}
-                            onPress={() => setSelectedDate(date.value)}
-                          >
-                            <Text style={[styles.wheelPickerText, isSelected && styles.wheelPickerTextActive]}>
-                              {date.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
+                      <Text style={styles.spinnerArrowText}>▲</Text>
+                    </TouchableOpacity>
+                    <View style={styles.spinnerValueContainer}>
+                      <Text style={styles.spinnerValue}>
+                        {dateOptions.find(d => d.value === selectedDate)?.label || 'Select'}
+                      </Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.spinnerArrow}
+                      onPress={() => {
+                        const currentIdx = dateOptions.findIndex(d => d.value === selectedDate);
+                        if (currentIdx < dateOptions.length - 1) setSelectedDate(dateOptions[currentIdx + 1].value);
+                      }}
+                    >
+                      <Text style={styles.spinnerArrowText}>▼</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
 
-                {/* Time Wheel */}
+                {/* Time Picker */}
                 <View style={styles.wheelPickerColumn}>
                   <Text style={styles.wheelPickerLabel}>Time</Text>
-                  <View style={styles.wheelPickerContainer}>
-                    <ScrollView 
-                      style={styles.wheelPickerScroll}
-                      showsVerticalScrollIndicator={false}
-                      nestedScrollEnabled={true}
-                      snapToInterval={48}
-                      decelerationRate="fast"
+                  <View style={styles.spinnerContainer}>
+                    <TouchableOpacity 
+                      style={styles.spinnerArrow}
+                      onPress={() => {
+                        const times = [
+                          '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
+                          '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
+                          '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+                          '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
+                          '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
+                        ];
+                        const currentIdx = times.indexOf(selectedTime);
+                        if (currentIdx > 0) setSelectedTime(times[currentIdx - 1]);
+                      }}
                     >
-                      {[
-                        '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
-                        '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
-                        '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-                        '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-                        '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
-                        '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
-                      ].map((time) => {
-                        const isSelected = selectedTime === time;
-                        return (
-                          <TouchableOpacity
-                            key={time}
-                            style={[styles.wheelPickerItem, isSelected && styles.wheelPickerItemActive]}
-                            onPress={() => setSelectedTime(time)}
-                          >
-                            <Text style={[styles.wheelPickerText, isSelected && styles.wheelPickerTextActive]}>
-                              {formatTime12h(time)}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ScrollView>
+                      <Text style={styles.spinnerArrowText}>▲</Text>
+                    </TouchableOpacity>
+                    <View style={styles.spinnerValueContainer}>
+                      <Text style={styles.spinnerValue}>{formatTime12h(selectedTime)}</Text>
+                    </View>
+                    <TouchableOpacity 
+                      style={styles.spinnerArrow}
+                      onPress={() => {
+                        const times = [
+                          '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30',
+                          '04:00', '04:30', '05:00', '05:30', '06:00', '06:30', '07:00', '07:30',
+                          '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                          '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
+                          '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
+                          '20:00', '20:30', '21:00', '21:30', '22:00', '22:30', '23:00', '23:30'
+                        ];
+                        const currentIdx = times.indexOf(selectedTime);
+                        if (currentIdx < times.length - 1) setSelectedTime(times[currentIdx + 1]);
+                      }}
+                    >
+                      <Text style={styles.spinnerArrowText}>▼</Text>
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -1143,6 +1152,35 @@ const styles = StyleSheet.create({
   },
   wheelPickerText: { fontSize: 15, color: '#9ca3af' },
   wheelPickerTextActive: { color: '#fff', fontWeight: '600' },
+  
+  // Spinner Styles
+  spinnerContainer: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    overflow: 'hidden',
+  },
+  spinnerArrow: {
+    paddingVertical: 8,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  spinnerArrowText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  spinnerValueContainer: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  spinnerValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
 
   // Inline Date Picker Styles
   inlineDateScroll: { marginTop: 8 },
