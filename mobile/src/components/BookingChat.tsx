@@ -5,7 +5,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -38,7 +38,7 @@ interface BookingChatProps {
 export function BookingChat({ bookingId, currentUserId, otherPartyName }: BookingChatProps) {
   const [message, setMessage] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const flatListRef = useRef<FlatList>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
   const queryClient = useQueryClient();
 
   const { data: messages = [], isLoading } = useQuery<Message[]>({
@@ -72,7 +72,7 @@ export function BookingChat({ bookingId, currentUserId, otherPartyName }: Bookin
   useEffect(() => {
     if (isExpanded && messages.length > 0) {
       setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
+        scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
     }
   }, [messages, isExpanded]);
@@ -88,10 +88,10 @@ export function BookingChat({ bookingId, currentUserId, otherPartyName }: Bookin
     return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderMessage = (item: Message) => {
     const isOwn = item.senderId === currentUserId;
     return (
-      <View style={[styles.messageBubble, isOwn ? styles.ownMessage : styles.otherMessage]}>
+      <View key={item.id} style={[styles.messageBubble, isOwn ? styles.ownMessage : styles.otherMessage]}>
         <Text style={[styles.messageText, isOwn ? styles.ownMessageText : styles.otherMessageText]}>
           {item.body}
         </Text>
@@ -141,15 +141,15 @@ export function BookingChat({ bookingId, currentUserId, otherPartyName }: Bookin
               <Text style={styles.emptySubtext}>Send a message to coordinate with {otherPartyName}.</Text>
             </View>
           ) : (
-            <FlatList
-              ref={flatListRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={(item) => item.id}
+            <ScrollView
+              ref={scrollViewRef}
               style={styles.messageList}
               contentContainerStyle={styles.messageListContent}
               showsVerticalScrollIndicator={false}
-            />
+              nestedScrollEnabled={true}
+            >
+              {messages.map(renderMessage)}
+            </ScrollView>
           )}
 
           <View style={styles.inputContainer}>
