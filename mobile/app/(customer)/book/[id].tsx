@@ -539,12 +539,12 @@ export default function BookingScreen() {
               </View>
             )}
             onNavigationStateChange={(navState) => {
-              // Only close on explicit success - check for bookings list page (not /book/) or success param
+              // Only close on explicit success URL - very specific check
               const url = navState.url;
-              const isBookingsListPage = url.includes('/bookings') && !url.includes('/book/');
-              const isPaymentSuccess = url.includes('success=true') || url.includes('payment_success');
+              console.log('WebView navigated to:', url);
               
-              if (isBookingsListPage || isPaymentSuccess) {
+              // Check for our specific success redirect
+              if (url.includes('booking-success') || url.includes('payment_intent=') && url.includes('redirect_status=succeeded')) {
                 setShowPaymentWebView(false);
                 queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
                 Alert.alert(
@@ -554,15 +554,13 @@ export default function BookingScreen() {
                 );
               }
             }}
-            onShouldStartLoadWithRequest={(request) => {
-              // Allow Stripe URLs and our own domain
-              if (request.url.includes('stripe.com') || 
-                  request.url.includes('js.stripe.com') ||
-                  request.url.startsWith(API_URL)) {
-                return true;
-              }
-              // Block external redirects that might break the flow
-              return true;
+            onError={(syntheticEvent) => {
+              const { nativeEvent } = syntheticEvent;
+              console.warn('WebView error: ', nativeEvent);
+            }}
+            onHttpError={(syntheticEvent) => {
+              const { nativeEvent } = syntheticEvent;
+              console.warn('WebView HTTP error: ', nativeEvent.statusCode);
             }}
           />
         </SafeAreaView>
