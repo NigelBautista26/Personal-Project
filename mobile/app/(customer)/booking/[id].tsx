@@ -7,17 +7,23 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, DollarSign, Shield, Navigation } from 'lucide-react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
+import { BookingChat } from '../../../src/components/BookingChat';
+import { useAuth } from '../../../src/context/AuthContext';
+import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
@@ -46,6 +52,14 @@ export default function BookingDetailScreen() {
       year: 'numeric' 
     });
   };
+
+  const getImageUrl = (url: string) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    return `${API_URL}${url}`;
+  };
+
+  const hasMeetingLocation = !!(booking?.meetingLatitude && booking?.meetingLongitude);
 
   if (isLoading) {
     return (
@@ -89,9 +103,34 @@ export default function BookingDetailScreen() {
               {(booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
             </Text>
           </View>
-          <Text style={styles.bookingId}>Booking #{booking.id}</Text>
         </View>
 
+        {/* Photographer Card */}
+        {booking.photographer && (
+          <View style={styles.photographerSection}>
+            {booking.photographer.profileImageUrl ? (
+              <Image 
+                source={{ uri: getImageUrl(booking.photographer.profileImageUrl)! }} 
+                style={styles.photographerImage} 
+              />
+            ) : (
+              <View style={styles.photographerAvatarLarge}>
+                <User size={28} color="#9ca3af" />
+              </View>
+            )}
+            <View style={styles.photographerInfo}>
+              <Text style={styles.photographerLabel}>Your Photographer</Text>
+              <Text style={styles.photographerName}>
+                {booking.photographer.user?.fullName || 'Photographer'}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.messageIconButton}>
+              <MessageSquare size={20} color={PRIMARY_COLOR} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Session Details with Total Paid */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Session Details</Text>
           <View style={styles.detailsCard}>
@@ -124,32 +163,83 @@ export default function BookingDetailScreen() {
                 <Text style={styles.detailValue}>{booking.location}</Text>
               </View>
             </View>
+
+            <View style={[styles.detailRow, { marginBottom: 0 }]}>
+              <View style={[styles.detailIcon, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
+                <DollarSign size={20} color="#22c55e" />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Total Paid</Text>
+                <Text style={[styles.detailValue, { color: '#22c55e', fontWeight: '700', fontSize: 18 }]}>
+                  £{parseFloat(booking.totalAmount || '0').toFixed(2)}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {booking.photographer && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Photographer</Text>
-            <View style={styles.photographerCard}>
-              <View style={styles.photographerAvatar}>
-                <User size={24} color="#9ca3af" />
-              </View>
-              <View style={styles.photographerInfo}>
-                <Text style={styles.photographerName}>
-                  {booking.photographer.user?.fullName || 'Photographer'}
-                </Text>
-                <TouchableOpacity style={styles.messageButton}>
-                  <MessageSquare size={16} color={PRIMARY_COLOR} />
-                  <Text style={styles.messageButtonText}>Message</Text>
-                </TouchableOpacity>
-              </View>
+        {/* Payment Protected Notice */}
+        {booking.status === 'confirmed' && (
+          <View style={styles.paymentProtectedCard}>
+            <View style={styles.paymentProtectedIcon}>
+              <Shield size={20} color="#22c55e" />
+            </View>
+            <View style={styles.paymentProtectedContent}>
+              <Text style={styles.paymentProtectedTitle}>Payment Protected</Text>
+              <Text style={styles.paymentProtectedText}>
+                Your payment is held securely until your photographer delivers your photos. This ensures you're protected and get what you paid for.
+              </Text>
             </View>
           </View>
         )}
 
+        {/* Meeting Point */}
         {booking.status === 'confirmed' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Live Location</Text>
+            <Text style={styles.sectionTitle}>Meeting Point</Text>
+            {hasMeetingLocation ? (
+              <View style={styles.meetingPointCard}>
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    region={{
+                      latitude: parseFloat(booking.meetingLatitude),
+                      longitude: parseFloat(booking.meetingLongitude),
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    <Marker
+                      coordinate={{ 
+                        latitude: parseFloat(booking.meetingLatitude), 
+                        longitude: parseFloat(booking.meetingLongitude) 
+                      }}
+                      pinColor={PRIMARY_COLOR}
+                    />
+                  </MapView>
+                </View>
+                {booking.meetingNotes && (
+                  <View style={styles.meetingNotesDisplay}>
+                    <Text style={styles.meetingNotesText}>{booking.meetingNotes}</Text>
+                  </View>
+                )}
+              </View>
+            ) : (
+              <View style={styles.waitingForLocationCard}>
+                <Navigation size={24} color="#9ca3af" />
+                <Text style={styles.waitingForLocationTitle}>Your photographer will set the exact meeting point soon.</Text>
+                <Text style={styles.waitingForLocationText}>You'll be notified when it's ready.</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Live Location Sharing */}
+        {booking.status === 'confirmed' && (
+          <View style={styles.section}>
             <LiveLocationSharing
               bookingId={booking.id}
               scheduledDate={booking.scheduledDate}
@@ -159,6 +249,18 @@ export default function BookingDetailScreen() {
           </View>
         )}
 
+        {/* Messages/Chat */}
+        {user && (booking.status === 'confirmed' || booking.status === 'pending') && (
+          <View style={styles.section}>
+            <BookingChat
+              bookingId={booking.id}
+              currentUserId={user.id}
+              otherPartyName={booking.photographer?.user?.fullName || 'Photographer'}
+            />
+          </View>
+        )}
+
+        {/* Customer Notes */}
         {booking.notes && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Notes</Text>
@@ -167,20 +269,6 @@ export default function BookingDetailScreen() {
             </View>
           </View>
         )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Payment</Text>
-          <View style={styles.paymentCard}>
-            <View style={styles.paymentRow}>
-              <Text style={styles.paymentLabel}>Session Fee</Text>
-              <Text style={styles.paymentValue}>£{booking.totalAmount}</Text>
-            </View>
-            <View style={[styles.paymentRow, styles.totalRow]}>
-              <Text style={styles.totalLabel}>Total Paid</Text>
-              <Text style={styles.totalValue}>£{booking.totalAmount}</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -297,4 +385,128 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 16, fontWeight: '600', color: '#fff' },
   totalValue: { fontSize: 18, fontWeight: '700', color: PRIMARY_COLOR },
+
+  // Photographer section styles
+  photographerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 24,
+  },
+  photographerImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+  },
+  photographerAvatarLarge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  photographerLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 2,
+  },
+  messageIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(37,99,235,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // Payment Protected styles
+  paymentProtectedCard: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(34, 197, 94, 0.2)',
+    marginBottom: 24,
+  },
+  paymentProtectedIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  paymentProtectedContent: {
+    flex: 1,
+  },
+  paymentProtectedTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#22c55e',
+    marginBottom: 4,
+  },
+  paymentProtectedText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    lineHeight: 18,
+  },
+
+  // Meeting Point styles
+  meetingPointCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  mapContainer: {
+    height: 180,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  meetingNotesDisplay: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  meetingNotesText: {
+    color: '#d1d5db',
+    fontSize: 14,
+  },
+  waitingForLocationCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  waitingForLocationTitle: {
+    fontSize: 14,
+    color: '#fff',
+    textAlign: 'center',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  waitingForLocationText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    textAlign: 'center',
+  },
 });

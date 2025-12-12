@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,26 +11,39 @@ import {
   Modal,
   Image,
   TextInput,
+  Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus, Navigation, DollarSign } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
 import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
+import { BookingChat } from '../../../src/components/BookingChat';
+import { useAuth } from '../../../src/context/AuthContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerBookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   // Photo upload state
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
   const [uploadMessage, setUploadMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Meeting point state
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
+  const [meetingLatitude, setMeetingLatitude] = useState<number | null>(null);
+  const [meetingLongitude, setMeetingLongitude] = useState<number | null>(null);
+  const [meetingNotes, setMeetingNotes] = useState('');
+  const [isSavingLocation, setIsSavingLocation] = useState(false);
 
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ['booking', id],
@@ -229,6 +242,58 @@ export default function PhotographerBookingDetailScreen() {
     });
   };
 
+  // Initialize meeting point from booking data
+  useEffect(() => {
+    if (booking) {
+      if (booking.meetingLatitude) setMeetingLatitude(parseFloat(booking.meetingLatitude));
+      if (booking.meetingLongitude) setMeetingLongitude(parseFloat(booking.meetingLongitude));
+      if (booking.meetingNotes) setMeetingNotes(booking.meetingNotes);
+    }
+  }, [booking]);
+
+  const hasMeetingLocation = !!(booking?.meetingLatitude && booking?.meetingLongitude);
+
+  const handleUseCurrentLocation = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location permission is required to set meeting point.');
+      return;
+    }
+    const location = await Location.getCurrentPositionAsync({});
+    setMeetingLatitude(location.coords.latitude);
+    setMeetingLongitude(location.coords.longitude);
+    setIsEditingLocation(true);
+  };
+
+  const handleMapPress = (event: any) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setMeetingLatitude(latitude);
+    setMeetingLongitude(longitude);
+  };
+
+  const handleSaveLocation = async () => {
+    if (!meetingLatitude || !meetingLongitude) {
+      Alert.alert('Error', 'Please select a location on the map.');
+      return;
+    }
+    setIsSavingLocation(true);
+    try {
+      await api.patch(`/api/bookings/${id}/meeting-location`, {
+        meetingLatitude: meetingLatitude.toString(),
+        meetingLongitude: meetingLongitude.toString(),
+        meetingNotes: meetingNotes || null,
+      });
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      refetch();
+      setIsEditingLocation(false);
+      Alert.alert('Success', 'Meeting point saved!');
+    } catch (error) {
+      Alert.alert('Error', 'Could not save meeting point.');
+    } finally {
+      setIsSavingLocation(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -297,36 +362,25 @@ export default function PhotographerBookingDetailScreen() {
           <Text style={styles.earningsLabel}>Your earnings</Text>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Customer</Text>
-          <View style={styles.customerCard}>
-            <View style={styles.customerAvatar}>
-              <User size={24} color="#9ca3af" />
+        {/* Customer Card */}
+        <View style={styles.customerSection}>
+          {booking.customer?.profileImageUrl ? (
+            <Image 
+              source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
+              style={styles.customerImage} 
+            />
+          ) : (
+            <View style={styles.customerAvatarLarge}>
+              <User size={28} color="#9ca3af" />
             </View>
-            <View style={styles.customerInfo}>
-              <Text style={styles.customerName}>
-                {booking.customer?.fullName || 'Customer'}
-              </Text>
-              <TouchableOpacity style={styles.messageButton}>
-                <MessageSquare size={16} color={PRIMARY_COLOR} />
-                <Text style={styles.messageButtonText}>Message</Text>
-              </TouchableOpacity>
-            </View>
+          )}
+          <View style={styles.customerInfo}>
+            <Text style={styles.customerLabel}>Customer</Text>
+            <Text style={styles.customerName}>{booking.customer?.fullName || 'Customer'}</Text>
           </View>
         </View>
 
-        {booking.status === 'confirmed' && !hasSessionEnded() && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Live Location</Text>
-            <LiveLocationSharing
-              bookingId={booking.id}
-              scheduledDate={booking.scheduledDate}
-              scheduledTime={booking.scheduledTime}
-              userType="photographer"
-            />
-          </View>
-        )}
-
+        {/* Session Details */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Session Details</Text>
           <View style={styles.detailsCard}>
@@ -350,7 +404,7 @@ export default function PhotographerBookingDetailScreen() {
               </View>
             </View>
 
-            <View style={[styles.detailRow, { marginBottom: 0 }]}>
+            <View style={styles.detailRow}>
               <View style={styles.detailIcon}>
                 <MapPin size={20} color={PRIMARY_COLOR} />
               </View>
@@ -359,9 +413,157 @@ export default function PhotographerBookingDetailScreen() {
                 <Text style={styles.detailValue}>{booking.location}</Text>
               </View>
             </View>
+
+            <View style={[styles.detailRow, { marginBottom: 0 }]}>
+              <View style={[styles.detailIcon, { backgroundColor: 'rgba(34, 197, 94, 0.2)' }]}>
+                <DollarSign size={20} color="#22c55e" />
+              </View>
+              <View style={styles.detailContent}>
+                <Text style={styles.detailLabel}>Your Earnings</Text>
+                <Text style={[styles.detailValue, { color: '#22c55e', fontWeight: '700', fontSize: 18 }]}>
+                  £{parseFloat(booking.photographerEarnings || '0').toFixed(2)}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
 
+        {/* Meeting Point - for confirmed bookings */}
+        {isConfirmed && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>Meeting Point</Text>
+              {hasMeetingLocation && !isEditingLocation && (
+                <TouchableOpacity 
+                  onPress={() => setIsEditingLocation(true)}
+                  style={styles.editButton}
+                >
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {(isEditingLocation || !hasMeetingLocation) ? (
+              <View style={styles.meetingPointCard}>
+                <TouchableOpacity 
+                  style={styles.useLocationButton}
+                  onPress={handleUseCurrentLocation}
+                  testID="button-use-my-location"
+                >
+                  <Navigation size={18} color="#fff" />
+                  <Text style={styles.useLocationButtonText}>Use My Current Location</Text>
+                </TouchableOpacity>
+
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    initialRegion={{
+                      latitude: meetingLatitude || 51.5074,
+                      longitude: meetingLongitude || -0.1278,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    region={meetingLatitude && meetingLongitude ? {
+                      latitude: meetingLatitude,
+                      longitude: meetingLongitude,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    } : undefined}
+                    onPress={handleMapPress}
+                    mapType="standard"
+                  >
+                    {meetingLatitude && meetingLongitude && (
+                      <Marker
+                        coordinate={{ latitude: meetingLatitude, longitude: meetingLongitude }}
+                        pinColor={PRIMARY_COLOR}
+                      />
+                    )}
+                  </MapView>
+                </View>
+
+                <Text style={styles.mapHint}>Tap on the map to set the meeting point</Text>
+
+                <TextInput
+                  style={styles.meetingNotesInput}
+                  placeholder="Meeting Notes (optional)"
+                  placeholderTextColor="#6b7280"
+                  value={meetingNotes}
+                  onChangeText={setMeetingNotes}
+                  multiline
+                />
+
+                <TouchableOpacity 
+                  style={[styles.saveLocationButton, (!meetingLatitude || isSavingLocation) && styles.saveLocationButtonDisabled]}
+                  onPress={handleSaveLocation}
+                  disabled={!meetingLatitude || isSavingLocation}
+                  testID="button-save-location"
+                >
+                  {isSavingLocation ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.saveLocationButtonText}>Save Location</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.meetingPointCard}>
+                <View style={styles.mapContainer}>
+                  <MapView
+                    style={styles.map}
+                    region={{
+                      latitude: parseFloat(booking.meetingLatitude),
+                      longitude: parseFloat(booking.meetingLongitude),
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    <Marker
+                      coordinate={{ 
+                        latitude: parseFloat(booking.meetingLatitude), 
+                        longitude: parseFloat(booking.meetingLongitude) 
+                      }}
+                      pinColor={PRIMARY_COLOR}
+                    />
+                  </MapView>
+                </View>
+                {booking.meetingNotes && (
+                  <View style={styles.meetingNotesDisplay}>
+                    <Text style={styles.meetingNotesText}>{booking.meetingNotes}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Live Location Sharing */}
+        {booking.status === 'confirmed' && !hasSessionEnded() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Live Location</Text>
+            <LiveLocationSharing
+              bookingId={booking.id}
+              scheduledDate={booking.scheduledDate}
+              scheduledTime={booking.scheduledTime}
+              userType="photographer"
+            />
+          </View>
+        )}
+
+        {/* Messages/Chat */}
+        {user && (booking.status === 'confirmed' || booking.status === 'pending') && (
+          <View style={styles.section}>
+            <BookingChat
+              bookingId={booking.id}
+              currentUserId={user.id}
+              otherPartyName={booking.customer?.fullName || 'Customer'}
+            />
+          </View>
+        )}
+
+        {/* Customer Notes */}
         {booking.notes && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Customer Notes</Text>
@@ -720,4 +922,134 @@ const styles = StyleSheet.create({
     backgroundColor: '#374151',
   },
   deliverButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  // Customer section styles
+  customerSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 24,
+  },
+  customerImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 16,
+  },
+  customerAvatarLarge: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  customerLabel: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginBottom: 2,
+  },
+
+  // Meeting Point styles
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  editButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  meetingPointCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  useLocationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 12,
+  },
+  useLocationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  mapContainer: {
+    height: 200,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+  mapHint: {
+    fontSize: 12,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  meetingNotesInput: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 12,
+    color: '#fff',
+    fontSize: 14,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    marginBottom: 12,
+  },
+  saveLocationButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  saveLocationButtonDisabled: {
+    backgroundColor: '#374151',
+  },
+  saveLocationButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  meetingNotesDisplay: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  meetingNotesText: {
+    color: '#d1d5db',
+    fontSize: 14,
+  },
 });
