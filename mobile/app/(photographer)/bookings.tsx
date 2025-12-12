@@ -165,14 +165,26 @@ export default function PhotographerBookingsScreen() {
     </View>
   );
 
-  const getTimeRemaining = (expiresAt: string) => {
+  const getTimeRemaining = (expiresAt: string | null | undefined) => {
+    if (!expiresAt) return null;
+    
     const now = new Date();
     const expiry = new Date(expiresAt);
+    
+    // Check if date is valid
+    if (isNaN(expiry.getTime())) return null;
+    
     const diff = expiry.getTime() - now.getTime();
-    if (diff <= 0) return null;
+    
+    if (diff <= 0) return 'Expired';
+    
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m left to respond`;
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m left to respond`;
+    }
+    return `${minutes}m left to respond`;
   };
 
   const formatFullDate = (dateStr: string) => {
@@ -248,9 +260,15 @@ export default function PhotographerBookingsScreen() {
 
         {/* Time remaining warning */}
         {options.showActions && timeRemaining && (
-          <View style={styles.expiryWarning}>
-            <AlertTriangle size={16} color="#92400e" />
-            <Text style={styles.expiryWarningText}>{timeRemaining}</Text>
+          <View style={[
+            styles.expiryWarning,
+            timeRemaining === 'Expired' && styles.expiryWarningExpired
+          ]}>
+            <AlertTriangle size={16} color={timeRemaining === 'Expired' ? '#ef4444' : '#fbbf24'} />
+            <Text style={[
+              styles.expiryWarningText,
+              timeRemaining === 'Expired' && styles.expiryWarningTextExpired
+            ]}>{timeRemaining}</Text>
           </View>
         )}
 
@@ -714,6 +732,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#fbbf24',
     fontWeight: '500',
+  },
+  expiryWarningExpired: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+  },
+  expiryWarningTextExpired: {
+    color: '#ef4444',
   },
 
   uploadButton: {
