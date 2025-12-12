@@ -6,7 +6,7 @@ import { Navigation, MapPin, AlertCircle, Loader2 } from 'lucide-react-native';
 import { snapnowApi } from '../api/snapnowApi';
 
 interface LiveLocationSharingProps {
-  bookingId: number;
+  bookingId: string;
   scheduledDate: string;
   scheduledTime: string;
   userType: 'customer' | 'photographer';
