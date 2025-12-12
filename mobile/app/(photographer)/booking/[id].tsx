@@ -288,12 +288,12 @@ export default function PhotographerBookingDetailScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statusCard}>
-          <View style={[styles.statusBadge, { backgroundColor: (isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status)) + '20' }]}>
-            <Text style={[styles.statusText, { color: isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status) }]}>
-              {isPhotosPending ? 'Ready for Photos' : getStatusLabel(booking.status)}
+          <View style={[styles.statusBadge, { backgroundColor: (isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status || 'pending')) + '20' }]}>
+            <Text style={[styles.statusText, { color: isPhotosPending ? getStatusColor('photos_pending') : getStatusColor(booking.status || 'pending') }]}>
+              {isPhotosPending ? 'Ready for Photos' : getStatusLabel(booking.status || 'pending')}
             </Text>
           </View>
-          <Text style={styles.earnings}>£{booking.photographerEarnings}</Text>
+          <Text style={styles.earnings}>£{booking.photographerEarnings || '0.00'}</Text>
           <Text style={styles.earningsLabel}>Your earnings</Text>
         </View>
 
@@ -315,7 +315,7 @@ export default function PhotographerBookingDetailScreen() {
           </View>
         </View>
 
-        {booking.status === 'confirmed' && !hasSessionEnded && (
+        {booking.status === 'confirmed' && !hasSessionEnded() && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Live Location</Text>
             <LiveLocationSharing
