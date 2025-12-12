@@ -17,7 +17,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL, apiClient } from '../../src/api/client';
 
@@ -169,6 +169,9 @@ export default function CustomerBookingsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to dismiss booking');
     },
   });
 
