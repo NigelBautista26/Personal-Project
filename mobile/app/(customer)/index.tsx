@@ -130,6 +130,7 @@ export default function CustomerMapScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [markersReady, setMarkersReady] = useState(false);
 
   const { data: photographers, isLoading } = useQuery({
     queryKey: ['photographers'],
@@ -159,6 +160,16 @@ export default function CustomerMapScreen() {
       }, 500);
     }
   }, [selectedCity]);
+
+  // Force markers to render after data loads
+  useEffect(() => {
+    if (photographers && photographers.length > 0 && !markersReady) {
+      const timer = setTimeout(() => {
+        setMarkersReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [photographers, markersReady]);
 
   const getImageUrl = (photographer: PhotographerProfile) => {
     const path = photographer.profileImageUrl || photographer.profilePicture;
@@ -253,13 +264,14 @@ export default function CustomerMapScreen() {
           
           return (
             <Marker
-              key={`photographer-${photographer.id}`}
+              key={`photographer-${photographer.id}-${markersReady}`}
               coordinate={{
                 latitude: coords.lat,
                 longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
+              tracksViewChanges={!markersReady}
             >
               <View style={styles.photographerMarker}>
                 <Image
@@ -277,12 +289,13 @@ export default function CustomerMapScreen() {
         {/* Photo Spot Markers */}
         {photoSpots.map((spot) => (
           <Marker
-            key={`spot-${spot.id}`}
+            key={`spot-${spot.id}-${markersReady}`}
             coordinate={{
               latitude: spot.latitude,
               longitude: spot.longitude,
             }}
             testID={`marker-spot-${spot.id}`}
+            tracksViewChanges={!markersReady}
           >
             <View style={styles.spotMarker}>
               <Image
