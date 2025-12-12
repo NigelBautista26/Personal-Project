@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Home, Calendar, DollarSign, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import PhotographerOnboardingScreen from '../../src/screens/PhotographerOnboarding';
@@ -21,11 +21,7 @@ export default function PhotographerLayout() {
   }
 
   if (!isAuthenticated || !user || user.role !== 'photographer') {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
+    return <Redirect href="/" />;
   }
 
   if (!photographerProfile || photographerProfile.verificationStatus === undefined) {
