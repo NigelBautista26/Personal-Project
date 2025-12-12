@@ -63,15 +63,29 @@ export default function PhotographersListScreen() {
   const filteredPhotographers = useMemo(() => {
     if (!photographers) return [];
     
-    return photographers.filter((p) => {
+    console.log('Selected city:', selectedCity.name, selectedCity.lat, selectedCity.lng);
+    console.log('Total photographers:', photographers.length);
+    
+    const result = photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
-      if (Number.isNaN(pLat) || Number.isNaN(pLng)) return false;
+      
+      console.log(`Photographer ${p.fullName}: lat=${p.latitude} (${pLat}), lng=${p.longitude} (${pLng})`);
+      
+      if (Number.isNaN(pLat) || Number.isNaN(pLng)) {
+        console.log(`  -> SKIPPED: Invalid coordinates`);
+        return false;
+      }
       
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
+      console.log(`  -> Distance from ${selectedCity.name}: ${distance.toFixed(1)} km`);
+      
       const isNearCity = distance <= 50;
       
-      if (!isNearCity) return false;
+      if (!isNearCity) {
+        console.log(`  -> FILTERED OUT: Too far`);
+        return false;
+      }
       
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -81,8 +95,12 @@ export default function PhotographersListScreen() {
         );
       }
       
+      console.log(`  -> INCLUDED`);
       return true;
     });
+    
+    console.log('Filtered result:', result.length, 'photographers');
+    return result;
   }, [photographers, selectedCity, searchQuery]);
 
   const getImageUrl = (photographer: PhotographerProfile) => {
