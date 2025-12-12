@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Home, Calendar, DollarSign, User } from 'lucide-react-native';
@@ -12,12 +12,14 @@ const PRIMARY_COLOR = '#2563eb';
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, isProfileLoading, user, isAuthenticated } = useAuth();
   const [hasCheckedAuth, setHasCheckedAuth] = React.useState(false);
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     if (!isLoading) {
-      if (!isAuthenticated || !user) {
+      if ((!isAuthenticated || !user) && !hasRedirected.current) {
+        hasRedirected.current = true;
         router.replace('/');
-      } else {
+      } else if (isAuthenticated && user) {
         setHasCheckedAuth(true);
       }
     }
