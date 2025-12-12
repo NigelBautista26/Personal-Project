@@ -341,6 +341,8 @@ export default function PhotographerBookingDetailScreen() {
   };
   
   const isConfirmed = booking.status === 'confirmed' && !hasSessionEnded();
+  const isPending = booking.status === 'pending';
+  const canEditMeetingPoint = (booking.status === 'pending' || booking.status === 'confirmed') && !hasSessionEnded();
   const isPhotosPending = (booking.status === 'confirmed' && hasSessionEnded()) || booking.status === 'photos_pending';
 
   return (
@@ -436,7 +438,7 @@ export default function PhotographerBookingDetailScreen() {
         </View>
 
         {/* Meeting Point - for confirmed bookings */}
-        {isConfirmed && (
+        {canEditMeetingPoint && (
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <Text style={styles.sectionTitle}>Meeting Point</Text>
