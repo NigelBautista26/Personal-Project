@@ -209,6 +209,7 @@ export default function BookingDetailScreen() {
               bookingId={booking.id}
               scheduledDate={booking.scheduledDate}
               scheduledTime={booking.scheduledTime}
+              duration={booking.duration || 1}
               userType="customer"
             />
           </View>

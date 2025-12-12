@@ -19,8 +19,9 @@ import { router } from 'expo-router';
 import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
+import { snapnowApi, PhotographerProfile, Booking } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
+import { useAuth } from '../../src/context/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
@@ -167,6 +168,7 @@ const POPULAR_CITIES: City[] = [
 ];
 
 export default function CustomerMapScreen() {
+  const { user } = useAuth();
   const mapRef = useRef<MapView>(null);
   const [selectedCity, setSelectedCity] = useState<City>(POPULAR_CITIES[0]);
   const [showCitySelector, setShowCitySelector] = useState(false);
@@ -174,11 +176,65 @@ export default function CustomerMapScreen() {
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [markersReady, setMarkersReady] = useState(false);
+  const [photographerLiveLocation, setPhotographerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string } | null>(null);
 
   const { data: photographers, isLoading } = useQuery({
     queryKey: ['photographers'],
     queryFn: () => snapnowApi.getPhotographers(),
   });
+
+  // Fetch customer's bookings to find active sessions
+  const { data: bookings } = useQuery({
+    queryKey: ['customer-bookings'],
+    queryFn: () => snapnowApi.getBookings(),
+    enabled: !!user,
+  });
+
+  // Find active session (confirmed booking within session window)
+  const activeSession = useMemo(() => {
+    if (!bookings) return null;
+    const now = new Date();
+    return bookings.find((booking: Booking) => {
+      if (booking.status !== 'confirmed') return false;
+      
+      // Parse session start time
+      const sessionDate = new Date(booking.scheduledDate);
+      const timeParts = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':');
+      const hours = parseInt(timeParts[0]);
+      const minutes = parseInt(timeParts[1]) || 0;
+      const isPM = booking.scheduledTime.toLowerCase().includes('pm');
+      sessionDate.setHours(isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours, minutes);
+      
+      // Session end time
+      const duration = booking.duration || 1;
+      const sessionEnd = new Date(sessionDate.getTime() + duration * 60 * 60 * 1000);
+      
+      // Check if within 10 min before to session end
+      const minutesUntilStart = (sessionDate.getTime() - now.getTime()) / (1000 * 60);
+      return minutesUntilStart <= 10 && now < sessionEnd;
+    });
+  }, [bookings]);
+
+  // Fetch photographer's live location for active session
+  const { data: photographerLocation } = useQuery({
+    queryKey: ['photographer-live-location', activeSession?.id],
+    queryFn: () => snapnowApi.getOtherPartyLocation(activeSession!.id, 'customer'),
+    enabled: !!activeSession,
+    refetchInterval: 5000,
+  });
+
+  // Update photographer live location state
+  useEffect(() => {
+    if (photographerLocation && activeSession) {
+      setPhotographerLiveLocation({
+        lat: parseFloat(photographerLocation.latitude),
+        lng: parseFloat(photographerLocation.longitude),
+        bookingId: activeSession.id,
+      });
+    } else {
+      setPhotographerLiveLocation(null);
+    }
+  }, [photographerLocation, activeSession]);
 
   useEffect(() => {
     (async () => {
@@ -348,6 +404,25 @@ export default function CustomerMapScreen() {
             </View>
           </Marker>
         ))}
+
+        {/* Photographer Live Location Marker */}
+        {photographerLiveLocation && (
+          <Marker
+            key="photographer-live"
+            coordinate={{
+              latitude: photographerLiveLocation.lat,
+              longitude: photographerLiveLocation.lng,
+            }}
+            title="Photographer's Location"
+            onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
+            testID="marker-photographer-live"
+          >
+            <View style={styles.liveLocationMarker}>
+              <View style={styles.liveLocationPulse} />
+              <View style={styles.liveLocationDot} />
+            </View>
+          </Marker>
+        )}
       </MapView>
 
       {/* Location Header - Two separate buttons like web */}
@@ -674,6 +749,32 @@ const styles = StyleSheet.create({
   spotImage: {
     width: '100%',
     height: '100%',
+  },
+  liveLocationMarker: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveLocationPulse: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  liveLocationDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#22c55e',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
   photographerMarker: {
     width: 50,

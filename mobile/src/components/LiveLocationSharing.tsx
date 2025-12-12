@@ -9,6 +9,7 @@ interface LiveLocationSharingProps {
   bookingId: string;
   scheduledDate: string;
   scheduledTime: string;
+  duration?: number; // Session duration in hours
   userType: 'customer' | 'photographer';
   onLocationUpdate?: (location: { lat: number; lng: number } | null) => void;
   onOtherPartyLocation?: (location: { lat: number; lng: number; updatedAt: string } | null) => void;
@@ -20,6 +21,7 @@ export function LiveLocationSharing({
   bookingId,
   scheduledDate,
   scheduledTime,
+  duration = 1,
   userType,
   onLocationUpdate,
   onOtherPartyLocation,
@@ -29,6 +31,7 @@ export function LiveLocationSharing({
   const [error, setError] = useState<string | null>(null);
   const [minutesUntilAvailable, setMinutesUntilAvailable] = useState<number | null>(null);
   const [isWithinWindow, setIsWithinWindow] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const hasAutoStarted = useRef(false);
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
@@ -44,17 +47,31 @@ export function LiveLocationSharing({
     return sessionDate;
   }, [scheduledDate, scheduledTime]);
 
+  const getSessionEndDateTime = useCallback(() => {
+    const startTime = getSessionDateTime();
+    return new Date(startTime.getTime() + duration * 60 * 60 * 1000);
+  }, [getSessionDateTime, duration]);
+
   useEffect(() => {
     const checkAvailability = () => {
       const sessionDateTime = getSessionDateTime();
+      const sessionEndTime = getSessionEndDateTime();
       const now = new Date();
-      const minutesUntil = (sessionDateTime.getTime() - now.getTime()) / (1000 * 60);
+      const minutesUntilStart = (sessionDateTime.getTime() - now.getTime()) / (1000 * 60);
 
-      if (minutesUntil <= 10) {
+      // Check if session has ended
+      if (now > sessionEndTime) {
+        setSessionEnded(true);
+        setIsWithinWindow(false);
+        return;
+      }
+
+      // Share from 10 min before until session ends
+      if (minutesUntilStart <= 10) {
         setMinutesUntilAvailable(null);
         setIsWithinWindow(true);
       } else {
-        setMinutesUntilAvailable(Math.ceil(minutesUntil - 10));
+        setMinutesUntilAvailable(Math.ceil(minutesUntilStart - 10));
         setIsWithinWindow(false);
       }
     };
@@ -62,7 +79,7 @@ export function LiveLocationSharing({
     checkAvailability();
     const interval = setInterval(checkAvailability, 30000);
     return () => clearInterval(interval);
-  }, [getSessionDateTime]);
+  }, [getSessionDateTime, getSessionEndDateTime]);
 
   const updateLocationMutation = useMutation({
     mutationFn: (data: { latitude: number; longitude: number; accuracy: number }) =>
@@ -144,6 +161,13 @@ export function LiveLocationSharing({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isWithinWindow]);
 
+  // Stop sharing when session ends
+  useEffect(() => {
+    if (sessionEnded && isSharing) {
+      stopSharing();
+    }
+  }, [sessionEnded, isSharing, stopSharing]);
+
   useEffect(() => {
     return () => {
       if (locationSubscription.current) {
@@ -151,6 +175,21 @@ export function LiveLocationSharing({
       }
     };
   }, []);
+
+  // Session has ended
+  if (sessionEnded) {
+    return (
+      <View style={styles.container}>
+        <View style={[styles.iconContainer, styles.grayBg]}>
+          <Navigation size={20} color="#9ca3af" />
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Session Ended</Text>
+          <Text style={styles.subtitle}>Location sharing has stopped</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (!isWithinWindow) {
     if (minutesUntilAvailable !== null) {
@@ -162,7 +201,7 @@ export function LiveLocationSharing({
           <View style={styles.content}>
             <Text style={styles.title}>Location Sharing</Text>
             <Text style={styles.subtitle}>
-              Available in {minutesUntilAvailable} minute{minutesUntilAvailable !== 1 ? 's' : ''}
+              Starts {minutesUntilAvailable} min before session
             </Text>
           </View>
         </View>

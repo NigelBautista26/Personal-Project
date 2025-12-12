@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -52,6 +52,7 @@ export default function PhotographerDashboardScreen() {
   const mapRef = useRef<MapView>(null);
   const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  const [customerLiveLocation, setCustomerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string } | null>(null);
 
   // Request location permissions on mount
   useEffect(() => {
@@ -68,6 +69,53 @@ export default function PhotographerDashboardScreen() {
     queryFn: () => snapnowApi.getPhotographerBookings(photographerProfile!.id.toString()),
     enabled: !!photographerProfile?.id,
   });
+
+  // Find active session (confirmed booking within session window)
+  const activeSession = useMemo(() => {
+    if (!bookings) return null;
+    const bookingsArray = Array.isArray(bookings) ? bookings : [];
+    const now = new Date();
+    return bookingsArray.find((booking) => {
+      if (booking.status !== 'confirmed') return false;
+      
+      // Parse session start time
+      const sessionDate = new Date(booking.scheduledDate);
+      const timeParts = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':');
+      const hours = parseInt(timeParts[0]);
+      const minutes = parseInt(timeParts[1]) || 0;
+      const isPM = booking.scheduledTime.toLowerCase().includes('pm');
+      sessionDate.setHours(isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours, minutes);
+      
+      // Session end time
+      const duration = booking.duration || 1;
+      const sessionEnd = new Date(sessionDate.getTime() + duration * 60 * 60 * 1000);
+      
+      // Check if within 10 min before to session end
+      const minutesUntilStart = (sessionDate.getTime() - now.getTime()) / (1000 * 60);
+      return minutesUntilStart <= 10 && now < sessionEnd;
+    });
+  }, [bookings]);
+
+  // Fetch customer's live location for active session
+  const { data: customerLocation } = useQuery({
+    queryKey: ['customer-live-location', activeSession?.id],
+    queryFn: () => snapnowApi.getOtherPartyLocation(activeSession!.id, 'photographer'),
+    enabled: !!activeSession,
+    refetchInterval: 5000,
+  });
+
+  // Update customer live location state
+  useEffect(() => {
+    if (customerLocation && activeSession) {
+      setCustomerLiveLocation({
+        lat: parseFloat(customerLocation.latitude),
+        lng: parseFloat(customerLocation.longitude),
+        bookingId: activeSession.id,
+      });
+    } else {
+      setCustomerLiveLocation(null);
+    }
+  }, [customerLocation, activeSession]);
 
   const { data: earnings } = useQuery({
     queryKey: ['photographer-earnings', photographerProfile?.id],
@@ -299,6 +347,25 @@ export default function PhotographerDashboardScreen() {
                       <View style={styles.myLocationMarkerInner}>
                         <MapPin size={16} color="#fff" />
                       </View>
+                    </View>
+                  </Marker>
+                )}
+
+                {/* Customer Live Location Marker */}
+                {customerLiveLocation && (
+                  <Marker
+                    key="customer-live"
+                    coordinate={{
+                      latitude: customerLiveLocation.lat,
+                      longitude: customerLiveLocation.lng,
+                    }}
+                    title="Customer's Location"
+                    onPress={() => router.push(`/(photographer)/booking/${customerLiveLocation.bookingId}`)}
+                    testID="marker-customer-live"
+                  >
+                    <View style={styles.liveLocationMarker}>
+                      <View style={styles.liveLocationPulse} />
+                      <View style={styles.liveLocationDot} />
                     </View>
                   </Marker>
                 )}
@@ -585,6 +652,32 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#fff',
+  },
+  liveLocationMarker: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveLocationPulse: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+  },
+  liveLocationDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#3b82f6',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   tipsSection: { marginBottom: 20 },
