@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  RefreshControl,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -44,11 +45,22 @@ export default function PhotographerBookingsScreen() {
     setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
-  const { data: bookings, isLoading: bookingsLoading } = useQuery({
+  const { data: bookings, isLoading: bookingsLoading, refetch: refetchBookings } = useQuery({
     queryKey: ['photographer-bookings', photographerProfile?.id],
     queryFn: () => snapnowApi.getPhotographerBookings(photographerProfile!.id.toString()),
     enabled: !!photographerProfile?.id,
   });
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      refetchBookings(),
+      queryClient.invalidateQueries({ queryKey: ['photographer-editing-requests'] }),
+    ]);
+    setIsRefreshing(false);
+  };
 
   const { data: editingRequests = [] } = useQuery({
     queryKey: ['photographer-editing-requests', photographerProfile?.id],
@@ -357,7 +369,18 @@ export default function PhotographerBookingsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            tintColor={PRIMARY_COLOR}
+            colors={[PRIMARY_COLOR]}
+          />
+        }
+      >
         <View style={styles.header}>
           <Text style={styles.title}>My Bookings</Text>
           <Text style={styles.subtitle}>Manage your upcoming photo sessions</Text>

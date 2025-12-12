@@ -811,7 +811,7 @@ export async function registerRoutes(
       }
       
       const { status } = req.body;
-      if (!['pending', 'confirmed', 'cancelled', 'completed'].includes(status)) {
+      if (!['pending', 'confirmed', 'cancelled', 'completed', 'declined'].includes(status)) {
         return res.status(400).json({ error: "Invalid status" });
       }
       
@@ -839,7 +839,7 @@ export async function registerRoutes(
             console.error("Failed to capture payment:", stripeError);
             return res.status(500).json({ error: "Failed to capture payment. The authorization may have expired." });
           }
-        } else if (status === 'cancelled') {
+        } else if (status === 'cancelled' || status === 'declined') {
           // Cancel the payment authorization when photographer declines
           try {
             await stripe.paymentIntents.cancel(booking.stripePaymentId);
@@ -926,9 +926,9 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Not authorized to dismiss this booking" });
       }
 
-      // Only expired or cancelled bookings can be dismissed
-      if (booking.status !== "expired" && booking.status !== "cancelled") {
-        return res.status(400).json({ error: "Only expired or cancelled bookings can be dismissed" });
+      // Only expired, cancelled, or declined bookings can be dismissed
+      if (booking.status !== "expired" && booking.status !== "cancelled" && booking.status !== "declined") {
+        return res.status(400).json({ error: "Only expired, cancelled, or declined bookings can be dismissed" });
       }
 
       // Update the booking with dismissedAt timestamp
