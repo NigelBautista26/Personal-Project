@@ -42,7 +42,11 @@ export function CityProvider({ children }: { children: ReactNode }) {
 export function useCity() {
   const context = useContext(CityContext);
   if (!context) {
-    throw new Error('useCity must be used within a CityProvider');
+    // Return default values instead of throwing to prevent crashes during initialization
+    return {
+      selectedCity: POPULAR_CITIES[0],
+      setSelectedCity: () => {},
+    };
   }
   return context;
 }

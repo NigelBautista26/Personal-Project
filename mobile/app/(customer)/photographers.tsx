@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 import { Search, MapPin, Star, ChevronDown } from 'lucide-react-native';
 import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
-import { useCity, POPULAR_CITIES } from '../../src/context/CityContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -30,9 +29,30 @@ const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) =
   return R * c;
 };
 
+interface City {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
+const POPULAR_CITIES: City[] = [
+  { name: "London", lat: 51.5074, lng: -0.1278 },
+  { name: "Paris", lat: 48.8566, lng: 2.3522 },
+  { name: "New York", lat: 40.7128, lng: -74.0060 },
+  { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
+  { name: "Dubai", lat: 25.2048, lng: 55.2708 },
+  { name: "Barcelona", lat: 41.3851, lng: 2.1734 },
+  { name: "Rome", lat: 41.9028, lng: 12.4964 },
+  { name: "Sydney", lat: -33.8688, lng: 151.2093 },
+  { name: "Amsterdam", lat: 52.3676, lng: 4.9041 },
+  { name: "Singapore", lat: 1.3521, lng: 103.8198 },
+  { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
+  { name: "Berlin", lat: 52.5200, lng: 13.4050 },
+];
+
 export default function PhotographersListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const { selectedCity, setSelectedCity } = useCity();
+  const [selectedCity, setSelectedCity] = useState<City>(POPULAR_CITIES[0]);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   const { data: photographers, isLoading } = useQuery({
