@@ -563,19 +563,34 @@ export default function BookingScreen() {
               </View>
             )}
             onNavigationStateChange={(navState) => {
-              // Only close on explicit success URL - very specific check
               const url = navState.url;
-              console.log('WebView navigated to:', url);
-              
-              // Check for our specific success redirect
-              if (url.includes('booking-success') || url.includes('payment_intent=') && url.includes('redirect_status=succeeded')) {
+              // Check for success redirect from Stripe
+              if (url.includes('payment_intent=') && url.includes('redirect_status=succeeded')) {
                 setShowPaymentWebView(false);
+                setPaymentToken(null);
                 queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
                 Alert.alert(
                   'Booking Confirmed!',
                   'Your payment was successful and booking request has been sent.',
                   [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
                 );
+              }
+            }}
+            onMessage={(event) => {
+              try {
+                const data = JSON.parse(event.nativeEvent.data);
+                if (data.type === 'PAYMENT_SUCCESS') {
+                  setShowPaymentWebView(false);
+                  setPaymentToken(null);
+                  queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
+                  Alert.alert(
+                    'Booking Confirmed!',
+                    'Your payment was successful and booking request has been sent.',
+                    [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
+                  );
+                }
+              } catch (e) {
+                // Ignore non-JSON messages
               }
             }}
             onError={(syntheticEvent) => {

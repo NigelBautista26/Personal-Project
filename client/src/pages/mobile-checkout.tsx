@@ -1,4 +1,12 @@
 import { useEffect, useState } from "react";
+
+declare global {
+  interface Window {
+    ReactNativeWebView?: {
+      postMessage: (message: string) => void;
+    };
+  }
+}
 import { useLocation } from "wouter";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -76,6 +84,10 @@ function CheckoutForm({
         }
 
         setSucceeded(true);
+        // Try to communicate back to the React Native app
+        if (window.ReactNativeWebView) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'PAYMENT_SUCCESS' }));
+        }
       } catch (err: any) {
         setError(err.message || "Failed to complete booking");
         setProcessing(false);
