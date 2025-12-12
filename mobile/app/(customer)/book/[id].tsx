@@ -480,27 +480,41 @@ export default function BookingScreen() {
               <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
-            {dateOptions.map((date) => (
-              <TouchableOpacity
-                key={date.value}
-                style={[
-                  styles.modalOption,
-                  selectedDate === date.value && styles.modalOptionActive,
-                ]}
-                onPress={() => {
-                  setSelectedDate(date.value);
-                  setShowDatePicker(false);
-                }}
-              >
-                <Text style={[
-                  styles.modalOptionText,
-                  selectedDate === date.value && styles.modalOptionTextActive,
-                ]}>
-                  {date.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <ScrollView style={styles.modalContent} contentContainerStyle={styles.dateGridContainer}>
+            <View style={styles.dateGrid}>
+              {dateOptions.map((date) => {
+                const d = new Date(date.value);
+                const dayNum = d.getDate();
+                const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' });
+                const month = d.toLocaleDateString('en-GB', { month: 'short' });
+                const isSelected = selectedDate === date.value;
+                const isToday = date.value === new Date().toISOString().split('T')[0];
+                return (
+                  <TouchableOpacity
+                    key={date.value}
+                    style={[
+                      styles.dateCard,
+                      isSelected && styles.dateCardActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedDate(date.value);
+                      setShowDatePicker(false);
+                    }}
+                  >
+                    <Text style={[styles.dateDayName, isSelected && styles.dateTextActive]}>
+                      {dayName}
+                    </Text>
+                    <Text style={[styles.dateDayNum, isSelected && styles.dateTextActive]}>
+                      {dayNum}
+                    </Text>
+                    <Text style={[styles.dateMonth, isSelected && styles.dateTextActive]}>
+                      {month}
+                    </Text>
+                    {isToday && <View style={[styles.todayDot, isSelected && styles.todayDotActive]} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </ScrollView>
         </SafeAreaView>
       </Modal>
@@ -519,28 +533,35 @@ export default function BookingScreen() {
               <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-          <ScrollView style={styles.modalContent}>
-            {timeSlots.map((time) => (
-              <TouchableOpacity
-                key={time}
-                style={[
-                  styles.modalOption,
-                  selectedTime === time && styles.modalOptionActive,
-                ]}
-                onPress={() => {
-                  setSelectedTime(time);
-                  setShowTimePicker(false);
-                }}
-              >
-                <Text style={[
-                  styles.modalOptionText,
-                  selectedTime === time && styles.modalOptionTextActive,
-                ]}>
-                  {formatTime12h(time)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <View style={styles.timePickerContent}>
+            <Text style={styles.timePickerSubtitle}>Choose a time slot for your session</Text>
+            <View style={styles.timeGrid}>
+              {timeSlots.map((time) => {
+                const isSelected = selectedTime === time;
+                return (
+                  <TouchableOpacity
+                    key={time}
+                    style={[
+                      styles.timeCard,
+                      isSelected && styles.timeCardActive,
+                    ]}
+                    onPress={() => {
+                      setSelectedTime(time);
+                      setShowTimePicker(false);
+                    }}
+                  >
+                    <Clock size={16} color={isSelected ? '#fff' : '#6b7280'} />
+                    <Text style={[
+                      styles.timeCardText,
+                      isSelected && styles.timeCardTextActive,
+                    ]}>
+                      {formatTime12h(time)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
         </SafeAreaView>
       </Modal>
 
@@ -862,6 +883,67 @@ const styles = StyleSheet.create({
   },
   modalOptionText: { fontSize: 16, color: '#fff' },
   modalOptionTextActive: { color: PRIMARY_COLOR, fontWeight: '600' },
+
+  dateGridContainer: { paddingVertical: 16 },
+  dateGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: 10,
+    paddingHorizontal: 4,
+  },
+  dateCard: {
+    width: '22%',
+    aspectRatio: 0.85,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  dateCardActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  dateDayName: { fontSize: 12, color: '#9ca3af', marginBottom: 2 },
+  dateDayNum: { fontSize: 24, fontWeight: '700', color: '#fff' },
+  dateMonth: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
+  dateTextActive: { color: '#fff' },
+  todayDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: PRIMARY_COLOR,
+    marginTop: 4,
+  },
+  todayDotActive: { backgroundColor: '#fff' },
+
+  timePickerContent: { padding: 16 },
+  timePickerSubtitle: { fontSize: 14, color: '#9ca3af', marginBottom: 16 },
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  timeCard: {
+    width: '31%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  timeCardActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  timeCardText: { fontSize: 14, color: '#fff' },
+  timeCardTextActive: { color: '#fff', fontWeight: '600' },
 
   locationOption: {
     flexDirection: 'row',
