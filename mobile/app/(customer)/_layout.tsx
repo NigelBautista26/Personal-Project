@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -9,17 +9,13 @@ const PRIMARY_COLOR = '#2563eb';
 export default function CustomerLayout() {
   const { user, isLoading, isAuthenticated } = useAuth();
 
-  if (isLoading) {
+  // Show loading while auth check or redirect is pending
+  if (isLoading || !isAuthenticated || !user) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
-  }
-
-  // Redirect to welcome if not authenticated
-  if (!isAuthenticated || !user) {
-    return <Redirect href="/" />;
   }
 
   return (

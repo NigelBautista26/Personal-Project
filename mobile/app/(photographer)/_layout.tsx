@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Home, Calendar, DollarSign, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import PhotographerOnboardingScreen from '../../src/screens/PhotographerOnboarding';
@@ -12,21 +12,8 @@ const PRIMARY_COLOR = '#2563eb';
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user, isAuthenticated, isProfileLoading } = useAuth();
 
-  // Only show loading during initial auth check
-  if (isLoading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-      </View>
-    );
-  }
-
-  // Redirect to welcome if not authenticated
-  if (!isAuthenticated || !user) {
-    return <Redirect href="/" />;
-  }
-
-  if (user.role !== 'photographer') {
+  // Show loading while auth check or redirect is pending
+  if (isLoading || !isAuthenticated || !user || user.role !== 'photographer') {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
