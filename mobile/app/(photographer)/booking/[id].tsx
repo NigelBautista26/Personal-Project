@@ -17,13 +17,11 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, Check, X, Upload, Plus, Navigation, DollarSign } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
-import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
+import { MeetUpExperience } from '../../../src/components/MeetUpExperience';
 import { BookingChat } from '../../../src/components/BookingChat';
 import { useAuth } from '../../../src/context/AuthContext';
 
@@ -40,12 +38,6 @@ export default function PhotographerBookingDetailScreen() {
   const [uploadMessage, setUploadMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   
-  // Meeting point state
-  const [isEditingLocation, setIsEditingLocation] = useState(false);
-  const [meetingLatitude, setMeetingLatitude] = useState<number | null>(null);
-  const [meetingLongitude, setMeetingLongitude] = useState<number | null>(null);
-  const [meetingNotes, setMeetingNotes] = useState('');
-  const [isSavingLocation, setIsSavingLocation] = useState(false);
 
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ['booking', id],
@@ -216,58 +208,6 @@ export default function PhotographerBookingDetailScreen() {
     });
   };
 
-  // Initialize meeting point from booking data
-  useEffect(() => {
-    if (booking) {
-      if (booking.meetingLatitude) setMeetingLatitude(parseFloat(booking.meetingLatitude));
-      if (booking.meetingLongitude) setMeetingLongitude(parseFloat(booking.meetingLongitude));
-      if (booking.meetingNotes) setMeetingNotes(booking.meetingNotes);
-    }
-  }, [booking]);
-
-  const hasMeetingLocation = !!(booking?.meetingLatitude && booking?.meetingLongitude);
-
-  const handleUseCurrentLocation = async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Location permission is required to set meeting point.');
-      return;
-    }
-    const location = await Location.getCurrentPositionAsync({});
-    setMeetingLatitude(location.coords.latitude);
-    setMeetingLongitude(location.coords.longitude);
-    setIsEditingLocation(true);
-  };
-
-  const handleMapPress = (event: any) => {
-    const { latitude, longitude } = event.nativeEvent.coordinate;
-    setMeetingLatitude(latitude);
-    setMeetingLongitude(longitude);
-  };
-
-  const handleSaveLocation = async () => {
-    if (!meetingLatitude || !meetingLongitude) {
-      Alert.alert('Error', 'Please select a location on the map.');
-      return;
-    }
-    setIsSavingLocation(true);
-    try {
-      await api.patch(`/api/bookings/${id}/meeting-location`, {
-        latitude: meetingLatitude,
-        longitude: meetingLongitude,
-        notes: meetingNotes || null,
-      });
-      queryClient.invalidateQueries({ queryKey: ['booking', id] });
-      refetch();
-      setIsEditingLocation(false);
-      Alert.alert('Success', 'Meeting point saved!');
-    } catch (error) {
-      Alert.alert('Error', 'Could not save meeting point.');
-    } finally {
-      setIsSavingLocation(false);
-    }
-  };
-
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -407,91 +347,21 @@ export default function PhotographerBookingDetailScreen() {
           </View>
         </View>
 
-        {/* Meeting Point - for confirmed bookings */}
-        {canEditMeetingPoint && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Meeting Point</Text>
-              {hasMeetingLocation && !isEditingLocation && (
-                <TouchableOpacity 
-                  onPress={() => setIsEditingLocation(true)}
-                  style={styles.editButton}
-                >
-                  <Text style={styles.editButtonText}>Edit</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {(isEditingLocation || !hasMeetingLocation) ? (
-              <View style={styles.meetingPointCard}>
-                <TouchableOpacity 
-                  style={styles.useLocationButton}
-                  onPress={handleUseCurrentLocation}
-                  testID="button-use-my-location"
-                >
-                  <Navigation size={18} color="#fff" />
-                  <Text style={styles.useLocationButtonText}>Use My Current Location</Text>
-                </TouchableOpacity>
-
-                {meetingLatitude && meetingLongitude && (
-                  <View style={styles.locationSetCard}>
-                    <MapPin size={16} color="#22c55e" />
-                    <Text style={styles.locationSetText}>
-                      Location set: {meetingLatitude.toFixed(4)}, {meetingLongitude.toFixed(4)}
-                    </Text>
-                  </View>
-                )}
-
-                <TextInput
-                  style={styles.meetingNotesInput}
-                  placeholder="Meeting Notes (optional)"
-                  placeholderTextColor="#6b7280"
-                  value={meetingNotes}
-                  onChangeText={setMeetingNotes}
-                  multiline
-                />
-
-                <TouchableOpacity 
-                  style={[styles.saveLocationButton, (!meetingLatitude || isSavingLocation) && styles.saveLocationButtonDisabled]}
-                  onPress={handleSaveLocation}
-                  disabled={!meetingLatitude || isSavingLocation}
-                  testID="button-save-location"
-                >
-                  {isSavingLocation ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.saveLocationButtonText}>Save Meeting Point</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.meetingPointCard}>
-                <View style={styles.locationSetCard}>
-                  <MapPin size={16} color="#22c55e" />
-                  <Text style={styles.locationSetText}>Meeting point set</Text>
-                </View>
-                {booking.meetingNotes && (
-                  <View style={styles.meetingNotesDisplay}>
-                    <Text style={styles.meetingNotesText}>{booking.meetingNotes}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Live Location Sharing */}
+        {/* Meet Up Experience - unified meeting point + live location */}
         {booking.status === 'confirmed' && !hasSessionEnded() && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Live Location</Text>
-            <LiveLocationSharing
-              bookingId={booking.id}
-              scheduledDate={booking.scheduledDate}
-              scheduledTime={booking.scheduledTime}
-              duration={booking.duration || 1}
-              userType="photographer"
-            />
-          </View>
+          <MeetUpExperience
+            bookingId={booking.id}
+            scheduledDate={booking.scheduledDate}
+            scheduledTime={booking.scheduledTime}
+            duration={booking.duration || 1}
+            userType="photographer"
+            meetingLatitude={booking.meetingLatitude}
+            meetingLongitude={booking.meetingLongitude}
+            meetingNotes={booking.meetingNotes}
+            locationName={booking.location}
+            canEditMeetingPoint={canEditMeetingPoint}
+            onMeetingPointSaved={() => refetch()}
+          />
         )}
 
         {/* Messages/Chat */}

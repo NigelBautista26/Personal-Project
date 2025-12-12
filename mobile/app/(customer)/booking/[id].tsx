@@ -15,7 +15,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
-import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
+import { MeetUpExperience } from '../../../src/components/MeetUpExperience';
 import { BookingChat } from '../../../src/components/BookingChat';
 import { useAuth } from '../../../src/context/AuthContext';
 import { API_URL } from '../../../src/api/client';
@@ -201,18 +201,19 @@ export default function BookingDetailScreen() {
           </View>
         )}
 
-        {/* Live Location Sharing */}
+        {/* Meet Up Experience - unified meeting point + live location */}
         {booking.status === 'confirmed' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Live Location</Text>
-            <LiveLocationSharing
-              bookingId={booking.id}
-              scheduledDate={booking.scheduledDate}
-              scheduledTime={booking.scheduledTime}
-              duration={booking.duration || 1}
-              userType="customer"
-            />
-          </View>
+          <MeetUpExperience
+            bookingId={booking.id}
+            scheduledDate={booking.scheduledDate}
+            scheduledTime={booking.scheduledTime}
+            duration={booking.duration || 1}
+            userType="customer"
+            meetingLatitude={booking.meetingLatitude}
+            meetingLongitude={booking.meetingLongitude}
+            meetingNotes={booking.meetingNotes}
+            locationName={booking.location}
+          />
         )}
 
         {/* Messages/Chat */}
