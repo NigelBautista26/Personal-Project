@@ -92,8 +92,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, password: string): Promise<User> => {
     const loggedInUser = await snapnowApi.login({ email, password });
     await SecureStore.setItemAsync(AUTH_FLAG_KEY, 'true');
-    // Small delay to ensure session cookie is saved by response interceptor
-    await new Promise(resolve => setTimeout(resolve, 100));
     setUser(loggedInUser);
     if (loggedInUser.role === 'photographer') {
       await refreshPhotographerProfile();

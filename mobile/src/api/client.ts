@@ -34,9 +34,11 @@ api.interceptors.response.use(
   async (response) => {
     try {
       const setCookie = response.headers['set-cookie'];
-      if (setCookie && setCookie.length > 0) {
+      if (setCookie) {
+        // Handle both string and array formats (React Native returns string)
+        const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
         // Extract the connect.sid cookie
-        const sessionCookie = setCookie.find((c: string) => c.includes('connect.sid'));
+        const sessionCookie = cookies.find((c: string) => c.includes('connect.sid'));
         if (sessionCookie) {
           // Store just the cookie value (e.g., connect.sid=xxx)
           const cookiePart = sessionCookie.split(';')[0];
