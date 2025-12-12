@@ -361,6 +361,8 @@ export default function PhotographerBookingDetailScreen() {
             locationName={booking.location}
             canEditMeetingPoint={canEditMeetingPoint}
             onMeetingPointSaved={() => refetch()}
+            myProfileImage={user?.profileImageUrl ? getImageUrl(user.profileImageUrl) : undefined}
+            otherPartyProfileImage={booking.customer?.profileImageUrl ? getImageUrl(booking.customer.profileImageUrl) : undefined}
           />
         )}
 

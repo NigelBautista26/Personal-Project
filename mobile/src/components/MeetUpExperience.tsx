@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Image } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Navigation, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { MapPin, Navigation, MessageSquare, Clock, CheckCircle, AlertCircle, Camera, User } from 'lucide-react-native';
 import { snapnowApi } from '../api/snapnowApi';
 import api from '../api/client';
 
@@ -19,6 +19,8 @@ interface MeetUpExperienceProps {
   locationName: string;
   onMeetingPointSaved?: () => void;
   canEditMeetingPoint?: boolean;
+  myProfileImage?: string | null;
+  otherPartyProfileImage?: string | null;
 }
 
 const PRIMARY_COLOR = '#2563eb';
@@ -35,6 +37,8 @@ export function MeetUpExperience({
   locationName,
   onMeetingPointSaved,
   canEditMeetingPoint = false,
+  myProfileImage,
+  otherPartyProfileImage,
 }: MeetUpExperienceProps) {
   const queryClient = useQueryClient();
   const [isSharing, setIsSharing] = useState(false);
@@ -382,20 +386,29 @@ export function MeetUpExperience({
               </Marker>
             )}
 
-            {/* Your Location (Blue) */}
+            {/* Your Location - Profile Picture with Blue Border */}
             {currentLocation && (
               <Marker
                 coordinate={{ latitude: currentLocation.lat, longitude: currentLocation.lng }}
                 title="You"
                 anchor={{ x: 0.5, y: 0.5 }}
               >
-                <View style={styles.userDot}>
-                  <View style={styles.userDotInner} />
+                <View style={styles.profileMarker}>
+                  <View style={[styles.profileMarkerBorder, { borderColor: '#3b82f6' }]}>
+                    {myProfileImage ? (
+                      <Image source={{ uri: myProfileImage }} style={styles.profileMarkerImage} />
+                    ) : (
+                      <View style={[styles.profileMarkerFallback, { backgroundColor: '#3b82f6' }]}>
+                        <User size={16} color="#fff" />
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.profileMarkerLabel}>You</Text>
                 </View>
               </Marker>
             )}
 
-            {/* Other Party Location (Green for photographer, Orange for customer) */}
+            {/* Other Party Location - Profile Picture with Green/Orange Border */}
             {hasOtherPartyLocation && (
               <Marker
                 coordinate={{
@@ -405,34 +418,31 @@ export function MeetUpExperience({
                 title={otherPartyLabel}
                 anchor={{ x: 0.5, y: 0.5 }}
               >
-                <View style={[styles.otherPartyDot, userType === 'customer' ? styles.photographerDot : styles.customerDot]}>
-                  <View style={[styles.otherPartyDotInner, userType === 'customer' ? styles.photographerDotInner : styles.customerDotInner]} />
+                <View style={styles.profileMarker}>
+                  <View style={[styles.profileMarkerBorder, { borderColor: userType === 'customer' ? '#22c55e' : '#f97316' }]}>
+                    {otherPartyProfileImage ? (
+                      <Image source={{ uri: otherPartyProfileImage }} style={styles.profileMarkerImage} />
+                    ) : (
+                      <View style={[styles.profileMarkerFallback, { backgroundColor: userType === 'customer' ? '#22c55e' : '#f97316' }]}>
+                        {userType === 'customer' ? <Camera size={16} color="#fff" /> : <User size={16} color="#fff" />}
+                      </View>
+                    )}
+                  </View>
+                  <Text style={styles.profileMarkerLabel}>{otherPartyLabel}</Text>
                 </View>
               </Marker>
             )}
           </MapView>
 
-          {/* Map Legend */}
-          <View style={styles.legend}>
-            {hasMeetingPoint && (
+          {/* Simplified Legend - only show meeting point indicator */}
+          {hasMeetingPoint && (
+            <View style={styles.legend}>
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: PRIMARY_COLOR }]} />
                 <Text style={styles.legendText}>Meeting Point</Text>
               </View>
-            )}
-            {currentLocation && (
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#3b82f6' }]} />
-                <Text style={styles.legendText}>You</Text>
-              </View>
-            )}
-            {hasOtherPartyLocation && (
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: userType === 'customer' ? '#22c55e' : '#f97316' }]} />
-                <Text style={styles.legendText}>{otherPartyLabel}</Text>
-              </View>
-            )}
-          </View>
+            </View>
+          )}
         </View>
       )}
 
@@ -549,47 +559,42 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
-  userDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
+  profileMarker: {
+    alignItems: 'center',
+  },
+  profileMarkerBorder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 3,
+    padding: 2,
+    backgroundColor: '#1a1a2e',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  profileMarkerImage: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+  },
+  profileMarkerFallback: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  userDotInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#3b82f6',
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  otherPartyDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photographerDot: {
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
-  },
-  customerDot: {
-    backgroundColor: 'rgba(249, 115, 22, 0.3)',
-  },
-  otherPartyDotInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  photographerDotInner: {
-    backgroundColor: '#22c55e',
-  },
-  customerDotInner: {
-    backgroundColor: '#f97316',
+  profileMarkerLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#fff',
+    marginTop: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   waitingCard: {
     flexDirection: 'row',

@@ -213,6 +213,8 @@ export default function BookingDetailScreen() {
             meetingLongitude={booking.meetingLongitude}
             meetingNotes={booking.meetingNotes}
             locationName={booking.location}
+            myProfileImage={user?.profileImageUrl ? getImageUrl(user.profileImageUrl) : undefined}
+            otherPartyProfileImage={booking.photographer?.profileImageUrl ? getImageUrl(booking.photographer.profileImageUrl) : undefined}
           />
         )}
 
