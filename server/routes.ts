@@ -202,8 +202,15 @@ export async function registerRoutes(
       return res.status(404).json({ error: "User not found" });
     }
     
+    // Check if photographer has completed onboarding
+    let hasPhotographerProfile = false;
+    if (user.role === "photographer") {
+      const profile = await storage.getPhotographerByUserId(user.id);
+      hasPhotographerProfile = profile !== null;
+    }
+    
     const { password, ...userWithoutPassword } = user;
-    res.json(userWithoutPassword);
+    res.json({ ...userWithoutPassword, hasPhotographerProfile });
   });
 
   // Update current user profile
