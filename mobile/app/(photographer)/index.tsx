@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
   Dimensions,
-  Alert,
 } from 'react-native';
-import * as Location from 'expo-location';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { 
   Calendar, 
@@ -23,14 +20,11 @@ import {
   Bell, 
   ChevronRight, 
   MapPin,
-  Layers,
-  Navigation,
   Zap,
   User as UserIcon,
   Lightbulb,
   Target,
 } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { useAuth } from '../../src/context/AuthContext';
 import { snapnowApi } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
@@ -38,84 +32,15 @@ import { API_URL } from '../../src/api/client';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
 
-const darkMapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1f2e' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c1929' }] },
-];
-
 export default function PhotographerDashboardScreen() {
   const { user, photographerProfile, refreshPhotographerProfile } = useAuth();
   const queryClient = useQueryClient();
-  const mapRef = useRef<MapView>(null);
-  const [mapType, setMapType] = useState<'standard' | 'satellite'>('standard');
-  const [locationPermission, setLocationPermission] = useState<boolean>(false);
-  const [customerLiveLocation, setCustomerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string } | null>(null);
-
-  // Request location permissions on mount
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        setLocationPermission(true);
-      }
-    })();
-  }, []);
 
   const { data: bookings } = useQuery({
     queryKey: ['photographer-bookings', photographerProfile?.id],
     queryFn: () => snapnowApi.getPhotographerBookings(photographerProfile!.id.toString()),
     enabled: !!photographerProfile?.id,
   });
-
-  // Find active session (confirmed booking within session window)
-  const activeSession = useMemo(() => {
-    if (!bookings) return null;
-    const bookingsArray = Array.isArray(bookings) ? bookings : [];
-    const now = new Date();
-    return bookingsArray.find((booking) => {
-      if (booking.status !== 'confirmed') return false;
-      
-      // Parse session start time
-      const sessionDate = new Date(booking.scheduledDate);
-      const timeParts = booking.scheduledTime.replace(/[AP]M/i, '').trim().split(':');
-      const hours = parseInt(timeParts[0]);
-      const minutes = parseInt(timeParts[1]) || 0;
-      const isPM = booking.scheduledTime.toLowerCase().includes('pm');
-      sessionDate.setHours(isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours, minutes);
-      
-      // Session end time
-      const duration = booking.duration || 1;
-      const sessionEnd = new Date(sessionDate.getTime() + duration * 60 * 60 * 1000);
-      
-      // Check if within 10 min before to session end
-      const minutesUntilStart = (sessionDate.getTime() - now.getTime()) / (1000 * 60);
-      return minutesUntilStart <= 10 && now < sessionEnd;
-    });
-  }, [bookings]);
-
-  // Fetch customer's live location for active session
-  const { data: customerLocation } = useQuery({
-    queryKey: ['customer-live-location', activeSession?.id],
-    queryFn: () => snapnowApi.getOtherPartyLocation(activeSession!.id, 'photographer'),
-    enabled: !!activeSession,
-    refetchInterval: 5000,
-  });
-
-  // Update customer live location state
-  useEffect(() => {
-    if (customerLocation && activeSession) {
-      setCustomerLiveLocation({
-        lat: parseFloat(customerLocation.latitude),
-        lng: parseFloat(customerLocation.longitude),
-        bookingId: activeSession.id,
-      });
-    } else {
-      setCustomerLiveLocation(null);
-    }
-  }, [customerLocation, activeSession]);
 
   const { data: earnings } = useQuery({
     queryKey: ['photographer-earnings', photographerProfile?.id],
@@ -189,17 +114,6 @@ export default function PhotographerDashboardScreen() {
   };
 
   const rating = photographerProfile?.rating ? parseFloat(photographerProfile.rating.toString()) : 5.0;
-
-  const mapCenter = {
-    latitude: photographerProfile?.latitude ? Number(photographerProfile.latitude) : 51.5074,
-    longitude: photographerProfile?.longitude ? Number(photographerProfile.longitude) : -0.1278,
-    latitudeDelta: 0.08,
-    longitudeDelta: 0.08,
-  };
-
-  const upcomingBookingsWithLocation = confirmedBookings.filter(
-    b => b.meetingLatitude && b.meetingLongitude && new Date(b.scheduledDate) >= new Date()
-  );
 
   const isToday = (dateStr: string) => {
     return new Date(dateStr).toDateString() === new Date().toDateString();
@@ -312,109 +226,6 @@ export default function PhotographerDashboardScreen() {
               </View>
               <Text style={styles.statValue}>{completedBookings.length}</Text>
               <Text style={styles.statSubtext}>Jobs Done</Text>
-            </View>
-          </View>
-
-          {/* Live Map Section */}
-          <View style={styles.mapSection}>
-            <View style={styles.sectionHeader}>
-              <MapPin size={20} color={PRIMARY_COLOR} />
-              <Text style={styles.sectionTitle}>Live Map</Text>
-            </View>
-            <View style={styles.mapContainer}>
-              <MapView
-                ref={mapRef}
-                style={styles.map}
-                provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
-                mapType={Platform.OS === 'ios' ? 'mutedStandard' : 'standard'}
-                customMapStyle={Platform.OS === 'android' ? darkMapStyle : undefined}
-                initialRegion={mapCenter}
-                showsUserLocation={locationPermission}
-                showsMyLocationButton={false}
-                userLocationAnnotationTitle="Your live location"
-              >
-                {/* Photographer's registered location marker */}
-                {photographerProfile?.latitude && photographerProfile?.longitude && (
-                  <Marker
-                    coordinate={{
-                      latitude: Number(photographerProfile.latitude),
-                      longitude: Number(photographerProfile.longitude),
-                    }}
-                    title="Your Location"
-                    description={photographerProfile?.city || 'Registered location'}
-                  >
-                    <View style={styles.myLocationMarker}>
-                      <View style={styles.myLocationMarkerInner}>
-                        <MapPin size={16} color="#fff" />
-                      </View>
-                    </View>
-                  </Marker>
-                )}
-
-                {/* Customer Live Location Marker */}
-                {customerLiveLocation && (
-                  <Marker
-                    key="customer-live"
-                    coordinate={{
-                      latitude: customerLiveLocation.lat,
-                      longitude: customerLiveLocation.lng,
-                    }}
-                    title="Customer's Location"
-                    onPress={() => router.push(`/(photographer)/booking/${customerLiveLocation.bookingId}`)}
-                    testID="marker-customer-live"
-                  >
-                    <View style={styles.liveLocationMarker}>
-                      <View style={styles.liveLocationPulse} />
-                      <View style={styles.liveLocationDot} />
-                    </View>
-                  </Marker>
-                )}
-
-                {/* Upcoming booking markers */}
-                {upcomingBookingsWithLocation.map(booking => (
-                  <Marker
-                    key={booking.id}
-                    coordinate={{
-                      latitude: parseFloat(booking.meetingLatitude),
-                      longitude: parseFloat(booking.meetingLongitude),
-                    }}
-                    onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
-                  >
-                    <View style={[
-                      styles.bookingMarker,
-                      { backgroundColor: isToday(booking.scheduledDate) ? '#22c55e' : '#8b5cf6' }
-                    ]}>
-                      <View style={styles.bookingMarkerInner} />
-                    </View>
-                  </Marker>
-                ))}
-              </MapView>
-
-              {/* Map Controls */}
-              <View style={styles.mapControls}>
-                <TouchableOpacity style={styles.mapControlButton}>
-                  <Layers size={16} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.mapControlButton}>
-                  <Navigation size={16} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Legend */}
-              <View style={styles.mapLegend}>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#2563eb' }]} />
-                  <Text style={styles.legendText}>You</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#22c55e' }]} />
-                  <Text style={styles.legendText}>Today</Text>
-                </View>
-                <View style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: '#8b5cf6' }]} />
-                  <Text style={styles.legendText}>Upcoming</Text>
-                </View>
-              </View>
             </View>
           </View>
 
@@ -578,107 +389,8 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 28, fontWeight: '700', color: '#fff' },
   statSubtext: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
 
-  mapSection: { marginBottom: 20 },
   sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
-  mapContainer: {
-    height: 220,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  map: { flex: 1 },
-  mapControls: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    gap: 8,
-  },
-  mapControlButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  mapLegend: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    flexDirection: 'row',
-    gap: 16,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 12, height: 12, borderRadius: 6 },
-  legendText: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
-  myLocationMarker: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  myLocationMarkerInner: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#2563eb',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  bookingMarker: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  bookingMarkerInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#fff',
-  },
-  liveLocationMarker: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveLocationPulse: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(59, 130, 246, 0.3)',
-  },
-  liveLocationDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
 
   tipsSection: { marginBottom: 20 },
   tipCard: {
