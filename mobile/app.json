@@ -29,7 +29,18 @@
       "output": "static",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-secure-store", "expo-location"],
+    "plugins": [
+      "expo-router", 
+      "expo-secure-store", 
+      "expo-location",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.snapnow.app",
+          "enableGooglePay": true
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
     }
