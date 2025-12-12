@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MapPin, Navigation, ExternalLink, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react-native';
+import { MapPin, Navigation, MessageSquare, Clock, CheckCircle, AlertCircle } from 'lucide-react-native';
 import { snapnowApi } from '../api/snapnowApi';
 import api from '../api/client';
 
@@ -198,17 +198,6 @@ export function MeetUpExperience({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const openInMaps = (lat: number, lng: number, label: string) => {
-    const scheme = Platform.OS === 'ios' ? 'maps:' : 'geo:';
-    const url = Platform.OS === 'ios'
-      ? `${scheme}?q=${encodeURIComponent(label)}&ll=${lat},${lng}`
-      : `${scheme}${lat},${lng}?q=${lat},${lng}(${encodeURIComponent(label)})`;
-    Linking.openURL(url).catch(() => {
-      const webUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-      Linking.openURL(webUrl);
-    });
   };
 
   const otherPartyLabel = userType === 'customer' ? 'Photographer' : 'Customer';
@@ -462,17 +451,6 @@ export function MeetUpExperience({
           <Text style={styles.notesText}>{meetingNotes}</Text>
         </View>
       )}
-
-      {/* Open in Maps Button */}
-      {hasMeetingPoint && (
-        <TouchableOpacity 
-          style={styles.directionsButton}
-          onPress={() => openInMaps(parseFloat(meetingLatitude!), parseFloat(meetingLongitude!), locationName)}
-        >
-          <ExternalLink size={16} color={PRIMARY_COLOR} />
-          <Text style={styles.directionsButtonText}>Open in Maps</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 }
@@ -531,7 +509,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.1)',
   },
   map: {
-    height: 180,
+    height: 250,
   },
   mapHint: {
     fontSize: 11,
@@ -641,22 +619,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#d1d5db',
     lineHeight: 20,
-  },
-  directionsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-    borderRadius: 12,
-    padding: 14,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(37, 99, 235, 0.3)',
-  },
-  directionsButtonText: {
-    color: PRIMARY_COLOR,
-    fontSize: 14,
-    fontWeight: '600',
   },
   useLocationButton: {
     flexDirection: 'row',
