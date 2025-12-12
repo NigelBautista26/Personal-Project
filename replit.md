@@ -42,13 +42,11 @@ Preferred communication style: Simple, everyday language.
 - Modular route registration pattern
 
 **Authentication & Security:**
-- Dual authentication system supporting both web and mobile:
-  - Web: Session-based authentication using express-session with HTTP-only cookies
-  - Mobile: Token-based authentication via `X-Session-Token` header (session ID returned in login response)
+- Session-based authentication using express-session
 - Bcrypt for password hashing (10 salt rounds)
-- HTTP-only cookies with SameSite protection for web
+- HTTP-only cookies with SameSite protection
 - Session secret required in production environment
-- Mobile token stored securely using expo-secure-store
+- No JWT implementation
 
 **Database Layer:**
 - Drizzle ORM for type-safe database queries
