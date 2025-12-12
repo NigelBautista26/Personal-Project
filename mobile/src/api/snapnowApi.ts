@@ -268,4 +268,18 @@ export const snapnowApi = {
       return null;
     }
   },
+
+  // Mobile payment session (token-based auth for WebView checkout)
+  async createMobilePaymentSession(data: {
+    photographerId: string;
+    duration: number;
+    location: string;
+    scheduledDate: string;
+    scheduledTime: string;
+    amount: number;
+    photographerName: string;
+  }): Promise<{ token: string; expiresIn: number }> {
+    const response = await api.post('/api/mobile/create-payment-session', data);
+    return response.data;
+  },
 };

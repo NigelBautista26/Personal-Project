@@ -2226,6 +2226,190 @@ export async function registerRoutes(
     }
   });
 
+  // Mobile Payment Session - token-based auth for WebView checkout
+  // Store for temporary mobile payment tokens (in production, use Redis/database)
+  const mobilePaymentTokens = new Map<string, { userId: string; bookingData: any; expiresAt: number }>();
+  
+  // Create a mobile payment session with a temporary token
+  app.post("/api/mobile/create-payment-session", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { photographerId, duration, location, scheduledDate, scheduledTime, amount, photographerName } = req.body;
+      
+      // Generate a random token
+      const token = crypto.randomUUID() + '-' + Date.now().toString(36);
+      
+      // Store the token with booking data (expires in 10 minutes)
+      mobilePaymentTokens.set(token, {
+        userId: req.session.userId,
+        bookingData: { photographerId, duration, location, scheduledDate, scheduledTime, amount, photographerName },
+        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      });
+      
+      // Clean up expired tokens
+      Array.from(mobilePaymentTokens.entries()).forEach(([key, value]) => {
+        if (value.expiresAt < Date.now()) {
+          mobilePaymentTokens.delete(key);
+        }
+      });
+      
+      res.json({ token, expiresIn: 600 });
+    } catch (error: any) {
+      console.error("Mobile payment session error:", error);
+      res.status(500).json({ error: error.message || "Failed to create payment session" });
+    }
+  });
+  
+  // Get payment session data by token (for mobile checkout page)
+  app.get("/api/mobile/payment-session/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const session = mobilePaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      if (session.expiresAt < Date.now()) {
+        mobilePaymentTokens.delete(token);
+        return res.status(410).json({ error: "Session expired" });
+      }
+      
+      // Get stripe config
+      const configured = await isStripeConfigured();
+      if (!configured) {
+        return res.status(503).json({ error: "Payment not configured" });
+      }
+      
+      const publishableKey = await getStripePublishableKey();
+      
+      res.json({
+        bookingData: session.bookingData,
+        stripePublishableKey: publishableKey,
+      });
+    } catch (error: any) {
+      console.error("Get payment session error:", error);
+      res.status(500).json({ error: error.message || "Failed to get payment session" });
+    }
+  });
+  
+  // Create payment intent using mobile token (no session required)
+  app.post("/api/mobile/create-payment-intent/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const session = mobilePaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      if (session.expiresAt < Date.now()) {
+        mobilePaymentTokens.delete(token);
+        return res.status(410).json({ error: "Session expired" });
+      }
+      
+      const { amount, photographerName } = session.bookingData;
+      
+      const stripe = await getUncachableStripeClient();
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: 'gbp',
+        capture_method: 'manual',
+        metadata: {
+          mobileToken: token,
+          userId: session.userId,
+          photographerName: photographerName || 'Photographer',
+        },
+        description: `SnapNow Photography Session${photographerName ? ` with ${photographerName}` : ''}`,
+      });
+      
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error: any) {
+      console.error("Mobile payment intent error:", error);
+      res.status(500).json({ error: error.message || "Failed to create payment intent" });
+    }
+  });
+  
+  // Complete booking after payment (using mobile token)
+  app.post("/api/mobile/complete-booking/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { paymentIntentId } = req.body;
+      
+      const session = mobilePaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      const { photographerId, duration, location, scheduledDate, scheduledTime } = session.bookingData;
+      
+      // Get photographer info for pricing
+      const photographer = await storage.getPhotographer(photographerId);
+      if (!photographer) {
+        return res.status(404).json({ error: "Photographer not found" });
+      }
+      
+      const baseAmount = parseFloat(photographer.hourlyRate) * duration;
+      const serviceFee = baseAmount * 0.1;
+      const totalAmount = baseAmount + serviceFee;
+      const platformFee = baseAmount * 0.2;
+      const photographerEarnings = baseAmount - platformFee;
+      
+      // Calculate expiration time
+      const sessionDate = new Date(scheduledDate);
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      sessionDate.setHours(hours, minutes, 0, 0);
+      
+      const now = new Date();
+      const hoursUntilSession = (sessionDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+      
+      let expirationMinutes: number;
+      if (hoursUntilSession <= 2) {
+        expirationMinutes = 30;
+      } else if (hoursUntilSession <= 6) {
+        expirationMinutes = 60;
+      } else if (hoursUntilSession <= 24) {
+        expirationMinutes = 4 * 60;
+      } else {
+        expirationMinutes = 24 * 60;
+      }
+      
+      const expiresAt = new Date(now.getTime() + expirationMinutes * 60 * 1000);
+      
+      const booking = await storage.createBooking({
+        customerId: session.userId,
+        photographerId,
+        duration,
+        location,
+        scheduledDate: sessionDate,
+        scheduledTime,
+        baseAmount: baseAmount.toFixed(2),
+        customerServiceFee: serviceFee.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        platformFee: platformFee.toFixed(2),
+        photographerEarnings: photographerEarnings.toFixed(2),
+        stripePaymentId: paymentIntentId,
+        expiresAt: expiresAt,
+      });
+      
+      // Clean up the token
+      mobilePaymentTokens.delete(token);
+      
+      res.json({ success: true, bookingId: booking.id });
+    } catch (error: any) {
+      console.error("Mobile complete booking error:", error);
+      res.status(500).json({ error: error.message || "Failed to complete booking" });
+    }
+  });
+
   // Stripe Payment Routes
   app.get("/api/stripe/config", async (req, res) => {
     try {

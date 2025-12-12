@@ -80,6 +80,8 @@ export default function BookingScreen() {
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
+  const [paymentToken, setPaymentToken] = useState<string | null>(null);
+  const [isCreatingPaymentSession, setIsCreatingPaymentSession] = useState(false);
 
   const { data: photographer, isLoading } = useQuery({
     queryKey: ['photographer', id],
@@ -99,8 +101,30 @@ export default function BookingScreen() {
     setStep(2);
   };
 
-  const handleOpenPayment = () => {
-    setShowPaymentWebView(true);
+  const handleOpenPayment = async () => {
+    if (isCreatingPaymentSession) return;
+    
+    setIsCreatingPaymentSession(true);
+    try {
+      // Create a mobile payment session with all booking data
+      const response = await snapnowApi.createMobilePaymentSession({
+        photographerId: id!,
+        duration,
+        location,
+        scheduledDate: selectedDate,
+        scheduledTime: selectedTime,
+        amount: totalPrice,
+        photographerName: photographer?.fullName || 'Photographer',
+      });
+      
+      setPaymentToken(response.token);
+      setShowPaymentWebView(true);
+    } catch (error: any) {
+      console.error('Failed to create payment session:', error);
+      Alert.alert('Error', error.message || 'Failed to start payment. Please try again.');
+    } finally {
+      setIsCreatingPaymentSession(false);
+    }
   };
 
   const handleBack = () => {
@@ -202,8 +226,8 @@ export default function BookingScreen() {
   const photographerCity = photographer?.city || photographer?.location?.split(',')[0] || 'London';
   const spots = PHOTO_SPOTS[photographerCity] || PHOTO_SPOTS['London'];
 
-  // Build the web booking URL with all the parameters
-  const webBookingUrl = `${API_URL}/book/${id}?duration=${duration}&date=${selectedDate}&time=${selectedTime}&location=${encodeURIComponent(location)}&step=2`;
+  // Build the mobile checkout URL with the payment token
+  const mobileCheckoutUrl = paymentToken ? `${API_URL}/mobile-checkout?token=${paymentToken}` : '';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -522,7 +546,7 @@ export default function BookingScreen() {
           </View>
           <WebView
             ref={webViewRef}
-            source={{ uri: webBookingUrl }}
+            source={{ uri: mobileCheckoutUrl }}
             style={styles.webView}
             javaScriptEnabled={true}
             domStorageEnabled={true}

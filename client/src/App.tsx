@@ -36,6 +36,7 @@ import InvestorProjections from "@/pages/investor-projections";
 import FundingPlan from "@/pages/funding-plan";
 import FounderCV from "@/pages/founder-cv";
 import MobileGuide from "@/pages/mobile-guide";
+import MobileCheckout from "@/pages/mobile-checkout";
 
 function Router() {
   return (
@@ -72,6 +73,7 @@ function Router() {
       <Route path="/funding-plan" component={FundingPlan} />
       <Route path="/founder-cv" component={FounderCV} />
       <Route path="/mobile-guide" component={MobileGuide} />
+      <Route path="/mobile-checkout" component={MobileCheckout} />
       <Route component={NotFound} />
     </Switch>
   );
