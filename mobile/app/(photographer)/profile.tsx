@@ -60,7 +60,10 @@ export default function PhotographerProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/');
+            // Navigate back to root - go back until we can't anymore
+            while (router.canGoBack()) {
+              router.back();
+            }
           },
         },
       ]

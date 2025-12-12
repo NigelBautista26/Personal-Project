@@ -37,7 +37,10 @@ export default function CustomerProfileScreen() {
           style: 'destructive',
           onPress: async () => {
             await logout();
-            router.replace('/');
+            // Navigate back to root - dismissAll clears the navigation stack
+            while (router.canGoBack()) {
+              router.back();
+            }
           },
         },
       ]
