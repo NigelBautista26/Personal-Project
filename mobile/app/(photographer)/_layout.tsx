@@ -12,8 +12,16 @@ const PRIMARY_COLOR = '#2563eb';
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user, isAuthenticated, isProfileLoading } = useAuth();
 
-  // Show loading while auth check or redirect is pending
-  if (isLoading || !isAuthenticated || !user || user.role !== 'photographer') {
+  // Only show loading during initial auth check
+  if (isLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated || !user || user.role !== 'photographer') {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />

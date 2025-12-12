@@ -9,7 +9,6 @@ const PRIMARY_COLOR = '#2563eb';
 export default function CustomerLayout() {
   const { user, isLoading, isAuthenticated } = useAuth();
 
-  // Show loading while auth check or redirect is pending
   if (isLoading || !isAuthenticated || !user) {
     return (
       <View style={styles.loading}>
