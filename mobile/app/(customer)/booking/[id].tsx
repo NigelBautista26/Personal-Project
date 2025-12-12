@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -26,6 +26,9 @@ const PRIMARY_COLOR = '#2563eb';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+  
+  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [photographerLocation, setPhotographerLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
@@ -223,15 +226,56 @@ export default function BookingDetailScreen() {
                     zoomEnabled={false}
                     rotateEnabled={false}
                   >
+                    {/* Meeting Point Marker */}
                     <Marker
                       coordinate={{ 
                         latitude: parseFloat(booking.meetingLatitude), 
                         longitude: parseFloat(booking.meetingLongitude) 
                       }}
                       pinColor={PRIMARY_COLOR}
+                      title="Meeting Point"
                     />
+                    {/* My Live Location (blue) */}
+                    {myLocation && (
+                      <Marker
+                        coordinate={{ latitude: myLocation.lat, longitude: myLocation.lng }}
+                        title="You"
+                      >
+                        <View style={styles.liveMarker}>
+                          <View style={[styles.liveMarkerInner, { backgroundColor: PRIMARY_COLOR }]} />
+                        </View>
+                      </Marker>
+                    )}
+                    {/* Photographer's Live Location (green) */}
+                    {photographerLocation && (
+                      <Marker
+                        coordinate={{ latitude: photographerLocation.lat, longitude: photographerLocation.lng }}
+                        title="Photographer"
+                      >
+                        <View style={styles.liveMarker}>
+                          <View style={[styles.liveMarkerInner, { backgroundColor: '#22c55e' }]} />
+                        </View>
+                      </Marker>
+                    )}
                   </MapView>
                 </View>
+                {/* Live Location Legend */}
+                {(myLocation || photographerLocation) && (
+                  <View style={styles.mapLegend}>
+                    {myLocation && (
+                      <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: PRIMARY_COLOR }]} />
+                        <Text style={styles.legendText}>You</Text>
+                      </View>
+                    )}
+                    {photographerLocation && (
+                      <View style={styles.legendItem}>
+                        <View style={[styles.legendDot, { backgroundColor: '#22c55e' }]} />
+                        <Text style={styles.legendText}>Photographer</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
                 {booking.meetingNotes && (
                   <View style={styles.meetingNotesDisplay}>
                     <Text style={styles.meetingNotesText}>{booking.meetingNotes}</Text>
@@ -256,6 +300,8 @@ export default function BookingDetailScreen() {
               scheduledDate={booking.scheduledDate}
               scheduledTime={booking.scheduledTime}
               userType="customer"
+              onLocationUpdate={setMyLocation}
+              onOtherPartyLocation={(loc) => setPhotographerLocation(loc ? { lat: loc.lat, lng: loc.lng } : null)}
             />
           </View>
         )}
@@ -500,6 +546,47 @@ const styles = StyleSheet.create({
   meetingNotesText: {
     color: '#d1d5db',
     fontSize: 14,
+  },
+  liveMarker: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  liveMarkerInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  mapLegend: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    color: '#9ca3af',
+    fontSize: 12,
   },
   waitingForLocationCard: {
     backgroundColor: 'rgba(255,255,255,0.05)',
