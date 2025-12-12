@@ -25,7 +25,8 @@
     "react-native-screens": "*",
     "react-native-svg": "*",
     "react-native-maps": "^1.10.0",
-    "lucide-react-native": "^0.300.0"
+    "lucide-react-native": "^0.300.0",
+    "react-native-webview": "^13.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

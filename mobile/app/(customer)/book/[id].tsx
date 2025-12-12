@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,9 +12,10 @@ import {
   Image,
   Modal,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, MessageSquare, Navigation, X, ChevronRight, CreditCard, Lock } from 'lucide-react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeft, Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -57,44 +58,25 @@ const formatTime12h = (time: string) => {
 export default function BookingScreen() {
   const { id, duration: durationParam } = useLocalSearchParams<{ id: string; duration?: string }>();
   const queryClient = useQueryClient();
+  const webViewRef = useRef<WebView>(null);
   
   const [step, setStep] = useState(1);
   const [duration, setDuration] = useState(Number(durationParam) || 1);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState('14:00');
   const [location, setLocation] = useState('');
-  const [notes, setNotes] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
 
   const { data: photographer, isLoading } = useQuery({
     queryKey: ['photographer', id],
     queryFn: () => snapnowApi.getPhotographer(id!),
     enabled: !!id,
-  });
-
-  const bookingMutation = useMutation({
-    mutationFn: (data: {
-      photographerId: string;
-      scheduledDate: string;
-      scheduledTime: string;
-      duration: number;
-      location: string;
-    }) => snapnowApi.createBooking(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
-      Alert.alert(
-        'Booking Requested',
-        'Your booking request has been sent to the photographer. You will be notified when they respond.',
-        [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
-      );
-    },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to create booking. Please try again.');
-    },
   });
 
   const handleContinueToPayment = () => {
@@ -109,16 +91,27 @@ export default function BookingScreen() {
     setStep(2);
   };
 
-  const handleSubmit = () => {
-    const scheduledDateTime = `${selectedDate}T${selectedTime}:00.000Z`;
+  const handleOpenPayment = () => {
+    setShowPaymentWebView(true);
+  };
 
-    bookingMutation.mutate({
-      photographerId: id!,
-      scheduledDate: scheduledDateTime,
-      scheduledTime: selectedTime,
-      duration,
-      location: location.trim(),
-    });
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data.type === 'PAYMENT_SUCCESS') {
+        setShowPaymentWebView(false);
+        queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
+        Alert.alert(
+          'Booking Confirmed!',
+          'Your payment was successful and booking request has been sent to the photographer.',
+          [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
+        );
+      } else if (data.type === 'PAYMENT_CANCELLED') {
+        setShowPaymentWebView(false);
+      }
+    } catch (e) {
+      // Not a JSON message, ignore
+    }
   };
 
   const handleBack = () => {
@@ -201,6 +194,9 @@ export default function BookingScreen() {
   const dateOptions = generateDateOptions();
   const photographerCity = photographer?.city || photographer?.location?.split(',')[0] || 'London';
   const spots = PHOTO_SPOTS[photographerCity] || PHOTO_SPOTS['London'];
+
+  // Build the web booking URL with all the parameters
+  const webBookingUrl = `${API_URL.replace('/api', '')}/book/${id}?duration=${duration}&date=${selectedDate}&time=${selectedTime}&location=${encodeURIComponent(location)}&mobile=true`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -397,10 +393,15 @@ export default function BookingScreen() {
                 </Text>
               </View>
 
-              <View style={styles.cardInputPlaceholder}>
+              <TouchableOpacity
+                style={styles.cardInputPlaceholder}
+                onPress={handleOpenPayment}
+                testID="button-open-payment"
+              >
                 <CreditCard size={20} color="#6b7280" />
-                <Text style={styles.cardInputText}>Card number</Text>
-              </View>
+                <Text style={styles.cardInputText}>Tap to enter card details</Text>
+                <ChevronRight size={18} color="#6b7280" />
+              </TouchableOpacity>
 
               <View style={styles.securedBy}>
                 <Lock size={12} color="#6b7280" />
@@ -416,12 +417,12 @@ export default function BookingScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.submitButton, bookingMutation.isPending && styles.submitButtonDisabled]}
-          onPress={step === 1 ? handleContinueToPayment : handleSubmit}
-          disabled={bookingMutation.isPending}
+          style={[styles.submitButton, isProcessingPayment && styles.submitButtonDisabled]}
+          onPress={step === 1 ? handleContinueToPayment : handleOpenPayment}
+          disabled={isProcessingPayment}
           testID="button-submit"
         >
-          {bookingMutation.isPending ? (
+          {isProcessingPayment ? (
             <ActivityIndicator color="#fff" />
           ) : (
             <Text style={styles.submitButtonText}>
@@ -430,6 +431,51 @@ export default function BookingScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Payment WebView Modal */}
+      <Modal
+        visible={showPaymentWebView}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowPaymentWebView(false)}
+      >
+        <SafeAreaView style={styles.webViewContainer}>
+          <View style={styles.webViewHeader}>
+            <TouchableOpacity onPress={() => setShowPaymentWebView(false)} style={styles.webViewClose}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.webViewTitle}>Complete Payment</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <WebView
+            ref={webViewRef}
+            source={{ uri: webBookingUrl }}
+            style={styles.webView}
+            onMessage={handleWebViewMessage}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={styles.webViewLoading}>
+                <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+                <Text style={styles.webViewLoadingText}>Loading payment form...</Text>
+              </View>
+            )}
+            onNavigationStateChange={(navState) => {
+              // Check if navigated to success page
+              if (navState.url.includes('/bookings') || navState.url.includes('success')) {
+                setShowPaymentWebView(false);
+                queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
+                Alert.alert(
+                  'Booking Confirmed!',
+                  'Your payment was successful and booking request has been sent.',
+                  [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
+                );
+              }
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
 
       {/* Date Picker Modal */}
       <Modal
@@ -752,7 +798,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  cardInputText: { fontSize: 15, color: '#6b7280' },
+  cardInputText: { fontSize: 15, color: '#6b7280', flex: 1 },
   securedBy: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -777,6 +823,31 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  webViewContainer: { flex: 1, backgroundColor: '#0a0a0a' },
+  webViewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  webViewClose: { padding: 8 },
+  webViewTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
+  webView: { flex: 1, backgroundColor: '#0a0a0a' },
+  webViewLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+  webViewLoadingText: { color: '#9ca3af', marginTop: 16, fontSize: 14 },
 
   modalContainer: { flex: 1, backgroundColor: '#0a0a0a' },
   modalHeader: {
