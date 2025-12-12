@@ -51,10 +51,19 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const status = error.response?.status;
     const config = error.config;
+    const retryCount = (config as any)?._retryCount || 0;
+    
+    // Handle network errors (server sleeping or unreachable)
+    if (!error.response && config && retryCount < 3) {
+      (config as any)._retryCount = retryCount + 1;
+      console.log(`Network error, retrying (${retryCount + 1}/3) in 2s...`);
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return api(config);
+    }
     
     // Handle server temporarily unavailable
-    if ((status === 502 || status === 503 || status === 504) && config && !(config as any)._retry) {
-      (config as any)._retry = true;
+    if ((status === 502 || status === 503 || status === 504) && config && retryCount < 3) {
+      (config as any)._retryCount = retryCount + 1;
       console.log(`Server temporarily unavailable (${status}), retrying in 2s...`);
       await new Promise(resolve => setTimeout(resolve, 2000));
       return api(config);
@@ -69,6 +78,11 @@ api.interceptors.response.use(
       console.log('API Error:', status, JSON.stringify(error.response.data).substring(0, 200));
     } else if (error.message) {
       console.log('API Error:', error.message);
+    }
+    
+    // Provide user-friendly error message for network issues
+    if (!error.response) {
+      error.message = 'Could not connect to the server. Please check your internet connection and try again.';
     }
     
     return Promise.reject(error);
