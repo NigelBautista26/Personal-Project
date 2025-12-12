@@ -17,7 +17,20 @@ function calculateSessionPhase(
   duration: number,
   status: string
 ): SessionPhase {
-  // Only confirmed bookings can be in_progress
+  // Handle different statuses appropriately
+  if (status === 'completed' || status === 'photos_pending') {
+    return 'completed';
+  }
+  
+  if (status === 'cancelled' || status === 'declined' || status === 'expired') {
+    return 'completed'; // Treat cancelled/declined as no longer active
+  }
+  
+  if (status === 'pending') {
+    return 'upcoming';
+  }
+  
+  // For confirmed bookings, calculate based on time
   if (status !== 'confirmed') {
     return 'upcoming';
   }
