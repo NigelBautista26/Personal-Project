@@ -43,8 +43,10 @@ export default function BookingDetailScreen() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | undefined | null) => {
+    if (!dateStr) return 'Date not set';
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Invalid Date';
     return date.toLocaleDateString('en-GB', { 
       weekday: 'long',
       day: 'numeric', 
@@ -150,7 +152,9 @@ export default function BookingDetailScreen() {
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Time & Duration</Text>
-                <Text style={styles.detailValue}>{booking.scheduledTime} ({booking.duration} hour{booking.duration > 1 ? 's' : ''})</Text>
+                <Text style={styles.detailValue}>
+                  {booking.scheduledTime || 'Time not set'} ({booking.duration || 1} hour{(booking.duration || 1) > 1 ? 's' : ''})
+                </Text>
               </View>
             </View>
 
@@ -160,7 +164,7 @@ export default function BookingDetailScreen() {
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Location</Text>
-                <Text style={styles.detailValue}>{booking.location}</Text>
+                <Text style={styles.detailValue}>{booking.location || 'Location not set'}</Text>
               </View>
             </View>
 

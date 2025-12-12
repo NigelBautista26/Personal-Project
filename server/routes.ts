@@ -884,6 +884,73 @@ export async function registerRoutes(
     }
   });
 
+  // Get single booking with related data (for mobile app detail pages)
+  app.get("/api/bookings/:bookingId", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify user is part of this booking (either customer or photographer)
+      const user = await storage.getUser(req.session.userId);
+      const photographer = await storage.getPhotographer(booking.photographerId);
+      
+      const isCustomer = booking.customerId === req.session.userId;
+      const isPhotographer = photographer?.userId === req.session.userId;
+      
+      if (!isCustomer && !isPhotographer) {
+        return res.status(403).json({ error: "Not authorized to view this booking" });
+      }
+      
+      // Get additional data based on user type
+      let enrichedBooking: any = { ...booking };
+      
+      // Add session phase
+      enrichedBooking.sessionPhase = calculateSessionPhase(
+        booking.scheduledDate,
+        booking.scheduledTime,
+        booking.duration,
+        booking.status
+      );
+      
+      if (isCustomer && photographer) {
+        // Customer view - include photographer info
+        const photographerUser = await storage.getUser(photographer.userId);
+        enrichedBooking.photographer = {
+          id: photographer.id,
+          profileImageUrl: photographer.profileImageUrl,
+          hourlyRate: photographer.hourlyRate,
+          user: photographerUser ? {
+            id: photographerUser.id,
+            fullName: photographerUser.fullName,
+            email: photographerUser.email,
+          } : null,
+        };
+      }
+      
+      if (isPhotographer) {
+        // Photographer view - include customer info
+        const customer = await storage.getUser(booking.customerId);
+        enrichedBooking.customer = customer ? {
+          id: customer.id,
+          fullName: customer.fullName,
+          email: customer.email,
+          profileImageUrl: customer.profileImageUrl,
+        } : null;
+      }
+      
+      res.json(enrichedBooking);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      res.status(500).json({ error: "Failed to fetch booking" });
+    }
+  });
+
   // Update booking status (for photographers to accept/decline)
   app.patch("/api/bookings/:bookingId/status", async (req, res) => {
     try {
