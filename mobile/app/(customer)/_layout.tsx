@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import { CityProvider } from '../../src/context/CityContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -24,25 +25,26 @@ export default function CustomerLayout() {
   }
 
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#000',
-          borderTopColor: 'rgba(37,99,235,0.3)',
-          borderTopWidth: 1,
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 70,
-        },
-        tabBarActiveTintColor: PRIMARY_COLOR,
-        tabBarInactiveTintColor: '#9ca3af',
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
-      }}
-    >
+    <CityProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {
+            backgroundColor: '#000',
+            borderTopColor: 'rgba(37,99,235,0.3)',
+            borderTopWidth: 1,
+            paddingBottom: 8,
+            paddingTop: 8,
+            height: 70,
+          },
+          tabBarActiveTintColor: PRIMARY_COLOR,
+          tabBarInactiveTintColor: '#9ca3af',
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: '600',
+          },
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
@@ -102,7 +104,8 @@ export default function CustomerLayout() {
           href: null,
         }}
       />
-    </Tabs>
+      </Tabs>
+    </CityProvider>
   );
 }
 
