@@ -91,23 +91,6 @@ export default function PhotographerBookingDetailScreen() {
     },
   });
 
-  const completeMutation = useMutation({
-    mutationFn: async () => {
-      const response = await api.patch(`/api/bookings/${id}/status`, { status: 'completed' });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
-      queryClient.invalidateQueries({ queryKey: ['photographer-earnings'] });
-      queryClient.invalidateQueries({ queryKey: ['booking', id] });
-      refetch();
-      Alert.alert('Success', 'Session marked as complete!');
-    },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to complete booking');
-    },
-  });
-
   const handleConfirm = () => {
     Alert.alert(
       'Confirm Booking',
@@ -126,17 +109,6 @@ export default function PhotographerBookingDetailScreen() {
       [
         { text: 'Cancel', style: 'cancel' },
         { text: 'Decline', style: 'destructive', onPress: () => declineMutation.mutate() },
-      ]
-    );
-  };
-
-  const handleComplete = () => {
-    Alert.alert(
-      'Complete Session',
-      'Mark this session as complete?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Complete', onPress: () => completeMutation.mutate() },
       ]
     );
   };
@@ -340,7 +312,6 @@ export default function PhotographerBookingDetailScreen() {
     return new Date() > sessionEndTime;
   };
   
-  const isConfirmed = booking.status === 'confirmed' && !hasSessionEnded();
   const canEditMeetingPoint = (booking.status === 'pending' || booking.status === 'confirmed') && !hasSessionEnded();
   const isPhotosPending = (booking.status === 'confirmed' && hasSessionEnded()) || booking.status === 'photos_pending';
 
@@ -580,23 +551,6 @@ export default function PhotographerBookingDetailScreen() {
         </View>
       )}
 
-      {isConfirmed && (
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={handleComplete}
-            disabled={completeMutation.isPending}
-            testID="button-complete"
-          >
-            {completeMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.completeButtonText}>Mark as Complete</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      )}
-
       {isPhotosPending && (
         <View style={styles.footer}>
           <TouchableOpacity
@@ -806,14 +760,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#22c55e',
   },
   confirmButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  completeButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: PRIMARY_COLOR,
-  },
-  completeButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   uploadButton: {
     flex: 1,
     flexDirection: 'row',
