@@ -32,13 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const profile = await snapnowApi.mePhotographer();
       setPhotographerProfile(profile);
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        setUser(null);
-        setPhotographerProfile(null);
-        await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
-      } else {
-        setPhotographerProfile(null);
-      }
+      // Don't clear user on 401 - the cookie might just be delayed
+      // Only set profile to null, user state managed separately
+      console.log('Failed to load photographer profile:', error?.response?.status || error?.message);
+      setPhotographerProfile(null);
     } finally {
       setIsProfileLoading(false);
     }
@@ -93,8 +90,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loggedInUser = await snapnowApi.login({ email, password });
     await SecureStore.setItemAsync(AUTH_FLAG_KEY, 'true');
     setUser(loggedInUser);
+    // Don't block on profile loading - let it load in background
+    // This prevents the spinner from showing after login
     if (loggedInUser.role === 'photographer') {
-      await refreshPhotographerProfile();
+      refreshPhotographerProfile(); // Fire and forget
     }
     return loggedInUser;
   };

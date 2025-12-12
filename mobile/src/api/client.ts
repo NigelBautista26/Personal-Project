@@ -29,25 +29,30 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Helper to save cookie - exported so login can await it
+export const saveCookieFromResponse = async (response: any): Promise<void> => {
+  try {
+    const setCookie = response.headers['set-cookie'];
+    if (setCookie) {
+      // Handle both string and array formats (React Native returns string)
+      const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+      // Extract the connect.sid cookie
+      const sessionCookie = cookies.find((c: string) => c.includes('connect.sid'));
+      if (sessionCookie) {
+        // Store just the cookie value (e.g., connect.sid=xxx)
+        const cookiePart = sessionCookie.split(';')[0];
+        await SecureStore.setItemAsync(COOKIE_KEY, cookiePart);
+      }
+    }
+  } catch (error) {
+    console.log('Error saving cookie:', error);
+  }
+};
+
 // Response interceptor to capture and store session cookie
 api.interceptors.response.use(
   async (response) => {
-    try {
-      const setCookie = response.headers['set-cookie'];
-      if (setCookie) {
-        // Handle both string and array formats (React Native returns string)
-        const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
-        // Extract the connect.sid cookie
-        const sessionCookie = cookies.find((c: string) => c.includes('connect.sid'));
-        if (sessionCookie) {
-          // Store just the cookie value (e.g., connect.sid=xxx)
-          const cookiePart = sessionCookie.split(';')[0];
-          await SecureStore.setItemAsync(COOKIE_KEY, cookiePart);
-        }
-      }
-    } catch (error) {
-      console.log('Error saving cookie:', error);
-    }
+    await saveCookieFromResponse(response);
     return response;
   },
   async (error: AxiosError) => {

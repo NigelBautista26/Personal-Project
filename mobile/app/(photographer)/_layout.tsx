@@ -10,9 +10,10 @@ import RejectedScreen from '../../src/screens/Rejected';
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
-  const { photographerProfile, isLoading, isProfileLoading, user, isAuthenticated } = useAuth();
+  const { photographerProfile, isLoading, user, isAuthenticated, isProfileLoading } = useAuth();
 
-  if (isLoading || isProfileLoading || !isAuthenticated || !user || user.role !== 'photographer') {
+  // Only show loading during initial auth check
+  if (isLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
@@ -20,17 +21,31 @@ export default function PhotographerLayout() {
     );
   }
 
-  if (!photographerProfile || photographerProfile.verificationStatus === undefined) {
+  if (!isAuthenticated || !user || user.role !== 'photographer') {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+      </View>
+    );
+  }
+
+  // Use hasPhotographerProfile from login response for routing
+  // This avoids waiting for the profile API which may fail due to cookie issues
+  if (!user.hasPhotographerProfile) {
     return <PhotographerOnboardingScreen />;
   }
 
-  if (photographerProfile.verificationStatus === 'pending_review') {
-    return <PendingVerificationScreen />;
+  // If profile loaded successfully, check verification status
+  if (photographerProfile) {
+    if (photographerProfile.verificationStatus === 'pending_review') {
+      return <PendingVerificationScreen />;
+    }
+    if (photographerProfile.verificationStatus === 'rejected') {
+      return <RejectedScreen />;
+    }
   }
 
-  if (photographerProfile.verificationStatus === 'rejected') {
-    return <RejectedScreen />;
-  }
+  // Show dashboard immediately - profile data will load in screens via React Query
 
   return (
     <Tabs
