@@ -286,143 +286,65 @@ export default function BookingScreen() {
               </View>
             </View>
 
-            {/* Date Selection - Inline Scroll */}
+            {/* Date & Time */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Calendar size={18} color={PRIMARY_COLOR} />
-                <Text style={styles.sectionTitle}>Select Date</Text>
+                <Text style={styles.sectionTitle}>Date & Time</Text>
               </View>
+              
+              {/* Date - Horizontal Scroll */}
+              <Text style={styles.pickerLabel}>Date</Text>
               <ScrollView 
                 horizontal 
                 showsHorizontalScrollIndicator={false}
-                style={styles.inlineDateScroll}
-                contentContainerStyle={styles.inlineDateContent}
+                style={styles.horizontalPickerScroll}
               >
                 {dateOptions.map((date) => {
                   const d = new Date(date.value);
-                  const dayNum = d.getDate();
-                  const dayName = d.toLocaleDateString('en-GB', { weekday: 'short' });
-                  const month = d.toLocaleDateString('en-GB', { month: 'short' });
                   const isSelected = selectedDate === date.value;
-                  const isToday = date.value === new Date().toISOString().split('T')[0];
                   return (
                     <TouchableOpacity
                       key={date.value}
-                      style={[styles.inlineDateCard, isSelected && styles.inlineDateCardActive]}
+                      style={[styles.horizontalPickerItem, isSelected && styles.horizontalPickerItemActive]}
                       onPress={() => setSelectedDate(date.value)}
-                      testID={`button-date-${date.value}`}
                     >
-                      <Text style={[styles.inlineDateDayName, isSelected && styles.inlineDateTextActive]}>
-                        {dayName}
+                      <Text style={[styles.horizontalPickerText, isSelected && styles.horizontalPickerTextActive]}>
+                        {date.label}
                       </Text>
-                      <Text style={[styles.inlineDateDayNum, isSelected && styles.inlineDateTextActive]}>
-                        {dayNum}
-                      </Text>
-                      <Text style={[styles.inlineDateMonth, isSelected && styles.inlineDateTextActive]}>
-                        {month}
-                      </Text>
-                      {isToday && <View style={[styles.inlineTodayDot, isSelected && styles.inlineTodayDotActive]} />}
                     </TouchableOpacity>
                   );
                 })}
               </ScrollView>
-            </View>
 
-            {/* Time Selection - Inline Wheel */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Clock size={18} color={PRIMARY_COLOR} />
-                <Text style={styles.sectionTitle}>Select Time</Text>
-              </View>
-              <View style={styles.inlineTimeContainer}>
-                {/* Hour Scroll */}
-                <View style={styles.inlineTimeColumn}>
-                  <Text style={styles.inlineTimeLabel}>Hour</Text>
-                  <ScrollView 
-                    style={styles.inlineTimeScroll}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled={true}
-                  >
-                    {hours.map((h) => (
-                      <TouchableOpacity
-                        key={h}
-                        style={[styles.inlineTimeItem, tempHour === h && styles.inlineTimeItemActive]}
-                        onPress={() => {
-                          setTempHour(h);
-                          let hour24 = h;
-                          if (tempAmPm === 'PM' && h !== 12) hour24 = h + 12;
-                          if (tempAmPm === 'AM' && h === 12) hour24 = 0;
-                          setSelectedTime(`${hour24.toString().padStart(2, '0')}:${tempMinute.toString().padStart(2, '0')}`);
-                        }}
-                      >
-                        <Text style={[styles.inlineTimeText, tempHour === h && styles.inlineTimeTextActive]}>
-                          {h}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-
-                {/* Minute Scroll */}
-                <View style={styles.inlineTimeColumn}>
-                  <Text style={styles.inlineTimeLabel}>Min</Text>
-                  <ScrollView 
-                    style={styles.inlineTimeScroll}
-                    showsVerticalScrollIndicator={false}
-                    nestedScrollEnabled={true}
-                  >
-                    {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].map((m) => (
-                      <TouchableOpacity
-                        key={m}
-                        style={[styles.inlineTimeItem, tempMinute === m && styles.inlineTimeItemActive]}
-                        onPress={() => {
-                          setTempMinute(m);
-                          let hour24 = tempHour;
-                          if (tempAmPm === 'PM' && tempHour !== 12) hour24 = tempHour + 12;
-                          if (tempAmPm === 'AM' && tempHour === 12) hour24 = 0;
-                          setSelectedTime(`${hour24.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
-                        }}
-                      >
-                        <Text style={[styles.inlineTimeText, tempMinute === m && styles.inlineTimeTextActive]}>
-                          {m.toString().padStart(2, '0')}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                </View>
-
-                {/* AM/PM */}
-                <View style={styles.inlineTimeColumn}>
-                  <Text style={styles.inlineTimeLabel}></Text>
-                  <View style={styles.inlineAmPmContainer}>
+              {/* Time - Horizontal Scroll */}
+              <Text style={[styles.pickerLabel, { marginTop: 16 }]}>Time</Text>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.horizontalPickerScroll}
+              >
+                {[
+                  '06:00', '06:30', '07:00', '07:30', '08:00', '08:30', '09:00', '09:30',
+                  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30',
+                  '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30',
+                  '18:00', '18:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30',
+                  '22:00', '22:30', '23:00', '23:30'
+                ].map((time) => {
+                  const isSelected = selectedTime === time;
+                  return (
                     <TouchableOpacity
-                      style={[styles.inlineAmPmButton, tempAmPm === 'AM' && styles.inlineAmPmButtonActive]}
-                      onPress={() => {
-                        setTempAmPm('AM');
-                        let hour24 = tempHour;
-                        if (tempHour === 12) hour24 = 0;
-                        setSelectedTime(`${hour24.toString().padStart(2, '0')}:${tempMinute.toString().padStart(2, '0')}`);
-                      }}
+                      key={time}
+                      style={[styles.horizontalPickerItem, isSelected && styles.horizontalPickerItemActive]}
+                      onPress={() => setSelectedTime(time)}
                     >
-                      <Text style={[styles.inlineAmPmText, tempAmPm === 'AM' && styles.inlineAmPmTextActive]}>AM</Text>
+                      <Text style={[styles.horizontalPickerText, isSelected && styles.horizontalPickerTextActive]}>
+                        {formatTime12h(time)}
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.inlineAmPmButton, tempAmPm === 'PM' && styles.inlineAmPmButtonActive]}
-                      onPress={() => {
-                        setTempAmPm('PM');
-                        let hour24 = tempHour;
-                        if (tempHour !== 12) hour24 = tempHour + 12;
-                        setSelectedTime(`${hour24.toString().padStart(2, '0')}:${tempMinute.toString().padStart(2, '0')}`);
-                      }}
-                    >
-                      <Text style={[styles.inlineAmPmText, tempAmPm === 'PM' && styles.inlineAmPmTextActive]}>PM</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-              <Text style={styles.selectedTimeDisplay}>
-                Selected: {formatTime12h(selectedTime)}
-              </Text>
+                  );
+                })}
+              </ScrollView>
             </View>
 
             {/* Meeting Location */}
@@ -1175,6 +1097,25 @@ const styles = StyleSheet.create({
   },
   amPmText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
   amPmTextActive: { color: '#fff', fontWeight: '600' },
+
+  // Horizontal Picker Styles
+  pickerLabel: { fontSize: 13, color: '#9ca3af', marginBottom: 8, marginTop: 4 },
+  horizontalPickerScroll: { marginHorizontal: -16 },
+  horizontalPickerItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginHorizontal: 4,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  horizontalPickerItemActive: {
+    backgroundColor: PRIMARY_COLOR,
+    borderColor: PRIMARY_COLOR,
+  },
+  horizontalPickerText: { fontSize: 14, color: '#fff' },
+  horizontalPickerTextActive: { color: '#fff', fontWeight: '600' },
 
   // Inline Date Picker Styles
   inlineDateScroll: { marginTop: 8 },
