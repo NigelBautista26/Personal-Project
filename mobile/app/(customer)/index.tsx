@@ -201,14 +201,15 @@ export default function CustomerMapScreen() {
     setSearchQuery('');
   };
 
-  const centerOnCity = () => {
-    if (mapRef.current) {
+  const centerOnUser = () => {
+    if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion({
-        latitude: selectedCity.lat,
-        longitude: selectedCity.lng,
-        latitudeDelta: 0.12,
-        longitudeDelta: 0.12,
+        ...userLocation,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
       }, 500);
+    } else {
+      Alert.alert('Location', 'Unable to get your location. Please enable location services.');
     }
   };
 
@@ -321,7 +322,7 @@ export default function CustomerMapScreen() {
         >
           <Layers size={20} color={mapType === 'satellite' ? PRIMARY_COLOR : '#fff'} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.controlButton} onPress={centerOnCity} testID="button-locate">
+        <TouchableOpacity style={styles.controlButton} onPress={centerOnUser} testID="button-locate">
           <Navigation size={20} color="#fff" />
         </TouchableOpacity>
       </View>
