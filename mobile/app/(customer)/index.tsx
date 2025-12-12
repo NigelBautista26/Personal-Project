@@ -54,7 +54,7 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: numbe
     { id: 1, name: 'Tower Bridge', latitude: 51.5055, longitude: -0.0754, image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=100' },
     { id: 2, name: 'Big Ben', latitude: 51.5007, longitude: -0.1246, image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=100' },
     { id: 3, name: 'London Eye', latitude: 51.5033, longitude: -0.1195, image: 'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=100' },
-    { id: 4, name: 'Buckingham Palace', latitude: 51.5014, longitude: -0.1419, image: 'https://images.unsplash.com/photo-1587056753321-c3fef73bfc71?w=100' },
+    { id: 4, name: 'Buckingham Palace', latitude: 51.5014, longitude: -0.1419, image: 'https://images.unsplash.com/photo-1533856493584-0c6ca8ca9ce3?w=100' },
   ],
   Paris: [
     { id: 1, name: 'Eiffel Tower', latitude: 48.8584, longitude: 2.2945, image: 'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=100' },
@@ -65,6 +65,51 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: numbe
     { id: 1, name: 'Statue of Liberty', latitude: 40.6892, longitude: -74.0445, image: 'https://images.unsplash.com/photo-1485738422979-f5c462d49f74?w=100' },
     { id: 2, name: 'Central Park', latitude: 40.7829, longitude: -73.9654, image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=100' },
     { id: 3, name: 'Brooklyn Bridge', latitude: 40.7061, longitude: -73.9969, image: 'https://images.unsplash.com/photo-1496588152823-86ff7695e68f?w=100' },
+  ],
+  Tokyo: [
+    { id: 1, name: 'Tokyo Tower', latitude: 35.6586, longitude: 139.7454, image: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=100' },
+    { id: 2, name: 'Senso-ji Temple', latitude: 35.7148, longitude: 139.7967, image: 'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=100' },
+    { id: 3, name: 'Shibuya Crossing', latitude: 35.6595, longitude: 139.7004, image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=100' },
+  ],
+  Dubai: [
+    { id: 1, name: 'Burj Khalifa', latitude: 25.1972, longitude: 55.2744, image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=100' },
+    { id: 2, name: 'Palm Jumeirah', latitude: 25.1124, longitude: 55.1390, image: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=100' },
+    { id: 3, name: 'Dubai Marina', latitude: 25.0805, longitude: 55.1403, image: 'https://images.unsplash.com/photo-1533395427226-788cee25cc7b?w=100' },
+  ],
+  Barcelona: [
+    { id: 1, name: 'Sagrada Familia', latitude: 41.4036, longitude: 2.1744, image: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=100' },
+    { id: 2, name: 'Park Guell', latitude: 41.4145, longitude: 2.1527, image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=100' },
+    { id: 3, name: 'La Barceloneta Beach', latitude: 41.3784, longitude: 2.1925, image: 'https://images.unsplash.com/photo-1523531294919-4bcd7c65e216?w=100' },
+  ],
+  Rome: [
+    { id: 1, name: 'Colosseum', latitude: 41.8902, longitude: 12.4922, image: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=100' },
+    { id: 2, name: 'Trevi Fountain', latitude: 41.9009, longitude: 12.4833, image: 'https://images.unsplash.com/photo-1525874684015-58379d421a52?w=100' },
+    { id: 3, name: 'Vatican City', latitude: 41.9029, longitude: 12.4534, image: 'https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=100' },
+  ],
+  Sydney: [
+    { id: 1, name: 'Sydney Opera House', latitude: -33.8568, longitude: 151.2153, image: 'https://images.unsplash.com/photo-1506973035872-a4ec16b8e8d9?w=100' },
+    { id: 2, name: 'Harbour Bridge', latitude: -33.8523, longitude: 151.2108, image: 'https://images.unsplash.com/photo-1524293581917-878a6d017c71?w=100' },
+    { id: 3, name: 'Bondi Beach', latitude: -33.8908, longitude: 151.2743, image: 'https://images.unsplash.com/photo-1523428096881-5bd79d043006?w=100' },
+  ],
+  Amsterdam: [
+    { id: 1, name: 'Canal Ring', latitude: 52.3676, longitude: 4.9041, image: 'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=100' },
+    { id: 2, name: 'Rijksmuseum', latitude: 52.3600, longitude: 4.8852, image: 'https://images.unsplash.com/photo-1583037189850-1921ae7c6c22?w=100' },
+    { id: 3, name: 'Anne Frank House', latitude: 52.3752, longitude: 4.8840, image: 'https://images.unsplash.com/photo-1576924542622-772281b13aa8?w=100' },
+  ],
+  Singapore: [
+    { id: 1, name: 'Marina Bay Sands', latitude: 1.2834, longitude: 103.8607, image: 'https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=100' },
+    { id: 2, name: 'Gardens by the Bay', latitude: 1.2816, longitude: 103.8636, image: 'https://images.unsplash.com/photo-1508964942454-1a56651d54ac?w=100' },
+    { id: 3, name: 'Merlion Park', latitude: 1.2868, longitude: 103.8545, image: 'https://images.unsplash.com/photo-1565967511849-76a60a516170?w=100' },
+  ],
+  'Los Angeles': [
+    { id: 1, name: 'Hollywood Sign', latitude: 34.1341, longitude: -118.3215, image: 'https://images.unsplash.com/photo-1515896769750-31548aa180ed?w=100' },
+    { id: 2, name: 'Santa Monica Pier', latitude: 34.0083, longitude: -118.4987, image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=100' },
+    { id: 3, name: 'Griffith Observatory', latitude: 34.1184, longitude: -118.3004, image: 'https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?w=100' },
+  ],
+  Berlin: [
+    { id: 1, name: 'Brandenburg Gate', latitude: 52.5163, longitude: 13.3777, image: 'https://images.unsplash.com/photo-1560969184-10fe8719e047?w=100' },
+    { id: 2, name: 'Berlin Wall', latitude: 52.5076, longitude: 13.3904, image: 'https://images.unsplash.com/photo-1528728329032-2972f65dfb3f?w=100' },
+    { id: 3, name: 'Museum Island', latitude: 52.5169, longitude: 13.4019, image: 'https://images.unsplash.com/photo-1566404791232-af9fe5c0bbb5?w=100' },
   ],
 };
 
