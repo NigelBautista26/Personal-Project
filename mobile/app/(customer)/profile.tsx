@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,18 +7,19 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
+import { ThemedAlert } from '../../src/components/ThemedAlert';
 
 const PRIMARY_COLOR = '#2563eb';
 const BG_COLOR = '#0a0a0f';
 
 export default function CustomerProfileScreen() {
   const { user, logout } = useAuth();
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   const getImageUrl = (path?: string) => {
     if (!path) return null;
@@ -27,21 +28,13 @@ export default function CustomerProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.dismissAll();
-          },
-        },
-      ]
-    );
+    setShowLogoutAlert(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutAlert(false);
+    await logout();
+    router.dismissAll();
   };
 
   const menuItems = [
@@ -123,6 +116,18 @@ export default function CustomerProfileScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       </SafeAreaView>
+
+      <ThemedAlert
+        visible={showLogoutAlert}
+        title="Log out"
+        message="Are you sure you want to log out?"
+        icon="logout"
+        onDismiss={() => setShowLogoutAlert(false)}
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowLogoutAlert(false) },
+          { text: 'Log out', style: 'destructive', onPress: confirmLogout },
+        ]}
+      />
     </View>
   );
 }

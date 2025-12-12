@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Alert,
   Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -24,12 +23,14 @@ import {
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
+import { ThemedAlert } from '../../src/components/ThemedAlert';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerProfileScreen() {
   const { user, photographerProfile, logout } = useAuth();
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   const getImageUrl = (path?: string | null) => {
     if (!path) return null;
@@ -50,21 +51,13 @@ export default function PhotographerProfileScreen() {
   const reviewCount = photographerProfile?.reviewCount || 0;
 
   const handleLogout = () => {
-    Alert.alert(
-      'Log out',
-      'Are you sure you want to log out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log out',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.dismissAll();
-          },
-        },
-      ]
-    );
+    setShowLogoutAlert(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutAlert(false);
+    await logout();
+    router.dismissAll();
   };
 
   return (
@@ -217,6 +210,18 @@ export default function PhotographerProfileScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+
+      <ThemedAlert
+        visible={showLogoutAlert}
+        title="Log out"
+        message="Are you sure you want to log out?"
+        icon="logout"
+        onDismiss={() => setShowLogoutAlert(false)}
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowLogoutAlert(false) },
+          { text: 'Log out', style: 'destructive', onPress: confirmLogout },
+        ]}
+      />
     </SafeAreaView>
   );
 }
