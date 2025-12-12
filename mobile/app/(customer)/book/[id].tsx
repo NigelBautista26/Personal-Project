@@ -71,6 +71,11 @@ export default function BookingScreen() {
   const [location, setLocation] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [tempHour, setTempHour] = useState(14);
+  const [tempMinute, setTempMinute] = useState(0);
+  const [tempAmPm, setTempAmPm] = useState<'AM' | 'PM'>('PM');
+  const hourScrollRef = useRef<ScrollView>(null);
+  const minuteScrollRef = useRef<ScrollView>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
@@ -159,12 +164,27 @@ export default function BookingScreen() {
     return dates;
   };
 
-  const timeSlots = [
-    '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
-    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
-    '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
-  ];
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12
+  const minutes = Array.from({ length: 60 }, (_, i) => i); // 0-59
+
+  const openTimePicker = () => {
+    // Parse current selectedTime to set temp values
+    const [h, m] = selectedTime.split(':').map(Number);
+    const hour12 = h % 12 || 12;
+    setTempHour(hour12);
+    setTempMinute(m);
+    setTempAmPm(h >= 12 ? 'PM' : 'AM');
+    setShowTimePicker(true);
+  };
+
+  const confirmTime = () => {
+    let hour24 = tempHour;
+    if (tempAmPm === 'PM' && tempHour !== 12) hour24 = tempHour + 12;
+    if (tempAmPm === 'AM' && tempHour === 12) hour24 = 0;
+    const timeStr = `${hour24.toString().padStart(2, '0')}:${tempMinute.toString().padStart(2, '0')}`;
+    setSelectedTime(timeStr);
+    setShowTimePicker(false);
+  };
 
   if (isLoading) {
     return (
@@ -289,7 +309,7 @@ export default function BookingScreen() {
 
                 <TouchableOpacity 
                   style={styles.dateTimePicker}
-                  onPress={() => setShowTimePicker(true)}
+                  onPress={openTimePicker}
                   testID="button-time-picker"
                 >
                   <View style={styles.dateTimePickerContent}>
@@ -522,50 +542,102 @@ export default function BookingScreen() {
         </SafeAreaView>
       </Modal>
 
-      {/* Time Picker Modal */}
+      {/* Time Picker Modal - Wheel Style */}
       <Modal
         visible={showTimePicker}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={true}
         onRequestClose={() => setShowTimePicker(false)}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Time</Text>
-            <TouchableOpacity onPress={() => setShowTimePicker(false)}>
-              <X size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
-          <ScrollView style={styles.timePickerContent} contentContainerStyle={styles.timePickerScroll}>
-            <Text style={styles.timePickerSubtitle}>Choose a time slot for your session</Text>
-            <View style={styles.timeGrid}>
-              {timeSlots.map((time) => {
-                const isSelected = selectedTime === time;
-                return (
-                  <TouchableOpacity
-                    key={time}
-                    style={[
-                      styles.timeCard,
-                      isSelected && styles.timeCardActive,
-                    ]}
-                    onPress={() => {
-                      setSelectedTime(time);
-                      setShowTimePicker(false);
-                    }}
-                  >
-                    <Clock size={16} color={isSelected ? '#fff' : '#6b7280'} />
-                    <Text style={[
-                      styles.timeCardText,
-                      isSelected && styles.timeCardTextActive,
-                    ]}>
-                      {formatTime12h(time)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+        <View style={styles.wheelModalOverlay}>
+          <View style={styles.wheelModalContent}>
+            <View style={styles.wheelModalHeader}>
+              <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                <Text style={styles.wheelModalCancel}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={styles.wheelModalTitle}>Select Time</Text>
+              <TouchableOpacity onPress={confirmTime}>
+                <Text style={styles.wheelModalDone}>Done</Text>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
-        </SafeAreaView>
+            
+            <View style={styles.wheelContainer}>
+              {/* Hour Column */}
+              <View style={styles.wheelColumn}>
+                <Text style={styles.wheelLabel}>Hour</Text>
+                <ScrollView 
+                  ref={hourScrollRef}
+                  style={styles.wheelScroll}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={44}
+                  decelerationRate="fast"
+                >
+                  <View style={{ height: 66 }} />
+                  {hours.map((h) => (
+                    <TouchableOpacity
+                      key={h}
+                      style={[styles.wheelItem, tempHour === h && styles.wheelItemActive]}
+                      onPress={() => setTempHour(h)}
+                    >
+                      <Text style={[styles.wheelItemText, tempHour === h && styles.wheelItemTextActive]}>
+                        {h}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <View style={{ height: 66 }} />
+                </ScrollView>
+              </View>
+
+              {/* Minute Column */}
+              <View style={styles.wheelColumn}>
+                <Text style={styles.wheelLabel}>Min</Text>
+                <ScrollView 
+                  ref={minuteScrollRef}
+                  style={styles.wheelScroll}
+                  showsVerticalScrollIndicator={false}
+                  snapToInterval={44}
+                  decelerationRate="fast"
+                >
+                  <View style={{ height: 66 }} />
+                  {minutes.map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[styles.wheelItem, tempMinute === m && styles.wheelItemActive]}
+                      onPress={() => setTempMinute(m)}
+                    >
+                      <Text style={[styles.wheelItemText, tempMinute === m && styles.wheelItemTextActive]}>
+                        {m.toString().padStart(2, '0')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <View style={{ height: 66 }} />
+                </ScrollView>
+              </View>
+
+              {/* AM/PM Column */}
+              <View style={styles.wheelColumn}>
+                <Text style={styles.wheelLabel}></Text>
+                <View style={styles.amPmContainer}>
+                  <TouchableOpacity
+                    style={[styles.amPmButton, tempAmPm === 'AM' && styles.amPmButtonActive]}
+                    onPress={() => setTempAmPm('AM')}
+                  >
+                    <Text style={[styles.amPmText, tempAmPm === 'AM' && styles.amPmTextActive]}>AM</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.amPmButton, tempAmPm === 'PM' && styles.amPmButtonActive]}
+                    onPress={() => setTempAmPm('PM')}
+                  >
+                    <Text style={[styles.amPmText, tempAmPm === 'PM' && styles.amPmTextActive]}>PM</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+            {/* Selection Indicator */}
+            <View style={styles.wheelSelectionIndicator} pointerEvents="none" />
+          </View>
+        </View>
       </Modal>
 
       {/* Location Picker Modal */}
@@ -922,32 +994,83 @@ const styles = StyleSheet.create({
   },
   todayDotActive: { backgroundColor: '#fff' },
 
-  timePickerContent: { flex: 1 },
-  timePickerScroll: { padding: 16, paddingBottom: 32 },
-  timePickerSubtitle: { fontSize: 14, color: '#9ca3af', marginBottom: 16 },
-  timeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+  wheelModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
   },
-  timeCard: {
-    width: '31%',
+  wheelModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+  },
+  wheelModalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderWidth: 1,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  wheelModalCancel: { fontSize: 16, color: '#9ca3af' },
+  wheelModalTitle: { fontSize: 17, fontWeight: '600', color: '#fff' },
+  wheelModalDone: { fontSize: 16, fontWeight: '600', color: PRIMARY_COLOR },
+  wheelContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    height: 220,
+  },
+  wheelColumn: {
+    flex: 1,
+    alignItems: 'center',
+    maxWidth: 100,
+  },
+  wheelLabel: { fontSize: 13, color: '#6b7280', marginBottom: 8, height: 18 },
+  wheelScroll: {
+    height: 176,
+  },
+  wheelItem: {
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  wheelItemActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+    borderRadius: 8,
+  },
+  wheelItemText: { fontSize: 22, color: '#6b7280' },
+  wheelItemTextActive: { color: '#fff', fontWeight: '600' },
+  wheelSelectionIndicator: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    top: 120,
+    height: 44,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+    pointerEvents: 'none',
   },
-  timeCardActive: {
+  amPmContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    gap: 8,
+  },
+  amPmButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  amPmButtonActive: {
     backgroundColor: PRIMARY_COLOR,
-    borderColor: PRIMARY_COLOR,
   },
-  timeCardText: { fontSize: 14, color: '#fff' },
-  timeCardTextActive: { color: '#fff', fontWeight: '600' },
+  amPmText: { fontSize: 16, color: '#6b7280', textAlign: 'center' },
+  amPmTextActive: { color: '#fff', fontWeight: '600' },
 
   locationOption: {
     flexDirection: 'row',
