@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
+import { router } from 'expo-router';
 import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
@@ -26,6 +27,7 @@ export default function CustomerProfileScreen() {
 
   const handleLogout = async () => {
     await logout();
+    router.replace('/');
   };
 
   const menuItems = [
