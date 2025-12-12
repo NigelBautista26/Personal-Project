@@ -416,10 +416,9 @@ export default function CustomerBookingsScreen() {
   const formatFullDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-GB', { 
-      weekday: 'long', 
+      weekday: 'short', 
       day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
+      month: 'short'
     });
   };
 
