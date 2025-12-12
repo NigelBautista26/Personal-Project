@@ -186,24 +186,50 @@ export function LiveLocationSharing({
   }
 
   if (isSharing) {
+    const otherPartyLabel = userType === 'customer' ? 'Photographer' : 'Customer';
+    const hasOtherPartyLocation = otherPartyLocation && otherPartyLocation.latitude;
+    
     return (
-      <View style={[styles.container, styles.activeContainer]}>
-        <View style={[styles.iconContainer, styles.blueBg]}>
-          <Navigation size={20} color={PRIMARY_COLOR} />
-          <View style={styles.pulse} />
+      <View style={styles.sharingWrapper}>
+        {/* Your Location */}
+        <View style={[styles.container, styles.activeContainer]}>
+          <View style={[styles.iconContainer, styles.blueBg]}>
+            <Navigation size={20} color={PRIMARY_COLOR} />
+            <View style={styles.pulse} />
+          </View>
+          <View style={styles.content}>
+            <Text style={styles.title}>Sharing Your Location</Text>
+            {currentLocation && (
+              <View style={styles.locationRow}>
+                <MapPin size={12} color={PRIMARY_COLOR} />
+                <Text style={styles.locationText}>
+                  {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Loader2 size={20} color={PRIMARY_COLOR} style={styles.spinner} />
         </View>
-        <View style={styles.content}>
-          <Text style={styles.title}>Sharing Your Location</Text>
-          {currentLocation && (
-            <View style={styles.locationRow}>
-              <MapPin size={12} color={PRIMARY_COLOR} />
-              <Text style={styles.locationText}>
-                {currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)}
-              </Text>
-            </View>
-          )}
+
+        {/* Other Party's Location */}
+        <View style={[styles.container, hasOtherPartyLocation ? styles.greenContainer : styles.grayContainer, styles.marginTop]}>
+          <View style={[styles.iconContainer, hasOtherPartyLocation ? styles.greenBg : styles.grayBg]}>
+            <MapPin size={20} color={hasOtherPartyLocation ? '#22c55e' : '#9ca3af'} />
+          </View>
+          <View style={styles.content}>
+            <Text style={styles.title}>{otherPartyLabel}'s Location</Text>
+            {hasOtherPartyLocation ? (
+              <View style={styles.locationRow}>
+                <MapPin size={12} color="#22c55e" />
+                <Text style={[styles.locationText, styles.greenText]}>
+                  {parseFloat(otherPartyLocation.latitude).toFixed(4)}, {parseFloat(otherPartyLocation.longitude).toFixed(4)}
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.subtitle}>Waiting for {otherPartyLabel.toLowerCase()} to share...</Text>
+            )}
+          </View>
         </View>
-        <Loader2 size={20} color={PRIMARY_COLOR} style={styles.spinner} />
       </View>
     );
   }
@@ -222,6 +248,9 @@ export function LiveLocationSharing({
 }
 
 const styles = StyleSheet.create({
+  sharingWrapper: {
+    gap: 12,
+  },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -231,9 +260,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
+  marginTop: {
+    marginTop: 12,
+  },
   activeContainer: {
     backgroundColor: 'rgba(37, 99, 235, 0.05)',
     borderColor: 'rgba(37, 99, 235, 0.3)',
+  },
+  greenContainer: {
+    backgroundColor: 'rgba(34, 197, 94, 0.05)',
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  grayContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   errorContainer: {
     backgroundColor: 'rgba(239, 68, 68, 0.05)',
@@ -252,6 +292,9 @@ const styles = StyleSheet.create({
   },
   blueBg: {
     backgroundColor: 'rgba(37, 99, 235, 0.2)',
+  },
+  greenBg: {
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
   },
   redBg: {
     backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -288,6 +331,9 @@ const styles = StyleSheet.create({
     color: PRIMARY_COLOR,
     fontSize: 11,
     marginLeft: 4,
+  },
+  greenText: {
+    color: '#22c55e',
   },
   spinner: {
     marginLeft: 8,
