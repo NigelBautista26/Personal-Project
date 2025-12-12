@@ -177,13 +177,26 @@ export default function CustomerMapScreen() {
   };
 
   const filteredPhotographers = useMemo(() => {
-    if (!photographers || photographers.length === 0) return [];
+    if (!photographers || photographers.length === 0) {
+      console.log('[DEBUG] No photographers data');
+      return [];
+    }
     
-    return photographers.filter((p) => {
-      if (isNaN(p.latitude) || isNaN(p.longitude) || p.latitude === 0 || p.longitude === 0) return false;
+    console.log('[DEBUG] Total photographers:', photographers.length);
+    console.log('[DEBUG] Sample photographer:', JSON.stringify(photographers[0], null, 2));
+    
+    const filtered = photographers.filter((p) => {
+      if (isNaN(p.latitude) || isNaN(p.longitude) || p.latitude === 0 || p.longitude === 0) {
+        console.log('[DEBUG] Filtered out (invalid coords):', p.id, p.latitude, p.longitude);
+        return false;
+      }
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, p.latitude, p.longitude);
+      console.log('[DEBUG] Photographer', p.id, 'distance:', distance, 'km');
       return distance <= 50;
     });
+    
+    console.log('[DEBUG] Filtered photographers count:', filtered.length);
+    return filtered;
   }, [photographers, selectedCity]);
 
   const photoSpots = useMemo(() => {
@@ -265,17 +278,10 @@ export default function CustomerMapScreen() {
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-            >
-              <View style={styles.photographerMarker}>
-                <Image
-                  source={{ uri: getImageUrl(photographer) }}
-                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
-                />
-                <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
-                </View>
-              </View>
-            </Marker>
+              pinColor={isAvailable ? '#22c55e' : '#3b82f6'}
+              title={photographer.displayName || `${photographer.firstName} ${photographer.lastName}`}
+              description={`£${photographer.hourlyRate}/hr`}
+            />
           );
         })}
 
@@ -639,6 +645,19 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#3b82f6',
     backgroundColor: '#1a1a1a',
+  },
+  photographerMarkerImageContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 3,
+    borderColor: '#3b82f6',
+    backgroundColor: '#1a1a1a',
+    overflow: 'hidden',
+  },
+  photographerMarkerImageInner: {
+    width: '100%',
+    height: '100%',
   },
   photographerMarkerPrice: {
     backgroundColor: '#1a1a1a',
