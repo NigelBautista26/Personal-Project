@@ -2069,9 +2069,9 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Only the photographer can set the meeting location" });
       }
 
-      // Booking must be confirmed
-      if (booking.status !== "confirmed") {
-        return res.status(400).json({ error: "Can only set meeting location for confirmed bookings" });
+      // Booking must be pending or confirmed
+      if (booking.status !== "pending" && booking.status !== "confirmed") {
+        return res.status(400).json({ error: "Can only set meeting location for pending or confirmed bookings" });
       }
 
       const updatedBooking = await storage.updateMeetingLocation(
