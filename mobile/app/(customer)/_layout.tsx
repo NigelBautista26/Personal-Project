@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -9,19 +9,17 @@ const PRIMARY_COLOR = '#2563eb';
 export default function CustomerLayout() {
   const { user, isLoading, isAuthenticated } = useAuth();
 
-  // Redirect to welcome if logged out
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace('/');
-    }
-  }, [isLoading, isAuthenticated]);
-
-  if (isLoading || !isAuthenticated || !user) {
+  if (isLoading) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={PRIMARY_COLOR} />
       </View>
     );
+  }
+
+  // Redirect to welcome if not authenticated
+  if (!isAuthenticated || !user) {
+    return <Redirect href="/" />;
   }
 
   return (
