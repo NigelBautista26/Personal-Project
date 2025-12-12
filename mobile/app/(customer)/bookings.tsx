@@ -17,7 +17,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Images } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL, apiClient } from '../../src/api/client';
 
@@ -474,7 +474,7 @@ export default function CustomerBookingsScreen() {
             style={styles.viewPhotosButton}
             onPress={() => handleViewPhotos(String(booking.id), booking)}
           >
-            <Images size={14} color={PRIMARY_COLOR} />
+            <ImageIcon size={14} color={PRIMARY_COLOR} />
             <Text style={styles.viewPhotosText}>View Photos</Text>
           </TouchableOpacity>
           
@@ -529,7 +529,7 @@ export default function CustomerBookingsScreen() {
                 style={styles.viewEditedButton}
                 onPress={() => handleViewEditedPhotos(String(booking.id), editingRequest)}
               >
-                <Images size={12} color="#fff" />
+                <ImageIcon size={12} color="#fff" />
                 <Text style={styles.viewEditedText}>View Edited</Text>
               </TouchableOpacity>
             )}
@@ -813,7 +813,7 @@ export default function CustomerBookingsScreen() {
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleRow}>
-              <Images size={20} color="#8b5cf6" />
+              <ImageIcon size={20} color="#8b5cf6" />
               <Text style={styles.modalTitle}>Compare Photos</Text>
               {viewingEditedPhotos?.status === 'delivered' && (
                 <View style={[styles.statusBadge, { backgroundColor: 'rgba(234, 179, 8, 0.2)' }]}>

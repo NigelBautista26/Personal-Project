@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, MessageSquare, Navigation, X, Camera } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, MessageSquare, Navigation, X, Camera, ChevronRight } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -28,12 +28,22 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; category: strin
     { id: 3, name: 'London Eye', category: 'Landmark', image: 'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=100' },
     { id: 4, name: 'St Pauls Cathedral', category: 'Architecture', image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=100' },
     { id: 5, name: 'Camden Market', category: 'Street', image: 'https://images.unsplash.com/photo-1533929736562-4f5040f56024?w=100' },
-    { id: 6, name: 'Notting Hill', category: 'Street', image: 'https://images.unsplash.com/photo-1506452305024-9d3f02d1c9b5?w=100' },
-    { id: 7, name: 'Big Ben & Westminster', category: 'Landmark', image: 'https://images.unsplash.com/photo-1529655683826-aba9b3e77383?w=100' },
-    { id: 8, name: 'South Bank', category: 'Waterfront', image: 'https://images.unsplash.com/photo-1520986606214-8b456906c813?w=100' },
-    { id: 9, name: 'Hyde Park', category: 'Park', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?w=100' },
-    { id: 10, name: 'Covent Garden', category: 'Street', image: 'https://images.unsplash.com/photo-1533929736562-4f5040f56024?w=100' },
   ],
+};
+
+const formatDateShort = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${day} ${months[date.getMonth()]}`;
+};
+
+const formatTime12h = (time: string) => {
+  const [hours, minutes] = time.split(':');
+  const h = parseInt(hours);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 || 12;
+  return `${h12}:${minutes} ${ampm}`;
 };
 
 export default function BookingScreen() {
@@ -42,9 +52,11 @@ export default function BookingScreen() {
   
   const [duration, setDuration] = useState(Number(durationParam) || 1);
   const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTime, setSelectedTime] = useState('14:00');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
@@ -79,10 +91,6 @@ export default function BookingScreen() {
   const handleSubmit = () => {
     if (!selectedDate) {
       Alert.alert('Missing Information', 'Please select a date for your session.');
-      return;
-    }
-    if (!selectedTime) {
-      Alert.alert('Missing Information', 'Please select a time for your session.');
       return;
     }
     if (!location.trim()) {
@@ -185,6 +193,7 @@ export default function BookingScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Photographer Card */}
         <View style={styles.photographerCard}>
           <Image
             source={{ uri: getImageUrl(photographer?.profilePicture) || 'https://via.placeholder.com/60' }}
@@ -200,9 +209,10 @@ export default function BookingScreen() {
           </View>
         </View>
 
+        {/* Session Duration */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Clock size={20} color={PRIMARY_COLOR} />
+            <Clock size={18} color={PRIMARY_COLOR} />
             <Text style={styles.sectionTitle}>Session Duration</Text>
           </View>
           <View style={styles.durationGrid}>
@@ -237,70 +247,45 @@ export default function BookingScreen() {
           </View>
         </View>
 
+        {/* Date & Time - Compact Picker Style */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Calendar size={20} color={PRIMARY_COLOR} />
+            <Calendar size={18} color={PRIMARY_COLOR} />
             <Text style={styles.sectionTitle}>Date & Time</Text>
           </View>
           <View style={styles.dateTimeRow}>
-            <View style={styles.dateTimeColumn}>
-              <Text style={styles.dateTimeLabel}>Date</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={styles.dateGrid}>
-                  {dateOptions.slice(0, 7).map((date) => (
-                    <TouchableOpacity
-                      key={date.value}
-                      style={[
-                        styles.dateOption,
-                        selectedDate === date.value && styles.dateOptionActive,
-                      ]}
-                      onPress={() => setSelectedDate(date.value)}
-                      testID={`button-date-${date.value}`}
-                    >
-                      <Text
-                        style={[
-                          styles.dateText,
-                          selectedDate === date.value && styles.dateTextActive,
-                        ]}
-                      >
-                        {date.label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-          <View style={styles.dateTimeColumn}>
-            <Text style={styles.dateTimeLabel}>Time</Text>
-            <View style={styles.timeGrid}>
-              {timeSlots.map((time) => (
-                <TouchableOpacity
-                  key={time}
-                  style={[
-                    styles.timeOption,
-                    selectedTime === time && styles.timeOptionActive,
-                  ]}
-                  onPress={() => setSelectedTime(time)}
-                  testID={`button-time-${time}`}
-                >
-                  <Text
-                    style={[
-                      styles.timeText,
-                      selectedTime === time && styles.timeTextActive,
-                    ]}
-                  >
-                    {time}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            <TouchableOpacity 
+              style={styles.dateTimePicker}
+              onPress={() => setShowDatePicker(true)}
+              testID="button-date-picker"
+            >
+              <View style={styles.dateTimePickerContent}>
+                <Text style={styles.dateTimeLabel}>Date</Text>
+                <Text style={styles.dateTimeValue}>
+                  {selectedDate ? formatDateShort(selectedDate) : 'Select'}
+                </Text>
+              </View>
+              <Calendar size={18} color="#6b7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={styles.dateTimePicker}
+              onPress={() => setShowTimePicker(true)}
+              testID="button-time-picker"
+            >
+              <View style={styles.dateTimePickerContent}>
+                <Text style={styles.dateTimeLabel}>Time</Text>
+                <Text style={styles.dateTimeValue}>{formatTime12h(selectedTime)}</Text>
+              </View>
+              <Clock size={18} color="#6b7280" />
+            </TouchableOpacity>
           </View>
         </View>
 
+        {/* Meeting Location */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MapPin size={20} color={PRIMARY_COLOR} />
+            <MapPin size={18} color={PRIMARY_COLOR} />
             <Text style={styles.sectionTitle}>Meeting Location</Text>
           </View>
           <TouchableOpacity
@@ -311,13 +296,14 @@ export default function BookingScreen() {
             <Text style={location ? styles.locationText : styles.locationPlaceholder}>
               {location || 'Select a location'}
             </Text>
-            <Text style={styles.locationArrow}>›</Text>
+            <ChevronRight size={20} color="#6b7280" />
           </TouchableOpacity>
         </View>
 
+        {/* Notes */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <MessageSquare size={20} color={PRIMARY_COLOR} />
+            <MessageSquare size={18} color={PRIMARY_COLOR} />
             <Text style={styles.sectionTitle}>Notes (optional)</Text>
           </View>
           <TextInput
@@ -333,6 +319,7 @@ export default function BookingScreen() {
           />
         </View>
 
+        {/* Price Summary */}
         <View style={styles.priceSummary}>
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Session ({duration}h)</Text>
@@ -351,6 +338,7 @@ export default function BookingScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.submitButton, bookingMutation.isPending && styles.submitButtonDisabled]}
@@ -366,6 +354,85 @@ export default function BookingScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Date Picker Modal */}
+      <Modal
+        visible={showDatePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowDatePicker(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Date</Text>
+            <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            {dateOptions.map((date) => (
+              <TouchableOpacity
+                key={date.value}
+                style={[
+                  styles.modalOption,
+                  selectedDate === date.value && styles.modalOptionActive,
+                ]}
+                onPress={() => {
+                  setSelectedDate(date.value);
+                  setShowDatePicker(false);
+                }}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  selectedDate === date.value && styles.modalOptionTextActive,
+                ]}>
+                  {date.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Time Picker Modal */}
+      <Modal
+        visible={showTimePicker}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowTimePicker(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Time</Text>
+            <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalContent}>
+            {timeSlots.map((time) => (
+              <TouchableOpacity
+                key={time}
+                style={[
+                  styles.modalOption,
+                  selectedTime === time && styles.modalOptionActive,
+                ]}
+                onPress={() => {
+                  setSelectedTime(time);
+                  setShowTimePicker(false);
+                }}
+              >
+                <Text style={[
+                  styles.modalOptionText,
+                  selectedTime === time && styles.modalOptionTextActive,
+                ]}>
+                  {formatTime12h(time)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Location Picker Modal */}
       <Modal
         visible={showLocationPicker}
         animationType="slide"
@@ -397,20 +464,6 @@ export default function BookingScreen() {
               {isGettingLocation && <ActivityIndicator size="small" color={PRIMARY_COLOR} />}
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.locationOption}
-              onPress={() => Alert.alert('Coming Soon', 'Map picker will be available soon!')}
-              testID="button-pick-on-map"
-            >
-              <View style={[styles.locationOptionIcon, { backgroundColor: 'rgba(139, 92, 246, 0.2)' }]}>
-                <Camera size={20} color="#8b5cf6" />
-              </View>
-              <View style={styles.locationOptionText}>
-                <Text style={styles.locationOptionTitle}>Pick on Map</Text>
-                <Text style={styles.locationOptionSubtitle}>Tap anywhere to set location</Text>
-              </View>
-            </TouchableOpacity>
-
             <View style={styles.manualSection}>
               <Text style={styles.manualLabel}>ENTER MANUALLY</Text>
               <View style={styles.manualInputRow}>
@@ -433,7 +486,7 @@ export default function BookingScreen() {
             </View>
 
             <View style={styles.spotsSection}>
-              <Text style={styles.spotsLabel}>POPULAR PHOTO SPOTS IN {photographerCity.toUpperCase()}</Text>
+              <Text style={styles.spotsLabel}>POPULAR PHOTO SPOTS</Text>
               {spots.map((spot) => (
                 <TouchableOpacity
                   key={spot.id}
@@ -496,8 +549,8 @@ const styles = StyleSheet.create({
   photographerRate: { fontSize: 14, color: PRIMARY_COLOR, fontWeight: '600', marginTop: 4 },
 
   section: { marginTop: 24 },
-  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginLeft: 8 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#fff' },
   
   durationGrid: { flexDirection: 'row', gap: 12 },
   durationOption: {
@@ -519,40 +572,21 @@ const styles = StyleSheet.create({
   durationPrice: { fontSize: 13, color: '#6b7280', marginTop: 4 },
   durationPriceActive: { color: PRIMARY_COLOR },
 
-  dateTimeRow: { marginBottom: 16 },
-  dateTimeColumn: { marginBottom: 12 },
-  dateTimeLabel: { fontSize: 13, color: '#9ca3af', marginBottom: 8 },
-  dateGrid: { flexDirection: 'row', gap: 8 },
-  dateOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+  dateTimeRow: { flexDirection: 'row', gap: 12 },
+  dateTimePicker: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 14,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  dateOptionActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderColor: PRIMARY_COLOR,
-  },
-  dateText: { fontSize: 13, color: '#9ca3af' },
-  dateTextActive: { color: '#fff' },
-
-  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  timeOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  timeOptionActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-    borderColor: PRIMARY_COLOR,
-  },
-  timeText: { fontSize: 13, color: '#9ca3af' },
-  timeTextActive: { color: '#fff' },
+  dateTimePickerContent: {},
+  dateTimeLabel: { fontSize: 12, color: '#6b7280', marginBottom: 4 },
+  dateTimeValue: { fontSize: 15, fontWeight: '500', color: '#fff' },
 
   locationSelector: {
     flexDirection: 'row',
@@ -566,7 +600,6 @@ const styles = StyleSheet.create({
   },
   locationText: { fontSize: 15, color: '#fff', flex: 1 },
   locationPlaceholder: { fontSize: 15, color: '#6b7280', flex: 1 },
-  locationArrow: { fontSize: 20, color: '#6b7280' },
 
   input: {
     backgroundColor: 'rgba(255,255,255,0.05)',
@@ -632,6 +665,17 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
   modalContent: { flex: 1, paddingHorizontal: 16 },
+  modalOption: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.06)',
+  },
+  modalOptionActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.15)',
+  },
+  modalOptionText: { fontSize: 16, color: '#fff' },
+  modalOptionTextActive: { color: PRIMARY_COLOR, fontWeight: '600' },
 
   locationOption: {
     flexDirection: 'row',
