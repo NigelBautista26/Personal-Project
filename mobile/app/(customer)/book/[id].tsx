@@ -210,7 +210,7 @@ export default function BookingScreen() {
         {/* Photographer Card - Both Steps */}
         <View style={styles.photographerCard}>
           <Image
-            source={{ uri: getImageUrl(photographer?.profilePicture) || 'https://via.placeholder.com/60' }}
+            source={{ uri: getImageUrl(photographer?.profilePicture || photographer?.profileImageUrl) || 'https://via.placeholder.com/60' }}
             style={styles.photographerImage}
           />
           <View style={styles.photographerInfo}>
