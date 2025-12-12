@@ -305,7 +305,7 @@ export default function CustomerBookingsScreen() {
   );
   const completedBookings = allBookings.filter(b => b.status === 'completed');
   const expiredBookings = allBookings.filter(b => 
-    (b.status === 'expired' || b.status === 'declined' || b.status === 'cancelled') && !(b as any).dismissed
+    (b.status === 'expired' || b.status === 'declined' || b.status === 'cancelled') && !(b as any).dismissedAt
   );
 
   const formatDate = (dateStr: string) => {
