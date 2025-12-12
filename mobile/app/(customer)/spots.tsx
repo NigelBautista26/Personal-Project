@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
   ImageBackground,
 } from 'react-native';
 import { router } from 'expo-router';
-import { MapPin, Camera, ChevronDown } from 'lucide-react-native';
+import { MapPin, Camera } from 'lucide-react-native';
+import { useCity } from '../../src/context/CityContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -58,17 +59,15 @@ const ALL_SPOTS: { [city: string]: { id: number; name: string; location: string;
   ],
 };
 
-const CITIES = ['All Cities', ...Object.keys(ALL_SPOTS)];
-
 export default function SpotsScreen() {
-  const [selectedCity, setSelectedCity] = useState('All Cities');
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const { selectedCity } = useCity();
 
   const getSpots = () => {
-    if (selectedCity === 'All Cities') {
-      return Object.values(ALL_SPOTS).flat();
+    const cityName = selectedCity.name;
+    if (ALL_SPOTS[cityName]) {
+      return ALL_SPOTS[cityName];
     }
-    return ALL_SPOTS[selectedCity] || [];
+    return [];
   };
 
   const spots = getSpots();
@@ -81,68 +80,56 @@ export default function SpotsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Photo Spots</Text>
-        <Text style={styles.subtitle}>Popular photography locations</Text>
+        <Text style={styles.subtitle}>Popular spots in {selectedCity.name}</Text>
       </View>
 
-      <TouchableOpacity 
-        style={styles.citySelector}
-        onPress={() => setShowCityDropdown(!showCityDropdown)}
-      >
+      <View style={styles.cityIndicator}>
         <MapPin size={16} color={PRIMARY_COLOR} />
-        <Text style={styles.citySelectorText}>{selectedCity}</Text>
-        <ChevronDown size={16} color="#9ca3af" />
-      </TouchableOpacity>
-
-      {showCityDropdown && (
-        <View style={styles.dropdown}>
-          {CITIES.map((city) => (
-            <TouchableOpacity
-              key={city}
-              style={[styles.dropdownItem, selectedCity === city && styles.dropdownItemActive]}
-              onPress={() => {
-                setSelectedCity(city);
-                setShowCityDropdown(false);
-              }}
-            >
-              <Text style={[styles.dropdownText, selectedCity === city && styles.dropdownTextActive]}>
-                {city}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
+        <Text style={styles.cityIndicatorText}>{selectedCity.name}</Text>
+        <Text style={styles.cityHint}>Change city from Map tab</Text>
+      </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.grid}>
-          {spots.map((spot) => (
-            <TouchableOpacity
-              key={spot.id}
-              style={styles.spotCard}
-              activeOpacity={0.8}
-              onPress={() => handleSpotPress(spot.id)}
-              testID={`card-spot-${spot.id}`}
-            >
-              <ImageBackground 
-                source={{ uri: spot.image }} 
-                style={styles.spotImage}
-                imageStyle={{ borderRadius: 16 }}
+        {spots.length === 0 ? (
+          <View style={styles.emptyState}>
+            <MapPin size={48} color="#4b5563" />
+            <Text style={styles.emptyTitle}>No spots available</Text>
+            <Text style={styles.emptyText}>
+              We don't have photo spots for {selectedCity.name} yet. Try selecting a different city from the Map tab.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.grid}>
+            {spots.map((spot) => (
+              <TouchableOpacity
+                key={spot.id}
+                style={styles.spotCard}
+                activeOpacity={0.8}
+                onPress={() => handleSpotPress(spot.id)}
+                testID={`card-spot-${spot.id}`}
               >
-                <View style={styles.spotOverlay}>
-                  <View style={styles.spotInfo}>
-                    <Text style={styles.spotName} numberOfLines={1}>{spot.name}</Text>
-                    <View style={styles.spotLocation}>
-                      <MapPin size={12} color="#9ca3af" />
-                      <Text style={styles.spotLocationText} numberOfLines={1}>{spot.location}</Text>
+                <ImageBackground 
+                  source={{ uri: spot.image }} 
+                  style={styles.spotImage}
+                  imageStyle={{ borderRadius: 16 }}
+                >
+                  <View style={styles.spotOverlay}>
+                    <View style={styles.spotInfo}>
+                      <Text style={styles.spotName} numberOfLines={1}>{spot.name}</Text>
+                      <View style={styles.spotLocation}>
+                        <MapPin size={12} color="#9ca3af" />
+                        <Text style={styles.spotLocationText} numberOfLines={1}>{spot.location}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.cameraIcon}>
+                      <Camera size={16} color="#fff" />
                     </View>
                   </View>
-                  <View style={styles.cameraIcon}>
-                    <Camera size={16} color="#fff" />
-                  </View>
-                </View>
-              </ImageBackground>
-            </TouchableOpacity>
-          ))}
-        </View>
+                </ImageBackground>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
         <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
@@ -169,7 +156,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
   },
-  citySelector: {
+  cityIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -181,39 +168,33 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  citySelectorText: {
-    flex: 1,
+  cityIndicatorText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
   },
-  dropdown: {
-    position: 'absolute',
-    top: 140,
-    left: 16,
-    right: 16,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    zIndex: 100,
-    maxHeight: 300,
+  cityHint: {
+    marginLeft: 'auto',
+    color: '#6b7280',
+    fontSize: 12,
   },
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    gap: 12,
   },
-  dropdownItemActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.1)',
-  },
-  dropdownText: {
-    color: '#9ca3af',
-    fontSize: 14,
-  },
-  dropdownTextActive: {
-    color: PRIMARY_COLOR,
+  emptyTitle: {
+    fontSize: 18,
     fontWeight: '600',
+    color: '#fff',
+    marginTop: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    lineHeight: 20,
   },
   content: {
     flex: 1,
