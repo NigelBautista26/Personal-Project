@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -13,8 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, MessageSquare, DollarSign, Shield, Navigation } from 'lucide-react-native';
-import MapView, { Marker } from 'react-native-maps';
+import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { LiveLocationSharing } from '../../../src/components/LiveLocationSharing';
 import { BookingChat } from '../../../src/components/BookingChat';
@@ -26,9 +25,6 @@ const PRIMARY_COLOR = '#2563eb';
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  
-  const [myLocation, setMyLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [photographerLocation, setPhotographerLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
@@ -65,8 +61,6 @@ export default function BookingDetailScreen() {
     if (url.startsWith('http')) return url;
     return `${API_URL}${url}`;
   };
-
-  const hasMeetingLocation = !!(booking?.meetingLatitude && booking?.meetingLongitude);
 
   if (isLoading) {
     return (
@@ -207,101 +201,15 @@ export default function BookingDetailScreen() {
           </View>
         )}
 
-        {/* Meeting Point */}
-        {booking.status === 'confirmed' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Meeting Point</Text>
-            {hasMeetingLocation ? (
-              <View style={styles.meetingPointCard}>
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.map}
-                    region={{
-                      latitude: parseFloat(booking.meetingLatitude),
-                      longitude: parseFloat(booking.meetingLongitude),
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    rotateEnabled={false}
-                  >
-                    {/* Meeting Point Marker */}
-                    <Marker
-                      coordinate={{ 
-                        latitude: parseFloat(booking.meetingLatitude), 
-                        longitude: parseFloat(booking.meetingLongitude) 
-                      }}
-                      pinColor={PRIMARY_COLOR}
-                      title="Meeting Point"
-                    />
-                    {/* My Live Location (blue) */}
-                    {myLocation && (
-                      <Marker
-                        coordinate={{ latitude: myLocation.lat, longitude: myLocation.lng }}
-                        title="You"
-                      >
-                        <View style={styles.liveMarker}>
-                          <View style={[styles.liveMarkerInner, { backgroundColor: PRIMARY_COLOR }]} />
-                        </View>
-                      </Marker>
-                    )}
-                    {/* Photographer's Live Location (green) */}
-                    {photographerLocation && (
-                      <Marker
-                        coordinate={{ latitude: photographerLocation.lat, longitude: photographerLocation.lng }}
-                        title="Photographer"
-                      >
-                        <View style={styles.liveMarker}>
-                          <View style={[styles.liveMarkerInner, { backgroundColor: '#22c55e' }]} />
-                        </View>
-                      </Marker>
-                    )}
-                  </MapView>
-                </View>
-                {/* Live Location Legend */}
-                {(myLocation || photographerLocation) && (
-                  <View style={styles.mapLegend}>
-                    {myLocation && (
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: PRIMARY_COLOR }]} />
-                        <Text style={styles.legendText}>You</Text>
-                      </View>
-                    )}
-                    {photographerLocation && (
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendDot, { backgroundColor: '#22c55e' }]} />
-                        <Text style={styles.legendText}>Photographer</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-                {booking.meetingNotes && (
-                  <View style={styles.meetingNotesDisplay}>
-                    <Text style={styles.meetingNotesText}>{booking.meetingNotes}</Text>
-                  </View>
-                )}
-              </View>
-            ) : (
-              <View style={styles.waitingForLocationCard}>
-                <Navigation size={24} color="#9ca3af" />
-                <Text style={styles.waitingForLocationTitle}>Your photographer will set the exact meeting point soon.</Text>
-                <Text style={styles.waitingForLocationText}>You'll be notified when it's ready.</Text>
-              </View>
-            )}
-          </View>
-        )}
-
         {/* Live Location Sharing */}
         {booking.status === 'confirmed' && (
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Live Location</Text>
             <LiveLocationSharing
               bookingId={booking.id}
               scheduledDate={booking.scheduledDate}
               scheduledTime={booking.scheduledTime}
               userType="customer"
-              onLocationUpdate={setMyLocation}
-              onOtherPartyLocation={(loc) => setPhotographerLocation(loc ? { lat: loc.lat, lng: loc.lng } : null)}
             />
           </View>
         )}

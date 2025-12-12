@@ -461,34 +461,14 @@ export default function PhotographerBookingDetailScreen() {
                   <Text style={styles.useLocationButtonText}>Use My Current Location</Text>
                 </TouchableOpacity>
 
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.map}
-                    initialRegion={{
-                      latitude: meetingLatitude || 51.5074,
-                      longitude: meetingLongitude || -0.1278,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                    region={meetingLatitude && meetingLongitude ? {
-                      latitude: meetingLatitude,
-                      longitude: meetingLongitude,
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    } : undefined}
-                    onPress={handleMapPress}
-                    mapType="standard"
-                  >
-                    {meetingLatitude && meetingLongitude && (
-                      <Marker
-                        coordinate={{ latitude: meetingLatitude, longitude: meetingLongitude }}
-                        pinColor={PRIMARY_COLOR}
-                      />
-                    )}
-                  </MapView>
-                </View>
-
-                <Text style={styles.mapHint}>Tap on the map to set the meeting point</Text>
+                {meetingLatitude && meetingLongitude && (
+                  <View style={styles.locationSetCard}>
+                    <MapPin size={16} color="#22c55e" />
+                    <Text style={styles.locationSetText}>
+                      Location set: {meetingLatitude.toFixed(4)}, {meetingLongitude.toFixed(4)}
+                    </Text>
+                  </View>
+                )}
 
                 <TextInput
                   style={styles.meetingNotesInput}
@@ -508,33 +488,15 @@ export default function PhotographerBookingDetailScreen() {
                   {isSavingLocation ? (
                     <ActivityIndicator color="#fff" />
                   ) : (
-                    <Text style={styles.saveLocationButtonText}>Save Location</Text>
+                    <Text style={styles.saveLocationButtonText}>Save Meeting Point</Text>
                   )}
                 </TouchableOpacity>
               </View>
             ) : (
               <View style={styles.meetingPointCard}>
-                <View style={styles.mapContainer}>
-                  <MapView
-                    style={styles.map}
-                    region={{
-                      latitude: parseFloat(booking.meetingLatitude),
-                      longitude: parseFloat(booking.meetingLongitude),
-                      latitudeDelta: 0.01,
-                      longitudeDelta: 0.01,
-                    }}
-                    scrollEnabled={false}
-                    zoomEnabled={false}
-                    rotateEnabled={false}
-                  >
-                    <Marker
-                      coordinate={{ 
-                        latitude: parseFloat(booking.meetingLatitude), 
-                        longitude: parseFloat(booking.meetingLongitude) 
-                      }}
-                      pinColor={PRIMARY_COLOR}
-                    />
-                  </MapView>
+                <View style={styles.locationSetCard}>
+                  <MapPin size={16} color="#22c55e" />
+                  <Text style={styles.locationSetText}>Meeting point set</Text>
                 </View>
                 {booking.meetingNotes && (
                   <View style={styles.meetingNotesDisplay}>
@@ -1058,6 +1020,19 @@ const styles = StyleSheet.create({
   },
   meetingNotesText: {
     color: '#d1d5db',
+    fontSize: 14,
+  },
+  locationSetCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 12,
+  },
+  locationSetText: {
+    color: '#22c55e',
     fontSize: 14,
   },
 });
