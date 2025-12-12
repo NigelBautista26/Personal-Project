@@ -281,9 +281,9 @@ export default function PhotographerBookingDetailScreen() {
     setIsSavingLocation(true);
     try {
       await api.patch(`/api/bookings/${id}/meeting-location`, {
-        meetingLatitude: meetingLatitude.toString(),
-        meetingLongitude: meetingLongitude.toString(),
-        meetingNotes: meetingNotes || null,
+        latitude: meetingLatitude,
+        longitude: meetingLongitude,
+        notes: meetingNotes || null,
       });
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
       refetch();
