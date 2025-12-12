@@ -11,6 +11,10 @@ import {
   Alert,
   Image,
   Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -180,6 +184,13 @@ export default function BookingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={0}
+      >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={{ flex: 1 }}>
       {/* Header with Progress */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="button-back">
@@ -406,6 +417,9 @@ export default function BookingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+      </View>
+      </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
       {/* Payment WebView Modal */}
       <Modal
