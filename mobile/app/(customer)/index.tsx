@@ -68,18 +68,20 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: numbe
   ],
 };
 
-const getOffsetCoordinates = (photographers: Array<{ latitude: number; longitude: number }>, index: number) => {
+const getOffsetCoordinates = (photographers: PhotographerProfile[], index: number) => {
   const p = photographers[index];
-  const lat = p.latitude;
-  const lng = p.longitude;
-  if (isNaN(lat) || isNaN(lng)) return { lat: 0, lng: 0 };
+  const lat = Number(p.latitude);
+  const lng = Number(p.longitude);
+  if (isNaN(lat) || isNaN(lng)) return { lat, lng };
   
   const OFFSET = 0.002;
   let sameLocationCount = 0;
   
   for (let i = 0; i < index; i++) {
     const other = photographers[i];
-    if (Math.abs(other.latitude - lat) < 0.001 && Math.abs(other.longitude - lng) < 0.001) {
+    const otherLat = Number(other.latitude);
+    const otherLng = Number(other.longitude);
+    if (Math.abs(otherLat - lat) < 0.001 && Math.abs(otherLng - lng) < 0.001) {
       sameLocationCount++;
     }
   }
@@ -129,21 +131,10 @@ export default function CustomerMapScreen() {
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
-  const { data: photographersRaw, isLoading } = useQuery({
+  const { data: photographers, isLoading } = useQuery({
     queryKey: ['photographers'],
     queryFn: () => snapnowApi.getPhotographers(),
   });
-
-  // Normalize coordinates to numbers to prevent NaN issues in map rendering
-  const photographers = useMemo(() => {
-    if (!photographersRaw) return [];
-    return photographersRaw.map(p => ({
-      ...p,
-      latitude: parseFloat(String(p.latitude)) || 0,
-      longitude: parseFloat(String(p.longitude)) || 0,
-      hourlyRate: parseFloat(String(p.hourlyRate)) || 0,
-    }));
-  }, [photographersRaw]);
 
   useEffect(() => {
     (async () => {
@@ -177,26 +168,15 @@ export default function CustomerMapScreen() {
   };
 
   const filteredPhotographers = useMemo(() => {
-    if (!photographers || photographers.length === 0) {
-      console.log('[DEBUG] No photographers data');
-      return [];
-    }
+    if (!photographers || photographers.length === 0) return [];
     
-    console.log('[DEBUG] Total photographers:', photographers.length);
-    console.log('[DEBUG] Sample photographer:', JSON.stringify(photographers[0], null, 2));
-    
-    const filtered = photographers.filter((p) => {
-      if (isNaN(p.latitude) || isNaN(p.longitude) || p.latitude === 0 || p.longitude === 0) {
-        console.log('[DEBUG] Filtered out (invalid coords):', p.id, p.latitude, p.longitude);
-        return false;
-      }
-      const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, p.latitude, p.longitude);
-      console.log('[DEBUG] Photographer', p.id, 'distance:', distance, 'km');
+    return photographers.filter((p) => {
+      const pLat = parseFloat(String(p.latitude));
+      const pLng = parseFloat(String(p.longitude));
+      if (Number.isNaN(pLat) || Number.isNaN(pLng)) return false;
+      const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
       return distance <= 50;
     });
-    
-    console.log('[DEBUG] Filtered photographers count:', filtered.length);
-    return filtered;
   }, [photographers, selectedCity]);
 
   const photoSpots = useMemo(() => {
@@ -263,24 +243,34 @@ export default function CustomerMapScreen() {
         testID="map-view"
       >
         {/* Photographer Markers */}
-        {filteredPhotographers.map((photographer) => {
-          const isAvailable = photographer.sessionState === 'available';
+        {filteredPhotographers.map((photographer, index) => {
+          const lat = Number(photographer.latitude);
+          const lng = Number(photographer.longitude);
+          if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
           
-          console.log('[MARKER] Rendering marker at:', photographer.latitude, photographer.longitude);
+          const coords = getOffsetCoordinates(filteredPhotographers, index);
+          const isAvailable = photographer.sessionState === 'available';
           
           return (
             <Marker
               key={`photographer-${photographer.id}`}
               coordinate={{
-                latitude: photographer.latitude,
-                longitude: photographer.longitude,
+                latitude: coords.lat,
+                longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              pinColor={isAvailable ? '#22c55e' : '#3b82f6'}
-              title={photographer.displayName || `${photographer.firstName} ${photographer.lastName}`}
-              description={`£${photographer.hourlyRate}/hr`}
-            />
+            >
+              <View style={styles.photographerMarker}>
+                <Image
+                  source={{ uri: getImageUrl(photographer) }}
+                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
+                />
+                <View style={styles.photographerMarkerPrice}>
+                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
+                </View>
+              </View>
+            </Marker>
           );
         })}
 
