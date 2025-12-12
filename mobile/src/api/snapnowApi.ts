@@ -1,4 +1,4 @@
-import api from './client';
+import api, { saveCookieFromResponse } from './client';
 
 export type UserRole = 'customer' | 'photographer' | 'admin';
 
@@ -91,11 +91,15 @@ export interface EditingRequest {
 export const snapnowApi = {
   async login(payload: { email: string; password: string }): Promise<User> {
     const response = await api.post<User>('/api/auth/login', payload);
+    // Explicitly save cookie before returning - don't rely on async interceptor
+    await saveCookieFromResponse(response);
     return response.data;
   },
 
   async register(payload: { email: string; password: string; fullName: string; role: UserRole }): Promise<User> {
     const response = await api.post<User>('/api/auth/register', payload);
+    // Explicitly save cookie before returning
+    await saveCookieFromResponse(response);
     return response.data;
   },
 
