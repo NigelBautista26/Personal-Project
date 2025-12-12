@@ -635,19 +635,6 @@ const styles = StyleSheet.create({
     borderColor: '#3b82f6',
     backgroundColor: '#1a1a1a',
   },
-  photographerMarkerImageContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 3,
-    borderColor: '#3b82f6',
-    backgroundColor: '#1a1a1a',
-    overflow: 'hidden',
-  },
-  photographerMarkerImageInner: {
-    width: '100%',
-    height: '100%',
-  },
   photographerMarkerPrice: {
     backgroundColor: '#1a1a1a',
     paddingHorizontal: 6,
