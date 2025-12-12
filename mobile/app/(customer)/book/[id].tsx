@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, MessageSquare, Navigation, X, Camera, ChevronRight } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, MessageSquare, Navigation, X, ChevronRight, CreditCard, Lock } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -38,6 +38,14 @@ const formatDateShort = (dateStr: string) => {
   return `${day} ${months[date.getMonth()]}`;
 };
 
+const formatDateFull = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const formatTime12h = (time: string) => {
   const [hours, minutes] = time.split(':');
   const h = parseInt(hours);
@@ -50,8 +58,9 @@ export default function BookingScreen() {
   const { id, duration: durationParam } = useLocalSearchParams<{ id: string; duration?: string }>();
   const queryClient = useQueryClient();
   
+  const [step, setStep] = useState(1);
   const [duration, setDuration] = useState(Number(durationParam) || 1);
-  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTime, setSelectedTime] = useState('14:00');
   const [location, setLocation] = useState('');
   const [notes, setNotes] = useState('');
@@ -88,7 +97,7 @@ export default function BookingScreen() {
     },
   });
 
-  const handleSubmit = () => {
+  const handleContinueToPayment = () => {
     if (!selectedDate) {
       Alert.alert('Missing Information', 'Please select a date for your session.');
       return;
@@ -97,7 +106,10 @@ export default function BookingScreen() {
       Alert.alert('Missing Information', 'Please enter a location for your session.');
       return;
     }
+    setStep(2);
+  };
 
+  const handleSubmit = () => {
     const scheduledDateTime = `${selectedDate}T${selectedTime}:00.000Z`;
 
     bookingMutation.mutate({
@@ -107,6 +119,14 @@ export default function BookingScreen() {
       duration,
       location: location.trim(),
     });
+  };
+
+  const handleBack = () => {
+    if (step === 2) {
+      setStep(1);
+    } else {
+      router.back();
+    }
   };
 
   const handleUseCurrentLocation = async () => {
@@ -184,16 +204,23 @@ export default function BookingScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header with Progress */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} testID="button-back">
+        <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="button-back">
           <ArrowLeft size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Book Session</Text>
         <View style={styles.placeholder} />
       </View>
 
+      {/* Progress Indicator */}
+      <View style={styles.progressBar}>
+        <View style={[styles.progressStep, step >= 1 && styles.progressStepActive]} />
+        <View style={[styles.progressStep, step >= 2 && styles.progressStepActive]} />
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Photographer Card */}
+        {/* Photographer Card - Both Steps */}
         <View style={styles.photographerCard}>
           <Image
             source={{ uri: getImageUrl(photographer?.profilePicture) || 'https://via.placeholder.com/60' }}
@@ -209,147 +236,197 @@ export default function BookingScreen() {
           </View>
         </View>
 
-        {/* Session Duration */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Clock size={18} color={PRIMARY_COLOR} />
-            <Text style={styles.sectionTitle}>Session Duration</Text>
-          </View>
-          <View style={styles.durationGrid}>
-            {[1, 2, 3].map((hours) => (
+        {step === 1 ? (
+          <>
+            {/* Step 1: Session Duration */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Clock size={18} color={PRIMARY_COLOR} />
+                <Text style={styles.sectionTitle}>Session Duration</Text>
+              </View>
+              <View style={styles.durationGrid}>
+                {[1, 2, 3].map((hours) => (
+                  <TouchableOpacity
+                    key={hours}
+                    style={[
+                      styles.durationOption,
+                      duration === hours && styles.durationOptionActive,
+                    ]}
+                    onPress={() => setDuration(hours)}
+                    testID={`button-duration-${hours}`}
+                  >
+                    <Text
+                      style={[
+                        styles.durationText,
+                        duration === hours && styles.durationTextActive,
+                      ]}
+                    >
+                      {hours} hour{hours > 1 ? 's' : ''}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.durationPrice,
+                        duration === hours && styles.durationPriceActive,
+                      ]}
+                    >
+                      £{hourlyRate * hours}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Date & Time */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Calendar size={18} color={PRIMARY_COLOR} />
+                <Text style={styles.sectionTitle}>Date & Time</Text>
+              </View>
+              <View style={styles.dateTimeRow}>
+                <TouchableOpacity 
+                  style={styles.dateTimePicker}
+                  onPress={() => setShowDatePicker(true)}
+                  testID="button-date-picker"
+                >
+                  <View style={styles.dateTimePickerContent}>
+                    <Text style={styles.dateTimeLabel}>Date</Text>
+                    <Text style={styles.dateTimeValue}>
+                      {selectedDate ? formatDateShort(selectedDate) : 'Select'}
+                    </Text>
+                  </View>
+                  <Calendar size={18} color="#6b7280" />
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.dateTimePicker}
+                  onPress={() => setShowTimePicker(true)}
+                  testID="button-time-picker"
+                >
+                  <View style={styles.dateTimePickerContent}>
+                    <Text style={styles.dateTimeLabel}>Time</Text>
+                    <Text style={styles.dateTimeValue}>{formatTime12h(selectedTime)}</Text>
+                  </View>
+                  <Clock size={18} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Meeting Location */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <MapPin size={18} color={PRIMARY_COLOR} />
+                <Text style={styles.sectionTitle}>Meeting Location</Text>
+              </View>
               <TouchableOpacity
-                key={hours}
-                style={[
-                  styles.durationOption,
-                  duration === hours && styles.durationOptionActive,
-                ]}
-                onPress={() => setDuration(hours)}
-                testID={`button-duration-${hours}`}
+                style={styles.locationSelector}
+                onPress={() => setShowLocationPicker(true)}
+                testID="button-select-location"
               >
-                <Text
-                  style={[
-                    styles.durationText,
-                    duration === hours && styles.durationTextActive,
-                  ]}
-                >
-                  {hours} hour{hours > 1 ? 's' : ''}
+                <Text style={location ? styles.locationText : styles.locationPlaceholder}>
+                  {location || 'Select a location'}
                 </Text>
-                <Text
-                  style={[
-                    styles.durationPrice,
-                    duration === hours && styles.durationPriceActive,
-                  ]}
-                >
-                  £{hourlyRate * hours}
-                </Text>
+                <ChevronRight size={20} color="#6b7280" />
               </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+            </View>
 
-        {/* Date & Time - Compact Picker Style */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Calendar size={18} color={PRIMARY_COLOR} />
-            <Text style={styles.sectionTitle}>Date & Time</Text>
-          </View>
-          <View style={styles.dateTimeRow}>
-            <TouchableOpacity 
-              style={styles.dateTimePicker}
-              onPress={() => setShowDatePicker(true)}
-              testID="button-date-picker"
-            >
-              <View style={styles.dateTimePickerContent}>
-                <Text style={styles.dateTimeLabel}>Date</Text>
-                <Text style={styles.dateTimeValue}>
-                  {selectedDate ? formatDateShort(selectedDate) : 'Select'}
+            {/* Price Preview */}
+            <View style={styles.priceSummary}>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Session ({duration}h)</Text>
+                <Text style={styles.priceValue}>£{baseAmount.toFixed(2)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Service fee (10%)</Text>
+                <Text style={styles.priceValue}>£{serviceFee.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.priceRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalValue}>£{totalPrice.toFixed(2)}</Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            {/* Step 2: Booking Summary */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Booking Summary</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Duration</Text>
+                <Text style={styles.summaryValue}>{duration} hour{duration > 1 ? 's' : ''}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Date</Text>
+                <Text style={styles.summaryValue}>{formatDateFull(selectedDate)}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Time</Text>
+                <Text style={styles.summaryValue}>{selectedTime}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Location</Text>
+                <Text style={styles.summaryValue}>{location}</Text>
+              </View>
+            </View>
+
+            {/* Price Breakdown */}
+            <View style={styles.priceSummary}>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Session ({duration}h)</Text>
+                <Text style={styles.priceValue}>£{baseAmount.toFixed(2)}</Text>
+              </View>
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>Service fee (10%)</Text>
+                <Text style={styles.priceValue}>£{serviceFee.toFixed(2)}</Text>
+              </View>
+              <View style={[styles.priceRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Total</Text>
+                <Text style={styles.totalValue}>£{totalPrice.toFixed(2)}</Text>
+              </View>
+            </View>
+
+            {/* Payment Section */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <CreditCard size={18} color={PRIMARY_COLOR} />
+                <Text style={styles.sectionTitle}>Payment</Text>
+              </View>
+              
+              <View style={styles.sandboxNotice}>
+                <Text style={styles.sandboxText}>
+                  Sandbox Mode - Use test card: 4242 4242 4242 4242, any future date, any CVC
                 </Text>
               </View>
-              <Calendar size={18} color="#6b7280" />
-            </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.dateTimePicker}
-              onPress={() => setShowTimePicker(true)}
-              testID="button-time-picker"
-            >
-              <View style={styles.dateTimePickerContent}>
-                <Text style={styles.dateTimeLabel}>Time</Text>
-                <Text style={styles.dateTimeValue}>{formatTime12h(selectedTime)}</Text>
+              <View style={styles.cardInputPlaceholder}>
+                <CreditCard size={20} color="#6b7280" />
+                <Text style={styles.cardInputText}>Card number</Text>
               </View>
-              <Clock size={18} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Meeting Location */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MapPin size={18} color={PRIMARY_COLOR} />
-            <Text style={styles.sectionTitle}>Meeting Location</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.locationSelector}
-            onPress={() => setShowLocationPicker(true)}
-            testID="button-select-location"
-          >
-            <Text style={location ? styles.locationText : styles.locationPlaceholder}>
-              {location || 'Select a location'}
-            </Text>
-            <ChevronRight size={20} color="#6b7280" />
-          </TouchableOpacity>
-        </View>
+              <View style={styles.securedBy}>
+                <Lock size={12} color="#6b7280" />
+                <Text style={styles.securedByText}>Secured by Stripe</Text>
+              </View>
+            </View>
+          </>
+        )}
 
-        {/* Notes */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MessageSquare size={18} color={PRIMARY_COLOR} />
-            <Text style={styles.sectionTitle}>Notes (optional)</Text>
-          </View>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            placeholder="Any special requests or details..."
-            placeholderTextColor="#6b7280"
-            value={notes}
-            onChangeText={setNotes}
-            multiline
-            numberOfLines={3}
-            textAlignVertical="top"
-            testID="input-notes"
-          />
-        </View>
-
-        {/* Price Summary */}
-        <View style={styles.priceSummary}>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Session ({duration}h)</Text>
-            <Text style={styles.priceValue}>£{baseAmount.toFixed(2)}</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Service fee (10%)</Text>
-            <Text style={styles.priceValue}>£{serviceFee.toFixed(2)}</Text>
-          </View>
-          <View style={[styles.priceRow, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>£{totalPrice.toFixed(2)}</Text>
-          </View>
-        </View>
-
-        <View style={{ height: 100 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.submitButton, bookingMutation.isPending && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
+          onPress={step === 1 ? handleContinueToPayment : handleSubmit}
           disabled={bookingMutation.isPending}
           testID="button-submit"
         >
           {bookingMutation.isPending ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>Continue to Payment</Text>
+            <Text style={styles.submitButtonText}>
+              {step === 1 ? 'Continue to Payment' : `Pay £${totalPrice.toFixed(2)}`}
+            </Text>
           )}
         </TouchableOpacity>
       </View>
@@ -517,12 +594,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
   },
   backButton: { padding: 8 },
   title: { fontSize: 18, fontWeight: '600', color: '#fff' },
   placeholder: { width: 40 },
+  
+  progressBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 8,
+    marginBottom: 8,
+  },
+  progressStep: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+  },
+  progressStepActive: {
+    backgroundColor: PRIMARY_COLOR,
+  },
+
   content: { flex: 1, paddingHorizontal: 16 },
   loader: { marginTop: 100 },
   
@@ -532,7 +624,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
     padding: 12,
-    marginTop: 16,
+    marginTop: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
@@ -601,17 +693,6 @@ const styles = StyleSheet.create({
   locationText: { fontSize: 15, color: '#fff', flex: 1 },
   locationPlaceholder: { fontSize: 15, color: '#6b7280', flex: 1 },
 
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    padding: 16,
-    color: '#fff',
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  textArea: { minHeight: 80, textAlignVertical: 'top' },
-
   priceSummary: {
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
@@ -636,6 +717,50 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 16, fontWeight: '600', color: '#fff' },
   totalValue: { fontSize: 18, fontWeight: '700', color: PRIMARY_COLOR },
+
+  summaryCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  summaryTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginBottom: 16 },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  summaryLabel: { fontSize: 14, color: '#6b7280' },
+  summaryValue: { fontSize: 14, color: '#fff' },
+
+  sandboxNotice: {
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  sandboxText: { fontSize: 12, color: '#9ca3af', textAlign: 'center' },
+  cardInputPlaceholder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  cardInputText: { fontSize: 15, color: '#6b7280' },
+  securedBy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  securedByText: { fontSize: 12, color: '#6b7280' },
 
   footer: {
     padding: 16,
