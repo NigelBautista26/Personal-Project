@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { snapnowApi, User, PhotographerProfile } from '../api/snapnowApi';
-import { clearSessionCookie } from '../api/client';
+import { clearSessionToken } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await snapnowApi.logout();
     } catch {
     }
-    await clearSessionCookie();
+    await clearSessionToken();
     await SecureStore.deleteItemAsync(AUTH_FLAG_KEY);
     setUser(null);
     setPhotographerProfile(null);

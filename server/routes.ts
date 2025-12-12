@@ -140,9 +140,13 @@ export async function registerRoutes(
         password: hashedPassword,
       });
       
-      // Don't send password back
+      // Set session
+      req.session.userId = user.id;
+      
+      // Don't send password back, include sessionToken for mobile
       const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      const sessionToken = req.sessionID;
+      res.json({ ...userWithoutPassword, sessionToken });
     } catch (error) {
       res.status(400).json({ error: "Invalid request" });
     }
@@ -179,7 +183,9 @@ export async function registerRoutes(
       }
       
       const { password: _, ...userWithoutPassword } = user;
-      res.json({ ...userWithoutPassword, hasPhotographerProfile });
+      // Include sessionToken for mobile apps that can't use cookies
+      const sessionToken = req.sessionID;
+      res.json({ ...userWithoutPassword, hasPhotographerProfile, sessionToken });
     } catch (error) {
       console.error("Login error:", error);
       res.status(400).json({ error: "Invalid request" });

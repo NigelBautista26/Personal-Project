@@ -28,7 +28,8 @@ app.use(cors({
   origin: true,  // Allow all origins (mobile apps)
   credentials: true,  // Allow cookies/sessions
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Session-Token'],
+  exposedHeaders: ['X-Session-Token'],
 }));
 
 app.use(
@@ -72,6 +73,30 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+
+// Mobile token auth middleware - allows X-Session-Token header as alternative to cookie
+app.use(async (req: Request, res: Response, next: NextFunction) => {
+  // If already authenticated via cookie, continue
+  if (req.session.userId) {
+    return next();
+  }
+  
+  // Check for X-Session-Token header (mobile auth)
+  const sessionToken = req.headers['x-session-token'] as string;
+  if (sessionToken) {
+    // Query the session store directly
+    const store = req.sessionStore;
+    store.get(sessionToken, (err: any, session: any) => {
+      if (!err && session && session.userId) {
+        // Manually set the userId on the request session
+        req.session.userId = session.userId;
+      }
+      next();
+    });
+  } else {
+    next();
+  }
+});
 
 setupWebSocket(httpServer, sessionMiddleware);
 

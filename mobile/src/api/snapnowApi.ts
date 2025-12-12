@@ -1,4 +1,4 @@
-import api, { saveCookieFromResponse } from './client';
+import api, { saveSessionToken } from './client';
 
 export type UserRole = 'customer' | 'photographer' | 'admin';
 
@@ -88,18 +88,26 @@ export interface EditingRequest {
   booking?: Booking;
 }
 
+interface LoginResponse extends User {
+  sessionToken?: string;
+}
+
 export const snapnowApi = {
   async login(payload: { email: string; password: string }): Promise<User> {
-    const response = await api.post<User>('/api/auth/login', payload);
-    // Explicitly save cookie before returning - don't rely on async interceptor
-    await saveCookieFromResponse(response);
+    const response = await api.post<LoginResponse>('/api/auth/login', payload);
+    // Save session token for mobile auth
+    if (response.data.sessionToken) {
+      await saveSessionToken(response.data.sessionToken);
+    }
     return response.data;
   },
 
   async register(payload: { email: string; password: string; fullName: string; role: UserRole }): Promise<User> {
-    const response = await api.post<User>('/api/auth/register', payload);
-    // Explicitly save cookie before returning
-    await saveCookieFromResponse(response);
+    const response = await api.post<LoginResponse>('/api/auth/register', payload);
+    // Save session token for mobile auth
+    if (response.data.sessionToken) {
+      await saveSessionToken(response.data.sessionToken);
+    }
     return response.data;
   },
 

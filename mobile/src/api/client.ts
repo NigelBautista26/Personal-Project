@@ -3,7 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export const API_URL = 'https://8ec47177-4071-40f8-9c7a-f64803516488-00-2z7o4xrlajvin.janeway.replit.dev';
 
-const COOKIE_KEY = 'snapnow_session_cookie';
+const SESSION_TOKEN_KEY = 'snapnow_session_token';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -13,48 +13,34 @@ const api = axios.create({
   },
 });
 
-// Request interceptor to add cookie to every request
+// Request interceptor to add session token to every request
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
-      const cookie = await SecureStore.getItemAsync(COOKIE_KEY);
-      if (cookie && config.headers) {
-        config.headers.Cookie = cookie;
+      const sessionToken = await SecureStore.getItemAsync(SESSION_TOKEN_KEY);
+      if (sessionToken && config.headers) {
+        config.headers['X-Session-Token'] = sessionToken;
       }
     } catch (error) {
-      console.log('Error reading cookie:', error);
+      console.log('Error reading session token:', error);
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Helper to save cookie - exported so login can await it
-export const saveCookieFromResponse = async (response: any): Promise<void> => {
+// Helper to save session token from login response
+export const saveSessionToken = async (token: string): Promise<void> => {
   try {
-    const setCookie = response.headers['set-cookie'];
-    if (setCookie) {
-      // Handle both string and array formats (React Native returns string)
-      const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
-      // Extract the connect.sid cookie
-      const sessionCookie = cookies.find((c: string) => c.includes('connect.sid'));
-      if (sessionCookie) {
-        // Store just the cookie value (e.g., connect.sid=xxx)
-        const cookiePart = sessionCookie.split(';')[0];
-        await SecureStore.setItemAsync(COOKIE_KEY, cookiePart);
-      }
-    }
+    await SecureStore.setItemAsync(SESSION_TOKEN_KEY, token);
   } catch (error) {
-    console.log('Error saving cookie:', error);
+    console.log('Error saving session token:', error);
   }
 };
 
-// Response interceptor to capture and store session cookie
+// Response interceptor for error handling
 api.interceptors.response.use(
-  async (response) => {
-    await saveCookieFromResponse(response);
-    return response;
-  },
+  (response) => response,
   async (error: AxiosError) => {
     const status = error.response?.status;
     const config = error.config;
@@ -76,9 +62,9 @@ api.interceptors.response.use(
       return api(config);
     }
     
-    // Handle 401 unauthorized - clear cookie
+    // Handle 401 unauthorized - clear session token
     if (status === 401) {
-      await SecureStore.deleteItemAsync(COOKIE_KEY);
+      await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
     }
     
     if (error.response?.data) {
@@ -96,9 +82,9 @@ api.interceptors.response.use(
   }
 );
 
-// Helper to clear cookie on logout
-export const clearSessionCookie = async () => {
-  await SecureStore.deleteItemAsync(COOKIE_KEY);
+// Helper to clear session token on logout
+export const clearSessionToken = async () => {
+  await SecureStore.deleteItemAsync(SESSION_TOKEN_KEY);
 };
 
 // Generic API client function for direct calls
