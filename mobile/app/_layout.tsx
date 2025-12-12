@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { QueryProvider } from '../src/context/QueryProvider';
+import { CityProvider } from '../src/context/CityContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 const PRIMARY_COLOR = '#2563eb';
@@ -32,8 +33,10 @@ export default function RootLayout() {
   return (
     <QueryProvider>
       <AuthProvider>
-        <StatusBar style="light" />
-        <RootNavigator />
+        <CityProvider>
+          <StatusBar style="light" />
+          <RootNavigator />
+        </CityProvider>
       </AuthProvider>
     </QueryProvider>
   );
