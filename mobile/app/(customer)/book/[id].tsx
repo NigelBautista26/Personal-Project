@@ -19,7 +19,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock, CheckCircle } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -78,6 +78,7 @@ export default function BookingScreen() {
   const minuteScrollRef = useRef<ScrollView>(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
   const [paymentToken, setPaymentToken] = useState<string | null>(null);
@@ -569,11 +570,7 @@ export default function BookingScreen() {
                 setShowPaymentWebView(false);
                 setPaymentToken(null);
                 queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
-                Alert.alert(
-                  'Booking Confirmed!',
-                  'Your payment was successful and booking request has been sent.',
-                  [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
-                );
+                setShowSuccessModal(true);
               }
             }}
             onMessage={(event) => {
@@ -583,11 +580,7 @@ export default function BookingScreen() {
                   setShowPaymentWebView(false);
                   setPaymentToken(null);
                   queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
-                  Alert.alert(
-                    'Booking Confirmed!',
-                    'Your payment was successful and booking request has been sent.',
-                    [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
-                  );
+                  setShowSuccessModal(true);
                 }
               } catch (e) {
                 // Ignore non-JSON messages
@@ -603,6 +596,38 @@ export default function BookingScreen() {
             }}
           />
         </SafeAreaView>
+      </Modal>
+
+      {/* Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {}}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successIconContainer}>
+              <CheckCircle size={64} color="#22c55e" />
+            </View>
+            <Text style={styles.successTitle}>Booking Confirmed!</Text>
+            <Text style={styles.successMessage}>
+              Your payment was successful and booking request has been sent to the photographer.
+            </Text>
+            <Text style={styles.successNote}>
+              You'll be notified when they confirm your session.
+            </Text>
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => {
+                setShowSuccessModal(false);
+                router.replace('/(customer)/bookings');
+              }}
+            >
+              <Text style={styles.successButtonText}>View My Bookings</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
       {/* Date Picker Modal */}
@@ -1051,6 +1076,66 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0a',
   },
   webViewLoadingText: { color: '#9ca3af', marginTop: 16, fontSize: 14 },
+
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  successModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  successIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  successTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  successMessage: {
+    fontSize: 15,
+    color: '#d1d5db',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 8,
+  },
+  successNote: {
+    fontSize: 13,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  successButton: {
+    backgroundColor: PRIMARY_COLOR,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 14,
+    width: '100%',
+  },
+  successButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 
   modalContainer: { flex: 1, backgroundColor: '#0a0a0a' },
   modalHeader: {
