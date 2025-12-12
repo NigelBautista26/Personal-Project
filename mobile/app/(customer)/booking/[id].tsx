@@ -84,9 +84,9 @@ export default function BookingDetailScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.statusCard}>
-          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status) + '20' }]}>
-            <Text style={[styles.statusText, { color: getStatusColor(booking.status) }]}>
-              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(booking.status || 'pending') + '20' }]}>
+            <Text style={[styles.statusText, { color: getStatusColor(booking.status || 'pending') }]}>
+              {(booking.status || 'Pending').charAt(0).toUpperCase() + (booking.status || 'pending').slice(1)}
             </Text>
           </View>
           <Text style={styles.bookingId}>Booking #{booking.id}</Text>
