@@ -18,7 +18,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User, MapPin } from 'lucide-react-native';
+import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User, MapPin, Play } from 'lucide-react-native';
 import { snapnowApi, Booking } from '../../src/api/snapnowApi';
 import { API_URL, apiClient } from '../../src/api/client';
 
@@ -299,14 +299,31 @@ export default function CustomerBookingsScreen() {
     return new Date() > sessionEndTime;
   };
 
-  const upcomingBookings = allBookings.filter(b => 
-    b.status === 'pending' || (b.status === 'confirmed' && !hasSessionEnded(b))
-  );
-  const awaitingPhotos = allBookings.filter(b => 
-    (b.status === 'confirmed' && hasSessionEnded(b)) || 
-    b.status === 'photos_pending' || 
-    b.status === 'in_progress'
-  );
+  // Active sessions - currently happening (use sessionPhase from backend)
+  const activeSessions = allBookings.filter((b: any) => b.sessionPhase === 'in_progress');
+  
+  // Upcoming bookings - pending or confirmed but not yet started
+  const upcomingBookings = allBookings.filter((b: any) => {
+    if (b.status === 'pending') return true;
+    if (b.status !== 'confirmed') return false;
+    // Use sessionPhase if available
+    if (b.sessionPhase) {
+      return b.sessionPhase === 'upcoming';
+    }
+    return !hasSessionEnded(b);
+  });
+  
+  // Awaiting photos - session ended
+  const awaitingPhotos = allBookings.filter((b: any) => {
+    if (b.status === 'photos_pending' || b.status === 'in_progress') return true;
+    if (b.status !== 'confirmed') return false;
+    // Use sessionPhase if available
+    if (b.sessionPhase) {
+      return b.sessionPhase === 'completed';
+    }
+    return hasSessionEnded(b);
+  });
+  
   const completedBookings = allBookings.filter(b => b.status === 'completed');
   const expiredBookings = allBookings.filter(b => 
     (b.status === 'expired' || b.status === 'declined' || b.status === 'cancelled') && !(b as any).dismissedAt
@@ -674,6 +691,59 @@ export default function CustomerBookingsScreen() {
           </View>
         ) : (
           <>
+            {/* Active Session - Currently in progress */}
+            {activeSessions.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Play size={16} color="#22c55e" />
+                  <Text style={[styles.sectionTitle, { color: '#22c55e' }]}>Active Session</Text>
+                </View>
+                {activeSessions.map(booking => (
+                  <TouchableOpacity 
+                    key={booking.id}
+                    style={styles.activeSessionCard}
+                    onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.activeSessionPulse}>
+                      <View style={styles.pulseCircle} />
+                    </View>
+                    <View style={styles.activeSessionContent}>
+                      <Text style={styles.activeSessionLabel}>In Progress</Text>
+                      <View style={styles.activeSessionPhotographer}>
+                        {getPhotographerImage(booking) ? (
+                          <Image 
+                            source={{ uri: getImageUrl(getPhotographerImage(booking)) }} 
+                            style={styles.activeSessionAvatar}
+                          />
+                        ) : (
+                          <View style={styles.activeSessionAvatarPlaceholder}>
+                            <User size={18} color="#9ca3af" />
+                          </View>
+                        )}
+                        <Text style={styles.activeSessionPhotographerName}>
+                          {getPhotographerName(booking)}
+                        </Text>
+                      </View>
+                      <View style={styles.activeSessionDetails}>
+                        <View style={styles.activeSessionDetailRow}>
+                          <MapPin size={14} color="#9ca3af" />
+                          <Text style={styles.activeSessionDetailText}>{booking.location}</Text>
+                        </View>
+                        <View style={styles.activeSessionDetailRow}>
+                          <Clock size={14} color="#9ca3af" />
+                          <Text style={styles.activeSessionDetailText}>
+                            {booking.scheduledTime} ({booking.duration}h)
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                    <ChevronRight size={20} color="#9ca3af" />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             {/* Upcoming Sessions */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
@@ -1952,4 +2022,77 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(249, 115, 22, 0.3)',
   },
   revisionSubmitText: { color: '#fff', fontSize: 12, fontWeight: '500' },
+
+  // Active Session styles
+  activeSessionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  activeSessionPulse: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  pulseCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#22c55e',
+  },
+  activeSessionContent: {
+    flex: 1,
+  },
+  activeSessionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#22c55e',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  activeSessionPhotographer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activeSessionAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  activeSessionAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  activeSessionPhotographerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  activeSessionDetails: {
+    gap: 4,
+  },
+  activeSessionDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  activeSessionDetailText: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
 });

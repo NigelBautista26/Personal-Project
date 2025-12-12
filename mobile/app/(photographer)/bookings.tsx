@@ -25,6 +25,7 @@ import {
   X,
   Palette,
   RefreshCw,
+  Play,
 } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { snapnowApi, EditingRequest } from '../../src/api/snapnowApi';
@@ -96,16 +97,32 @@ export default function PhotographerBookingsScreen() {
 
   const now = new Date();
   const pendingBookings = bookingsArray.filter(b => b.status === 'pending');
+  
+  // Active sessions - currently happening (use sessionPhase from backend)
+  const activeSessions = bookingsArray.filter(b => b.sessionPhase === 'in_progress');
+  
+  // Upcoming sessions - confirmed but not yet started
   const upcomingBookings = bookingsArray.filter(b => {
     if (b.status !== 'confirmed') return false;
+    // Use sessionPhase if available, otherwise fallback to time calculation
+    if (b.sessionPhase) {
+      return b.sessionPhase === 'upcoming';
+    }
     const sessionEnd = getSessionEndTime(b);
     return sessionEnd >= now;
   });
+  
+  // Ready for photos - session ended but photos not uploaded yet
   const readyForPhotos = bookingsArray.filter(b => {
     if (b.status !== 'confirmed') return false;
+    // Use sessionPhase if available
+    if (b.sessionPhase) {
+      return b.sessionPhase === 'completed';
+    }
     const sessionEnd = getSessionEndTime(b);
     return sessionEnd < now;
   });
+  
   const completedBookings = bookingsArray.filter(b => b.status === 'completed');
   const declinedBookings = bookingsArray.filter(b => 
     (b.status === 'declined' || b.status === 'cancelled') && !b.dismissedAt
@@ -458,6 +475,62 @@ export default function PhotographerBookingsScreen() {
           <Text style={styles.title}>My Bookings</Text>
           <Text style={styles.subtitle}>Manage your upcoming photo sessions</Text>
         </View>
+
+        {/* Active Session - Currently in progress */}
+        {activeSessions.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <Play size={20} color="#22c55e" />,
+              'Active Session',
+              activeSessions.length,
+              undefined,
+              '#22c55e'
+            )}
+            {activeSessions.map(booking => (
+              <TouchableOpacity 
+                key={booking.id}
+                style={styles.activeSessionCard}
+                onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.activeSessionPulse}>
+                  <View style={styles.pulseCircle} />
+                </View>
+                <View style={styles.activeSessionContent}>
+                  <Text style={styles.activeSessionLabel}>In Progress</Text>
+                  <View style={styles.activeSessionCustomer}>
+                    {booking.customer?.profileImageUrl ? (
+                      <Image 
+                        source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
+                        style={styles.activeSessionAvatar}
+                      />
+                    ) : (
+                      <View style={styles.activeSessionAvatarPlaceholder}>
+                        <User size={18} color="#9ca3af" />
+                      </View>
+                    )}
+                    <Text style={styles.activeSessionCustomerName}>
+                      {booking.customer?.fullName || 'Customer'}
+                    </Text>
+                  </View>
+                  <View style={styles.activeSessionDetails}>
+                    <View style={styles.activeSessionDetailRow}>
+                      <MapPin size={14} color="#9ca3af" />
+                      <Text style={styles.activeSessionDetailText}>{booking.location}</Text>
+                    </View>
+                    <View style={styles.activeSessionDetailRow}>
+                      <Clock size={14} color="#9ca3af" />
+                      <Text style={styles.activeSessionDetailText}>
+                        {booking.scheduledTime} ({booking.duration}h)
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                <ChevronRight size={20} color="#9ca3af" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {/* Upcoming Sessions */}
         <View style={styles.section}>
@@ -857,4 +930,77 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.05)',
   },
   dismissButtonText: { color: '#71717a', fontSize: 13 },
+
+  // Active Session styles
+  activeSessionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: 'rgba(34, 197, 94, 0.3)',
+  },
+  activeSessionPulse: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  pulseCircle: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#22c55e',
+  },
+  activeSessionContent: {
+    flex: 1,
+  },
+  activeSessionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#22c55e',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  activeSessionCustomer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  activeSessionAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  activeSessionAvatarPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  activeSessionCustomerName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  activeSessionDetails: {
+    gap: 4,
+  },
+  activeSessionDetailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  activeSessionDetailText: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
 });

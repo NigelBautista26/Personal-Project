@@ -8,6 +8,74 @@ import { z } from "zod";
 import { broadcastToBooking, broadcastToUser, broadcastToPhotographer, broadcastToCustomer } from "./realtime";
 import { getUncachableStripeClient, getStripePublishableKey, isStripeConfigured } from "./stripeClient";
 
+// Helper function to calculate session phase based on current time
+type SessionPhase = 'upcoming' | 'in_progress' | 'completed';
+
+function calculateSessionPhase(
+  scheduledDate: Date | string,
+  scheduledTime: string,
+  duration: number,
+  status: string
+): SessionPhase {
+  // Only confirmed bookings can be in_progress
+  if (status !== 'confirmed') {
+    return 'upcoming';
+  }
+
+  const now = new Date();
+  
+  // Parse the scheduled date and time
+  const dateStr = typeof scheduledDate === 'string' 
+    ? scheduledDate.split('T')[0] 
+    : scheduledDate.toISOString().split('T')[0];
+  
+  // Parse time (format: "14:00" or "2:00 PM")
+  let hours: number, minutes: number;
+  if (scheduledTime.includes('AM') || scheduledTime.includes('PM')) {
+    const match = scheduledTime.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (match) {
+      hours = parseInt(match[1]);
+      minutes = parseInt(match[2]);
+      const isPM = match[3].toUpperCase() === 'PM';
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+    } else {
+      return 'upcoming';
+    }
+  } else {
+    const timeParts = scheduledTime.split(':');
+    hours = parseInt(timeParts[0]);
+    minutes = parseInt(timeParts[1] || '0');
+  }
+
+  // Create session start and end times
+  const sessionStart = new Date(`${dateStr}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`);
+  const sessionEnd = new Date(sessionStart.getTime() + duration * 60 * 60 * 1000);
+
+  if (now < sessionStart) {
+    return 'upcoming';
+  } else if (now >= sessionStart && now < sessionEnd) {
+    return 'in_progress';
+  } else {
+    return 'completed';
+  }
+}
+
+// Helper function to add session phase to bookings
+function addSessionPhaseToBookings<T extends { scheduledDate: Date | string; scheduledTime: string; duration: number; status: string }>(
+  bookings: T[]
+): (T & { sessionPhase: SessionPhase })[] {
+  return bookings.map(booking => ({
+    ...booking,
+    sessionPhase: calculateSessionPhase(
+      booking.scheduledDate,
+      booking.scheduledTime,
+      booking.duration,
+      booking.status
+    ),
+  }));
+}
+
 // Helper function to expire bookings and cancel their Stripe payment intents
 async function expireBookingsAndCancelPayments(photographerId?: string): Promise<void> {
   const expiredBookings = await storage.expireOldPendingBookings(photographerId);
@@ -741,7 +809,7 @@ export async function registerRoutes(
       await expireBookingsAndCancelPayments();
       
       const bookings = await storage.getBookingsByCustomerWithPhotographer(req.params.customerId);
-      res.json(bookings);
+      res.json(addSessionPhaseToBookings(bookings));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
     }
@@ -755,7 +823,7 @@ export async function registerRoutes(
       
       await expireBookingsAndCancelPayments();
       const bookings = await storage.getBookingsByCustomerWithPhotographer(req.session.userId);
-      res.json(bookings);
+      res.json(addSessionPhaseToBookings(bookings));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
     }
@@ -774,7 +842,7 @@ export async function registerRoutes(
       
       await expireBookingsAndCancelPayments(photographer.id);
       const bookings = await storage.getBookingsByPhotographerWithCustomer(photographer.id);
-      res.json(bookings);
+      res.json(addSessionPhaseToBookings(bookings));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
     }
@@ -797,7 +865,7 @@ export async function registerRoutes(
       
       // Return bookings with customer info for photographer view
       const bookings = await storage.getBookingsByPhotographerWithCustomer(req.params.photographerId);
-      res.json(bookings);
+      res.json(addSessionPhaseToBookings(bookings));
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch bookings" });
     }
