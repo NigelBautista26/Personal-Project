@@ -27,8 +27,7 @@
     "react-native-maps": "^1.10.0",
     "lucide-react-native": "^0.468.0",
     "prop-types": "^15.8.1",
-    "react-native-webview": "^13.6.0",
-    "@stripe/stripe-react-native": "^0.38.0"
+    "react-native-webview": "^13.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

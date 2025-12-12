@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,13 +12,13 @@ import {
   Image,
   Modal,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock } from 'lucide-react-native';
 import * as Location from 'expo-location';
-import { CardField, useStripe, useConfirmPayment } from '@stripe/stripe-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
-import api, { API_URL } from '../../../src/api/client';
+import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -58,7 +58,7 @@ const formatTime12h = (time: string) => {
 export default function BookingScreen() {
   const { id, duration: durationParam } = useLocalSearchParams<{ id: string; duration?: string }>();
   const queryClient = useQueryClient();
-  const { confirmPayment } = useConfirmPayment();
+  const webViewRef = useRef<WebView>(null);
   
   const [step, setStep] = useState(1);
   const [duration, setDuration] = useState(Number(durationParam) || 1);
@@ -68,37 +68,14 @@ export default function BookingScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [manualLocation, setManualLocation] = useState('');
-  const [cardComplete, setCardComplete] = useState(false);
 
   const { data: photographer, isLoading } = useQuery({
     queryKey: ['photographer', id],
     queryFn: () => snapnowApi.getPhotographer(id!),
     enabled: !!id,
-  });
-
-  const bookingMutation = useMutation({
-    mutationFn: (data: {
-      photographerId: string;
-      scheduledDate: string;
-      scheduledTime: string;
-      duration: number;
-      location: string;
-      stripePaymentId?: string;
-    }) => snapnowApi.createBooking(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
-      Alert.alert(
-        'Booking Confirmed!',
-        'Your payment was successful and booking request has been sent to the photographer.',
-        [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
-      );
-    },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to create booking. Please try again.');
-    },
   });
 
   const handleContinueToPayment = () => {
@@ -113,52 +90,8 @@ export default function BookingScreen() {
     setStep(2);
   };
 
-  const handlePayment = async () => {
-    if (!cardComplete) {
-      Alert.alert('Card Required', 'Please enter your card details.');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-
-    try {
-      const response = await api.post('/stripe/create-payment-intent', {
-        amount: totalPrice,
-        photographerName: photographer?.fullName || 'Photographer',
-      });
-
-      const { clientSecret, paymentIntentId, error: serverError } = response.data;
-
-      if (serverError) {
-        throw new Error(serverError);
-      }
-
-      const { error: stripeError, paymentIntent } = await confirmPayment(clientSecret, {
-        paymentMethodType: 'Card',
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
-
-      if (paymentIntent?.status === 'Succeeded' || paymentIntent?.status === 'RequiresCapture') {
-        const scheduledDateTime = `${selectedDate}T${selectedTime}:00.000Z`;
-        
-        bookingMutation.mutate({
-          photographerId: id!,
-          scheduledDate: scheduledDateTime,
-          scheduledTime: selectedTime,
-          duration,
-          location: location.trim(),
-          stripePaymentId: paymentIntent.id,
-        });
-      } else {
-        throw new Error('Payment authorization was not successful');
-      }
-    } catch (error: any) {
-      Alert.alert('Payment Failed', error.message || 'Payment failed. Please try again.');
-      setIsProcessingPayment(false);
-    }
+  const handleOpenPayment = () => {
+    setShowPaymentWebView(true);
   };
 
   const handleBack = () => {
@@ -241,6 +174,9 @@ export default function BookingScreen() {
   const dateOptions = generateDateOptions();
   const photographerCity = photographer?.city || photographer?.location?.split(',')[0] || 'London';
   const spots = PHOTO_SPOTS[photographerCity] || PHOTO_SPOTS['London'];
+
+  // Build the web booking URL with all the parameters
+  const webBookingUrl = `${API_URL}/book/${id}?duration=${duration}&date=${selectedDate}&time=${selectedTime}&location=${encodeURIComponent(location)}&step=2`;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -437,26 +373,15 @@ export default function BookingScreen() {
                 </Text>
               </View>
 
-              <View style={styles.cardFieldContainer}>
-                <CardField
-                  postalCodeEnabled={false}
-                  placeholders={{
-                    number: '4242 4242 4242 4242',
-                  }}
-                  cardStyle={{
-                    backgroundColor: '#1a1a1a',
-                    textColor: '#ffffff',
-                    placeholderColor: '#6b7280',
-                    borderColor: 'rgba(255,255,255,0.1)',
-                    borderWidth: 1,
-                    borderRadius: 12,
-                  }}
-                  style={styles.cardField}
-                  onCardChange={(cardDetails) => {
-                    setCardComplete(cardDetails.complete);
-                  }}
-                />
-              </View>
+              <TouchableOpacity
+                style={styles.cardInputPlaceholder}
+                onPress={handleOpenPayment}
+                testID="button-open-payment"
+              >
+                <CreditCard size={20} color="#6b7280" />
+                <Text style={styles.cardInputText}>Tap to enter card details</Text>
+                <ChevronRight size={18} color="#6b7280" />
+              </TouchableOpacity>
 
               <View style={styles.securedBy}>
                 <Lock size={12} color="#6b7280" />
@@ -472,24 +397,60 @@ export default function BookingScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[
-            styles.submitButton, 
-            (isProcessingPayment || bookingMutation.isPending) && styles.submitButtonDisabled,
-            step === 2 && !cardComplete && styles.submitButtonDisabled,
-          ]}
-          onPress={step === 1 ? handleContinueToPayment : handlePayment}
-          disabled={isProcessingPayment || bookingMutation.isPending || (step === 2 && !cardComplete)}
+          style={styles.submitButton}
+          onPress={step === 1 ? handleContinueToPayment : handleOpenPayment}
           testID="button-submit"
         >
-          {isProcessingPayment || bookingMutation.isPending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>
-              {step === 1 ? 'Continue to Payment' : `Pay £${totalPrice.toFixed(2)}`}
-            </Text>
-          )}
+          <Text style={styles.submitButtonText}>
+            {step === 1 ? 'Continue to Payment' : `Pay £${totalPrice.toFixed(2)}`}
+          </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Payment WebView Modal */}
+      <Modal
+        visible={showPaymentWebView}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowPaymentWebView(false)}
+      >
+        <SafeAreaView style={styles.webViewContainer}>
+          <View style={styles.webViewHeader}>
+            <TouchableOpacity onPress={() => setShowPaymentWebView(false)} style={styles.webViewClose}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.webViewTitle}>Complete Payment</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <WebView
+            ref={webViewRef}
+            source={{ uri: webBookingUrl }}
+            style={styles.webView}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={styles.webViewLoading}>
+                <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+                <Text style={styles.webViewLoadingText}>Loading payment form...</Text>
+              </View>
+            )}
+            onNavigationStateChange={(navState) => {
+              if (navState.url.includes('/bookings') || navState.url.includes('success=true')) {
+                setShowPaymentWebView(false);
+                queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
+                Alert.alert(
+                  'Booking Confirmed!',
+                  'Your payment was successful and booking request has been sent.',
+                  [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
+                );
+              }
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
 
       {/* Date Picker Modal */}
       <Modal
@@ -803,17 +764,17 @@ const styles = StyleSheet.create({
   },
   sandboxText: { fontSize: 12, color: '#9ca3af', textAlign: 'center' },
   
-  cardFieldContainer: {
+  cardInputPlaceholder: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.05)',
     borderRadius: 12,
+    padding: 16,
+    gap: 12,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
-    overflow: 'hidden',
   },
-  cardField: {
-    width: '100%',
-    height: 50,
-  },
+  cardInputText: { fontSize: 15, color: '#6b7280', flex: 1 },
   
   securedBy: {
     flexDirection: 'row',
@@ -837,8 +798,32 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
   },
-  submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+
+  webViewContainer: { flex: 1, backgroundColor: '#0a0a0a' },
+  webViewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  webViewClose: { padding: 8 },
+  webViewTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
+  webView: { flex: 1, backgroundColor: '#0a0a0a' },
+  webViewLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+  webViewLoadingText: { color: '#9ca3af', marginTop: 16, fontSize: 14 },
 
   modalContainer: { flex: 1, backgroundColor: '#0a0a0a' },
   modalHeader: {
