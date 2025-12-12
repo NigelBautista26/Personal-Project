@@ -341,7 +341,6 @@ export default function PhotographerBookingDetailScreen() {
   };
   
   const isConfirmed = booking.status === 'confirmed' && !hasSessionEnded();
-  const isPending = booking.status === 'pending';
   const canEditMeetingPoint = (booking.status === 'pending' || booking.status === 'confirmed') && !hasSessionEnded();
   const isPhotosPending = (booking.status === 'confirmed' && hasSessionEnded()) || booking.status === 'photos_pending';
 
