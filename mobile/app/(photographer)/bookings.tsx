@@ -226,7 +226,9 @@ export default function PhotographerBookingsScreen() {
     } = {}
   ) => {
     const timeRemaining = booking.expiresAt ? getTimeRemaining(booking.expiresAt) : null;
-    const isClickable = !options.showActions; // Not clickable if showing Accept/Decline buttons
+    const isClickable = !options.showActions;
+    const isConfirmed = booking.status === 'confirmed';
+    const isPending = booking.status === 'pending';
     
     const CardWrapper = isClickable ? TouchableOpacity : View;
     const cardProps = isClickable ? {
@@ -241,48 +243,84 @@ export default function PhotographerBookingsScreen() {
         testID={`card-booking-${booking.id}`}
         {...cardProps}
       >
+        {/* Accent line at top */}
+        <View style={[styles.bookingAccent, { backgroundColor: isConfirmed ? '#22c55e' : isPending ? '#f59e0b' : '#6b7280' }]} />
+        
         {/* Header: Customer info + Earnings */}
         <View style={styles.bookingHeader}>
           <View style={styles.customerInfo}>
-            <View style={styles.customerAvatar}>
-              {booking.customer?.profileImageUrl ? (
-                <Image 
-                  source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
-                  style={styles.customerAvatarImage} 
-                />
-              ) : (
-                <User size={20} color="#9ca3af" />
+            <View style={styles.customerAvatarWrapper}>
+              <View style={styles.customerAvatar}>
+                {booking.customer?.profileImageUrl ? (
+                  <Image 
+                    source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
+                    style={styles.customerAvatarImage} 
+                  />
+                ) : (
+                  <User size={22} color="#9ca3af" />
+                )}
+              </View>
+              {isConfirmed && (
+                <View style={styles.avatarBadge}>
+                  <Check size={10} color="#fff" />
+                </View>
               )}
             </View>
             <View style={styles.customerDetails}>
               <Text style={styles.customerName}>
                 {booking.customer?.fullName || 'Customer'}
               </Text>
-              <Text style={styles.durationText}>{booking.duration} hour{booking.duration > 1 ? 's' : ''}</Text>
+              <Text style={styles.durationText}>{booking.duration} hour session</Text>
             </View>
           </View>
           {options.showEarnings !== false && (
             <View style={styles.earningsContainer}>
-              <Text style={styles.earnings}>£{parseFloat(booking.photographerEarnings || 0).toFixed(2)}</Text>
-              <Text style={styles.earningsLabel}>earnings</Text>
+              <Text style={styles.earningsLabel}>EARNINGS</Text>
+              <Text style={styles.earnings}>£{parseFloat(booking.photographerEarnings || 0).toFixed(0)}</Text>
             </View>
           )}
         </View>
 
-        {/* Booking details with icons */}
-        <View style={styles.bookingDetailsSection}>
-          <View style={styles.detailRow}>
-            <Calendar size={16} color="#9ca3af" />
-            <Text style={styles.detailText}>{formatFullDate(booking.scheduledDate)}</Text>
+        {/* Status badge */}
+        <View style={styles.statusRow}>
+          <View style={[styles.statusBadge, { backgroundColor: isConfirmed ? 'rgba(34,197,94,0.15)' : isPending ? 'rgba(245,158,11,0.15)' : 'rgba(107,114,128,0.15)' }]}>
+            {isConfirmed && <Check size={12} color="#22c55e" />}
+            {isPending && <Clock size={12} color="#f59e0b" />}
+            <Text style={[styles.statusBadgeText, { color: isConfirmed ? '#22c55e' : isPending ? '#f59e0b' : '#9ca3af' }]}>
+              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </Text>
           </View>
-          <View style={styles.detailRow}>
-            <Clock size={16} color="#9ca3af" />
-            <Text style={styles.detailText}>{booking.scheduledTime}</Text>
+        </View>
+
+        {/* Details grid */}
+        <View style={styles.detailsGrid}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailIconWrapper}>
+              <Calendar size={14} color="#3b82f6" />
+            </View>
+            <View>
+              <Text style={styles.detailLabel}>DATE</Text>
+              <Text style={styles.detailValue}>{formatFullDate(booking.scheduledDate)}</Text>
+            </View>
           </View>
-          <View style={styles.detailRow}>
-            <MapPin size={16} color="#9ca3af" />
-            <Text style={styles.detailText}>{booking.location}</Text>
+          <View style={styles.detailItem}>
+            <View style={[styles.detailIconWrapper, { backgroundColor: 'rgba(139,92,246,0.15)' }]}>
+              <Clock size={14} color="#8b5cf6" />
+            </View>
+            <View>
+              <Text style={styles.detailLabel}>TIME</Text>
+              <Text style={styles.detailValue}>{booking.scheduledTime}</Text>
+            </View>
           </View>
+        </View>
+        
+        {/* Location row */}
+        <View style={styles.locationRow}>
+          <View style={styles.locationIcon}>
+            <MapPin size={14} color="#f59e0b" />
+          </View>
+          <Text style={styles.locationText} numberOfLines={1}>{booking.location}</Text>
+          {isClickable && <ChevronRight size={18} color="#6b7280" />}
         </View>
 
         {/* Time remaining warning */}
@@ -744,33 +782,62 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 14, color: '#9ca3af', marginTop: 12 },
 
   bookingCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 12,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  bookingAccent: {
+    height: 4,
+    width: '100%',
   },
   bookingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   customerInfo: { flexDirection: 'row', alignItems: 'flex-start', flex: 1 },
+  customerAvatarWrapper: {
+    position: 'relative',
+    marginRight: 12,
+  },
   customerAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
     overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  customerAvatarImage: { width: 48, height: 48, borderRadius: 24 },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0d1117',
+  },
+  customerAvatarImage: { width: 52, height: 52, borderRadius: 26 },
   customerDetails: { flex: 1 },
   customerNameRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
-  customerName: { fontSize: 16, fontWeight: '600', color: '#fff' },
+  customerName: { fontSize: 17, fontWeight: '700', color: '#fff', letterSpacing: -0.3 },
   awaitingBadge: {
     backgroundColor: 'rgba(20, 184, 166, 0.2)',
     paddingHorizontal: 8,
@@ -785,12 +852,94 @@ const styles = StyleSheet.create({
   bookingLocation: { fontSize: 13, color: '#9ca3af', marginTop: 1 },
   durationText: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   earningsContainer: { alignItems: 'flex-end' },
-  earnings: { fontSize: 18, fontWeight: '700', color: '#22c55e' },
-  earningsLabel: { fontSize: 11, color: '#9ca3af' },
+  earningsLabel: { fontSize: 11, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5 },
+  earnings: { fontSize: 22, fontWeight: '700', color: '#22c55e', marginTop: 2 },
+
+  statusRow: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 5,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  detailsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
+  },
+  detailItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  detailIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(59,130,246,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  detailValue: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(249,115,22,0.08)',
+    borderRadius: 12,
+    gap: 10,
+  },
+  locationIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(249,115,22,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  locationText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
+  },
 
   bookingDetailsSection: {
     marginTop: 16,
     gap: 8,
+    paddingHorizontal: 16,
   },
   detailRow: {
     flexDirection: 'row',
@@ -808,7 +957,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 8,
-    marginTop: 16,
+    marginHorizontal: 16,
+    marginTop: 0,
+    marginBottom: 16,
     gap: 10,
   },
   expiryWarningText: {
@@ -830,7 +981,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#2563eb',
     paddingVertical: 12,
     borderRadius: 12,
-    marginTop: 16,
+    marginHorizontal: 16,
+    marginTop: 0,
+    marginBottom: 16,
     gap: 8,
   },
   uploadButtonText: { fontSize: 14, fontWeight: '600', color: '#fff' },
@@ -838,7 +991,9 @@ const styles = StyleSheet.create({
   actionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16,
+    marginHorizontal: 16,
+    marginTop: 0,
+    marginBottom: 16,
   },
   declineButton: {
     flex: 1,
@@ -872,7 +1027,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2563eb',
-    marginTop: 16,
+    marginHorizontal: 16,
+    marginTop: 0,
+    marginBottom: 16,
     gap: 6,
   },
   managePhotosButtonText: { color: '#2563eb', fontSize: 14, fontWeight: '600' },
