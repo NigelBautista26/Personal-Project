@@ -212,8 +212,6 @@ export default function BookingScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={{ flex: 1 }}>
       {/* Header with Progress */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="button-back">
@@ -229,7 +227,7 @@ export default function BookingScreen() {
         <View style={[styles.progressStep, step >= 2 && styles.progressStepActive]} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         {/* Photographer Card - Both Steps */}
         <View style={styles.photographerCard}>
           <Image
@@ -505,8 +503,6 @@ export default function BookingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-      </View>
-      </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
       {/* Payment WebView Modal */}
@@ -812,6 +808,7 @@ const styles = StyleSheet.create({
   },
 
   content: { flex: 1, paddingHorizontal: 16 },
+  contentContainer: { paddingBottom: 20 },
   loader: { marginTop: 100 },
   
   photographerCard: {
