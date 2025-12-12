@@ -197,10 +197,9 @@ export default function PhotographerBookingsScreen() {
     const timeRemaining = booking.expiresAt ? getTimeRemaining(booking.expiresAt) : null;
     
     return (
-      <TouchableOpacity
+      <View
         key={booking.id}
         style={styles.bookingCard}
-        onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
         testID={`card-booking-${booking.id}`}
       >
         {/* Header: Customer info + Earnings */}
@@ -293,7 +292,7 @@ export default function PhotographerBookingsScreen() {
             <Text style={styles.managePhotosButtonText}>Manage Photos</Text>
           </TouchableOpacity>
         )}
-      </TouchableOpacity>
+      </View>
     );
   };
 

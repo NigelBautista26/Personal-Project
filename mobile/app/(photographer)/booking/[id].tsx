@@ -212,6 +212,7 @@ export default function PhotographerBookingDetailScreen() {
   };
 
   const getStatusLabel = (status: string) => {
+    if (!status) return 'Unknown';
     switch (status) {
       case 'photos_pending': return 'Ready for Photos';
       default: return status.charAt(0).toUpperCase() + status.slice(1);
