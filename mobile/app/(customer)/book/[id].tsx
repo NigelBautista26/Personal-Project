@@ -160,8 +160,10 @@ export default function BookingScreen() {
   };
 
   const timeSlots = [
-    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', 
-    '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+    '00:00', '01:00', '02:00', '03:00', '04:00', '05:00',
+    '06:00', '07:00', '08:00', '09:00', '10:00', '11:00',
+    '12:00', '13:00', '14:00', '15:00', '16:00', '17:00',
+    '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'
   ];
 
   if (isLoading) {
@@ -534,7 +536,7 @@ export default function BookingScreen() {
               <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
-          <View style={styles.timePickerContent}>
+          <ScrollView style={styles.timePickerContent} contentContainerStyle={styles.timePickerScroll}>
             <Text style={styles.timePickerSubtitle}>Choose a time slot for your session</Text>
             <View style={styles.timeGrid}>
               {timeSlots.map((time) => {
@@ -562,7 +564,7 @@ export default function BookingScreen() {
                 );
               })}
             </View>
-          </View>
+          </ScrollView>
         </SafeAreaView>
       </Modal>
 
@@ -920,7 +922,8 @@ const styles = StyleSheet.create({
   },
   todayDotActive: { backgroundColor: '#fff' },
 
-  timePickerContent: { padding: 16 },
+  timePickerContent: { flex: 1 },
+  timePickerScroll: { padding: 16, paddingBottom: 32 },
   timePickerSubtitle: { fontSize: 14, color: '#9ca3af', marginBottom: 16 },
   timeGrid: {
     flexDirection: 'row',
