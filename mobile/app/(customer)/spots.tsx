@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { router } from 'expo-router';
-import { MapPin, Camera } from 'lucide-react-native';
-import { useCity } from '../../src/context/CityContext';
+import { MapPin, Camera, ChevronDown } from 'lucide-react-native';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -59,15 +58,17 @@ const ALL_SPOTS: { [city: string]: { id: number; name: string; location: string;
   ],
 };
 
+const CITIES = ['All Cities', ...Object.keys(ALL_SPOTS)];
+
 export default function SpotsScreen() {
-  const { selectedCity } = useCity();
+  const [selectedCity, setSelectedCity] = useState('All Cities');
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   const getSpots = () => {
-    const cityName = selectedCity.name;
-    if (ALL_SPOTS[cityName]) {
-      return ALL_SPOTS[cityName];
+    if (selectedCity === 'All Cities') {
+      return Object.values(ALL_SPOTS).flat();
     }
-    return [];
+    return ALL_SPOTS[selectedCity] || [];
   };
 
   const spots = getSpots();
@@ -80,27 +81,42 @@ export default function SpotsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Photo Spots</Text>
-        <Text style={styles.subtitle}>Popular spots in {selectedCity.name}</Text>
+        <Text style={styles.subtitle}>Popular photography locations</Text>
       </View>
 
-      <View style={styles.cityIndicator}>
+      <TouchableOpacity 
+        style={styles.citySelector}
+        onPress={() => setShowCityDropdown(!showCityDropdown)}
+      >
         <MapPin size={16} color={PRIMARY_COLOR} />
-        <Text style={styles.cityIndicatorText}>{selectedCity.name}</Text>
-        <Text style={styles.cityHint}>Change city from Map tab</Text>
-      </View>
+        <Text style={styles.citySelectorText}>{selectedCity}</Text>
+        <ChevronDown size={16} color="#9ca3af" />
+      </TouchableOpacity>
+
+      {showCityDropdown && (
+        <View style={styles.dropdown}>
+          <ScrollView style={{ maxHeight: 250 }} nestedScrollEnabled>
+            {CITIES.map((city) => (
+              <TouchableOpacity
+                key={city}
+                style={[styles.dropdownItem, selectedCity === city && styles.dropdownItemActive]}
+                onPress={() => {
+                  setSelectedCity(city);
+                  setShowCityDropdown(false);
+                }}
+              >
+                <Text style={[styles.dropdownText, selectedCity === city && styles.dropdownTextActive]}>
+                  {city}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {spots.length === 0 ? (
-          <View style={styles.emptyState}>
-            <MapPin size={48} color="#4b5563" />
-            <Text style={styles.emptyTitle}>No spots available</Text>
-            <Text style={styles.emptyText}>
-              We don't have photo spots for {selectedCity.name} yet. Try selecting a different city from the Map tab.
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {spots.map((spot) => (
+        <View style={styles.grid}>
+          {spots.map((spot) => (
               <TouchableOpacity
                 key={spot.id}
                 style={styles.spotCard}
@@ -128,8 +144,7 @@ export default function SpotsScreen() {
                 </ImageBackground>
               </TouchableOpacity>
             ))}
-          </View>
-        )}
+        </View>
         <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
@@ -156,7 +171,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
   },
-  cityIndicator: {
+  citySelector: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
@@ -168,15 +183,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  cityIndicatorText: {
+  citySelectorText: {
+    flex: 1,
     color: '#fff',
     fontSize: 14,
     fontWeight: '500',
   },
-  cityHint: {
-    marginLeft: 'auto',
-    color: '#6b7280',
-    fontSize: 12,
+  dropdown: {
+    position: 'absolute',
+    top: 140,
+    left: 16,
+    right: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    zIndex: 100,
+  },
+  dropdownItem: {
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+  },
+  dropdownItemActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+  },
+  dropdownText: {
+    color: '#9ca3af',
+    fontSize: 14,
+  },
+  dropdownTextActive: {
+    color: PRIMARY_COLOR,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
