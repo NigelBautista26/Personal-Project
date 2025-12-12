@@ -165,6 +165,26 @@ export default function PhotographerBookingsScreen() {
     </View>
   );
 
+  const getTimeRemaining = (expiresAt: string) => {
+    const now = new Date();
+    const expiry = new Date(expiresAt);
+    const diff = expiry.getTime() - now.getTime();
+    if (diff <= 0) return null;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return `${hours}h ${minutes}m left to respond`;
+  };
+
+  const formatFullDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { 
+      weekday: 'long', 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
   const renderBookingCard = (
     booking: any, 
     options: { 
@@ -173,83 +193,109 @@ export default function PhotographerBookingsScreen() {
       showEarnings?: boolean;
       showManagePhotos?: boolean;
     } = {}
-  ) => (
-    <TouchableOpacity
-      key={booking.id}
-      style={styles.bookingCard}
-      onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
-      testID={`card-booking-${booking.id}`}
-    >
-      <View style={styles.bookingHeader}>
-        <View style={styles.customerInfo}>
-          <View style={styles.customerAvatar}>
-            {booking.customer?.profileImageUrl ? (
-              <Image 
-                source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
-                style={styles.customerAvatarImage} 
-              />
-            ) : (
-              <User size={20} color="#9ca3af" />
-            )}
+  ) => {
+    const timeRemaining = booking.expiresAt ? getTimeRemaining(booking.expiresAt) : null;
+    
+    return (
+      <TouchableOpacity
+        key={booking.id}
+        style={styles.bookingCard}
+        onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
+        testID={`card-booking-${booking.id}`}
+      >
+        {/* Header: Customer info + Earnings */}
+        <View style={styles.bookingHeader}>
+          <View style={styles.customerInfo}>
+            <View style={styles.customerAvatar}>
+              {booking.customer?.profileImageUrl ? (
+                <Image 
+                  source={{ uri: getImageUrl(booking.customer.profileImageUrl)! }} 
+                  style={styles.customerAvatarImage} 
+                />
+              ) : (
+                <User size={20} color="#9ca3af" />
+              )}
+            </View>
+            <View style={styles.customerDetails}>
+              <Text style={styles.customerName}>
+                {booking.customer?.fullName || 'Customer'}
+              </Text>
+              <Text style={styles.durationText}>{booking.duration} hour{booking.duration > 1 ? 's' : ''}</Text>
+            </View>
           </View>
-          <View style={styles.customerDetails}>
-            <Text style={styles.customerName}>
-              {booking.customer?.fullName || 'Customer'}
-            </Text>
-            <Text style={styles.bookingMeta}>
-              {formatDate(booking.scheduledDate)}
-            </Text>
-            <Text style={styles.bookingLocation}>{booking.location}</Text>
+          {options.showEarnings !== false && (
+            <View style={styles.earningsContainer}>
+              <Text style={styles.earnings}>£{parseFloat(booking.photographerEarnings || 0).toFixed(2)}</Text>
+              <Text style={styles.earningsLabel}>earnings</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Booking details with icons */}
+        <View style={styles.bookingDetailsSection}>
+          <View style={styles.detailRow}>
+            <Calendar size={16} color="#9ca3af" />
+            <Text style={styles.detailText}>{formatFullDate(booking.scheduledDate)}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Clock size={16} color="#9ca3af" />
+            <Text style={styles.detailText}>{booking.scheduledTime}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <MapPin size={16} color="#9ca3af" />
+            <Text style={styles.detailText}>{booking.location}</Text>
           </View>
         </View>
-        {options.showEarnings !== false && (
-          <View style={styles.earningsContainer}>
-            <Text style={styles.earnings}>£{parseFloat(booking.photographerEarnings || 0).toFixed(2)}</Text>
-            <Text style={styles.earningsLabel}>earnings</Text>
+
+        {/* Time remaining warning */}
+        {options.showActions && timeRemaining && (
+          <View style={styles.expiryWarning}>
+            <AlertTriangle size={16} color="#92400e" />
+            <Text style={styles.expiryWarningText}>{timeRemaining}</Text>
           </View>
         )}
-      </View>
 
-      {options.showUploadButton && (
-        <TouchableOpacity 
-          style={styles.uploadButton}
-          onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
-        >
-          <Upload size={18} color="#fff" />
-          <Text style={styles.uploadButtonText}>Upload Photos Now</Text>
-        </TouchableOpacity>
-      )}
-
-      {options.showActions && (
-        <View style={styles.actionButtons}>
+        {options.showUploadButton && (
           <TouchableOpacity 
-            style={styles.declineButton}
-            onPress={() => updateBookingMutation.mutate({ bookingId: booking.id, status: 'declined' })}
+            style={styles.uploadButton}
+            onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
           >
-            <X size={16} color="#ef4444" />
-            <Text style={styles.declineButtonText}>Decline</Text>
+            <Upload size={18} color="#fff" />
+            <Text style={styles.uploadButtonText}>Upload Photos Now</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.acceptButton}
-            onPress={() => updateBookingMutation.mutate({ bookingId: booking.id, status: 'confirmed' })}
-          >
-            <Check size={16} color="#fff" />
-            <Text style={styles.acceptButtonText}>Accept</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
 
-      {options.showManagePhotos && (
-        <TouchableOpacity 
-          style={styles.managePhotosButton}
-          onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
-        >
-          <Upload size={16} color="#2563eb" />
-          <Text style={styles.managePhotosButtonText}>Manage Photos</Text>
-        </TouchableOpacity>
-      )}
-    </TouchableOpacity>
-  );
+        {options.showActions && (
+          <View style={styles.actionButtons}>
+            <TouchableOpacity 
+              style={styles.acceptButton}
+              onPress={() => updateBookingMutation.mutate({ bookingId: booking.id, status: 'confirmed' })}
+            >
+              <Check size={16} color="#fff" />
+              <Text style={styles.acceptButtonText}>Accept</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.declineButton}
+              onPress={() => updateBookingMutation.mutate({ bookingId: booking.id, status: 'declined' })}
+            >
+              <X size={16} color="#ef4444" />
+              <Text style={styles.declineButtonText}>Decline</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {options.showManagePhotos && (
+          <TouchableOpacity 
+            style={styles.managePhotosButton}
+            onPress={() => router.push(`/(photographer)/booking/${booking.id}`)}
+          >
+            <Upload size={16} color="#2563eb" />
+            <Text style={styles.managePhotosButtonText}>Manage Photos</Text>
+          </TouchableOpacity>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   const renderEditingRequestCard = (
     request: EditingRequest, 
@@ -637,9 +683,39 @@ const styles = StyleSheet.create({
   paymentNote: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
   bookingMeta: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   bookingLocation: { fontSize: 13, color: '#9ca3af', marginTop: 1 },
+  durationText: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   earningsContainer: { alignItems: 'flex-end' },
   earnings: { fontSize: 18, fontWeight: '700', color: '#22c55e' },
   earningsLabel: { fontSize: 11, color: '#9ca3af' },
+
+  bookingDetailsSection: {
+    marginTop: 16,
+    gap: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#e5e7eb',
+  },
+  expiryWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(251, 191, 36, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    marginTop: 16,
+    gap: 10,
+  },
+  expiryWarningText: {
+    fontSize: 14,
+    color: '#fbbf24',
+    fontWeight: '500',
+  },
 
   uploadButton: {
     flexDirection: 'row',
@@ -657,9 +733,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.1)',
   },
   declineButton: {
     flex: 1,
