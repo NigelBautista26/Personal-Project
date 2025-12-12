@@ -96,6 +96,12 @@ export default function CustomerLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="spot/[id]"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }
