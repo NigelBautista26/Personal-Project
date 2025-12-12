@@ -528,6 +528,9 @@ export default function BookingScreen() {
             domStorageEnabled={true}
             sharedCookiesEnabled={true}
             thirdPartyCookiesEnabled={true}
+            mixedContentMode="compatibility"
+            allowsInlineMediaPlayback={true}
+            originWhitelist={['*']}
             startInLoadingState={true}
             renderLoading={() => (
               <View style={styles.webViewLoading}>
@@ -536,7 +539,12 @@ export default function BookingScreen() {
               </View>
             )}
             onNavigationStateChange={(navState) => {
-              if (navState.url.includes('/bookings') || navState.url.includes('success=true')) {
+              // Only close on explicit success - check for bookings list page (not /book/) or success param
+              const url = navState.url;
+              const isBookingsListPage = url.includes('/bookings') && !url.includes('/book/');
+              const isPaymentSuccess = url.includes('success=true') || url.includes('payment_success');
+              
+              if (isBookingsListPage || isPaymentSuccess) {
                 setShowPaymentWebView(false);
                 queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
                 Alert.alert(
@@ -545,6 +553,16 @@ export default function BookingScreen() {
                   [{ text: 'OK', onPress: () => router.replace('/(customer)/bookings') }]
                 );
               }
+            }}
+            onShouldStartLoadWithRequest={(request) => {
+              // Allow Stripe URLs and our own domain
+              if (request.url.includes('stripe.com') || 
+                  request.url.includes('js.stripe.com') ||
+                  request.url.startsWith(API_URL)) {
+                return true;
+              }
+              // Block external redirects that might break the flow
+              return true;
             }}
           />
         </SafeAreaView>
