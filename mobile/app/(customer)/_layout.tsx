@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { Tabs, router } from 'expo-router';
 import { Map, Users, Camera, Calendar, User } from 'lucide-react-native';
 import { useAuth } from '../../src/context/AuthContext';
+import { CityProvider } from '../../src/context/CityContext';
 
 const PRIMARY_COLOR = '#2563eb';
 
@@ -24,6 +25,7 @@ export default function CustomerLayout() {
   }
 
   return (
+    <CityProvider>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -103,6 +105,7 @@ export default function CustomerLayout() {
         }}
       />
     </Tabs>
+    </CityProvider>
   );
 }
 

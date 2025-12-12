@@ -15,29 +15,9 @@ import { router } from 'expo-router';
 import { Search, MapPin, Star, ChevronDown } from 'lucide-react-native';
 import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
 import { API_URL } from '../../src/api/client';
+import { useCity, POPULAR_CITIES } from '../../src/context/CityContext';
 
 const PRIMARY_COLOR = '#2563eb';
-
-interface City {
-  name: string;
-  lat: number;
-  lng: number;
-}
-
-const CITIES: City[] = [
-  { name: "London", lat: 51.5074, lng: -0.1278 },
-  { name: "Paris", lat: 48.8566, lng: 2.3522 },
-  { name: "New York", lat: 40.7128, lng: -74.0060 },
-  { name: "Tokyo", lat: 35.6762, lng: 139.6503 },
-  { name: "Dubai", lat: 25.2048, lng: 55.2708 },
-  { name: "Barcelona", lat: 41.3851, lng: 2.1734 },
-  { name: "Rome", lat: 41.9028, lng: 12.4964 },
-  { name: "Sydney", lat: -33.8688, lng: 151.2093 },
-  { name: "Amsterdam", lat: 52.3676, lng: 4.9041 },
-  { name: "Singapore", lat: 1.3521, lng: 103.8198 },
-  { name: "Los Angeles", lat: 34.0522, lng: -118.2437 },
-  { name: "Berlin", lat: 52.5200, lng: 13.4050 },
-];
 
 const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) => {
   const R = 6371;
@@ -52,7 +32,7 @@ const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) =
 
 export default function PhotographersListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCity, setSelectedCity] = useState<City>(CITIES[0]);
+  const { selectedCity, setSelectedCity } = useCity();
   const [showCityDropdown, setShowCityDropdown] = useState(false);
 
   const { data: photographers, isLoading } = useQuery({
@@ -63,29 +43,16 @@ export default function PhotographersListScreen() {
   const filteredPhotographers = useMemo(() => {
     if (!photographers) return [];
     
-    console.log('Selected city:', selectedCity.name, selectedCity.lat, selectedCity.lng);
-    console.log('Total photographers:', photographers.length);
-    
-    const result = photographers.filter((p) => {
+    return photographers.filter((p) => {
       const pLat = parseFloat(String(p.latitude));
       const pLng = parseFloat(String(p.longitude));
       
-      console.log(`Photographer ${p.fullName}: lat=${p.latitude} (${pLat}), lng=${p.longitude} (${pLng})`);
-      
-      if (Number.isNaN(pLat) || Number.isNaN(pLng)) {
-        console.log(`  -> SKIPPED: Invalid coordinates`);
-        return false;
-      }
+      if (Number.isNaN(pLat) || Number.isNaN(pLng)) return false;
       
       const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
-      console.log(`  -> Distance from ${selectedCity.name}: ${distance.toFixed(1)} km`);
-      
       const isNearCity = distance <= 50;
       
-      if (!isNearCity) {
-        console.log(`  -> FILTERED OUT: Too far`);
-        return false;
-      }
+      if (!isNearCity) return false;
       
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
@@ -95,12 +62,8 @@ export default function PhotographersListScreen() {
         );
       }
       
-      console.log(`  -> INCLUDED`);
       return true;
     });
-    
-    console.log('Filtered result:', result.length, 'photographers');
-    return result;
   }, [photographers, selectedCity, searchQuery]);
 
   const getImageUrl = (photographer: PhotographerProfile) => {
@@ -155,7 +118,7 @@ export default function PhotographersListScreen() {
       {showCityDropdown && (
         <View style={styles.dropdown}>
           <ScrollView style={{ maxHeight: 300 }} nestedScrollEnabled>
-            {CITIES.map((city) => (
+            {POPULAR_CITIES.map((city) => (
               <TouchableOpacity
                 key={city.name}
                 style={[styles.dropdownItem, selectedCity.name === city.name && styles.dropdownItemActive]}
