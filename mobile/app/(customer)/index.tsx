@@ -263,18 +263,17 @@ export default function CustomerMapScreen() {
         testID="map-view"
       >
         {/* Photographer Markers */}
-        {filteredPhotographers.map((photographer, index) => {
-          const coords = getOffsetCoordinates(filteredPhotographers, index);
-          if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
-          
+        {filteredPhotographers.map((photographer) => {
           const isAvailable = photographer.sessionState === 'available';
+          
+          console.log('[MARKER] Rendering marker at:', photographer.latitude, photographer.longitude);
           
           return (
             <Marker
               key={`photographer-${photographer.id}`}
               coordinate={{
-                latitude: coords.lat,
-                longitude: coords.lng,
+                latitude: photographer.latitude,
+                longitude: photographer.longitude,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
