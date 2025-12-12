@@ -49,6 +49,8 @@ export default function PhotographerBookingsScreen() {
     queryKey: ['photographer-bookings', photographerProfile?.id],
     queryFn: () => snapnowApi.getPhotographerBookings(photographerProfile!.id.toString()),
     enabled: !!photographerProfile?.id,
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
+    refetchOnWindowFocus: true,
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
