@@ -209,12 +209,20 @@ export default function PhotographerBookingsScreen() {
     } = {}
   ) => {
     const timeRemaining = booking.expiresAt ? getTimeRemaining(booking.expiresAt) : null;
+    const isClickable = !options.showActions; // Not clickable if showing Accept/Decline buttons
+    
+    const CardWrapper = isClickable ? TouchableOpacity : View;
+    const cardProps = isClickable ? {
+      onPress: () => router.push(`/(photographer)/booking/${booking.id}`),
+      activeOpacity: 0.7,
+    } : {};
     
     return (
-      <View
+      <CardWrapper
         key={booking.id}
         style={styles.bookingCard}
         testID={`card-booking-${booking.id}`}
+        {...cardProps}
       >
         {/* Header: Customer info + Earnings */}
         <View style={styles.bookingHeader}>
@@ -312,7 +320,7 @@ export default function PhotographerBookingsScreen() {
             <Text style={styles.managePhotosButtonText}>Manage Photos</Text>
           </TouchableOpacity>
         )}
-      </View>
+      </CardWrapper>
     );
   };
 
