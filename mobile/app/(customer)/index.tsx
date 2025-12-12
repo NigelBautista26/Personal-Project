@@ -68,20 +68,18 @@ const PHOTO_SPOTS: { [city: string]: { id: number; name: string; latitude: numbe
   ],
 };
 
-const getOffsetCoordinates = (photographers: PhotographerProfile[], index: number) => {
+const getOffsetCoordinates = (photographers: Array<{ latitude: number; longitude: number }>, index: number) => {
   const p = photographers[index];
-  const lat = Number(p.latitude);
-  const lng = Number(p.longitude);
-  if (isNaN(lat) || isNaN(lng)) return { lat, lng };
+  const lat = p.latitude;
+  const lng = p.longitude;
+  if (isNaN(lat) || isNaN(lng)) return { lat: 0, lng: 0 };
   
   const OFFSET = 0.002;
   let sameLocationCount = 0;
   
   for (let i = 0; i < index; i++) {
     const other = photographers[i];
-    const otherLat = Number(other.latitude);
-    const otherLng = Number(other.longitude);
-    if (Math.abs(otherLat - lat) < 0.001 && Math.abs(otherLng - lng) < 0.001) {
+    if (Math.abs(other.latitude - lat) < 0.001 && Math.abs(other.longitude - lng) < 0.001) {
       sameLocationCount++;
     }
   }
@@ -131,10 +129,21 @@ export default function CustomerMapScreen() {
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
-  const { data: photographers, isLoading } = useQuery({
+  const { data: photographersRaw, isLoading } = useQuery({
     queryKey: ['photographers'],
     queryFn: () => snapnowApi.getPhotographers(),
   });
+
+  // Normalize coordinates to numbers to prevent NaN issues in map rendering
+  const photographers = useMemo(() => {
+    if (!photographersRaw) return [];
+    return photographersRaw.map(p => ({
+      ...p,
+      latitude: parseFloat(String(p.latitude)) || 0,
+      longitude: parseFloat(String(p.longitude)) || 0,
+      hourlyRate: parseFloat(String(p.hourlyRate)) || 0,
+    }));
+  }, [photographersRaw]);
 
   useEffect(() => {
     (async () => {
@@ -171,10 +180,8 @@ export default function CustomerMapScreen() {
     if (!photographers || photographers.length === 0) return [];
     
     return photographers.filter((p) => {
-      const pLat = parseFloat(String(p.latitude));
-      const pLng = parseFloat(String(p.longitude));
-      if (Number.isNaN(pLat) || Number.isNaN(pLng)) return false;
-      const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, pLat, pLng);
+      if (isNaN(p.latitude) || isNaN(p.longitude) || p.latitude === 0 || p.longitude === 0) return false;
+      const distance = getDistanceKm(selectedCity.lat, selectedCity.lng, p.latitude, p.longitude);
       return distance <= 50;
     });
   }, [photographers, selectedCity]);
@@ -244,11 +251,9 @@ export default function CustomerMapScreen() {
       >
         {/* Photographer Markers */}
         {filteredPhotographers.map((photographer, index) => {
-          const lat = parseFloat(String(photographer.latitude));
-          const lng = parseFloat(String(photographer.longitude));
-          if (isNaN(lat) || isNaN(lng)) return null;
-          
           const coords = getOffsetCoordinates(filteredPhotographers, index);
+          if (isNaN(coords.lat) || isNaN(coords.lng)) return null;
+          
           const isAvailable = photographer.sessionState === 'available';
           
           return (
@@ -260,7 +265,6 @@ export default function CustomerMapScreen() {
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              tracksViewChanges={false}
             >
               <View style={styles.photographerMarker}>
                 <Image
@@ -268,7 +272,7 @@ export default function CustomerMapScreen() {
                   style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
                 />
                 <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{parseFloat(String(photographer.hourlyRate)).toFixed(0)}</Text>
+                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
                 </View>
               </View>
             </Marker>
