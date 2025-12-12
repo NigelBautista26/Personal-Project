@@ -431,6 +431,8 @@ export default function CustomerBookingsScreen() {
 
   const renderUpcomingCard = (booking: Booking) => {
     const statusStyle = getStatusBadgeStyle(booking.status);
+    const isConfirmed = booking.status === 'confirmed';
+    const isPending = booking.status === 'pending';
     
     return (
       <TouchableOpacity
@@ -438,42 +440,71 @@ export default function CustomerBookingsScreen() {
         style={styles.upcomingCard}
         onPress={() => router.push(`/(customer)/booking/${booking.id}`)}
         testID={`card-booking-${booking.id}`}
+        activeOpacity={0.7}
       >
+        {/* Accent line at top */}
+        <View style={[styles.upcomingAccent, { backgroundColor: isConfirmed ? '#22c55e' : isPending ? '#f59e0b' : '#6b7280' }]} />
+        
         {/* Header with avatar, name, badge */}
         <View style={styles.upcomingHeader}>
-          <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.upcomingAvatar} />
+          <View style={styles.upcomingAvatarWrapper}>
+            <Image source={{ uri: getImageUrl(getPhotographerImage(booking)) }} style={styles.upcomingAvatar} />
+            {isConfirmed && (
+              <View style={styles.upcomingAvatarBadge}>
+                <Check size={10} color="#fff" />
+              </View>
+            )}
+          </View>
           <View style={styles.upcomingInfo}>
             <Text style={styles.upcomingName}>{getPhotographerName(booking)}</Text>
-            <Text style={styles.upcomingDuration}>{booking.duration} hour{Number(booking.duration) > 1 ? 's' : ''}</Text>
+            <Text style={styles.upcomingDuration}>{booking.duration} hour session</Text>
           </View>
-          <View style={styles.upcomingBadgeRow}>
-            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-              <Text style={[styles.statusBadgeText, { color: statusStyle.text }]}>{booking.status}</Text>
+          <View style={styles.upcomingPriceColumn}>
+            <Text style={styles.upcomingPriceLabel}>Total</Text>
+            <Text style={styles.upcomingPriceAmount}>£{parseFloat(booking.totalAmount as any).toFixed(0)}</Text>
+          </View>
+        </View>
+
+        {/* Status badge row */}
+        <View style={styles.upcomingStatusRow}>
+          <View style={[styles.upcomingStatusBadge, { backgroundColor: statusStyle.bg }]}>
+            {isConfirmed && <Check size={12} color={statusStyle.text} />}
+            {isPending && <Clock size={12} color={statusStyle.text} />}
+            <Text style={[styles.upcomingStatusText, { color: statusStyle.text }]}>
+              {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Details grid */}
+        <View style={styles.upcomingDetailsGrid}>
+          <View style={styles.upcomingDetailItem}>
+            <View style={styles.upcomingDetailIconWrapper}>
+              <Calendar size={14} color="#3b82f6" />
             </View>
-            <ChevronRight size={20} color="#6b7280" />
+            <View>
+              <Text style={styles.upcomingDetailLabel}>Date</Text>
+              <Text style={styles.upcomingDetailValue}>{formatFullDate(booking.scheduledDate)}</Text>
+            </View>
+          </View>
+          <View style={styles.upcomingDetailItem}>
+            <View style={styles.upcomingDetailIconWrapper}>
+              <Clock size={14} color="#8b5cf6" />
+            </View>
+            <View>
+              <Text style={styles.upcomingDetailLabel}>Time</Text>
+              <Text style={styles.upcomingDetailValue}>{booking.scheduledTime}</Text>
+            </View>
           </View>
         </View>
-
-        {/* Booking details with icons */}
-        <View style={styles.upcomingDetails}>
-          <View style={styles.upcomingDetailRow}>
-            <Calendar size={14} color="#9ca3af" />
-            <Text style={styles.upcomingDetailText}>{formatFullDate(booking.scheduledDate)}</Text>
+        
+        {/* Location row */}
+        <View style={styles.upcomingLocationRow}>
+          <View style={styles.upcomingLocationIcon}>
+            <MapPin size={14} color="#f59e0b" />
           </View>
-          <View style={styles.upcomingDetailRow}>
-            <Clock size={14} color="#9ca3af" />
-            <Text style={styles.upcomingDetailText}>{booking.scheduledTime}</Text>
-          </View>
-          <View style={styles.upcomingDetailRow}>
-            <MapPin size={14} color="#9ca3af" />
-            <Text style={styles.upcomingDetailText}>{booking.location}</Text>
-          </View>
-        </View>
-
-        {/* Total */}
-        <View style={styles.upcomingTotal}>
-          <Text style={styles.upcomingTotalLabel}>Total</Text>
-          <Text style={styles.upcomingTotalAmount}>£{parseFloat(booking.totalAmount as any).toFixed(2)}</Text>
+          <Text style={styles.upcomingLocationText} numberOfLines={1}>{booking.location}</Text>
+          <ChevronRight size={18} color="#6b7280" />
         </View>
       </TouchableOpacity>
     );
@@ -1444,36 +1475,159 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   upcomingCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 12,
+    borderColor: 'rgba(255,255,255,0.08)',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  upcomingAccent: {
+    height: 4,
+    width: '100%',
   },
   upcomingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  upcomingAvatarWrapper: {
+    position: 'relative',
+    marginRight: 12,
   },
   upcomingAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: '#1a1a1a',
-    marginRight: 12,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  upcomingAvatarBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#22c55e',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#0d1117',
   },
   upcomingInfo: {
     flex: 1,
   },
   upcomingName: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#fff',
+    letterSpacing: -0.3,
   },
   upcomingDuration: {
     fontSize: 13,
     color: '#9ca3af',
+    marginTop: 3,
+  },
+  upcomingPriceColumn: {
+    alignItems: 'flex-end',
+  },
+  upcomingPriceLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  upcomingPriceAmount: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#22c55e',
     marginTop: 2,
+  },
+  upcomingStatusRow: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  upcomingStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 5,
+  },
+  upcomingStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  upcomingDetailsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    gap: 12,
+  },
+  upcomingDetailItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 12,
+    padding: 12,
+    gap: 10,
+  },
+  upcomingDetailIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upcomingDetailLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  upcomingDetailValue: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  upcomingLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(249,115,22,0.08)',
+    borderRadius: 12,
+    gap: 10,
+  },
+  upcomingLocationIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(249,115,22,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upcomingLocationText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '500',
   },
   upcomingBadgeRow: {
     flexDirection: 'row',
