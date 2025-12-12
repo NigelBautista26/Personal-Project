@@ -15,7 +15,12 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, MapPin, Star, Clock, Calendar, Instagram, Globe, MessageSquare, Heart } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
-import { format } from 'date-fns';
+
+const formatDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+};
 
 const PRIMARY_COLOR = '#2563eb';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -197,7 +202,7 @@ export default function PhotographerDetailScreen() {
                     <View style={styles.reviewerInfo}>
                       <Text style={styles.reviewerName}>{review.customer.fullName}</Text>
                       <Text style={styles.reviewDate}>
-                        {format(new Date(review.createdAt), 'MMM d, yyyy')}
+                        {formatDate(review.createdAt)}
                       </Text>
                     </View>
                     {renderStars(review.rating)}
