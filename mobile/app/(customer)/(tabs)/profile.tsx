@@ -34,7 +34,7 @@ export default function CustomerProfileScreen() {
   const confirmLogout = async () => {
     setShowLogoutAlert(false);
     await logout();
-    router.dismissAll();
+    router.replace('/');
   };
 
   const menuItems = [

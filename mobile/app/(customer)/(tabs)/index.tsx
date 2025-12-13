@@ -23,27 +23,7 @@ import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
 import { useAuth } from '../../../src/context/AuthContext';
-interface City {
-  name: string;
-  country?: string;
-  lat: number;
-  lng: number;
-}
-
-const POPULAR_CITIES: City[] = [
-  { name: "London", country: "United Kingdom", lat: 51.5074, lng: -0.1278 },
-  { name: "Paris", country: "France", lat: 48.8566, lng: 2.3522 },
-  { name: "New York", country: "United States", lat: 40.7128, lng: -74.0060 },
-  { name: "Tokyo", country: "Japan", lat: 35.6762, lng: 139.6503 },
-  { name: "Dubai", country: "UAE", lat: 25.2048, lng: 55.2708 },
-  { name: "Barcelona", country: "Spain", lat: 41.3851, lng: 2.1734 },
-  { name: "Rome", country: "Italy", lat: 41.9028, lng: 12.4964 },
-  { name: "Sydney", country: "Australia", lat: -33.8688, lng: 151.2093 },
-  { name: "Amsterdam", country: "Netherlands", lat: 52.3676, lng: 4.9041 },
-  { name: "Singapore", country: "Singapore", lat: 1.3521, lng: 103.8198 },
-  { name: "Los Angeles", country: "United States", lat: 34.0522, lng: -118.2437 },
-  { name: "Berlin", country: "Germany", lat: 52.5200, lng: 13.4050 },
-];
+import { useCity, City, POPULAR_CITIES } from '../../../src/context/CityContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
@@ -169,8 +149,8 @@ const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) =
 
 export default function CustomerMapScreen() {
   const { user } = useAuth();
+  const { selectedCity, setSelectedCity } = useCity();
   const mapRef = useRef<SafeMapView>(null);
-  const [selectedCity, setSelectedCity] = useState<City>(POPULAR_CITIES[0]);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [mapType, setMapType] = useState<MapType>('standard');
