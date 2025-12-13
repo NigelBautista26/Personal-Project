@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, ActivityIndicator, Image } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from './SafeMapView';
 import * as Location from 'expo-location';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { MapPin, Navigation, MessageSquare, Clock, CheckCircle, AlertCircle, Camera, User } from 'lucide-react-native';
@@ -283,7 +283,7 @@ export function MeetUpExperience({
 
         {editLat && editLng && (
           <View style={styles.mapContainer}>
-            <MapView
+            <SafeMapView
               style={styles.map}
               region={{
                 latitude: editLat,
@@ -291,19 +291,19 @@ export function MeetUpExperience({
                 latitudeDelta: 0.01,
                 longitudeDelta: 0.01,
               }}
-              onPress={(e) => {
+              onPress={(e: any) => {
                 setEditLat(e.nativeEvent.coordinate.latitude);
                 setEditLng(e.nativeEvent.coordinate.longitude);
               }}
             >
-              <Marker coordinate={{ latitude: editLat, longitude: editLng }}>
+              <SafeMarker coordinate={{ latitude: editLat, longitude: editLng }}>
                 <View style={styles.meetingPinContainer}>
                   <View style={styles.meetingPin}>
                     <MapPin size={16} color="#fff" />
                   </View>
                 </View>
-              </Marker>
-            </MapView>
+              </SafeMarker>
+            </SafeMapView>
             <Text style={styles.mapHint}>Tap map to adjust location</Text>
           </View>
         )}
@@ -367,10 +367,10 @@ export function MeetUpExperience({
       {/* Map */}
       {(hasMeetingPoint || currentLocation || hasOtherPartyLocation) && (
         <View style={styles.mapContainer}>
-          <MapView style={styles.map} region={getMapRegion()}>
+          <SafeMapView style={styles.map} region={getMapRegion()}>
             {/* Meeting Point Marker */}
             {hasMeetingPoint && (
-              <Marker
+              <SafeMarker
                 coordinate={{
                   latitude: parseFloat(meetingLatitude!),
                   longitude: parseFloat(meetingLongitude!),
@@ -383,12 +383,12 @@ export function MeetUpExperience({
                     <MapPin size={14} color="#fff" />
                   </View>
                 </View>
-              </Marker>
+              </SafeMarker>
             )}
 
             {/* Your Location - Profile Picture with Blue Border */}
             {currentLocation && (
-              <Marker
+              <SafeMarker
                 coordinate={{ latitude: currentLocation.lat, longitude: currentLocation.lng }}
                 title="You"
                 anchor={{ x: 0.5, y: 0.5 }}
@@ -405,12 +405,12 @@ export function MeetUpExperience({
                   </View>
                   <Text style={styles.profileMarkerLabel}>You</Text>
                 </View>
-              </Marker>
+              </SafeMarker>
             )}
 
             {/* Other Party Location - Profile Picture with Green/Orange Border */}
             {hasOtherPartyLocation && (
-              <Marker
+              <SafeMarker
                 coordinate={{
                   latitude: parseFloat(otherPartyLocation.latitude),
                   longitude: parseFloat(otherPartyLocation.longitude),
@@ -430,9 +430,9 @@ export function MeetUpExperience({
                   </View>
                   <Text style={styles.profileMarkerLabel}>{otherPartyLabel}</Text>
                 </View>
-              </Marker>
+              </SafeMarker>
             )}
-          </MapView>
+          </SafeMapView>
 
           {/* Simplified Legend - only show meeting point indicator */}
           {hasMeetingPoint && (
