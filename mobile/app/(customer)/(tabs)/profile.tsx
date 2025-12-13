@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { User, Shield, Settings, HelpCircle, LogOut, ChevronRight } from 'lucide-react-native';
-import { useAuth } from '../../src/context/AuthContext';
-import { API_URL } from '../../src/api/client';
-import { ThemedAlert } from '../../src/components/ThemedAlert';
+import { useAuth } from '../../../src/context/AuthContext';
+import { API_URL } from '../../../src/api/client';
+import { ThemedAlert } from '../../../src/components/ThemedAlert';
 
 const PRIMARY_COLOR = '#2563eb';
 const BG_COLOR = '#0a0a0f';

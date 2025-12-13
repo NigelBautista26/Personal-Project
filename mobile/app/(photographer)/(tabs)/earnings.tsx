@@ -21,8 +21,8 @@ import {
   Upload,
   Calendar,
 } from 'lucide-react-native';
-import { useAuth } from '../../src/context/AuthContext';
-import { snapnowApi } from '../../src/api/snapnowApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { snapnowApi } from '../../../src/api/snapnowApi';
 
 const PRIMARY_COLOR = '#2563eb';
 

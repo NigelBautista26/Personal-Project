@@ -19,9 +19,9 @@ import { router } from 'expo-router';
 import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
-import { snapnowApi, PhotographerProfile, Booking } from '../../src/api/snapnowApi';
-import { API_URL } from '../../src/api/client';
-import { useAuth } from '../../src/context/AuthContext';
+import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
+import { API_URL } from '../../../src/api/client';
+import { useAuth } from '../../../src/context/AuthContext';
 interface City {
   name: string;
   country?: string;

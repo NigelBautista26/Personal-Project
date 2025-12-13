@@ -13,8 +13,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { Search, MapPin, Star, ChevronDown } from 'lucide-react-native';
-import { snapnowApi, PhotographerProfile } from '../../src/api/snapnowApi';
-import { API_URL } from '../../src/api/client';
+import { snapnowApi, PhotographerProfile } from '../../../src/api/snapnowApi';
+import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 

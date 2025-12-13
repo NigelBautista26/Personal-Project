@@ -27,10 +27,10 @@ import {
   X,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '../../src/context/AuthContext';
-import { API_URL } from '../../src/api/client';
-import { ThemedAlert } from '../../src/components/ThemedAlert';
-import { snapnowApi } from '../../src/api/snapnowApi';
+import { useAuth } from '../../../src/context/AuthContext';
+import { API_URL } from '../../../src/api/client';
+import { ThemedAlert } from '../../../src/components/ThemedAlert';
+import { snapnowApi } from '../../../src/api/snapnowApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';

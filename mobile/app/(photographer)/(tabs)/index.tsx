@@ -25,9 +25,9 @@ import {
   Lightbulb,
   Target,
 } from 'lucide-react-native';
-import { useAuth } from '../../src/context/AuthContext';
-import { snapnowApi } from '../../src/api/snapnowApi';
-import { API_URL } from '../../src/api/client';
+import { useAuth } from '../../../src/context/AuthContext';
+import { snapnowApi } from '../../../src/api/snapnowApi';
+import { API_URL } from '../../../src/api/client';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';

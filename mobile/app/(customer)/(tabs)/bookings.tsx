@@ -19,8 +19,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { Calendar, Clock, Camera, X, Star, Eye, Check, Palette, Download, ChevronLeft, ChevronRight, MessageSquare, Image as ImageIcon, User, MapPin, Play } from 'lucide-react-native';
-import { snapnowApi, Booking } from '../../src/api/snapnowApi';
-import { API_URL, apiClient } from '../../src/api/client';
+import { snapnowApi, Booking } from '../../../src/api/snapnowApi';
+import { API_URL, apiClient } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

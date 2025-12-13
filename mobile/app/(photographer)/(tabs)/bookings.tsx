@@ -27,9 +27,9 @@ import {
   RefreshCw,
   Play,
 } from 'lucide-react-native';
-import { useAuth } from '../../src/context/AuthContext';
-import { snapnowApi, EditingRequest } from '../../src/api/snapnowApi';
-import { API_URL } from '../../src/api/client';
+import { useAuth } from '../../../src/context/AuthContext';
+import { snapnowApi, EditingRequest } from '../../../src/api/snapnowApi';
+import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 
