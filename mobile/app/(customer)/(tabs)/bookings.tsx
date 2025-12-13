@@ -115,7 +115,7 @@ export default function CustomerBookingsScreen() {
   const photographerIds = Array.from(new Set(allBookings.filter(b => b.status === 'completed').map((b: any) => String(b.photographerId))));
 
   const { data: reviewInfoMap = {} } = useQuery<Record<string, ReviewInfo>>({
-    queryKey: ['bookingReviewInfo', completedBookingIds],
+    queryKey: ['bookingReviewInfo', completedBookingIds.join(',')],
     queryFn: async () => {
       const results: Record<string, ReviewInfo> = {};
       await Promise.all(
@@ -131,10 +131,11 @@ export default function CustomerBookingsScreen() {
       return results;
     },
     enabled: completedBookingIds.length > 0,
+    staleTime: 0,
   });
 
   const { data: editingRequestsMap = {} } = useQuery<Record<string, EditingRequestInfo | null>>({
-    queryKey: ['editingRequests', completedBookingIds],
+    queryKey: ['editingRequests', completedBookingIds.join(',')],
     queryFn: async () => {
       const results: Record<string, EditingRequestInfo | null> = {};
       await Promise.all(
@@ -150,10 +151,11 @@ export default function CustomerBookingsScreen() {
       return results;
     },
     enabled: completedBookingIds.length > 0,
+    staleTime: 0,
   });
 
   const { data: editingServicesMap = {} } = useQuery<Record<string, EditingServiceInfo | null>>({
-    queryKey: ['editingServices', photographerIds],
+    queryKey: ['editingServices', photographerIds.join(',')],
     queryFn: async () => {
       const results: Record<string, EditingServiceInfo | null> = {};
       await Promise.all(
@@ -169,6 +171,7 @@ export default function CustomerBookingsScreen() {
       return results;
     },
     enabled: photographerIds.length > 0,
+    staleTime: 0,
   });
 
   const submitReviewMutation = useMutation({
