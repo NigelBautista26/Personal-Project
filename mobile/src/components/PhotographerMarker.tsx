@@ -1,7 +1,6 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { View, Image, Text, StyleSheet, Platform } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Image, Text, StyleSheet } from 'react-native';
 import { Marker } from 'react-native-maps';
-import { Camera } from 'lucide-react-native';
 
 interface PhotographerMarkerProps {
   id: number;
@@ -26,40 +25,19 @@ export function PhotographerMarker({
   testID,
 }: PhotographerMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [renderKey, setRenderKey] = useState(0);
   const markerRef = useRef<any>(null);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-    // Force marker to redraw with the loaded image
-    setRenderKey(k => k + 1);
-    // Then stop tracking after a brief delay
-    setTimeout(() => {
-      if (markerRef.current) {
-        markerRef.current.redraw?.();
-      }
-    }, 100);
   }, []);
 
   const handleImageError = useCallback(() => {
     setImageLoaded(true);
-    setRenderKey(k => k + 1);
-  }, []);
-
-  // Force initial render
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (markerRef.current) {
-        markerRef.current.redraw?.();
-      }
-    }, 500);
-    return () => clearTimeout(timer);
   }, []);
 
   return (
     <Marker
       ref={markerRef}
-      key={`marker-${id}-${renderKey}`}
       coordinate={coordinate}
       onPress={onPress}
       testID={testID}
@@ -68,16 +46,12 @@ export function PhotographerMarker({
     >
       <View style={styles.container}>
         <View style={[styles.imageWrapper, isAvailable && styles.availableBorder]}>
-          {!imageLoaded && (
-            <View style={styles.placeholder}>
-              <Camera size={20} color="#fff" />
-            </View>
-          )}
           <Image
             source={{ uri: imageUrl }}
-            style={[styles.image, !imageLoaded && styles.hiddenImage]}
+            style={styles.image}
             onLoad={handleImageLoad}
             onError={handleImageError}
+            defaultSource={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }}
           />
         </View>
         <View style={styles.priceTag}>
@@ -107,37 +81,19 @@ export function PhotoSpotMarker({
   testID,
 }: PhotoSpotMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [renderKey, setRenderKey] = useState(0);
   const markerRef = useRef<any>(null);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-    setRenderKey(k => k + 1);
-    setTimeout(() => {
-      if (markerRef.current) {
-        markerRef.current.redraw?.();
-      }
-    }, 100);
   }, []);
 
   const handleImageError = useCallback(() => {
     setImageLoaded(true);
-    setRenderKey(k => k + 1);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (markerRef.current) {
-        markerRef.current.redraw?.();
-      }
-    }, 500);
-    return () => clearTimeout(timer);
   }, []);
 
   return (
     <Marker
       ref={markerRef}
-      key={`spot-${id}-${renderKey}`}
       coordinate={coordinate}
       title={name}
       testID={testID}
@@ -201,26 +157,13 @@ const styles = StyleSheet.create({
     borderColor: '#2563eb',
     backgroundColor: '#1e293b',
     overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   availableBorder: {
     borderColor: '#22c55e',
   },
-  placeholder: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#1e293b',
-  },
   image: {
     width: '100%',
     height: '100%',
-  },
-  hiddenImage: {
-    opacity: 0,
   },
   priceTag: {
     backgroundColor: '#0f172a',
