@@ -17,7 +17,8 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region, MapType } from 'react-native-maps';
+import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from '../../../src/components/SafeMapView';
+import type { Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -168,7 +169,7 @@ const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number) =
 
 export default function CustomerMapScreen() {
   const { user } = useAuth();
-  const mapRef = useRef<MapView>(null);
+  const mapRef = useRef<SafeMapView>(null);
   const [selectedCity, setSelectedCity] = useState<City>(POPULAR_CITIES[0]);
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -339,7 +340,7 @@ export default function CustomerMapScreen() {
 
   return (
     <View style={styles.container}>
-      <MapView
+      <SafeMapView
         ref={mapRef}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
@@ -361,7 +362,7 @@ export default function CustomerMapScreen() {
           const isAvailable = photographer.sessionState === 'available';
           
           return (
-            <Marker
+            <SafeMarker
               key={`photographer-${photographer.id}-${markersReady}`}
               coordinate={{
                 latitude: coords.lat,
@@ -380,13 +381,13 @@ export default function CustomerMapScreen() {
                   <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
                 </View>
               </View>
-            </Marker>
+            </SafeMarker>
           );
         })}
 
         {/* Photo Spot Markers */}
         {photoSpots.map((spot) => (
-          <Marker
+          <SafeMarker
             key={`spot-${spot.id}-${markersReady}`}
             coordinate={{
               latitude: spot.latitude,
@@ -401,12 +402,12 @@ export default function CustomerMapScreen() {
                 style={styles.spotImage}
               />
             </View>
-          </Marker>
+          </SafeMarker>
         ))}
 
         {/* Photographer Live Location Marker */}
         {photographerLiveLocation && (
-          <Marker
+          <SafeMarker
             key="photographer-live"
             coordinate={{
               latitude: photographerLiveLocation.lat,
@@ -420,9 +421,9 @@ export default function CustomerMapScreen() {
               <View style={styles.liveLocationPulse} />
               <View style={styles.liveLocationDot} />
             </View>
-          </Marker>
+          </SafeMarker>
         )}
-      </MapView>
+      </SafeMapView>
 
       {/* Location Header - Two separate buttons like web */}
       <View style={styles.header}>
