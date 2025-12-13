@@ -1,0 +1,58 @@
+
+✔ Continue with uncommitted changes? … yes
+
+✔ Cleared android, ios code
+✔ Created native directories
+✔ Updated package.json | no changes
+✖ Prebuild failed
+Error: [ios.dangerous]: withIosDangerousBaseMod: Could not find MIME for Buffer <null>
+Error: [ios.dangerous]: withIosDangerousBaseMod: Could not find MIME for Buffer <null>
+    at Jimp.parseBitmap (/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/jimp-compact/dist/jimp.js:1:125518)
+    at Jimp.parseBitmap (/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/jimp-compact/dist/jimp.js:1:8514)
+    at /Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/jimp-compact/dist/jimp.js:1:7613
+    at FSReqCallback.readFileAfterClose [as oncomplete] (node:internal/fs/read/context:68:3)
+Using Expo modules
+[Expo] Enabling modular headers for pod ExpoModulesCore
+[Expo] Enabling modular headers for pod React-RCTAppDelegate
+[Expo] Enabling modular headers for pod React-RCTFabric
+[Expo] Enabling modular headers for pod ReactAppDependencyProvider
+[Expo] Enabling modular headers for pod React-Core
+[Expo] Enabling modular headers for pod ReactCodegen
+[Expo] Enabling modular headers for pod RCTRequired
+[Expo] Enabling modular headers for pod RCTTypeSafety
+[Expo] Enabling modular headers for pod ReactCommon
+[Expo] Enabling modular headers for pod React-NativeModulesApple
+[Expo] Enabling modular headers for pod Yoga
+[Expo] Enabling modular headers for pod React-Fabric
+[Expo] Enabling modular headers for pod React-graphics
+[Expo] Enabling modular headers for pod React-utils
+[Expo] Enabling modular headers for pod React-featureflags
+[Expo] Enabling modular headers for pod React-debug
+[Expo] Enabling modular headers for pod React-ImageManager
+[Expo] Enabling modular headers for pod React-rendererdebug
+[Expo] Enabling modular headers for pod React-jsi
+[Expo] Enabling modular headers for pod React-renderercss
+[Expo] Enabling modular headers for pod hermes-engine
+[Expo] Enabling modular headers for pod glog
+[Expo] Enabling modular headers for pod boost
+[Expo] Enabling modular headers for pod DoubleConversion
+[Expo] Enabling modular headers for pod fast_float
+[Expo] Enabling modular headers for pod fmt
+[Expo] Enabling modular headers for pod RCT-Folly
+[Expo] Enabling modular headers for pod SocketRocket
+[Expo] Enabling modular headers for pod RNScreens
+Found 8 modules for target `SnapNow`
+link_native_modules! {ios_packages: [{configurations: [], name: "expo", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/expo", path: "../node_modules/expo", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/expo/Expo.podspec", script_phases: []}, {configurations: [], name: "react-native-safe-area-context", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-safe-area-context", path: "../node_modules/react-native-safe-area-context", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-safe-area-context/react-native-safe-area-context.podspec", script_phases: []}, {configurations: [], name: "react-native-screens", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-screens", path: "../node_modules/react-native-screens", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-screens/RNScreens.podspec", script_phases: []}, {configurations: [], name: "react-native-svg", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-svg", path: "../node_modules/react-native-svg", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-svg/RNSVG.podspec", script_phases: []}, {configurations: [], name: "react-native-gesture-handler", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-gesture-handler", path: "../node_modules/react-native-gesture-handler", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-gesture-handler/RNGestureHandler.podspec", script_phases: []}, {configurations: [], name: "react-native-reanimated", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-reanimated", path: "../node_modules/react-native-reanimated", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-reanimated/RNReanimated.podspec", script_phases: []}, {configurations: [], name: "react-native-maps", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-maps", path: "../node_modules/react-native-maps", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-maps/react-native-maps.podspec", script_phases: []}, {configurations: [], name: "react-native-webview", root: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-webview", path: "../node_modules/react-native-webview", podspec_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/node_modules/react-native-webview/react-native-webview.podspec", script_phases: []}], ios_project_root_path: "/Users/nigelbautista/Downloads/Personal-Project/mobile/ios", react_native_path: "../node_modules/react-native"}
+Auto-linking React Native modules for target `SnapNow`: RNGestureHandler, RNReanimated, RNSVG, RNScreens, react-native-maps, react-native-safe-area-context, and react-native-webview
+React Native requires XCode >= 16.1. Found 15.4.
+
+[!] Invalid `Podfile` file: Please upgrade XCode.
+
+ #  from /Users/nigelbautista/Downloads/Personal-Project/mobile/ios/Podfile:44
+ #  -------------------------------------------
+ #  
+ >    use_react_native!(
+ #      :path => config[:reactNativePath],
+ #  -------------------------------------------
+ConfigError: The expected package.json path: /Users/nigelbautista/Downloads/Personal-Project/mobile/ios/package.json does not exist
+nigelbautista@Nigels-MacBook-Pro ios % 
