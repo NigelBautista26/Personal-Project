@@ -1623,7 +1623,7 @@ export async function registerRoutes(
       const photographerEarnings = baseAmount - platformFee;
 
       // Require Stripe payment when Stripe is configured
-      const stripeConfigured = !!process.env.STRIPE_SECRET_KEY;
+      const stripeConfigured = await isStripeConfigured();
       if (stripeConfigured && !stripePaymentId) {
         return res.status(400).json({ error: "Payment is required. Please use the web app to complete payment." });
       }
