@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MapPin } from 'lucide-react-native';
+import MapView, { Marker, PROVIDER_GOOGLE as RNMapsProvider } from 'react-native-maps';
 
 interface SafeMapViewProps {
   children?: React.ReactNode;
@@ -19,22 +20,17 @@ interface SafeMapViewProps {
 
 export function SafeMapView({ children, style, region, ...props }: SafeMapViewProps) {
   return (
-    <View style={[styles.fallback, style]}>
-      <MapPin size={48} color="#3b82f6" />
-      <Text style={styles.fallbackText}>Map View</Text>
-      <Text style={styles.fallbackSubtext}>
-        {region ? `${region.latitude.toFixed(4)}, ${region.longitude.toFixed(4)}` : 'Location'}
-      </Text>
-      <Text style={styles.note}>Maps available in production build</Text>
-    </View>
+    <MapView style={style} region={region} {...props}>
+      {children}
+    </MapView>
   );
 }
 
 export function SafeMarker(props: any) {
-  return null;
+  return <Marker {...props} />;
 }
 
-export const PROVIDER_GOOGLE = null;
+export const PROVIDER_GOOGLE = RNMapsProvider;
 
 const styles = StyleSheet.create({
   fallback: {
@@ -52,10 +48,5 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
     fontSize: 14,
     marginTop: 4,
-  },
-  note: {
-    color: '#64748b',
-    fontSize: 12,
-    marginTop: 16,
   },
 });
