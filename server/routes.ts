@@ -1679,15 +1679,15 @@ export async function registerRoutes(
     }
   });
 
-  // Get active (non-terminal) editing request by booking ID
+  // Get latest editing request by booking ID (for display purposes)
   app.get("/api/editing-requests/booking/:bookingId", async (req, res) => {
     try {
       if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      // Returns the most recent active request (excludes completed/declined)
-      const editingRequest = await storage.getActiveEditingRequestByBooking(req.params.bookingId);
+      // Returns the most recent editing request (any status) for display
+      const editingRequest = await storage.getEditingRequestByBooking(req.params.bookingId);
       res.json(editingRequest || null);
     } catch (error) {
       console.error("Error fetching editing request:", error);

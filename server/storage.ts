@@ -695,7 +695,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined> {
-    const result = await db.select().from(editingRequests).where(eq(editingRequests.bookingId, bookingId)).limit(1);
+    // Returns the most recent editing request for display purposes
+    const result = await db.select()
+      .from(editingRequests)
+      .where(eq(editingRequests.bookingId, bookingId))
+      .orderBy(desc(editingRequests.requestedAt))
+      .limit(1);
     return result[0];
   }
 
