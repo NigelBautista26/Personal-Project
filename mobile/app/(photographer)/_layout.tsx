@@ -44,7 +44,6 @@ export default function PhotographerLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        gestureEnabled: true,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

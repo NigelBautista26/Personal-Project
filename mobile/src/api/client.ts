@@ -69,11 +69,6 @@ api.interceptors.response.use(
     
     if (error.response?.data) {
       console.log('API Error:', status, JSON.stringify(error.response.data).substring(0, 200));
-      // Extract server error message and attach to error object
-      const serverError = (error.response.data as any)?.error;
-      if (serverError && typeof serverError === 'string') {
-        error.message = serverError;
-      }
     } else if (error.message) {
       console.log('API Error:', error.message);
     }

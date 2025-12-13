@@ -20,7 +20,6 @@ export default function CustomerLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        gestureEnabled: true,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

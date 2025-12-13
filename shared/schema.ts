@@ -160,7 +160,6 @@ export const editingRequests = pgTable("editing_requests", {
   revisionCount: integer("revision_count").default(0), // number of revision rounds
   requestedPhotoUrls: text("requested_photo_urls").array().default(sql`ARRAY[]::text[]`), // photos customer wants edited
   editedPhotos: text("edited_photos").array().default(sql`ARRAY[]::text[]`), // delivered edited photos
-  stripePaymentId: text("stripe_payment_id"), // Stripe payment intent ID for authorization hold
   requestedAt: timestamp("requested_at").defaultNow().notNull(),
   acceptedAt: timestamp("accepted_at"),
   deliveredAt: timestamp("delivered_at"),

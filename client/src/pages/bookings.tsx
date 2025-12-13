@@ -1,7 +1,7 @@
 import { BottomNav } from "@/components/bottom-nav";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "@/lib/api";
-import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign, Lock } from "lucide-react";
+import { Calendar, MapPin, Clock, User, Loader2, Images, Download, X, ChevronLeft, ChevronRight, Star, MessageSquare, Check, Camera, ImageIcon, Palette, DollarSign } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -10,145 +10,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-
-const cardElementOptions = {
-  style: {
-    base: {
-      color: '#ffffff',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      fontSmoothing: 'antialiased',
-      fontSize: '16px',
-      '::placeholder': {
-        color: '#6b7280',
-      },
-      iconColor: '#8b5cf6',
-    },
-    invalid: {
-      color: '#ef4444',
-      iconColor: '#ef4444',
-    },
-  },
-};
-
-function EditingPaymentForm({ 
-  amount, 
-  bookingId,
-  onSuccess, 
-  onError 
-}: { 
-  amount: number;
-  bookingId: string;
-  onSuccess: (paymentIntentId: string) => void;
-  onError: (error: string) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSucceeded, setPaymentSucceeded] = useState(false);
-  const [cardComplete, setCardComplete] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!stripe || !elements) {
-      onError("Stripe hasn't loaded yet. Please try again.");
-      return;
-    }
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      onError("Card element not found");
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      const response = await fetch('/api/stripe/create-editing-payment-intent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ 
-          amount, 
-          bookingId,
-        }),
-      });
-
-      const { clientSecret, paymentIntentId, error: serverError } = await response.json();
-      
-      if (serverError) {
-        throw new Error(serverError);
-      }
-
-      const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-        },
-      });
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
-
-      if (paymentIntent?.status === 'succeeded' || paymentIntent?.status === 'requires_capture') {
-        setPaymentSucceeded(true);
-        onSuccess(paymentIntent.id);
-      } else {
-        throw new Error('Payment authorization was not successful');
-      }
-    } catch (error: any) {
-      onError(error.message || 'Payment failed');
-      setIsProcessing(false);
-    }
-  };
-
-  if (paymentSucceeded) {
-    return (
-      <div className="text-center py-6 space-y-3">
-        <div className="w-14 h-14 bg-green-500/20 rounded-full flex items-center justify-center mx-auto">
-          <Check className="w-7 h-7 text-green-400" />
-        </div>
-        <div>
-          <p className="text-white font-semibold">Card Authorized!</p>
-          <p className="text-sm text-muted-foreground">Sending request to photographer...</p>
-        </div>
-        <Loader2 className="w-5 h-5 animate-spin text-primary mx-auto" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="bg-zinc-800/80 p-4 rounded-xl border border-white/10">
-        <CardElement 
-          options={cardElementOptions}
-          onChange={(e) => setCardComplete(e.complete)}
-        />
-      </div>
-      
-      <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground">
-        <Lock className="w-3 h-3" />
-        <span>Secured by Stripe</span>
-      </div>
-
-      <Button
-        onClick={handleSubmit}
-        disabled={!stripe || isProcessing || !cardComplete}
-        className="w-full h-12 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold shadow-lg shadow-violet-500/25"
-      >
-        {isProcessing ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          `Authorize £${amount.toFixed(2)}`
-        )}
-      </Button>
-      
-      <p className="text-xs text-center text-muted-foreground">
-        You won't be charged until you approve the edited photos
-      </p>
-    </div>
-  );
-}
 
 interface PhotoDelivery {
   id: string;
@@ -191,22 +52,7 @@ export default function Bookings() {
   const [editingDialogBooking, setEditingDialogBooking] = useState<{id: string; photographerId: string; returnToPhotos?: any; selectedPhotoUrls?: string[]} | null>(null);
   const [editingPhotoCount, setEditingPhotoCount] = useState(1);
   const [editingNotes, setEditingNotes] = useState("");
-  const [editingPaymentStep, setEditingPaymentStep] = useState(false);
-  const [stripeConfig, setStripeConfig] = useState<{ configured: boolean; publishableKey?: string } | null>(null);
-  const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null);
   const queryClient = useQueryClient();
-
-  useEffect(() => {
-    fetch('/api/stripe/config')
-      .then(res => res.json())
-      .then(data => {
-        setStripeConfig(data);
-        if (data.configured && data.publishableKey) {
-          setStripePromise(loadStripe(data.publishableKey));
-        }
-      })
-      .catch(() => setStripeConfig({ configured: false }));
-  }, []);
 
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ["currentUser"],
@@ -350,19 +196,18 @@ export default function Bookings() {
   });
 
   const createEditingRequestMutation = useMutation({
-    mutationFn: async ({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls, stripePaymentId }: { 
+    mutationFn: async ({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls }: { 
       bookingId: string; 
       photographerId: string; 
       photoCount?: number; 
       customerNotes?: string;
       requestedPhotoUrls?: string[];
-      stripePaymentId?: string;
     }) => {
       const res = await fetch("/api/editing-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls, stripePaymentId }),
+        body: JSON.stringify({ bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls }),
       });
       if (!res.ok) {
         const error = await res.json();
@@ -375,12 +220,10 @@ export default function Bookings() {
       setEditingDialogBooking(null);
       setEditingPhotoCount(1);
       setEditingNotes("");
-      setEditingPaymentStep(false);
       queryClient.invalidateQueries({ queryKey: ["editingRequests"] });
     },
     onError: (error: Error) => {
       toast.error(error.message);
-      setEditingPaymentStep(false);
     },
   });
 
@@ -532,6 +375,23 @@ export default function Bookings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expiredBookingIds, setLocation]);
 
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+        <h1 className="text-xl font-bold text-white mb-4">Please log in to view bookings</h1>
+        <Link href="/login" className="text-primary hover:underline">Log In</Link>
+      </div>
+    );
+  }
+
   // Helper to check if a session has ended (date + time + duration)
   const hasSessionEnded = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
@@ -559,13 +419,13 @@ export default function Bookings() {
     return new Date() > sessionEndTime;
   };
 
-  // Memoized status-based booking lists (don't depend on time) - MUST be before early returns
+  // Memoized status-based booking lists (don't depend on time)
   const { completedBookings, expiredBookings } = useMemo(() => ({
     completedBookings: bookings.filter((b: any) => b.status === 'completed'),
     expiredBookings: bookings.filter((b: any) => b.status === 'expired' && !b.dismissedAt),
   }), [bookings]);
 
-  // Dismiss expired booking mutation - MUST be before early returns
+  // Dismiss expired booking mutation
   const dismissBookingMutation = useMutation({
     mutationFn: async (bookingId: string) => {
       const res = await fetch(`/api/bookings/${bookingId}/dismiss`, {
@@ -586,24 +446,6 @@ export default function Bookings() {
       toast.error(error.message);
     },
   });
-
-  // Early returns AFTER all hooks
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-        <h1 className="text-xl font-bold text-white mb-4">Please log in to view bookings</h1>
-        <Link href="/login" className="text-primary hover:underline">Log In</Link>
-      </div>
-    );
-  }
 
   // Time-dependent filters - not memoized to ensure they update
   // Pending bookings always show (regardless of time since they haven't been accepted yet)
@@ -1031,19 +873,6 @@ export default function Bookings() {
                             </Button>
                           )}
                         </div>
-                        {/* Show "Request New Editing" button for completed/declined requests if service is enabled */}
-                        {(editingRequest.status === 'completed' || editingRequest.status === 'declined') && editingService?.isEnabled && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="mt-2 w-full border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
-                            onClick={() => handleViewPhotos(booking.id, booking)}
-                            data-testid={`button-request-new-editing-${booking.id}`}
-                          >
-                            <Palette className="w-3 h-3 mr-1" />
-                            Request New Editing
-                          </Button>
-                        )}
                       </div>
                     )}
                   </div>
@@ -1145,12 +974,11 @@ export default function Bookings() {
             {selectedBookingPhotos?.message && (
               <p className="text-sm text-muted-foreground line-clamp-2">{selectedBookingPhotos.message}</p>
             )}
-            {/* Request Editing Button - only show if photographer offers editing and no active request exists */}
+            {/* Request Editing Button - only show if photographer offers editing and no request exists */}
             {selectedBookingPhotos?.booking && (() => {
               const service = editingServicesMap[selectedBookingPhotos.booking.photographerId];
               const existingRequest = editingRequestsMap[selectedBookingPhotos.booking.id];
-              const canRequestNewEditing = !existingRequest || existingRequest.status === 'completed' || existingRequest.status === 'declined';
-              if (service?.isEnabled && canRequestNewEditing) {
+              if (service?.isEnabled && !existingRequest) {
                 const selectedCount = selectedPhotosForEditing.size;
                 const perPhotoRate = parseFloat(service.perPhotoRate || "0");
                 const estimatedCost = service.pricingModel === "flat" 
@@ -1245,9 +1073,7 @@ export default function Bookings() {
                 {selectedBookingPhotos.photos.map((photo, idx) => {
                   const isSelected = selectedPhotosForEditing.has(idx);
                   const service = selectedBookingPhotos.booking ? editingServicesMap[selectedBookingPhotos.booking.photographerId] : null;
-                  const existingEditingRequest = selectedBookingPhotos.booking?.id ? editingRequestsMap[selectedBookingPhotos.booking.id] : null;
-                  const canRequestNewEditing = !existingEditingRequest || existingEditingRequest.status === 'completed' || existingEditingRequest.status === 'declined';
-                  const showSelectionUI = service?.isEnabled && service?.pricingModel === "per_photo" && canRequestNewEditing;
+                  const showSelectionUI = service?.isEnabled && service?.pricingModel === "per_photo" && !editingRequestsMap[selectedBookingPhotos.booking?.id];
                   
                   return (
                     <button
@@ -1289,7 +1115,6 @@ export default function Bookings() {
             setSelectedBookingPhotos(editingDialogBooking.returnToPhotos);
           }
           setEditingDialogBooking(null);
-          setEditingPaymentStep(false);
         }
       }}>
         <DialogContent className="bg-zinc-900 border-white/10">
@@ -1312,58 +1137,6 @@ export default function Bookings() {
               : parseFloat(service.perPhotoRate || "0") * editingPhotoCount;
             const serviceFee = baseAmount * 0.10;
             const total = baseAmount + serviceFee;
-            
-            // Payment step - show Stripe form
-            if (editingPaymentStep && stripeConfig?.configured && stripePromise) {
-              return (
-                <div className="space-y-4 py-4">
-                  {/* Price Summary */}
-                  <div className="glass-panel rounded-xl p-4 space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Editing {service.pricingModel === "per_photo" ? `(${editingPhotoCount} photos)` : ""}</span>
-                      <span className="text-white">£{baseAmount.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Service fee (10%)</span>
-                      <span className="text-white">£{serviceFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold border-t border-white/10 pt-2 mt-2">
-                      <span className="text-white">Total</span>
-                      <span className="text-violet-400">£{total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  
-                  <Elements stripe={stripePromise}>
-                    <EditingPaymentForm
-                      amount={total}
-                      bookingId={editingDialogBooking.id}
-                      onSuccess={(paymentIntentId) => {
-                        createEditingRequestMutation.mutate({
-                          bookingId: editingDialogBooking.id,
-                          photographerId: editingDialogBooking.photographerId,
-                          photoCount: service.pricingModel === "per_photo" ? editingPhotoCount : undefined,
-                          customerNotes: editingNotes || undefined,
-                          requestedPhotoUrls: editingDialogBooking.selectedPhotoUrls,
-                          stripePaymentId: paymentIntentId,
-                        });
-                      }}
-                      onError={(error) => {
-                        toast.error(error);
-                        setEditingPaymentStep(false);
-                      }}
-                    />
-                  </Elements>
-                  
-                  <Button
-                    variant="ghost"
-                    onClick={() => setEditingPaymentStep(false)}
-                    className="w-full text-muted-foreground hover:text-white"
-                  >
-                    Back
-                  </Button>
-                </div>
-              );
-            }
             
             return (
               <div className="space-y-6 py-4">
@@ -1437,7 +1210,6 @@ export default function Bookings() {
                         setSelectedBookingPhotos(editingDialogBooking.returnToPhotos);
                       }
                       setEditingDialogBooking(null);
-                      setEditingPaymentStep(false);
                     }}
                     className="flex-1 border-white/10"
                     data-testid="button-cancel-editing"
@@ -1446,13 +1218,17 @@ export default function Bookings() {
                   </Button>
                   <Button
                     onClick={() => {
-                      if (stripeConfig?.configured) {
-                        if (stripePromise) {
-                          setEditingPaymentStep(true);
-                        }
+                      if (editingDialogBooking) {
+                        createEditingRequestMutation.mutate({
+                          bookingId: editingDialogBooking.id,
+                          photographerId: editingDialogBooking.photographerId,
+                          photoCount: service.pricingModel === "per_photo" ? editingPhotoCount : undefined,
+                          customerNotes: editingNotes || undefined,
+                          requestedPhotoUrls: editingDialogBooking.selectedPhotoUrls,
+                        });
                       }
                     }}
-                    disabled={createEditingRequestMutation.isPending || (stripeConfig?.configured && !stripePromise)}
+                    disabled={createEditingRequestMutation.isPending}
                     className="flex-1 bg-violet-500 hover:bg-violet-600 text-white"
                     data-testid="button-submit-editing"
                   >
@@ -1461,30 +1237,14 @@ export default function Bookings() {
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Sending...
                       </>
-                    ) : stripeConfig === null ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Loading...
-                      </>
-                    ) : !stripeConfig?.configured ? (
-                      <>
-                        <Lock className="w-4 h-4 mr-2" />
-                        Payment Not Configured
-                      </>
                     ) : (
                       <>
-                        <Lock className="w-4 h-4 mr-2" />
-                        Continue to Payment
+                        <Palette className="w-4 h-4 mr-2" />
+                        Request Editing
                       </>
                     )}
                   </Button>
                 </div>
-                
-                {!stripeConfig?.configured && stripeConfig !== null && (
-                  <p className="text-xs text-center text-amber-400">
-                    Payment is not configured. Please contact support.
-                  </p>
-                )}
               </div>
             );
           })()}

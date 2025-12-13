@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
@@ -103,12 +102,6 @@ export default function CustomerBookingsScreen() {
   
   // Custom success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  
-  // Editing payment WebView state
-  const [showEditingPaymentWebView, setShowEditingPaymentWebView] = useState(false);
-  const [editingPaymentToken, setEditingPaymentToken] = useState<string | null>(null);
-  const [isCreatingEditingPayment, setIsCreatingEditingPayment] = useState(false);
-  const webViewRef = useRef<WebView>(null);
   
   // Custom themed alert modal state
   const [themedAlert, setThemedAlert] = useState<{
@@ -253,7 +246,7 @@ export default function CustomerBookingsScreen() {
       setShowSuccessModal(true);
     },
     onError: (error: Error) => {
-      Alert.alert('Error', error.message || 'Failed to send editing request');
+      showThemedAlert('Error', error.message || 'Failed to send editing request', 'error');
     },
   });
 
@@ -1064,39 +1057,23 @@ export default function CustomerBookingsScreen() {
                     </TouchableOpacity>
                     <TouchableOpacity 
                       style={styles.editingSubmitButton}
-                      onPress={async () => {
-                        console.log('=== PAY BUTTON PRESSED ===');
-                        Alert.alert('Debug', 'Button pressed! Starting payment...');
-                        setIsCreatingEditingPayment(true);
-                        try {
-                          console.log('Calling createMobileEditingPaymentSession...');
-                          const response = await snapnowApi.createMobileEditingPaymentSession({
-                            bookingId: String(selectedBookingPhotos.booking.id),
-                            photographerId,
-                            photographerName: (selectedBookingPhotos.booking as any).photographerName || 'Photographer',
-                            photoCount: service.pricingModel === 'per_photo' ? photoCount : undefined,
-                            customerNotes: editingNotes || undefined,
-                            requestedPhotoUrls: photosToEdit,
-                            amount: total,
-                            pricingModel: service.pricingModel,
-                          });
-                          // Store token and show WebView modal (same as booking payment)
-                          setEditingPaymentToken(response.token);
-                          setShowEditingPaymentWebView(true);
-                        } catch (error: any) {
-                          Alert.alert('Error', error.message || 'Failed to start payment');
-                        } finally {
-                          setIsCreatingEditingPayment(false);
-                        }
+                      onPress={() => {
+                        createEditingRequestMutation.mutate({
+                          bookingId: String(selectedBookingPhotos.booking.id),
+                          photographerId,
+                          photoCount: service.pricingModel === 'per_photo' ? photoCount : undefined,
+                          customerNotes: editingNotes || undefined,
+                          requestedPhotoUrls: photosToEdit,
+                        });
                       }}
-                      disabled={isCreatingEditingPayment}
+                      disabled={createEditingRequestMutation.isPending}
                     >
-                      {isCreatingEditingPayment ? (
+                      {createEditingRequestMutation.isPending ? (
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
                         <>
                           <Palette size={16} color="#fff" />
-                          <Text style={styles.editingSubmitText}>Pay & Request Editing</Text>
+                          <Text style={styles.editingSubmitText}>Request Editing</Text>
                         </>
                       )}
                     </TouchableOpacity>
@@ -1906,79 +1883,6 @@ export default function CustomerBookingsScreen() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
-
-      {/* Editing Payment WebView Modal */}
-      <Modal
-        visible={showEditingPaymentWebView}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        onRequestClose={() => setShowEditingPaymentWebView(false)}
-      >
-        <SafeAreaView style={styles.webViewContainer}>
-          <View style={styles.webViewHeader}>
-            <TouchableOpacity onPress={() => {
-              setShowEditingPaymentWebView(false);
-              setEditingPaymentToken(null);
-            }} style={styles.webViewClose}>
-              <X size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.webViewTitle}>Complete Payment</Text>
-            <View style={{ width: 40 }} />
-          </View>
-          <WebView
-            ref={webViewRef}
-            source={{ uri: `${API_URL}/mobile-editing-checkout?token=${editingPaymentToken}` }}
-            style={{ flex: 1 }}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            sharedCookiesEnabled={true}
-            thirdPartyCookiesEnabled={true}
-            mixedContentMode="compatibility"
-            allowsInlineMediaPlayback={true}
-            originWhitelist={['*']}
-            startInLoadingState={true}
-            renderLoading={() => (
-              <View style={styles.webViewLoading}>
-                <ActivityIndicator size="large" color={PRIMARY_COLOR} />
-                <Text style={styles.webViewLoadingText}>Loading payment form...</Text>
-              </View>
-            )}
-            onNavigationStateChange={(navState) => {
-              const url = navState.url;
-              // Check for success redirect from Stripe
-              if (url.includes('payment_intent=') && url.includes('redirect_status=succeeded')) {
-                setShowEditingPaymentWebView(false);
-                setEditingPaymentToken(null);
-                setShowEditingFormInGallery(false);
-                setSelectedBookingPhotos(null);
-                queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
-                setShowSuccessModal(true);
-              }
-            }}
-            onMessage={(event) => {
-              try {
-                const data = JSON.parse(event.nativeEvent.data);
-                if (data.type === 'EDITING_PAYMENT_SUCCESS') {
-                  setShowEditingPaymentWebView(false);
-                  setEditingPaymentToken(null);
-                  setShowEditingFormInGallery(false);
-                  setSelectedBookingPhotos(null);
-                  queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
-                  setShowSuccessModal(true);
-                }
-              } catch {}
-            }}
-            onError={(syntheticEvent) => {
-              const { nativeEvent } = syntheticEvent;
-              console.warn('WebView error: ', nativeEvent);
-            }}
-            onHttpError={(syntheticEvent) => {
-              const { nativeEvent } = syntheticEvent;
-              console.warn('WebView HTTP error: ', nativeEvent.statusCode);
-            }}
-          />
-        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -3075,46 +2979,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-  },
-  webViewContainer: {
-    flex: 1,
-    backgroundColor: '#0a0a0a',
-  },
-  webViewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  webViewTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  webViewClose: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  webViewLoading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#0a0a0a',
-  },
-  webViewLoadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: '#9ca3af',
   },
 });

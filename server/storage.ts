@@ -40,7 +40,7 @@ import {
   liveLocations
 } from "@shared/schema";
 import { db } from "@db";
-import { eq, and, desc, lt, or, isNull, sql, notInArray } from "drizzle-orm";
+import { eq, and, desc, lt, or, isNull, sql } from "drizzle-orm";
 
 export type PhotographerWithUser = Photographer & { fullName: string; email?: string };
 
@@ -108,7 +108,6 @@ export interface IStorage {
   // Editing Request methods
   getEditingRequest(id: string): Promise<EditingRequest | undefined>;
   getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined>;
-  getActiveEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined>;
   getEditingRequestsByPhotographer(photographerId: string): Promise<EditingRequestWithDetails[]>;
   getEditingRequestsByCustomer(customerId: string): Promise<EditingRequestWithDetails[]>;
   createEditingRequest(request: InsertEditingRequest): Promise<EditingRequest>;
@@ -695,27 +694,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined> {
-    // Returns the most recent editing request for display purposes
-    const result = await db.select()
-      .from(editingRequests)
-      .where(eq(editingRequests.bookingId, bookingId))
-      .orderBy(desc(editingRequests.requestedAt))
-      .limit(1);
-    return result[0];
-  }
-
-  async getActiveEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined> {
-    // Returns the most recent non-terminal editing request (excludes completed and declined)
-    const result = await db.select()
-      .from(editingRequests)
-      .where(
-        and(
-          eq(editingRequests.bookingId, bookingId),
-          notInArray(editingRequests.status, ['completed', 'declined'])
-        )
-      )
-      .orderBy(desc(editingRequests.requestedAt))
-      .limit(1);
+    const result = await db.select().from(editingRequests).where(eq(editingRequests.bookingId, bookingId)).limit(1);
     return result[0];
   }
 
@@ -744,7 +723,6 @@ export class DatabaseStorage implements IStorage {
         revisionCount: editingRequests.revisionCount,
         requestedPhotoUrls: editingRequests.requestedPhotoUrls,
         editedPhotos: editingRequests.editedPhotos,
-        stripePaymentId: editingRequests.stripePaymentId,
         requestedAt: editingRequests.requestedAt,
         acceptedAt: editingRequests.acceptedAt,
         deliveredAt: editingRequests.deliveredAt,
@@ -788,7 +766,6 @@ export class DatabaseStorage implements IStorage {
       revisionCount: row.revisionCount,
       requestedPhotoUrls: row.requestedPhotoUrls,
       editedPhotos: row.editedPhotos,
-      stripePaymentId: row.stripePaymentId,
       requestedAt: row.requestedAt,
       acceptedAt: row.acceptedAt,
       deliveredAt: row.deliveredAt,
@@ -827,7 +804,6 @@ export class DatabaseStorage implements IStorage {
         revisionCount: editingRequests.revisionCount,
         requestedPhotoUrls: editingRequests.requestedPhotoUrls,
         editedPhotos: editingRequests.editedPhotos,
-        stripePaymentId: editingRequests.stripePaymentId,
         requestedAt: editingRequests.requestedAt,
         acceptedAt: editingRequests.acceptedAt,
         deliveredAt: editingRequests.deliveredAt,
@@ -871,7 +847,6 @@ export class DatabaseStorage implements IStorage {
       revisionCount: row.revisionCount,
       requestedPhotoUrls: row.requestedPhotoUrls,
       editedPhotos: row.editedPhotos,
-      stripePaymentId: row.stripePaymentId,
       requestedAt: row.requestedAt,
       acceptedAt: row.acceptedAt,
       deliveredAt: row.deliveredAt,

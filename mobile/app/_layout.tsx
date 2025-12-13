@@ -24,7 +24,6 @@ function RootNavigator() {
     <Stack 
       screenOptions={{ 
         headerShown: false,
-        gestureEnabled: true,
       }}
     >
       <Stack.Screen name="index" />
