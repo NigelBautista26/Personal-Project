@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { Clock, LogOut, CheckCircle } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import PhotoBackground from '../components/PhotoBackground';
 
@@ -29,7 +29,7 @@ export default function PendingVerificationScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <Clock size={64} color="#f59e0b" />
+            <Feather name="clock" size={64} color="#f59e0b" />
           </View>
 
           <Text style={styles.title}>Application Under Review</Text>
