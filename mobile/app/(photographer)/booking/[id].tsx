@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign, Camera, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
@@ -26,6 +26,7 @@ import { BookingChat } from '../../../src/components/BookingChat';
 import { useAuth } from '../../../src/context/AuthContext';
 
 const PRIMARY_COLOR = '#2563eb';
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function PhotographerBookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -37,6 +38,13 @@ export default function PhotographerBookingDetailScreen() {
   const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
   const [uploadMessage, setUploadMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Success modal state (themed replacement for Alert)
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
+  
+  // Photo fullscreen viewer state
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   
 
   const { data: booking, isLoading, error, refetch } = useQuery({
@@ -187,11 +195,22 @@ export default function PhotographerBookingDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
       refetch();
       setShowUploadModal(false);
-      Alert.alert('Photos Delivered', 'Your photos have been sent to the customer!');
+      // Show themed success modal instead of ugly Alert
+      setSuccessMessage({ title: 'Photos Delivered', message: 'Your photos have been sent to the customer!' });
+      setShowSuccessModal(true);
     } catch (error) {
       Alert.alert('Error', 'Could not save photo delivery.');
     }
   };
+
+  // Helper to show themed success
+  const showSuccess = (title: string, message: string) => {
+    setSuccessMessage({ title, message });
+    setShowSuccessModal(true);
+  };
+
+  // Get the photos to display (for completed bookings)
+  const deliveredPhotos = existingDelivery?.photos || [];
 
   const getImageUrl = (url: string) => {
     if (!url) return null;
@@ -408,6 +427,44 @@ export default function PhotographerBookingDetailScreen() {
             </View>
           </View>
         )}
+
+        {/* Delivered Photos - for completed bookings */}
+        {booking.status === 'completed' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Camera size={20} color="#6366f1" />
+                <Text style={styles.sectionTitle}>Delivered Photos</Text>
+              </View>
+              {deliveredPhotos.length > 0 && (
+                <Text style={styles.photoCountText}>{deliveredPhotos.length} photos</Text>
+              )}
+            </View>
+            
+            {deliveredPhotos.length > 0 ? (
+              <View style={styles.deliveredPhotoGrid}>
+                {deliveredPhotos.map((photo, index) => (
+                  <TouchableOpacity 
+                    key={index} 
+                    style={styles.deliveredPhotoThumbnail}
+                    onPress={() => setSelectedPhotoIndex(index)}
+                    testID={`delivered-photo-${index}`}
+                  >
+                    <Image 
+                      source={{ uri: getImageUrl(photo)! }} 
+                      style={styles.deliveredPhotoImage} 
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noPhotosCard}>
+                <Camera size={32} color="#6b7280" />
+                <Text style={styles.noPhotosText}>No photos delivered yet</Text>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
 
       {isPending && (
@@ -457,9 +514,22 @@ export default function PhotographerBookingDetailScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {booking.status === 'completed' && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.addMorePhotosButton}
+            onPress={handleOpenUploadModal}
+            testID="button-add-more-photos"
+          >
+            <Plus size={20} color="#fff" />
+            <Text style={styles.uploadButtonText}>Add More Photos</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       </KeyboardAvoidingView>
 
-      {/* Photo Upload Modal */}
+      {/* Photo Upload Modal - with keyboard fix */}
       <Modal
         visible={showUploadModal}
         animationType="slide"
@@ -467,67 +537,154 @@ export default function PhotographerBookingDetailScreen() {
         onRequestClose={() => setShowUploadModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowUploadModal(false)}>
-              <X size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Deliver Photos</Text>
-            <View style={{ width: 24 }} />
-          </View>
-
-          <ScrollView style={styles.modalContent}>
-            <Text style={styles.photoCountLabel}>Photos ({uploadingPhotos.length})</Text>
-            
-            <View style={styles.photoGrid}>
-              {uploadingPhotos.map((photo, idx) => (
-                <View key={idx} style={styles.photoItem}>
-                  <Image 
-                    source={{ uri: getImageUrl(photo) || photo }} 
-                    style={styles.photoImage} 
-                  />
-                </View>
-              ))}
-              
-              <TouchableOpacity 
-                style={styles.addPhotoButton}
-                onPress={handlePickImages}
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <ActivityIndicator color={PRIMARY_COLOR} />
-                ) : (
-                  <>
-                    <Plus size={24} color={PRIMARY_COLOR} />
-                    <Text style={styles.addPhotoText}>Add</Text>
-                  </>
-                )}
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          >
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowUploadModal(false)}>
+                <X size={24} color="#fff" />
               </TouchableOpacity>
+              <Text style={styles.modalTitle}>Deliver Photos</Text>
+              <View style={{ width: 24 }} />
             </View>
 
-            <Text style={styles.messageLabel}>Message to Customer (optional)</Text>
-            <TextInput
-              style={styles.messageInput}
-              placeholder="Add a personal note..."
-              placeholderTextColor="#6b7280"
-              value={uploadMessage}
-              onChangeText={setUploadMessage}
-              multiline
-              numberOfLines={3}
-            />
-          </ScrollView>
-
-          <View style={styles.modalFooter}>
-            <TouchableOpacity
-              style={[styles.deliverButton, uploadingPhotos.length === 0 && styles.deliverButtonDisabled]}
-              onPress={handleSaveDelivery}
-              disabled={uploadingPhotos.length === 0}
+            <ScrollView 
+              style={styles.modalContent} 
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.deliverButtonText}>
-                📷 Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
-              </Text>
+              <Text style={styles.photoCountLabel}>Photos ({uploadingPhotos.length})</Text>
+              
+              <View style={styles.photoGrid}>
+                {uploadingPhotos.map((photo, idx) => (
+                  <View key={idx} style={styles.photoItem}>
+                    <Image 
+                      source={{ uri: getImageUrl(photo) || photo }} 
+                      style={styles.photoImage} 
+                    />
+                  </View>
+                ))}
+                
+                <TouchableOpacity 
+                  style={styles.addPhotoButton}
+                  onPress={handlePickImages}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <ActivityIndicator color={PRIMARY_COLOR} />
+                  ) : (
+                    <>
+                      <Plus size={24} color={PRIMARY_COLOR} />
+                      <Text style={styles.addPhotoText}>Add</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.messageLabel}>Message to Customer (optional)</Text>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Add a personal note..."
+                placeholderTextColor="#6b7280"
+                value={uploadMessage}
+                onChangeText={setUploadMessage}
+                multiline
+                numberOfLines={3}
+              />
+              <View style={{ height: 100 }} />
+            </ScrollView>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={[styles.deliverButton, uploadingPhotos.length === 0 && styles.deliverButtonDisabled]}
+                onPress={handleSaveDelivery}
+                disabled={uploadingPhotos.length === 0}
+              >
+                <Text style={styles.deliverButtonText}>
+                  📷 Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Themed Success Modal */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successIconContainer}>
+              <CheckCircle size={48} color="#22c55e" />
+            </View>
+            <Text style={styles.successModalTitle}>{successMessage.title}</Text>
+            <Text style={styles.successModalMessage}>{successMessage.message}</Text>
+            <TouchableOpacity 
+              style={styles.successModalButton}
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.successModalButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
+      </Modal>
+
+      {/* Fullscreen Photo Viewer */}
+      <Modal
+        visible={selectedPhotoIndex !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedPhotoIndex(null)}
+      >
+        <View style={styles.fullscreenOverlay}>
+          <SafeAreaView style={styles.fullscreenContainer}>
+            <View style={styles.fullscreenHeader}>
+              <TouchableOpacity 
+                style={styles.fullscreenCloseButton} 
+                onPress={() => setSelectedPhotoIndex(null)}
+              >
+                <X size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.fullscreenCounter}>
+                {selectedPhotoIndex !== null ? `${selectedPhotoIndex + 1} / ${deliveredPhotos.length}` : ''}
+              </Text>
+              <View style={{ width: 40 }} />
+            </View>
+
+            {selectedPhotoIndex !== null && deliveredPhotos.length > 0 && selectedPhotoIndex < deliveredPhotos.length && (
+              <View style={styles.fullscreenImageContainer}>
+                <Image 
+                  source={{ uri: getImageUrl(deliveredPhotos[selectedPhotoIndex])! }} 
+                  style={styles.fullscreenImage}
+                  resizeMode="contain"
+                />
+                
+                {selectedPhotoIndex > 0 && (
+                  <TouchableOpacity 
+                    style={[styles.navButton, styles.navButtonLeft]}
+                    onPress={() => setSelectedPhotoIndex(selectedPhotoIndex - 1)}
+                  >
+                    <ChevronLeft size={32} color="#fff" />
+                  </TouchableOpacity>
+                )}
+                {selectedPhotoIndex < deliveredPhotos.length - 1 && (
+                  <TouchableOpacity 
+                    style={[styles.navButton, styles.navButtonRight]}
+                    onPress={() => setSelectedPhotoIndex(selectedPhotoIndex + 1)}
+                  >
+                    <ChevronRight size={32} color="#fff" />
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+          </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -876,5 +1033,162 @@ const styles = StyleSheet.create({
   locationSetText: {
     color: '#22c55e',
     fontSize: 14,
+  },
+
+  // Add more photos button
+  addMorePhotosButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: '#6366f1',
+  },
+
+  // Photo count text
+  photoCountText: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+
+  // Delivered photo grid
+  deliveredPhotoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  deliveredPhotoThumbnail: {
+    width: (SCREEN_WIDTH - 40 - 16) / 3,
+    height: (SCREEN_WIDTH - 40 - 16) / 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  deliveredPhotoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  noPhotosCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  noPhotosText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginTop: 12,
+  },
+
+  // Themed Success Modal
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  successModalContent: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 20,
+    padding: 32,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  successIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  successModalMessage: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  successModalButton: {
+    backgroundColor: '#22c55e',
+    paddingVertical: 14,
+    paddingHorizontal: 48,
+    borderRadius: 12,
+  },
+  successModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Fullscreen Photo Viewer
+  fullscreenOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+  },
+  fullscreenContainer: {
+    flex: 1,
+  },
+  fullscreenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  fullscreenCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullscreenCounter: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  fullscreenImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT * 0.75,
+  },
+  navButton: {
+    position: 'absolute',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: '50%',
+    marginTop: -25,
+  },
+  navButtonLeft: {
+    left: 16,
+  },
+  navButtonRight: {
+    right: 16,
   },
 });
