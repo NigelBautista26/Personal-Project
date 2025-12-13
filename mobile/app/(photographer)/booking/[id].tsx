@@ -203,6 +203,9 @@ export default function PhotographerBookingDetailScreen() {
           const delivery = await snapnowApi.addPhotoToDelivery(id!, objectPath);
           setUploadingPhotos(delivery.photos || []);
         }
+        // Refresh queries so customer sees new photos
+        queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
+        queryClient.invalidateQueries({ queryKey: ['booking', id] });
         setSuccessMessage({ title: 'Photos Added', message: `${result.assets.length} photo${result.assets.length > 1 ? 's' : ''} uploaded successfully!` });
         setShowSuccessModal(true);
       } catch (error) {
