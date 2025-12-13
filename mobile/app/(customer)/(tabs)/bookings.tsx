@@ -910,13 +910,20 @@ export default function CustomerBookingsScreen() {
                     style={styles.requestEditingButton}
                     onPress={() => {
                       console.log('[DEBUG] Request Editing button pressed');
-                      setEditingNotes('');
-                      setEditingModalBooking({
+                      // Save the data we need before closing the photo modal
+                      const editingData = {
                         bookingId: String(selectedBookingPhotos.booking.id),
                         photographerId: String((selectedBookingPhotos.booking as any).photographerId),
                         photos: selectedBookingPhotos.photos,
                         service,
-                      });
+                      };
+                      setEditingNotes('');
+                      // Close the photo gallery modal first, then open editing modal
+                      setSelectedBookingPhotos(null);
+                      // Use setTimeout to ensure the first modal closes before opening the second
+                      setTimeout(() => {
+                        setEditingModalBooking(editingData);
+                      }, 100);
                     }}
                     disabled={createEditingRequestMutation.isPending}
                   >
