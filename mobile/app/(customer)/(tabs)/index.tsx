@@ -217,16 +217,30 @@ export default function CustomerMapScreen() {
   }, [photographerLocation, activeSession]);
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const location = await Location.getCurrentPositionAsync({});
-        setUserLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
+    let isMounted = true;
+    
+    const requestLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted' && isMounted) {
+          const location = await Location.getCurrentPositionAsync({});
+          if (isMounted) {
+            setUserLocation({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            });
+          }
+        }
+      } catch (error) {
+        console.log('Location request error:', error);
       }
-    })();
+    };
+    
+    requestLocation();
+    
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
