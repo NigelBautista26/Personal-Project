@@ -20,10 +20,14 @@ import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Cros
 import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from '../../../src/components/SafeMapView';
 import MapView, { Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
 import { useAuth } from '../../../src/context/AuthContext';
 import { useCity, City, POPULAR_CITIES } from '../../../src/context/CityContext';
+
+// Detect if running in Expo Go on iOS (causes crashes with custom marker children)
+const isExpoGoOnIOS = Platform.OS === 'ios' && Constants.executionEnvironment === 'storeClient';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
@@ -362,6 +366,24 @@ export default function CustomerMapScreen() {
           const coords = getOffsetCoordinates(filteredPhotographers, index);
           const isAvailable = photographer.sessionState === 'available';
           
+          // Use simple markers without children in Expo Go on iOS to avoid crash
+          if (isExpoGoOnIOS) {
+            return (
+              <SafeMarker
+                key={`photographer-${photographer.id}-${markersReady}`}
+                coordinate={{
+                  latitude: coords.lat,
+                  longitude: coords.lng,
+                }}
+                onPress={() => handlePhotographerPress(photographer)}
+                title={photographer.fullName || 'Photographer'}
+                description={`£${photographer.hourlyRate}/hr`}
+                pinColor={isAvailable ? '#22c55e' : '#3b82f6'}
+                testID={`marker-photographer-${photographer.id}`}
+              />
+            );
+          }
+          
           return (
             <SafeMarker
               key={`photographer-${photographer.id}-${markersReady}`}
@@ -386,8 +408,8 @@ export default function CustomerMapScreen() {
           );
         })}
 
-        {/* Photo Spot Markers */}
-        {photoSpots.map((spot) => (
+        {/* Photo Spot Markers - skip in Expo Go on iOS to avoid crash */}
+        {!isExpoGoOnIOS && photoSpots.map((spot) => (
           <SafeMarker
             key={`spot-${spot.id}-${markersReady}`}
             coordinate={{
@@ -416,16 +438,12 @@ export default function CustomerMapScreen() {
             }}
             title="Photographer's Location"
             onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
+            pinColor="#22c55e"
             testID="marker-photographer-live"
-          >
-            <View style={styles.liveLocationMarker}>
-              <View style={styles.liveLocationPulse} />
-              <View style={styles.liveLocationDot} />
-            </View>
-          </SafeMarker>
+          />
         )}
 
-        {/* User Location Marker (custom instead of showsUserLocation) */}
+        {/* User Location Marker */}
         {userLocation && (
           <SafeMarker
             key="user-location"
@@ -434,13 +452,9 @@ export default function CustomerMapScreen() {
               longitude: userLocation.longitude,
             }}
             title="Your Location"
+            pinColor="#2563eb"
             testID="marker-user-location"
-          >
-            <View style={styles.userLocationMarker}>
-              <View style={styles.userLocationPulse} />
-              <View style={styles.userLocationDot} />
-            </View>
-          </SafeMarker>
+          />
         )}
       </SafeMapView>
 
