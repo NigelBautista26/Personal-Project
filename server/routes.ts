@@ -1584,9 +1584,10 @@ export async function registerRoutes(
         photoCount: z.number().min(1).optional(),
         customerNotes: z.string().max(500).optional(),
         requestedPhotoUrls: z.array(z.string()).optional(),
+        stripePaymentId: z.string().optional(), // Payment intent ID from Stripe
       });
 
-      const { bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls } = requestSchema.parse(req.body);
+      const { bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls, stripePaymentId } = requestSchema.parse(req.body);
 
       // Verify the booking belongs to this customer
       const booking = await storage.getBooking(bookingId);
@@ -1642,6 +1643,7 @@ export async function registerRoutes(
         customerNotes: customerNotes || null,
         photographerNotes: null,
         requestedPhotoUrls: requestedPhotoUrls || [],
+        stripePaymentId: stripePaymentId || null,
       });
 
       res.json(editingRequest);
@@ -1747,6 +1749,18 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Access denied" });
       }
 
+      // If declining, cancel the Stripe payment authorization
+      if (status === "declined" && editingRequest.stripePaymentId) {
+        try {
+          const stripe = await getUncachableStripeClient();
+          await stripe.paymentIntents.cancel(editingRequest.stripePaymentId);
+          console.log(`Payment authorization cancelled for declined editing request ${editingRequest.id}`);
+        } catch (stripeError: any) {
+          // Payment may already be cancelled - log but don't fail
+          console.log(`Note: Could not cancel payment for editing request ${editingRequest.id}:`, stripeError.message);
+        }
+      }
+
       const updatedRequest = await storage.updateEditingRequestStatus(
         req.params.requestId,
         status,
@@ -1811,6 +1825,18 @@ export async function registerRoutes(
 
       if (editingRequest.status !== "delivered") {
         return res.status(400).json({ error: "Cannot complete - photos not yet delivered" });
+      }
+
+      // Capture the payment when customer approves the delivered edits
+      if (editingRequest.stripePaymentId) {
+        try {
+          const stripe = await getUncachableStripeClient();
+          await stripe.paymentIntents.capture(editingRequest.stripePaymentId);
+          console.log(`Payment captured for completed editing request ${editingRequest.id}`);
+        } catch (stripeError: any) {
+          console.error(`Failed to capture payment for editing request ${editingRequest.id}:`, stripeError.message);
+          return res.status(500).json({ error: "Failed to process payment. Please try again." });
+        }
       }
 
       const updatedRequest = await storage.completeEditingRequest(req.params.requestId);
@@ -2660,6 +2686,44 @@ export async function registerRoutes(
       });
     } catch (error: any) {
       console.error("Stripe payment intent error:", error);
+      res.status(500).json({ error: error.message || "Failed to create payment intent" });
+    }
+  });
+
+  // Create payment intent for editing services
+  app.post("/api/stripe/create-editing-payment-intent", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { amount, bookingId, photographerName } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: "Invalid amount" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: 'gbp',
+        capture_method: 'manual', // Authorization hold - capture when customer approves edits
+        metadata: {
+          type: 'editing',
+          bookingId: bookingId || '',
+          userId: req.session.userId,
+          photographerName: photographerName || '',
+        },
+        description: `SnapNow Photo Editing${photographerName ? ` by ${photographerName}` : ''}`,
+      });
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error: any) {
+      console.error("Stripe editing payment intent error:", error);
       res.status(500).json({ error: error.message || "Failed to create payment intent" });
     }
   });
