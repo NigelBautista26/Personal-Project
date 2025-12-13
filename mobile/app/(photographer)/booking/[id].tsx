@@ -191,9 +191,11 @@ export default function PhotographerBookingDetailScreen() {
   const handleSaveDelivery = async () => {
     try {
       await snapnowApi.savePhotoDelivery(id!, uploadMessage || undefined);
+      // Invalidate all relevant queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
-      refetch();
+      queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      await refetch();
       setShowUploadModal(false);
       // Show themed success modal instead of ugly Alert
       setSuccessMessage({ title: 'Photos Delivered', message: 'Your photos have been sent to the customer!' });
