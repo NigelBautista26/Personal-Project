@@ -2673,6 +2673,204 @@ export async function registerRoutes(
     }
   });
 
+  // Mobile Editing Payment Session - token-based auth for WebView checkout
+  const mobileEditingPaymentTokens = new Map<string, { 
+    userId: string; 
+    editingData: {
+      bookingId: string;
+      photographerId: string;
+      photographerName: string;
+      photoCount?: number;
+      customerNotes?: string;
+      requestedPhotoUrls?: string[];
+      amount: number;
+      pricingModel: string;
+    }; 
+    expiresAt: number 
+  }>();
+  
+  // Create a mobile editing payment session with a temporary token
+  app.post("/api/mobile/create-editing-payment-session", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { bookingId, photographerId, photographerName, photoCount, customerNotes, requestedPhotoUrls, amount, pricingModel } = req.body;
+      
+      // Generate a random token
+      const token = 'edit-' + crypto.randomUUID() + '-' + Date.now().toString(36);
+      
+      // Store the token with editing data (expires in 10 minutes)
+      mobileEditingPaymentTokens.set(token, {
+        userId: req.session.userId,
+        editingData: { bookingId, photographerId, photographerName, photoCount, customerNotes, requestedPhotoUrls, amount, pricingModel },
+        expiresAt: Date.now() + 10 * 60 * 1000, // 10 minutes
+      });
+      
+      // Clean up expired tokens
+      Array.from(mobileEditingPaymentTokens.entries()).forEach(([key, value]) => {
+        if (value.expiresAt < Date.now()) {
+          mobileEditingPaymentTokens.delete(key);
+        }
+      });
+      
+      res.json({ token, expiresIn: 600 });
+    } catch (error: any) {
+      console.error("Mobile editing payment session error:", error);
+      res.status(500).json({ error: error.message || "Failed to create editing payment session" });
+    }
+  });
+  
+  // Get editing payment session data by token (for mobile checkout page)
+  app.get("/api/mobile/editing-payment-session/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const session = mobileEditingPaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      if (session.expiresAt < Date.now()) {
+        mobileEditingPaymentTokens.delete(token);
+        return res.status(410).json({ error: "Session expired" });
+      }
+      
+      // Get stripe config
+      const configured = await isStripeConfigured();
+      if (!configured) {
+        return res.status(503).json({ error: "Payment not configured" });
+      }
+      
+      const publishableKey = await getStripePublishableKey();
+      
+      res.json({
+        editingData: session.editingData,
+        stripePublishableKey: publishableKey,
+      });
+    } catch (error: any) {
+      console.error("Get editing payment session error:", error);
+      res.status(500).json({ error: error.message || "Failed to get editing payment session" });
+    }
+  });
+  
+  // Create editing payment intent using mobile token (no session required)
+  app.post("/api/mobile/create-editing-payment-intent/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const session = mobileEditingPaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      if (session.expiresAt < Date.now()) {
+        mobileEditingPaymentTokens.delete(token);
+        return res.status(410).json({ error: "Session expired" });
+      }
+      
+      const { amount, photographerName, bookingId } = session.editingData;
+      
+      const stripe = await getUncachableStripeClient();
+      
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency: 'gbp',
+        capture_method: 'manual', // Authorization hold - capture when customer approves edits
+        metadata: {
+          type: 'editing',
+          bookingId: bookingId || '',
+          userId: session.userId,
+          photographerName: photographerName || '',
+        },
+        description: `SnapNow Photo Editing${photographerName ? ` by ${photographerName}` : ''}`,
+      });
+      
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      });
+    } catch (error: any) {
+      console.error("Mobile editing payment intent error:", error);
+      res.status(500).json({ error: error.message || "Failed to create editing payment intent" });
+    }
+  });
+  
+  // Complete editing request using mobile token after successful payment
+  app.post("/api/mobile/complete-editing-request/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { paymentIntentId } = req.body;
+      
+      const session = mobileEditingPaymentTokens.get(token);
+      
+      if (!session) {
+        return res.status(404).json({ error: "Session not found or expired" });
+      }
+      
+      const { bookingId, photographerId, photoCount, customerNotes, requestedPhotoUrls, amount, pricingModel } = session.editingData;
+      
+      // Verify the booking belongs to this customer
+      const booking = await storage.getBooking(bookingId);
+      if (!booking || booking.customerId !== session.userId) {
+        return res.status(403).json({ error: "Booking not found or access denied" });
+      }
+
+      // Check if an active editing request already exists for this booking
+      const existingRequest = await storage.getActiveEditingRequestByBooking(bookingId);
+      if (existingRequest) {
+        return res.status(400).json({ error: "An editing request already exists for this booking" });
+      }
+
+      // Get photographer's editing service settings
+      const editingService = await storage.getEditingService(photographerId);
+      if (!editingService || !editingService.isEnabled) {
+        return res.status(400).json({ error: "Editing service not available for this photographer" });
+      }
+
+      // Calculate pricing (same 10% customer fee, 20% platform fee model)
+      let baseAmount: number;
+      if (pricingModel === "per_photo" && editingService.perPhotoRate && photoCount) {
+        baseAmount = parseFloat(editingService.perPhotoRate) * photoCount;
+      } else if (editingService.flatRate) {
+        baseAmount = parseFloat(editingService.flatRate);
+      } else {
+        return res.status(400).json({ error: "Pricing not configured" });
+      }
+
+      const customerServiceFee = baseAmount * 0.10;
+      const totalAmount = baseAmount + customerServiceFee;
+      const platformFee = baseAmount * 0.20;
+      const photographerEarnings = baseAmount - platformFee;
+
+      // Create the editing request
+      const editingRequest = await storage.createEditingRequest({
+        bookingId,
+        photographerId,
+        customerId: session.userId,
+        photoCount: photoCount || null,
+        customerNotes: customerNotes || null,
+        requestedPhotoUrls: requestedPhotoUrls || null,
+        baseAmount: baseAmount.toFixed(2),
+        customerServiceFee: customerServiceFee.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        platformFee: platformFee.toFixed(2),
+        photographerEarnings: photographerEarnings.toFixed(2),
+        pricingModel: pricingModel,
+        stripePaymentId: paymentIntentId,
+      });
+      
+      // Clean up the token
+      mobileEditingPaymentTokens.delete(token);
+      
+      res.json({ success: true, requestId: editingRequest.id });
+    } catch (error: any) {
+      console.error("Mobile complete editing request error:", error);
+      res.status(500).json({ error: error.message || "Failed to complete editing request" });
+    }
+  });
+
   // Stripe Payment Routes
   app.get("/api/stripe/config", async (req, res) => {
     try {

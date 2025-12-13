@@ -37,6 +37,7 @@ import FundingPlan from "@/pages/funding-plan";
 import FounderCV from "@/pages/founder-cv";
 import MobileGuide from "@/pages/mobile-guide";
 import MobileCheckout from "@/pages/mobile-checkout";
+import MobileEditingCheckout from "@/pages/mobile-editing-checkout";
 
 function Router() {
   return (
@@ -74,6 +75,7 @@ function Router() {
       <Route path="/founder-cv" component={FounderCV} />
       <Route path="/mobile-guide" component={MobileGuide} />
       <Route path="/mobile-checkout" component={MobileCheckout} />
+      <Route path="/mobile-editing-checkout" component={MobileEditingCheckout} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -337,4 +337,19 @@ export const snapnowApi = {
     const response = await api.post('/api/mobile/create-payment-session', data);
     return response.data;
   },
+
+  // Mobile editing payment session (token-based auth for WebView checkout)
+  async createMobileEditingPaymentSession(data: {
+    bookingId: string;
+    photographerId: string;
+    photographerName: string;
+    photoCount?: number;
+    customerNotes?: string;
+    requestedPhotoUrls?: string[];
+    amount: number;
+    pricingModel: string;
+  }): Promise<{ token: string; expiresIn: number }> {
+    const response = await api.post('/api/mobile/create-editing-payment-session', data);
+    return response.data;
+  },
 };
