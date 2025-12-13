@@ -909,6 +909,7 @@ export default function CustomerBookingsScreen() {
                   <TouchableOpacity 
                     style={styles.requestEditingButton}
                     onPress={() => {
+                      console.log('[DEBUG] Request Editing button pressed');
                       setEditingNotes('');
                       setEditingModalBooking({
                         bookingId: String(selectedBookingPhotos.booking.id),
