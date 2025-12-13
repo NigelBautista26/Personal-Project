@@ -281,6 +281,22 @@ export const snapnowApi = {
     }
   },
 
+  // Portfolio management methods
+  async addPortfolioPhoto(imageUrl: string): Promise<{ portfolioImages: string[] }> {
+    const response = await api.post('/api/photographers/me/portfolio', { imageUrl });
+    return response.data;
+  },
+
+  async deletePortfolioPhoto(imageUrl: string): Promise<{ portfolioImages: string[] }> {
+    const response = await api.delete('/api/photographers/me/portfolio', { data: { imageUrl } });
+    return response.data;
+  },
+
+  async updateProfilePicture(imageUrl: string): Promise<PhotographerProfile> {
+    const response = await api.post('/api/photographers/me/profile-picture', { imageUrl });
+    return response.data;
+  },
+
   // Mobile payment session (token-based auth for WebView checkout)
   async createMobilePaymentSession(data: {
     photographerId: string;

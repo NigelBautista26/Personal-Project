@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { 
@@ -20,17 +22,27 @@ import {
   Palette,
   LogOut,
   Edit,
+  Plus,
+  Trash2,
+  X,
 } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../src/context/AuthContext';
 import { API_URL } from '../../src/api/client';
 import { ThemedAlert } from '../../src/components/ThemedAlert';
+import { snapnowApi } from '../../src/api/snapnowApi';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerProfileScreen() {
-  const { user, photographerProfile, logout } = useAuth();
+  const { user, photographerProfile, logout, refreshPhotographerProfile } = useAuth();
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+  const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [isUploadingProfilePic, setIsUploadingProfilePic] = useState(false);
 
   const getImageUrl = (path?: string | null) => {
     if (!path) return null;
@@ -58,6 +70,109 @@ export default function PhotographerProfileScreen() {
     setShowLogoutAlert(false);
     await logout();
     router.dismissAll();
+  };
+
+  const handleAddPhoto = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) {
+        return;
+      }
+
+      setIsUploading(true);
+
+      const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
+      
+      const response = await fetch(result.assets[0].uri);
+      const blob = await response.blob();
+      
+      await fetch(uploadURL, {
+        method: 'PUT',
+        body: blob,
+        headers: {
+          'Content-Type': blob.type || 'image/jpeg',
+        },
+      });
+
+      await snapnowApi.addPortfolioPhoto(objectPath);
+      await refreshPhotographerProfile?.();
+    } catch (error) {
+      console.error('Failed to upload photo:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeletePhoto = (imageUrl: string) => {
+    setPhotoToDelete(imageUrl);
+    setShowDeleteAlert(true);
+  };
+
+  const confirmDeletePhoto = async () => {
+    if (!photoToDelete) return;
+    
+    try {
+      await snapnowApi.deletePortfolioPhoto(photoToDelete);
+      await refreshPhotographerProfile?.();
+    } catch (error) {
+      console.error('Failed to delete photo:', error);
+    } finally {
+      setShowDeleteAlert(false);
+      setPhotoToDelete(null);
+    }
+  };
+
+  const handleUpdateProfilePicture = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissionResult.granted) {
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (result.canceled || !result.assets?.[0]?.uri) {
+        return;
+      }
+
+      setIsUploadingProfilePic(true);
+
+      const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
+      
+      const response = await fetch(result.assets[0].uri);
+      const blob = await response.blob();
+      
+      await fetch(uploadURL, {
+        method: 'PUT',
+        body: blob,
+        headers: {
+          'Content-Type': blob.type || 'image/jpeg',
+        },
+      });
+
+      await snapnowApi.updateProfilePicture(objectPath);
+      await refreshPhotographerProfile?.();
+    } catch (error) {
+      console.error('Failed to update profile picture:', error);
+    } finally {
+      setIsUploadingProfilePic(false);
+    }
   };
 
   return (
@@ -101,8 +216,17 @@ export default function PhotographerProfileScreen() {
                 <Camera size={40} color="#6b7280" />
               </View>
             )}
-            <TouchableOpacity style={styles.cameraButton}>
-              <Camera size={14} color="#fff" />
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={handleUpdateProfilePicture}
+              disabled={isUploadingProfilePic}
+              testID="button-update-profile-picture"
+            >
+              {isUploadingProfilePic ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Camera size={14} color="#fff" />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -133,21 +257,56 @@ export default function PhotographerProfileScreen() {
         </View>
 
         {/* Portfolio Section */}
-        {portfolioImages.length > 0 && (
-          <View style={styles.portfolioSection}>
+        <View style={styles.portfolioSection}>
+          <View style={styles.portfolioHeader}>
             <Text style={styles.sectionTitle}>Portfolio</Text>
+            <TouchableOpacity 
+              style={styles.addPhotoButton}
+              onPress={handleAddPhoto}
+              disabled={isUploading}
+              testID="button-add-portfolio-photo"
+            >
+              {isUploading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Plus size={16} color="#fff" />
+                  <Text style={styles.addPhotoButtonText}>Add</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+          
+          {portfolioImages.length > 0 ? (
             <View style={styles.portfolioGrid}>
-              {portfolioImages.slice(0, 9).map((imageUrl: string, index: number) => (
-                <TouchableOpacity key={index} style={styles.portfolioItem}>
+              {portfolioImages.map((imageUrl: string, index: number) => (
+                <TouchableOpacity 
+                  key={index} 
+                  style={styles.portfolioItem}
+                  onPress={() => setSelectedImage(getImageUrl(imageUrl))}
+                  testID={`button-portfolio-image-${index}`}
+                >
                   <Image 
                     source={{ uri: getImageUrl(imageUrl)! }} 
                     style={styles.portfolioImage}
                   />
+                  <TouchableOpacity 
+                    style={styles.deletePhotoButton}
+                    onPress={() => handleDeletePhoto(imageUrl)}
+                    testID={`button-delete-photo-${index}`}
+                  >
+                    <Trash2 size={12} color="#fff" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={styles.emptyPortfolio}>
+              <Camera size={32} color="#6b7280" />
+              <Text style={styles.emptyPortfolioText}>Add photos to showcase your work</Text>
+            </View>
+          )}
+        </View>
 
         {/* Menu Items */}
         <View style={styles.menuSection}>
@@ -222,6 +381,43 @@ export default function PhotographerProfileScreen() {
           { text: 'Log out', style: 'destructive', onPress: confirmLogout },
         ]}
       />
+
+      <ThemedAlert
+        visible={showDeleteAlert}
+        title="Delete photo"
+        message="Are you sure you want to remove this photo from your portfolio?"
+        icon="delete"
+        onDismiss={() => setShowDeleteAlert(false)}
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowDeleteAlert(false) },
+          { text: 'Delete', style: 'destructive', onPress: confirmDeletePhoto },
+        ]}
+      />
+
+      {/* Lightbox Modal */}
+      <Modal
+        visible={!!selectedImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedImage(null)}
+      >
+        <View style={styles.lightboxOverlay}>
+          <TouchableOpacity 
+            style={styles.lightboxCloseButton}
+            onPress={() => setSelectedImage(null)}
+            testID="button-close-lightbox"
+          >
+            <X size={24} color="#fff" />
+          </TouchableOpacity>
+          {selectedImage && (
+            <Image 
+              source={{ uri: selectedImage }} 
+              style={styles.lightboxImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -335,7 +531,23 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 0,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 12 },
+  portfolioHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  addPhotoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: PRIMARY_COLOR,
+  },
+  addPhotoButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   portfolioGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -346,11 +558,34 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
+    position: 'relative',
   },
   portfolioImage: {
     width: '100%',
     height: '100%',
   },
+  deletePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyPortfolio: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 32,
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderStyle: 'dashed',
+  },
+  emptyPortfolioText: { fontSize: 14, color: '#6b7280', textAlign: 'center' },
 
   menuSection: {
     paddingHorizontal: 20,
@@ -400,4 +635,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239,68,68,0.1)',
   },
   logoutText: { fontSize: 15, fontWeight: '600', color: '#ef4444' },
+
+  lightboxOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lightboxCloseButton: {
+    position: 'absolute',
+    top: 60,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  lightboxImage: {
+    width: SCREEN_WIDTH - 40,
+    height: SCREEN_WIDTH - 40,
+    borderRadius: 12,
+  },
 });
