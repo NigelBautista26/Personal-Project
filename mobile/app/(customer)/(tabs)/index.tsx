@@ -370,19 +370,11 @@ export default function CustomerMapScreen() {
                 longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
+              title={photographer.fullName || 'Photographer'}
+              description={`£${photographer.hourlyRate}/hr`}
+              pinColor={isAvailable ? '#22c55e' : '#3b82f6'}
               testID={`marker-photographer-${photographer.id}`}
-              tracksViewChanges={!markersReady}
-            >
-              <View style={styles.photographerMarker}>
-                <Image
-                  source={{ uri: getImageUrl(photographer) }}
-                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
-                />
-                <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
-                </View>
-              </View>
-            </SafeMarker>
+            />
           );
         })}
 
@@ -394,16 +386,10 @@ export default function CustomerMapScreen() {
               latitude: spot.latitude,
               longitude: spot.longitude,
             }}
+            title={spot.name}
+            pinColor="#f59e0b"
             testID={`marker-spot-${spot.id}`}
-            tracksViewChanges={!markersReady}
-          >
-            <View style={styles.spotMarker}>
-              <Image
-                source={{ uri: spot.image }}
-                style={styles.spotImage}
-              />
-            </View>
-          </SafeMarker>
+          />
         ))}
 
         {/* Photographer Live Location Marker */}
