@@ -152,6 +152,9 @@ export default function CustomerBookingsScreen() {
     },
     enabled: completedBookingIds.length > 0,
     staleTime: 0,
+    gcTime: 0,
+    refetchInterval: 10000,
+    refetchOnMount: 'always',
   });
 
   const { data: editingServicesMap = {} } = useQuery<Record<string, EditingServiceInfo | null>>({
@@ -587,13 +590,6 @@ export default function CustomerBookingsScreen() {
     const bookingIdStr = String(booking.id);
     const reviewInfo = reviewInfoMap[bookingIdStr];
     const editingRequest = editingRequestsMap[bookingIdStr];
-    
-    // Debug: Log editing request data
-    console.log(`[DEBUG] Booking ${bookingIdStr}: editingRequest =`, editingRequest);
-    if (editingRequest) {
-      console.log(`[DEBUG] editingRequest.status =`, editingRequest.status);
-      console.log(`[DEBUG] editingRequest.editedPhotos =`, editingRequest.editedPhotos);
-    }
     
     return (
       <View key={booking.id} style={styles.completedCard}>
