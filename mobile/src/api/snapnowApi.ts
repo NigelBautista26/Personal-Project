@@ -205,6 +205,11 @@ export const snapnowApi = {
     return response.data;
   },
 
+  async updateEditingRequestStatus(requestId: string, status: 'accepted' | 'declined'): Promise<EditingRequest> {
+    const response = await api.patch<EditingRequest>(`/api/editing-requests/${requestId}/status`, { status });
+    return response.data;
+  },
+
   // Photo delivery methods
   async getPhotoDelivery(bookingId: string): Promise<{ id: string; photos: string[]; message?: string } | null> {
     try {

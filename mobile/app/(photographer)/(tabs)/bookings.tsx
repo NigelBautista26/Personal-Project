@@ -60,7 +60,7 @@ export default function PhotographerBookingsScreen() {
     setIsRefreshing(true);
     await Promise.all([
       refetchBookings(),
-      queryClient.invalidateQueries({ queryKey: ['photographer-editing-requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['photographer-editing-requests', photographerProfile?.id] }),
     ]);
     setIsRefreshing(false);
   };
@@ -140,6 +140,14 @@ export default function PhotographerBookingsScreen() {
     mutationFn: (bookingId: string) => snapnowApi.dismissBooking(bookingId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
+    },
+  });
+
+  const updateEditingRequestMutation = useMutation({
+    mutationFn: ({ requestId, status }: { requestId: string; status: 'accepted' | 'declined' }) => 
+      snapnowApi.updateEditingRequestStatus(requestId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['photographer-editing-requests', photographerProfile?.id] });
     },
   });
 
@@ -381,7 +389,7 @@ export default function PhotographerBookingsScreen() {
   const renderEditingRequestCard = (
     request: EditingRequest, 
     borderColor: string = 'rgba(255,255,255,0.1)',
-    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean } = {}
+    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean } = {}
   ) => {
     const isDelivered = options.isAwaitingApproval || options.isApproved;
     const photosToShow = isDelivered && request.editedPhotoUrls?.length 
@@ -479,6 +487,27 @@ export default function PhotographerBookingsScreen() {
             <RefreshCw size={18} color="#fff" />
             <Text style={styles.uploadButtonText}>Upload Revised Photos</Text>
           </TouchableOpacity>
+        )}
+
+        {options.showAcceptDecline && (
+          <View style={styles.bookingActions}>
+            <TouchableOpacity 
+              style={styles.acceptButton}
+              onPress={() => updateEditingRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
+              disabled={updateEditingRequestMutation.isPending}
+            >
+              <Check size={16} color="#fff" />
+              <Text style={styles.acceptButtonText}>Accept</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.declineButton}
+              onPress={() => updateEditingRequestMutation.mutate({ requestId: request.id, status: 'declined' })}
+              disabled={updateEditingRequestMutation.isPending}
+            >
+              <X size={16} color="#ef4444" />
+              <Text style={styles.declineButtonText}>Decline</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </View>
     );
@@ -610,7 +639,7 @@ export default function PhotographerBookingsScreen() {
               undefined,
               '#8b5cf6'
             )}
-            {pendingEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(139, 92, 246, 0.3)'))}
+            {pendingEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(139, 92, 246, 0.3)', { showAcceptDecline: true }))}
           </View>
         )}
 
