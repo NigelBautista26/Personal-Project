@@ -1153,6 +1153,7 @@ export async function registerRoutes(
       }
       
       const delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      console.log("Photo delivery for", req.params.bookingId, ":", JSON.stringify(delivery, null, 2));
       res.json(delivery || null);
     } catch (error) {
       console.error("Error fetching photo delivery:", error);
