@@ -343,46 +343,32 @@ export default function CustomerMapScreen() {
           
           return (
             <SafeMarker
-              key={`photographer-${photographer.id}-${markersReady}`}
+              key={`photographer-${photographer.id}`}
               coordinate={{
                 latitude: coords.lat,
                 longitude: coords.lng,
               }}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              tracksViewChanges={!markersReady}
-            >
-              <View style={styles.photographerMarker}>
-                <Image
-                  source={{ uri: getImageUrl(photographer) }}
-                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
-                />
-                <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
-                </View>
-              </View>
-            </SafeMarker>
+              pinColor={isAvailable ? '#22c55e' : '#2563eb'}
+              title={photographer.displayName || 'Photographer'}
+              description={`£${photographer.hourlyRate}/hr`}
+            />
           );
         })}
 
         {/* Photo Spot Markers */}
         {photoSpots.map((spot) => (
           <SafeMarker
-            key={`spot-${spot.id}-${markersReady}`}
+            key={`spot-${spot.id}`}
             coordinate={{
               latitude: spot.latitude,
               longitude: spot.longitude,
             }}
             testID={`marker-spot-${spot.id}`}
-            tracksViewChanges={!markersReady}
-          >
-            <View style={styles.spotMarker}>
-              <Image
-                source={{ uri: spot.image }}
-                style={styles.spotImage}
-              />
-            </View>
-          </SafeMarker>
+            pinColor="#f59e0b"
+            title={spot.name}
+          />
         ))}
 
         {/* Photographer Live Location Marker */}
@@ -396,12 +382,8 @@ export default function CustomerMapScreen() {
             title="Photographer's Location"
             onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
             testID="marker-photographer-live"
-          >
-            <View style={styles.liveLocationMarker}>
-              <View style={styles.liveLocationPulse} />
-              <View style={styles.liveLocationDot} />
-            </View>
-          </SafeMarker>
+            pinColor="#10b981"
+          />
         )}
       </SafeMapView>
 
