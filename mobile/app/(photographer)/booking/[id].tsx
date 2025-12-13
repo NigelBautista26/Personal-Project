@@ -440,6 +440,12 @@ export default function PhotographerBookingDetailScreen() {
   const getImageUrl = (url: string) => {
     if (!url) return null;
     if (url.startsWith('http')) return url;
+    // Ensure path starts with /objects/ for proper URL formation
+    if (!url.startsWith('/')) {
+      url = `/objects/${url}`;
+    } else if (!url.startsWith('/objects/')) {
+      url = `/objects${url}`;
+    }
     return `${API_URL}${url}`;
   };
 
