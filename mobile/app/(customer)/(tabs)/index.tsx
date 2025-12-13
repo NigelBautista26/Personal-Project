@@ -221,9 +221,16 @@ export default function CustomerMapScreen() {
     
     const requestLocation = async () => {
       try {
+        // Delay location request to avoid crash with new architecture in Expo Go
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        if (!isMounted) return;
+        
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted' && isMounted) {
-          const location = await Location.getCurrentPositionAsync({});
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
           if (isMounted) {
             setUserLocation({
               latitude: location.coords.latitude,
