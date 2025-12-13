@@ -107,6 +107,9 @@ export async function apiClient<T>(
   } else if (method === 'DELETE') {
     const response = await api.delete<T>(url);
     return response.data;
+  } else if (method === 'PATCH') {
+    const response = await api.patch<T>(url, options?.body);
+    return response.data;
   }
   
   throw new Error(`Unsupported method: ${method}`);

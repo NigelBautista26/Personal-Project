@@ -588,6 +588,13 @@ export default function CustomerBookingsScreen() {
     const reviewInfo = reviewInfoMap[bookingIdStr];
     const editingRequest = editingRequestsMap[bookingIdStr];
     
+    // Debug: Log editing request data
+    console.log(`[DEBUG] Booking ${bookingIdStr}: editingRequest =`, editingRequest);
+    if (editingRequest) {
+      console.log(`[DEBUG] editingRequest.status =`, editingRequest.status);
+      console.log(`[DEBUG] editingRequest.editedPhotos =`, editingRequest.editedPhotos);
+    }
+    
     return (
       <View key={booking.id} style={styles.completedCard}>
         <TouchableOpacity
