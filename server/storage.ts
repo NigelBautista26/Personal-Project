@@ -115,6 +115,7 @@ export interface IStorage {
   deliverEditedPhotos(id: string, photoUrls: string[], photographerNotes?: string): Promise<EditingRequest | undefined>;
   requestRevision(id: string, revisionNotes: string): Promise<EditingRequest | undefined>;
   completeEditingRequest(id: string): Promise<EditingRequest | undefined>;
+  deleteEditingRequest(id: string): Promise<void>;
   
   // Message methods
   getMessagesByBooking(bookingId: string): Promise<MessageWithSender[]>;
@@ -695,6 +696,10 @@ export class DatabaseStorage implements IStorage {
   async getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | undefined> {
     const result = await db.select().from(editingRequests).where(eq(editingRequests.bookingId, bookingId)).limit(1);
     return result[0];
+  }
+
+  async deleteEditingRequest(id: string): Promise<void> {
+    await db.delete(editingRequests).where(eq(editingRequests.id, id));
   }
 
   async getEditingRequestsByPhotographer(photographerId: string): Promise<EditingRequestWithDetails[]> {

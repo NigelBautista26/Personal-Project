@@ -1082,7 +1082,8 @@ export default function CustomerBookingsScreen() {
             const bookingId = String(selectedBookingPhotos.booking.id);
             const service = editingServicesMap[photographerId];
             const existingRequest = editingRequestsMap[bookingId];
-            const showEditingOption = service?.isEnabled && !existingRequest;
+            // Allow requesting again if previous request was declined
+            const showEditingOption = service?.isEnabled && (!existingRequest || existingRequest.status === 'declined');
             
             if (!showEditingOption) return null;
             
@@ -1177,7 +1178,8 @@ export default function CustomerBookingsScreen() {
                       const bookingId = String(selectedBookingPhotos.booking?.id || '');
                       const service = editingServicesMap[photographerId];
                       const existingRequest = editingRequestsMap[bookingId];
-                      const showSelection = service?.isEnabled && !existingRequest && service?.pricingModel === 'per_photo';
+                      // Allow selection if no request or previous request was declined
+                      const showSelection = service?.isEnabled && (!existingRequest || existingRequest.status === 'declined') && service?.pricingModel === 'per_photo';
                       
                       return (
                         <TouchableOpacity

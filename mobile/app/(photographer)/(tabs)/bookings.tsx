@@ -39,6 +39,7 @@ export default function PhotographerBookingsScreen() {
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     completedSessions: true,
     approvedEdits: true,
+    declinedEdits: true,
     declined: true,
   });
 
@@ -74,7 +75,7 @@ export default function PhotographerBookingsScreen() {
   const bookingsArray = Array.isArray(bookings) ? bookings : [];
   const editingRequestsArray = Array.isArray(editingRequests) ? editingRequests : [];
 
-  const { pendingEditingRequests, activeEditingRequests, revisionRequests, awaitingApprovalRequests, approvedEditingRequests } = useMemo(() => ({
+  const { pendingEditingRequests, activeEditingRequests, revisionRequests, awaitingApprovalRequests, approvedEditingRequests, declinedEditingRequests } = useMemo(() => ({
     pendingEditingRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'requested'),
     activeEditingRequests: editingRequestsArray.filter((r: EditingRequest) => 
       r.status === 'accepted' || r.status === 'in_progress'
@@ -82,6 +83,7 @@ export default function PhotographerBookingsScreen() {
     revisionRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'revision_requested'),
     awaitingApprovalRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'delivered'),
     approvedEditingRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'completed'),
+    declinedEditingRequests: editingRequestsArray.filter((r: EditingRequest) => r.status === 'declined'),
   }), [editingRequestsArray]);
 
   const getSessionEndTime = (booking: any) => {
@@ -389,13 +391,13 @@ export default function PhotographerBookingsScreen() {
   const renderEditingRequestCard = (
     request: EditingRequest, 
     borderColor: string = 'rgba(255,255,255,0.1)',
-    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean } = {}
+    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean; isDeclined?: boolean } = {}
   ) => {
     const isDelivered = options.isAwaitingApproval || options.isApproved;
     const photosToShow = isDelivered && request.editedPhotoUrls?.length 
       ? request.editedPhotoUrls 
       : request.requestedPhotoUrls;
-    const photosLabel = isDelivered ? 'Your delivered edits' : 'Photos to edit';
+    const photosLabel = isDelivered ? 'Your delivered edits' : options.isDeclined ? 'Requested photos' : 'Photos to edit';
 
     return (
       <View
@@ -423,6 +425,11 @@ export default function PhotographerBookingsScreen() {
                 {options.isAwaitingApproval && (
                   <View style={styles.awaitingBadge}>
                     <Text style={styles.awaitingBadgeText}>Awaiting Approval</Text>
+                  </View>
+                )}
+                {options.isDeclined && (
+                  <View style={[styles.awaitingBadge, { backgroundColor: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.4)' }]}>
+                    <Text style={[styles.awaitingBadgeText, { color: '#ef4444' }]}>Declined</Text>
                   </View>
                 )}
               </View>
@@ -714,6 +721,22 @@ export default function PhotographerBookingsScreen() {
             )}
             {!collapsedSections.approvedEdits && (
               approvedEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(34, 197, 94, 0.3)', { isApproved: true }))
+            )}
+          </View>
+        )}
+
+        {/* Declined Editing Requests */}
+        {declinedEditingRequests.length > 0 && (
+          <View style={styles.section}>
+            {renderSectionHeader(
+              <X size={20} color="#ef4444" />,
+              'Declined Editing Requests',
+              declinedEditingRequests.length,
+              'declinedEdits',
+              '#ef4444'
+            )}
+            {!collapsedSections.declinedEdits && (
+              declinedEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(239, 68, 68, 0.3)', { isDeclined: true }))
             )}
           </View>
         )}

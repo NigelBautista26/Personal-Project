@@ -1597,7 +1597,13 @@ export async function registerRoutes(
       // Check if an editing request already exists for this booking
       const existingRequest = await storage.getEditingRequestByBooking(bookingId);
       if (existingRequest) {
-        return res.status(400).json({ error: "An editing request already exists for this booking" });
+        // Allow creating a new request if the previous one was declined
+        if (existingRequest.status === 'declined') {
+          // Delete the declined request so a new one can be created
+          await storage.deleteEditingRequest(existingRequest.id);
+        } else {
+          return res.status(400).json({ error: "An editing request already exists for this booking" });
+        }
       }
 
       // Get photographer's editing service settings
