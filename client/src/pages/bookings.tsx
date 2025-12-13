@@ -532,23 +532,6 @@ export default function Bookings() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expiredBookingIds, setLocation]);
 
-  if (userLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
-        <h1 className="text-xl font-bold text-white mb-4">Please log in to view bookings</h1>
-        <Link href="/login" className="text-primary hover:underline">Log In</Link>
-      </div>
-    );
-  }
-
   // Helper to check if a session has ended (date + time + duration)
   const hasSessionEnded = (booking: any) => {
     const sessionDate = new Date(booking.scheduledDate);
@@ -576,13 +559,13 @@ export default function Bookings() {
     return new Date() > sessionEndTime;
   };
 
-  // Memoized status-based booking lists (don't depend on time)
+  // Memoized status-based booking lists (don't depend on time) - MUST be before early returns
   const { completedBookings, expiredBookings } = useMemo(() => ({
     completedBookings: bookings.filter((b: any) => b.status === 'completed'),
     expiredBookings: bookings.filter((b: any) => b.status === 'expired' && !b.dismissedAt),
   }), [bookings]);
 
-  // Dismiss expired booking mutation
+  // Dismiss expired booking mutation - MUST be before early returns
   const dismissBookingMutation = useMutation({
     mutationFn: async (bookingId: string) => {
       const res = await fetch(`/api/bookings/${bookingId}/dismiss`, {
@@ -603,6 +586,24 @@ export default function Bookings() {
       toast.error(error.message);
     },
   });
+
+  // Early returns AFTER all hooks
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+        <h1 className="text-xl font-bold text-white mb-4">Please log in to view bookings</h1>
+        <Link href="/login" className="text-primary hover:underline">Log In</Link>
+      </div>
+    );
+  }
 
   // Time-dependent filters - not memoized to ensure they update
   // Pending bookings always show (regardless of time since they haven't been accepted yet)
