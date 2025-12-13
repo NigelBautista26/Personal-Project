@@ -14,6 +14,8 @@ import {
   Alert,
   Share,
   RefreshControl,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -97,6 +99,9 @@ export default function CustomerBookingsScreen() {
   
   // Show editing form inside photo gallery modal (no separate modal needed)
   const [showEditingFormInGallery, setShowEditingFormInGallery] = useState(false);
+  
+  // Custom success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
@@ -213,10 +218,7 @@ export default function CustomerBookingsScreen() {
       setShowEditingFormInGallery(false);
       setSelectedBookingPhotos(null);
       setEditingNotes('');
-      Alert.alert(
-        'Request Sent!', 
-        'Your editing request has been sent to the photographer. They will respond soon.'
-      );
+      setShowSuccessModal(true);
     },
     onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to send editing request');
@@ -958,6 +960,10 @@ export default function CustomerBookingsScreen() {
               const total = baseAmount + serviceFee;
               
               return (
+                <KeyboardAvoidingView 
+                  behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                  style={{ flex: 1 }}
+                >
                 <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
                   <View style={styles.editingPricingCard}>
                     <Text style={styles.editingPricingTitle}>Pricing</Text>
@@ -1048,6 +1054,7 @@ export default function CustomerBookingsScreen() {
                     </TouchableOpacity>
                   </View>
                 </ScrollView>
+                </KeyboardAvoidingView>
               );
             })()
           ) : (
@@ -1787,6 +1794,32 @@ export default function CustomerBookingsScreen() {
             </>
           )}
         </SafeAreaView>
+      </Modal>
+      
+      {/* Success Modal for Editing Request */}
+      <Modal
+        visible={showSuccessModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={styles.successIconCircle}>
+              <Check size={32} color="#22c55e" />
+            </View>
+            <Text style={styles.successModalTitle}>Request Sent!</Text>
+            <Text style={styles.successModalMessage}>
+              Your editing request has been sent to the photographer. They will respond soon.
+            </Text>
+            <TouchableOpacity 
+              style={styles.successModalButton} 
+              onPress={() => setShowSuccessModal(false)}
+            >
+              <Text style={styles.successModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -2782,5 +2815,57 @@ const styles = StyleSheet.create({
   activeSessionDetailText: {
     fontSize: 13,
     color: '#9ca3af',
+  },
+  
+  // Success Modal styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  successModalContent: {
+    backgroundColor: '#18181b',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(34, 197, 94, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+  },
+  successModalMessage: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  successModalButton: {
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+  successModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
