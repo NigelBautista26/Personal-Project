@@ -1,6 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, Image, Text, StyleSheet, Platform } from 'react-native';
 import { Marker } from 'react-native-maps';
+import { Camera } from 'lucide-react-native';
 
 interface PhotographerMarkerProps {
   id: number;
@@ -25,43 +26,60 @@ export function PhotographerMarker({
   testID,
 }: PhotographerMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [renderKey, setRenderKey] = useState(0);
   const markerRef = useRef<any>(null);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-    if (markerRef.current) {
-      markerRef.current.setNativeProps?.({ tracksViewChanges: false });
-    }
+    // Force marker to redraw with the loaded image
+    setRenderKey(k => k + 1);
+    // Then stop tracking after a brief delay
+    setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.redraw?.();
+      }
+    }, 100);
   }, []);
 
   const handleImageError = useCallback(() => {
     setImageLoaded(true);
-    if (markerRef.current) {
-      markerRef.current.setNativeProps?.({ tracksViewChanges: false });
-    }
+    setRenderKey(k => k + 1);
+  }, []);
+
+  // Force initial render
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.redraw?.();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <Marker
       ref={markerRef}
+      key={`marker-${id}-${renderKey}`}
       coordinate={coordinate}
       onPress={onPress}
       testID={testID}
       tracksViewChanges={!imageLoaded}
+      anchor={{ x: 0.5, y: 1 }}
     >
-      <View 
-        style={styles.container}
-        renderToHardwareTextureAndroid={true}
-      >
-        <Image
-          source={{ uri: imageUrl }}
-          style={[
-            styles.image,
-            isAvailable && styles.availableBorder,
-          ]}
-          onLoad={handleImageLoad}
-          onError={handleImageError}
-        />
+      <View style={styles.container}>
+        <View style={[styles.imageWrapper, isAvailable && styles.availableBorder]}>
+          {!imageLoaded && (
+            <View style={styles.placeholder}>
+              <Camera size={20} color="#fff" />
+            </View>
+          )}
+          <Image
+            source={{ uri: imageUrl }}
+            style={[styles.image, !imageLoaded && styles.hiddenImage]}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
+        </View>
         <View style={styles.priceTag}>
           <Text style={styles.priceText}>£{hourlyRate}</Text>
         </View>
@@ -89,34 +107,44 @@ export function PhotoSpotMarker({
   testID,
 }: PhotoSpotMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [renderKey, setRenderKey] = useState(0);
   const markerRef = useRef<any>(null);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
-    if (markerRef.current) {
-      markerRef.current.setNativeProps?.({ tracksViewChanges: false });
-    }
+    setRenderKey(k => k + 1);
+    setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.redraw?.();
+      }
+    }, 100);
   }, []);
 
   const handleImageError = useCallback(() => {
     setImageLoaded(true);
-    if (markerRef.current) {
-      markerRef.current.setNativeProps?.({ tracksViewChanges: false });
-    }
+    setRenderKey(k => k + 1);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (markerRef.current) {
+        markerRef.current.redraw?.();
+      }
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
     <Marker
       ref={markerRef}
+      key={`spot-${id}-${renderKey}`}
       coordinate={coordinate}
       title={name}
       testID={testID}
       tracksViewChanges={!imageLoaded}
+      anchor={{ x: 0.5, y: 0.5 }}
     >
-      <View 
-        style={styles.spotContainer}
-        renderToHardwareTextureAndroid={true}
-      >
+      <View style={styles.spotContainer}>
         <Image
           source={{ uri: imageUrl }}
           style={styles.spotImage}
@@ -149,6 +177,7 @@ export function LiveLocationMarker({
       onPress={onPress}
       testID={testID}
       tracksViewChanges={false}
+      anchor={{ x: 0.5, y: 0.5 }}
     >
       <View style={styles.liveContainer}>
         <View style={styles.livePulse} />
@@ -164,16 +193,34 @@ const styles = StyleSheet.create({
     width: 56,
     height: 70,
   },
-  image: {
+  imageWrapper: {
     width: 48,
     height: 48,
     borderRadius: 24,
     borderWidth: 3,
     borderColor: '#2563eb',
     backgroundColor: '#1e293b',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   availableBorder: {
     borderColor: '#22c55e',
+  },
+  placeholder: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  hiddenImage: {
+    opacity: 0,
   },
   priceTag: {
     backgroundColor: '#0f172a',
@@ -196,11 +243,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#f59e0b',
+    backgroundColor: '#1e293b',
   },
   spotImage: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#1e293b',
   },
   liveContainer: {
     width: 24,
