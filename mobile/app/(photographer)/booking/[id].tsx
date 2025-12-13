@@ -13,7 +13,6 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -230,45 +229,43 @@ export default function PhotographerBookingDetailScreen() {
     });
   };
 
-  const handleDeleteSelectedPhotos = async () => {
+  const handleDeleteSelectedPhotos = () => {
     if (selectedPhotos.size === 0) return;
     
     const count = selectedPhotos.size;
-    Alert.alert(
-      'Delete Photos',
-      `Delete ${count} photo${count > 1 ? 's' : ''}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            try {
-              // Delete all selected photos in parallel
-              const deletePromises = Array.from(selectedPhotos).map(photoUrl =>
-                snapnowApi.deletePhotoFromDelivery(id!, photoUrl)
-              );
-              const results = await Promise.all(deletePromises);
-              
-              // Get the final photos list from last result
-              const finalResult = results[results.length - 1];
-              setUploadingPhotos(finalResult?.photos || []);
-              setSelectedPhotos(new Set());
-              queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
-              setSuccessMessage({ title: 'Photos Deleted', message: `${count} photo${count > 1 ? 's' : ''} removed.` });
-              setShowSuccessModal(true);
-            } catch (error) {
-              console.error('[DELETE] API error:', error);
-              setErrorMessage({ title: 'Error', message: 'Failed to delete photos. Please try again.' });
-              setShowErrorModal(true);
-            } finally {
-              setIsDeleting(false);
-            }
-          },
-        },
-      ]
-    );
+    setConfirmModalConfig({
+      title: 'Delete Photos',
+      message: `Delete ${count} photo${count > 1 ? 's' : ''}?`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+        setIsDeleting(true);
+        try {
+          // Delete all selected photos in parallel
+          const deletePromises = Array.from(selectedPhotos).map(photoUrl =>
+            snapnowApi.deletePhotoFromDelivery(id!, photoUrl)
+          );
+          const results = await Promise.all(deletePromises);
+          
+          // Get the final photos list from last result
+          const finalResult = results[results.length - 1];
+          setUploadingPhotos(finalResult?.photos || []);
+          setSelectedPhotos(new Set());
+          queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
+          setSuccessMessage({ title: 'Photos Deleted', message: `${count} photo${count > 1 ? 's' : ''} removed.` });
+          setShowSuccessModal(true);
+        } catch (error) {
+          console.error('[DELETE] API error:', error);
+          setErrorMessage({ title: 'Error', message: 'Failed to delete photos. Please try again.' });
+          setShowErrorModal(true);
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+    });
+    setShowConfirmModal(true);
   };
 
   const clearPhotoSelection = () => {
