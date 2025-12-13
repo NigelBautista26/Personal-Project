@@ -26,9 +26,8 @@ import { API_URL } from '../../../src/api/client';
 import { useAuth } from '../../../src/context/AuthContext';
 import { useCity, City, POPULAR_CITIES } from '../../../src/context/CityContext';
 
-// Detect if running in Expo Go on iOS SIMULATOR only (causes crashes with custom marker children)
-// Physical iPhones with Expo Go work fine with custom markers
-const isExpoGoIOSSimulator = Platform.OS === 'ios' && Constants.executionEnvironment === 'storeClient' && !Constants.isDevice;
+// Custom markers enabled everywhere - may crash on iOS simulator with Expo Go SDK 54
+const isExpoGoIOSSimulator = false;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
