@@ -1595,16 +1595,10 @@ export async function registerRoutes(
         return res.status(403).json({ error: "Booking not found or access denied" });
       }
 
-      // Check if an editing request already exists for this booking
-      const existingRequest = await storage.getEditingRequestByBooking(bookingId);
+      // Check if an active (non-terminal) editing request already exists for this booking
+      const existingRequest = await storage.getActiveEditingRequestByBooking(bookingId);
       if (existingRequest) {
-        // Allow creating a new request if the previous one was declined
-        if (existingRequest.status === 'declined') {
-          // Delete the declined request so a new one can be created
-          await storage.deleteEditingRequest(existingRequest.id);
-        } else {
-          return res.status(400).json({ error: "An editing request already exists for this booking" });
-        }
+        return res.status(400).json({ error: "An editing request already exists for this booking" });
       }
 
       // Get photographer's editing service settings
@@ -1685,14 +1679,15 @@ export async function registerRoutes(
     }
   });
 
-  // Get editing request by booking ID
+  // Get active (non-terminal) editing request by booking ID
   app.get("/api/editing-requests/booking/:bookingId", async (req, res) => {
     try {
       if (!req.session.userId) {
         return res.status(401).json({ error: "Not authenticated" });
       }
 
-      const editingRequest = await storage.getEditingRequestByBooking(req.params.bookingId);
+      // Returns the most recent active request (excludes completed/declined)
+      const editingRequest = await storage.getActiveEditingRequestByBooking(req.params.bookingId);
       res.json(editingRequest || null);
     } catch (error) {
       console.error("Error fetching editing request:", error);

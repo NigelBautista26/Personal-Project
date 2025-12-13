@@ -1030,6 +1030,19 @@ export default function Bookings() {
                             </Button>
                           )}
                         </div>
+                        {/* Show "Request New Editing" button for completed/declined requests if service is enabled */}
+                        {(editingRequest.status === 'completed' || editingRequest.status === 'declined') && editingService?.isEnabled && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 w-full border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
+                            onClick={() => handleViewPhotos(booking.id, booking)}
+                            data-testid={`button-request-new-editing-${booking.id}`}
+                          >
+                            <Palette className="w-3 h-3 mr-1" />
+                            Request New Editing
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1131,11 +1144,12 @@ export default function Bookings() {
             {selectedBookingPhotos?.message && (
               <p className="text-sm text-muted-foreground line-clamp-2">{selectedBookingPhotos.message}</p>
             )}
-            {/* Request Editing Button - only show if photographer offers editing and no request exists */}
+            {/* Request Editing Button - only show if photographer offers editing and no active request exists */}
             {selectedBookingPhotos?.booking && (() => {
               const service = editingServicesMap[selectedBookingPhotos.booking.photographerId];
               const existingRequest = editingRequestsMap[selectedBookingPhotos.booking.id];
-              if (service?.isEnabled && !existingRequest) {
+              const canRequestNewEditing = !existingRequest || existingRequest.status === 'completed' || existingRequest.status === 'declined';
+              if (service?.isEnabled && canRequestNewEditing) {
                 const selectedCount = selectedPhotosForEditing.size;
                 const perPhotoRate = parseFloat(service.perPhotoRate || "0");
                 const estimatedCost = service.pricingModel === "flat" 
@@ -1230,7 +1244,9 @@ export default function Bookings() {
                 {selectedBookingPhotos.photos.map((photo, idx) => {
                   const isSelected = selectedPhotosForEditing.has(idx);
                   const service = selectedBookingPhotos.booking ? editingServicesMap[selectedBookingPhotos.booking.photographerId] : null;
-                  const showSelectionUI = service?.isEnabled && service?.pricingModel === "per_photo" && !editingRequestsMap[selectedBookingPhotos.booking?.id];
+                  const existingEditingRequest = selectedBookingPhotos.booking?.id ? editingRequestsMap[selectedBookingPhotos.booking.id] : null;
+                  const canRequestNewEditing = !existingEditingRequest || existingEditingRequest.status === 'completed' || existingEditingRequest.status === 'declined';
+                  const showSelectionUI = service?.isEnabled && service?.pricingModel === "per_photo" && canRequestNewEditing;
                   
                   return (
                     <button
