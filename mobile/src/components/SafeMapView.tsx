@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { MapPin } from 'lucide-react-native';
 import MapView, { Marker, PROVIDER_GOOGLE as RNMapsProvider } from 'react-native-maps';
@@ -18,13 +18,17 @@ interface SafeMapViewProps {
   [key: string]: any;
 }
 
-export function SafeMapView({ children, style, region, ...props }: SafeMapViewProps) {
-  return (
-    <MapView style={style} region={region} {...props}>
-      {children}
-    </MapView>
-  );
-}
+export const SafeMapView = forwardRef<MapView, SafeMapViewProps>(
+  ({ children, style, region, ...props }, ref) => {
+    return (
+      <MapView ref={ref} style={style} region={region} {...props}>
+        {children}
+      </MapView>
+    );
+  }
+);
+
+SafeMapView.displayName = 'SafeMapView';
 
 export function SafeMarker(props: any) {
   return <Marker {...props} />;
