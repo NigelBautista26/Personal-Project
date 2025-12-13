@@ -394,8 +394,9 @@ export default function PhotographerBookingsScreen() {
     options: { showEditingUpload?: boolean; showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean; isDeclined?: boolean } = {}
   ) => {
     const isDelivered = options.isAwaitingApproval || options.isApproved;
-    const photosToShow = isDelivered && request.editedPhotoUrls?.length 
-      ? request.editedPhotoUrls 
+    const editedPhotosArray = request.editedPhotos ?? request.editedPhotoUrls ?? [];
+    const photosToShow = isDelivered && editedPhotosArray.length > 0
+      ? editedPhotosArray 
       : request.requestedPhotoUrls;
     const photosLabel = isDelivered ? 'Your delivered edits' : options.isDeclined ? 'Requested photos' : 'Photos to edit';
 
