@@ -38,6 +38,8 @@ export default function PhotographerBookingDetailScreen() {
   const [uploadingPhotos, setUploadingPhotos] = useState<string[]>([]);
   const [uploadMessage, setUploadMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Success modal state (themed replacement for Alert)
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -213,31 +215,61 @@ export default function PhotographerBookingDetailScreen() {
     }
   };
 
-  const handleDeletePhoto = async (photoUrl: string) => {
+  const togglePhotoSelection = (photoUrl: string) => {
+    setSelectedPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoUrl)) {
+        newSet.delete(photoUrl);
+      } else {
+        newSet.add(photoUrl);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDeleteSelectedPhotos = async () => {
+    if (selectedPhotos.size === 0) return;
+    
+    const count = selectedPhotos.size;
     Alert.alert(
-      'Delete Photo',
-      'Are you sure you want to remove this photo?',
+      'Delete Photos',
+      `Delete ${count} photo${count > 1 ? 's' : ''}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
+            setIsDeleting(true);
             try {
-              const result = await snapnowApi.deletePhotoFromDelivery(id!, photoUrl);
-              setUploadingPhotos(result.photos || []);
+              // Delete all selected photos in parallel
+              const deletePromises = Array.from(selectedPhotos).map(photoUrl =>
+                snapnowApi.deletePhotoFromDelivery(id!, photoUrl)
+              );
+              const results = await Promise.all(deletePromises);
+              
+              // Get the final photos list from last result
+              const finalResult = results[results.length - 1];
+              setUploadingPhotos(finalResult?.photos || []);
+              setSelectedPhotos(new Set());
               queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
-              setSuccessMessage({ title: 'Photo Removed', message: 'The photo has been deleted.' });
+              setSuccessMessage({ title: 'Photos Deleted', message: `${count} photo${count > 1 ? 's' : ''} removed.` });
               setShowSuccessModal(true);
             } catch (error) {
               console.error('[DELETE] API error:', error);
-              setErrorMessage({ title: 'Error', message: 'Failed to delete photo. Please try again.' });
+              setErrorMessage({ title: 'Error', message: 'Failed to delete photos. Please try again.' });
               setShowErrorModal(true);
+            } finally {
+              setIsDeleting(false);
             }
           },
         },
       ]
     );
+  };
+
+  const clearPhotoSelection = () => {
+    setSelectedPhotos(new Set());
   };
 
   const handleSaveDelivery = async () => {
@@ -587,7 +619,10 @@ export default function PhotographerBookingDetailScreen() {
         visible={showUploadModal}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setShowUploadModal(false)}
+        onRequestClose={() => {
+          clearPhotoSelection();
+          setShowUploadModal(false);
+        }}
       >
         <SafeAreaView style={styles.modalContainer}>
           <KeyboardAvoidingView 
@@ -596,7 +631,10 @@ export default function PhotographerBookingDetailScreen() {
             keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
           >
             <View style={styles.modalHeader}>
-              <TouchableOpacity onPress={() => setShowUploadModal(false)}>
+              <TouchableOpacity onPress={() => {
+                clearPhotoSelection();
+                setShowUploadModal(false);
+              }}>
                 <X size={24} color="#fff" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Deliver Photos</Text>
@@ -608,25 +646,40 @@ export default function PhotographerBookingDetailScreen() {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.photoCountLabel}>Photos ({uploadingPhotos.length})</Text>
+              <Text style={styles.photoCountLabel}>
+                {selectedPhotos.size > 0 
+                  ? `${selectedPhotos.size} selected` 
+                  : `Photos (${uploadingPhotos.length})`}
+              </Text>
+              {selectedPhotos.size === 0 && uploadingPhotos.length > 0 && (
+                <Text style={styles.photoHintLabel}>Tap photos to select for deletion</Text>
+              )}
               
               <View style={styles.photoGrid}>
-                {uploadingPhotos.map((photo, idx) => (
-                  <View key={idx} style={styles.photoItem}>
-                    <Image 
-                      source={{ uri: getImageUrl(photo) || photo }} 
-                      style={styles.photoImage} 
-                    />
-                    <TouchableOpacity
-                      style={styles.deletePhotoButton}
-                      onPress={() => handleDeletePhoto(photo)}
-                      activeOpacity={0.7}
-                      testID={`button-delete-photo-${idx}`}
+                {uploadingPhotos.map((photo, idx) => {
+                  const isSelected = selectedPhotos.has(photo);
+                  return (
+                    <TouchableOpacity 
+                      key={idx} 
+                      style={[styles.photoItem, isSelected && styles.photoItemSelected]}
+                      onPress={() => togglePhotoSelection(photo)}
+                      activeOpacity={0.8}
+                      testID={`photo-item-${idx}`}
                     >
-                      <X size={18} color="#fff" />
+                      <Image 
+                        source={{ uri: getImageUrl(photo) || photo }} 
+                        style={[styles.photoImage, isSelected && styles.photoImageSelected]} 
+                      />
+                      {isSelected && (
+                        <View style={styles.photoSelectOverlay}>
+                          <View style={styles.photoCheckBadge}>
+                            <Check size={16} color="#fff" />
+                          </View>
+                        </View>
+                      )}
                     </TouchableOpacity>
-                  </View>
-                ))}
+                  );
+                })}
                 
                 <TouchableOpacity 
                   style={styles.addPhotoButton}
@@ -654,20 +707,43 @@ export default function PhotographerBookingDetailScreen() {
                 multiline
                 numberOfLines={3}
               />
-              <View style={{ height: 100 }} />
+              <View style={{ height: 120 }} />
             </ScrollView>
 
-            <View style={styles.modalFooter}>
-              <TouchableOpacity
-                style={[styles.deliverButton, uploadingPhotos.length === 0 && styles.deliverButtonDisabled]}
-                onPress={handleSaveDelivery}
-                disabled={uploadingPhotos.length === 0}
-              >
-                <Text style={styles.deliverButtonText}>
-                  📷 Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {/* Selection Footer - shows when photos selected */}
+            {selectedPhotos.size > 0 ? (
+              <View style={styles.selectionFooter}>
+                <View style={styles.selectionInfo}>
+                  <Text style={styles.selectionCountText}>{selectedPhotos.size} selected</Text>
+                  <TouchableOpacity onPress={clearPhotoSelection}>
+                    <Text style={styles.clearSelectionText}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={styles.deleteSelectedButton}
+                  onPress={handleDeleteSelectedPhotos}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.deleteSelectedButtonText}>Delete</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={[styles.deliverButton, uploadingPhotos.length === 0 && styles.deliverButtonDisabled]}
+                  onPress={handleSaveDelivery}
+                  disabled={uploadingPhotos.length === 0}
+                >
+                  <Text style={styles.deliverButtonText}>
+                    📷 Deliver {uploadingPhotos.length} Photo{uploadingPhotos.length !== 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
@@ -952,7 +1028,8 @@ const styles = StyleSheet.create({
   },
   modalTitle: { fontSize: 18, fontWeight: '600', color: '#fff' },
   modalContent: { flex: 1, padding: 20 },
-  photoCountLabel: { fontSize: 14, color: '#9ca3af', marginBottom: 12 },
+  photoCountLabel: { fontSize: 14, color: '#9ca3af', marginBottom: 4 },
+  photoHintLabel: { fontSize: 12, color: '#6b7280', marginBottom: 12 },
   photoGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -965,20 +1042,56 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  photoItemSelected: {
+    borderColor: PRIMARY_COLOR,
   },
   photoImage: { width: '100%', height: '100%' },
-  deletePhotoButton: {
+  photoImageSelected: { opacity: 0.7 },
+  photoSelectOverlay: {
     position: 'absolute',
     top: 0,
+    left: 0,
     right: 0,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(239, 68, 68, 0.95)',
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.3)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
   },
+  photoCheckBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: PRIMARY_COLOR,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectionFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingBottom: 32,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#0a0a0a',
+  },
+  selectionInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  selectionCountText: { fontSize: 16, color: '#fff', fontWeight: '600' },
+  clearSelectionText: { fontSize: 14, color: PRIMARY_COLOR },
+  deleteSelectedButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    backgroundColor: '#ef4444',
+  },
+  deleteSelectedButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   addPhotoButton: {
     width: '31%',
     aspectRatio: 1,
