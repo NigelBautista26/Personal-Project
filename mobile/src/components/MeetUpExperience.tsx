@@ -117,13 +117,13 @@ export function MeetUpExperience({
   });
 
   const startSharing = useCallback(async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setPermissionDenied(true);
-        return;
-      }
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setPermissionDenied(true);
+      return;
+    }
 
+    try {
       const subscription = await Location.watchPositionAsync(
         { accuracy: Location.Accuracy.High, timeInterval: 5000, distanceInterval: 5 },
         (location) => {
@@ -171,19 +171,14 @@ export function MeetUpExperience({
   }, []);
 
   const handleUseCurrentLocation = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required.');
-        return;
-      }
-      const location = await Location.getCurrentPositionAsync({});
-      setEditLat(location.coords.latitude);
-      setEditLng(location.coords.longitude);
-    } catch (error) {
-      console.log('Location error:', error);
-      Alert.alert('Error', 'Could not get your location. Please try again.');
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Location permission is required.');
+      return;
     }
+    const location = await Location.getCurrentPositionAsync({});
+    setEditLat(location.coords.latitude);
+    setEditLng(location.coords.longitude);
   };
 
   const handleSaveMeetingPoint = async () => {

@@ -216,8 +216,18 @@ export default function CustomerMapScreen() {
     }
   }, [photographerLocation, activeSession]);
 
-  // Location is now only requested when user taps the locate button
-  // This avoids crash with new architecture in Expo Go on iOS simulator
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === 'granted') {
+        const location = await Location.getCurrentPositionAsync({});
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (mapRef.current && selectedCity) {
@@ -281,46 +291,15 @@ export default function CustomerMapScreen() {
     setSearchQuery('');
   };
 
-  const centerOnUser = async () => {
-    // If we already have location, just center on it
+  const centerOnUser = () => {
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion({
         ...userLocation,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       }, 500);
-      return;
-    }
-    
-    // Otherwise, request location when user taps the button
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Please enable location services to use this feature.');
-        return;
-      }
-      
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      
-      const newLocation = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      };
-      
-      setUserLocation(newLocation);
-      
-      if (mapRef.current) {
-        mapRef.current.animateToRegion({
-          ...newLocation,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }, 500);
-      }
-    } catch (error) {
-      console.log('Location error:', error);
-      Alert.alert('Error', 'Could not get your location. Please try again.');
+    } else {
+      Alert.alert('Location', 'Unable to get your location. Please enable location services.');
     }
   };
 
@@ -348,7 +327,7 @@ export default function CustomerMapScreen() {
         initialRegion={region}
         mapType={Platform.OS === 'ios' ? (mapType === 'satellite' ? 'satellite' : 'mutedStandard') : mapType}
         customMapStyle={Platform.OS === 'android' && mapType === 'standard' ? darkMapStyle : undefined}
-        showsUserLocation={false}
+        showsUserLocation={true}
         showsMyLocationButton={false}
         userInterfaceStyle="dark"
         testID="map-view"
@@ -416,23 +395,13 @@ export default function CustomerMapScreen() {
             }}
             title="Photographer's Location"
             onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
-            pinColor="#22c55e"
             testID="marker-photographer-live"
-          />
-        )}
-
-        {/* User Location Marker */}
-        {userLocation && (
-          <SafeMarker
-            key="user-location"
-            coordinate={{
-              latitude: userLocation.latitude,
-              longitude: userLocation.longitude,
-            }}
-            title="Your Location"
-            pinColor="#2563eb"
-            testID="marker-user-location"
-          />
+          >
+            <View style={styles.liveLocationMarker}>
+              <View style={styles.liveLocationPulse} />
+              <View style={styles.liveLocationDot} />
+            </View>
+          </SafeMarker>
         )}
       </SafeMapView>
 
@@ -779,32 +748,6 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: '#22c55e',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  userLocationMarker: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userLocationPulse: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(37, 99, 235, 0.3)',
-  },
-  userLocationDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#2563eb',
     borderWidth: 3,
     borderColor: '#fff',
     shadowColor: '#000',
