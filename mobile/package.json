@@ -28,7 +28,7 @@
     "react-native-safe-area-context": "~5.4.0",
     "react-native-screens": "~4.10.0",
     "react-native-svg": "15.8.0",
-    "react-native-webview": "14.2.1",
+    "react-native-webview": "13.12.5",
     "lucide-react-native": "^0.378.0",
     "prop-types": "^15.8.1"
   },
