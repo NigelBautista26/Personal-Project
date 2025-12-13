@@ -1065,8 +1065,11 @@ export default function CustomerBookingsScreen() {
                     <TouchableOpacity 
                       style={styles.editingSubmitButton}
                       onPress={async () => {
+                        console.log('=== PAY BUTTON PRESSED ===');
+                        Alert.alert('Debug', 'Button pressed! Starting payment...');
                         setIsCreatingEditingPayment(true);
                         try {
+                          console.log('Calling createMobileEditingPaymentSession...');
                           const response = await snapnowApi.createMobileEditingPaymentSession({
                             bookingId: String(selectedBookingPhotos.booking.id),
                             photographerId,
