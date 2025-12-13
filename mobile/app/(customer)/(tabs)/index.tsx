@@ -17,8 +17,9 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
-import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from '../../../src/components/SafeMapView';
+import { SafeMapView, PROVIDER_GOOGLE } from '../../../src/components/SafeMapView';
 import MapView, { Region, MapType } from 'react-native-maps';
+import { PhotographerMarker, PhotoSpotMarker, LiveLocationMarker } from '../../../src/components/PhotographerMarker';
 import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -155,7 +156,6 @@ export default function CustomerMapScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [markersReady, setMarkersReady] = useState(false);
   const [photographerLiveLocation, setPhotographerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string } | null>(null);
 
   const { data: photographers, isLoading } = useQuery({
@@ -239,16 +239,6 @@ export default function CustomerMapScreen() {
       }, 500);
     }
   }, [selectedCity]);
-
-  // Force markers to render after data loads
-  useEffect(() => {
-    if (photographers && photographers.length > 0 && !markersReady) {
-      const timer = setTimeout(() => {
-        setMarkersReady(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [photographers, markersReady]);
 
   const getImageUrl = (photographer: PhotographerProfile) => {
     const path = photographer.profileImageUrl || photographer.profilePicture;
@@ -342,47 +332,47 @@ export default function CustomerMapScreen() {
           const isAvailable = photographer.sessionState === 'available';
           
           return (
-            <SafeMarker
+            <PhotographerMarker
               key={`photographer-${photographer.id}`}
+              id={photographer.id}
               coordinate={{
                 latitude: coords.lat,
                 longitude: coords.lng,
               }}
+              imageUrl={getImageUrl(photographer)}
+              hourlyRate={photographer.hourlyRate}
+              isAvailable={isAvailable}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              pinColor={isAvailable ? '#22c55e' : '#2563eb'}
-              title={photographer.displayName || 'Photographer'}
-              description={`£${photographer.hourlyRate}/hr`}
             />
           );
         })}
 
         {/* Photo Spot Markers */}
         {photoSpots.map((spot) => (
-          <SafeMarker
+          <PhotoSpotMarker
             key={`spot-${spot.id}`}
+            id={spot.id}
             coordinate={{
               latitude: spot.latitude,
               longitude: spot.longitude,
             }}
+            name={spot.name}
+            imageUrl={spot.image}
             testID={`marker-spot-${spot.id}`}
-            pinColor="#f59e0b"
-            title={spot.name}
           />
         ))}
 
         {/* Photographer Live Location Marker */}
         {photographerLiveLocation && (
-          <SafeMarker
+          <LiveLocationMarker
             key="photographer-live"
             coordinate={{
               latitude: photographerLiveLocation.lat,
               longitude: photographerLiveLocation.lng,
             }}
-            title="Photographer's Location"
             onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
             testID="marker-photographer-live"
-            pinColor="#10b981"
           />
         )}
       </SafeMapView>
