@@ -23,6 +23,7 @@ export default function CustomerLayout() {
         gestureEnabled: true,
         gestureDirection: 'horizontal',
         animation: 'slide_from_right',
+        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

@@ -47,6 +47,7 @@ export default function PhotographerLayout() {
         gestureEnabled: true,
         gestureDirection: 'horizontal',
         animation: 'slide_from_right',
+        fullScreenGestureEnabled: true,
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
