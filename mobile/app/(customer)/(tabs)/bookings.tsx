@@ -246,7 +246,7 @@ export default function CustomerBookingsScreen() {
       setShowSuccessModal(true);
     },
     onError: (error: Error) => {
-      showThemedAlert('Error', error.message || 'Failed to send editing request', 'error');
+      Alert.alert('Error', error.message || 'Failed to send editing request');
     },
   });
 
