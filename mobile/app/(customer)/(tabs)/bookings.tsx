@@ -91,6 +91,9 @@ export default function CustomerBookingsScreen() {
     service: EditingServiceInfo;
   } | null>(null);
   const [editingNotes, setEditingNotes] = useState('');
+  
+  // Photo selection for editing
+  const [selectedPhotosForEditing, setSelectedPhotosForEditing] = useState<Set<string>>(new Set());
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
@@ -371,6 +374,7 @@ export default function CustomerBookingsScreen() {
       if (data && data.photos && data.photos.length > 0) {
         setSelectedBookingPhotos({ ...data, booking });
         setViewingPhotoIndex(0);
+        setSelectedPhotosForEditing(new Set()); // Reset selection when opening
       } else {
         Alert.alert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.');
       }
@@ -378,6 +382,18 @@ export default function CustomerBookingsScreen() {
       console.error('Failed to load photos:', e);
       Alert.alert('Error', 'Failed to load photos. Please try again.');
     }
+  };
+  
+  const togglePhotoSelection = (photo: string) => {
+    setSelectedPhotosForEditing(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photo)) {
+        newSet.delete(photo);
+      } else {
+        newSet.add(photo);
+      }
+      return newSet;
+    });
   };
 
   const renderStars = (rating: number, size: number = 12) => {
@@ -886,61 +902,99 @@ export default function CustomerBookingsScreen() {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.downloadAllContainer}>
-            <TouchableOpacity 
-              style={styles.downloadAllButton}
-              onPress={() => handleDownloadPhotos(selectedBookingPhotos?.photos || [])}
-            >
-              <Download size={16} color="#fff" />
-              <Text style={styles.downloadAllText}>Download All</Text>
-            </TouchableOpacity>
+          {/* Request Editing section - show if photographer offers editing and no existing request */}
+          {selectedBookingPhotos?.booking && (() => {
+            const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
+            const bookingId = String(selectedBookingPhotos.booking.id);
+            const service = editingServicesMap[photographerId];
+            const existingRequest = editingRequestsMap[bookingId];
+            const showEditingOption = service?.isEnabled && !existingRequest;
+            const selectedCount = selectedPhotosForEditing.size;
+            const perPhotoRate = parseFloat(service?.perPhotoRate || '0');
+            const flatRate = parseFloat(service?.flatRate || '0');
+            const estimatedCost = service?.pricingModel === 'flat' 
+              ? flatRate
+              : perPhotoRate * (selectedCount || 1);
             
-            {/* Request Editing button - show if photographer offers editing and no existing request */}
-            {selectedBookingPhotos?.booking && (() => {
-              const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
-              const bookingId = String(selectedBookingPhotos.booking.id);
-              const service = editingServicesMap[photographerId];
-              const existingRequest = editingRequestsMap[bookingId];
-              if (service?.isEnabled && !existingRequest) {
-                const estimatedCost = service.pricingModel === 'flat' 
-                  ? parseFloat(service.flatRate || '0')
-                  : parseFloat(service.perPhotoRate || '0');
-                return (
-                  <TouchableOpacity 
-                    style={styles.requestEditingButton}
-                    onPress={() => {
-                      console.log('[DEBUG] Request Editing button pressed');
-                      // Save the data we need before closing the photo modal
-                      const editingData = {
-                        bookingId: String(selectedBookingPhotos.booking.id),
-                        photographerId: String((selectedBookingPhotos.booking as any).photographerId),
-                        photos: selectedBookingPhotos.photos,
-                        service,
-                      };
-                      setEditingNotes('');
-                      // Close the photo gallery modal first, then open editing modal
-                      setSelectedBookingPhotos(null);
-                      // Use setTimeout to ensure the first modal closes before opening the second
-                      setTimeout(() => {
-                        setEditingModalBooking(editingData);
-                      }, 100);
-                    }}
-                    disabled={createEditingRequestMutation.isPending}
-                  >
-                    {createEditingRequestMutation.isPending ? (
-                      <ActivityIndicator size="small" color="#fff" />
-                    ) : (
-                      <>
-                        <Palette size={16} color="#fff" />
-                        <Text style={styles.requestEditingText}>Request Editing</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                );
-              }
-              return null;
-            })()}
-          </View>
+            return (
+              <View style={styles.downloadAllContainer}>
+                <TouchableOpacity 
+                  style={styles.downloadAllButton}
+                  onPress={() => handleDownloadPhotos(selectedBookingPhotos?.photos || [])}
+                >
+                  <Download size={16} color="#fff" />
+                  <Text style={styles.downloadAllText}>Download All</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
+          
+          {/* Selection hint and Request Editing button */}
+          {selectedBookingPhotos?.booking && (() => {
+            const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
+            const bookingId = String(selectedBookingPhotos.booking.id);
+            const service = editingServicesMap[photographerId];
+            const existingRequest = editingRequestsMap[bookingId];
+            const showEditingOption = service?.isEnabled && !existingRequest;
+            
+            if (!showEditingOption) return null;
+            
+            const selectedCount = selectedPhotosForEditing.size;
+            const perPhotoRate = parseFloat(service?.perPhotoRate || '0');
+            const flatRate = parseFloat(service?.flatRate || '0');
+            const estimatedCost = service?.pricingModel === 'flat' 
+              ? flatRate
+              : perPhotoRate * (selectedCount || 1);
+            
+            return (
+              <View style={styles.editingSelectionSection}>
+                <Text style={styles.editingSelectionHint}>
+                  Tap photos below to select which ones you want edited
+                </Text>
+                <TouchableOpacity 
+                  style={[
+                    styles.requestEditingButton, 
+                    styles.requestEditingButtonFull,
+                    selectedCount === 0 && service?.pricingModel === 'per_photo' && styles.requestEditingButtonDisabled
+                  ]}
+                  onPress={() => {
+                    if (service?.pricingModel === 'per_photo' && selectedCount === 0) {
+                      Alert.alert('Select Photos', 'Please tap on photos below to select which ones you want edited.');
+                      return;
+                    }
+                    const photosToEdit = service?.pricingModel === 'flat' 
+                      ? selectedBookingPhotos.photos 
+                      : Array.from(selectedPhotosForEditing);
+                    const editingData = {
+                      bookingId: String(selectedBookingPhotos.booking.id),
+                      photographerId: String((selectedBookingPhotos.booking as any).photographerId),
+                      photos: photosToEdit,
+                      service: service!,
+                    };
+                    setEditingNotes('');
+                    setSelectedBookingPhotos(null);
+                    setTimeout(() => {
+                      setEditingModalBooking(editingData);
+                    }, 100);
+                  }}
+                  disabled={createEditingRequestMutation.isPending}
+                >
+                  {createEditingRequestMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Palette size={16} color="#fff" />
+                      <Text style={styles.requestEditingText}>
+                        Request Editing {service?.pricingModel === 'per_photo' 
+                          ? `(${selectedCount} photo${selectedCount !== 1 ? 's' : ''} - £${estimatedCost.toFixed(0)}+)`
+                          : `- £${flatRate.toFixed(0)}+`}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            );
+          })()}
           
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
             {selectedBookingPhotos?.message && (
@@ -982,18 +1036,38 @@ export default function CustomerBookingsScreen() {
                 
                 <View style={styles.thumbnailSection}>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-                    {selectedBookingPhotos.photos.map((photo, idx) => (
-                      <TouchableOpacity
-                        key={idx}
-                        onPress={() => setViewingPhotoIndex(idx)}
-                        style={[
-                          styles.thumbnail,
-                          idx === viewingPhotoIndex && styles.thumbnailActive
-                        ]}
-                      >
-                        <Image source={{ uri: getImageUrl(photo) }} style={styles.thumbnailImage} />
-                      </TouchableOpacity>
-                    ))}
+                    {selectedBookingPhotos.photos.map((photo, idx) => {
+                      const isSelected = selectedPhotosForEditing.has(photo);
+                      const photographerId = String((selectedBookingPhotos.booking as any)?.photographerId || '');
+                      const bookingId = String(selectedBookingPhotos.booking?.id || '');
+                      const service = editingServicesMap[photographerId];
+                      const existingRequest = editingRequestsMap[bookingId];
+                      const showSelection = service?.isEnabled && !existingRequest && service?.pricingModel === 'per_photo';
+                      
+                      return (
+                        <TouchableOpacity
+                          key={idx}
+                          onPress={() => {
+                            setViewingPhotoIndex(idx);
+                            if (showSelection) {
+                              togglePhotoSelection(photo);
+                            }
+                          }}
+                          style={[
+                            styles.thumbnail,
+                            idx === viewingPhotoIndex && styles.thumbnailActive,
+                            isSelected && styles.thumbnailSelected
+                          ]}
+                        >
+                          <Image source={{ uri: getImageUrl(photo) }} style={styles.thumbnailImage} />
+                          {showSelection && isSelected && (
+                            <View style={styles.thumbnailCheckmark}>
+                              <Check size={14} color="#fff" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </ScrollView>
                 </View>
               </>
@@ -1289,7 +1363,10 @@ export default function CustomerBookingsScreen() {
           <View style={styles.modalHeader}>
             <View style={styles.modalTitleRow}>
               <Palette size={20} color="#8b5cf6" />
-              <Text style={styles.modalTitle}>Request Editing</Text>
+              <View>
+                <Text style={styles.modalTitle}>Request Photo Editing</Text>
+                <Text style={styles.modalSubtitle}>Professional editing for your photos</Text>
+              </View>
             </View>
             <TouchableOpacity onPress={() => setEditingModalBooking(null)} style={styles.modalCloseButton}>
               <X size={24} color="#fff" />
@@ -1320,11 +1397,13 @@ export default function CustomerBookingsScreen() {
                         <Text style={styles.editingPriceAmount}>£{parseFloat(service.perPhotoRate || '0').toFixed(2)}</Text>
                         <Text style={styles.editingPriceLabel}>per photo</Text>
                       </View>
-                      <Text style={styles.editingPhotoCount}>{photoCount} photo{photoCount > 1 ? 's' : ''} selected</Text>
+                      <Text style={styles.editingPhotoCount}>{photoCount} photo{photoCount !== 1 ? 's' : ''} selected for editing</Text>
                     </View>
                   )}
-                  {service.description && (
+                  {service.description ? (
                     <Text style={styles.editingDescription}>{service.description}</Text>
+                  ) : (
+                    <Text style={styles.editingDescription}>Professional color correction and retouching</Text>
                   )}
                   <Text style={styles.editingTurnaround}>
                     Estimated delivery: {service.turnaroundDays} {service.turnaroundDays === 1 ? 'day' : 'days'}
@@ -2021,6 +2100,7 @@ const styles = StyleSheet.create({
   },
   modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  modalSubtitle: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
   modalCloseButton: { padding: 8 },
   modalMessage: { color: '#9ca3af', fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
   
@@ -2075,7 +2155,19 @@ const styles = StyleSheet.create({
   },
   thumbnailActive: { borderColor: PRIMARY_COLOR },
   thumbnailActiveEdited: { borderColor: '#8b5cf6' },
+  thumbnailSelected: { borderColor: '#8b5cf6', borderWidth: 3 },
   thumbnailImage: { width: '100%', height: '100%' },
+  thumbnailCheckmark: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#8b5cf6',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   
   downloadAllContainer: {
     paddingHorizontal: 16,
@@ -2094,6 +2186,18 @@ const styles = StyleSheet.create({
   },
   downloadAllText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   
+  editingSelectionSection: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  editingSelectionHint: {
+    color: '#9ca3af',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   requestEditingButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2103,6 +2207,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#8b5cf6',
     borderRadius: 10,
     marginTop: 8,
+  },
+  requestEditingButtonFull: {
+    marginTop: 0,
+  },
+  requestEditingButtonDisabled: {
+    opacity: 0.5,
   },
   requestEditingText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   
