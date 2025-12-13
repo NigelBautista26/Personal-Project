@@ -26,8 +26,9 @@ import { API_URL } from '../../../src/api/client';
 import { useAuth } from '../../../src/context/AuthContext';
 import { useCity, City, POPULAR_CITIES } from '../../../src/context/CityContext';
 
-// Detect if running in Expo Go on iOS (causes crashes with custom marker children)
-const isExpoGoOnIOS = Platform.OS === 'ios' && Constants.executionEnvironment === 'storeClient';
+// Detect if running in Expo Go on iOS SIMULATOR only (causes crashes with custom marker children)
+// Physical iPhones with Expo Go work fine with custom markers
+const isExpoGoIOSSimulator = Platform.OS === 'ios' && Constants.executionEnvironment === 'storeClient' && !Constants.isDevice;
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
@@ -367,7 +368,7 @@ export default function CustomerMapScreen() {
           const isAvailable = photographer.sessionState === 'available';
           
           // Use simple markers without children in Expo Go on iOS to avoid crash
-          if (isExpoGoOnIOS) {
+          if (isExpoGoIOSSimulator) {
             return (
               <SafeMarker
                 key={`photographer-${photographer.id}-${markersReady}`}
@@ -409,7 +410,7 @@ export default function CustomerMapScreen() {
         })}
 
         {/* Photo Spot Markers - skip in Expo Go on iOS to avoid crash */}
-        {!isExpoGoOnIOS && photoSpots.map((spot) => (
+        {!isExpoGoIOSSimulator && photoSpots.map((spot) => (
           <SafeMarker
             key={`spot-${spot.id}-${markersReady}`}
             coordinate={{
