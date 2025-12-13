@@ -1265,6 +1265,42 @@ export async function registerRoutes(
     }
   });
 
+  // Delete photo from delivery (photographer only)
+  app.delete("/api/bookings/:bookingId/photos", async (req, res) => {
+    try {
+      if (!req.session.userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const booking = await storage.getBooking(req.params.bookingId);
+      if (!booking) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+      
+      // Verify the photographer owns this booking
+      const photographer = await storage.getPhotographerByUserId(req.session.userId);
+      if (!photographer || photographer.id !== booking.photographerId) {
+        return res.status(403).json({ error: "Not authorized to delete photos" });
+      }
+      
+      const { photoUrl } = req.body;
+      if (!photoUrl) {
+        return res.status(400).json({ error: "Photo URL required" });
+      }
+      
+      const delivery = await storage.getPhotoDeliveryByBooking(req.params.bookingId);
+      if (!delivery) {
+        return res.status(404).json({ error: "No photos found for this booking" });
+      }
+      
+      const updatedDelivery = await storage.removePhotoFromDelivery(delivery.id, photoUrl);
+      res.json(updatedDelivery);
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      res.status(500).json({ error: "Failed to delete photo" });
+    }
+  });
+
   // Mark photos as downloaded (customer action)
   app.post("/api/bookings/:bookingId/photos/downloaded", async (req, res) => {
     try {

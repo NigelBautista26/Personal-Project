@@ -233,6 +233,11 @@ export const snapnowApi = {
     await api.post(`/api/bookings/${bookingId}/dismiss`);
   },
 
+  async deletePhotoFromDelivery(bookingId: string, photoUrl: string): Promise<{ photos: string[] }> {
+    const response = await api.delete(`/api/bookings/${bookingId}/photos`, { data: { photoUrl } });
+    return response.data;
+  },
+
   // Stripe payment methods
   async getStripeConfig(): Promise<{ configured: boolean; publishableKey?: string }> {
     const response = await api.get('/api/stripe/config');

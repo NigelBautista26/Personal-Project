@@ -212,6 +212,30 @@ export default function PhotographerBookingDetailScreen() {
     }
   };
 
+  const handleDeletePhoto = async (photoUrl: string) => {
+    setConfirmModalConfig({
+      title: 'Delete Photo',
+      message: 'Are you sure you want to remove this photo?',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: async () => {
+        setShowConfirmModal(false);
+        try {
+          const result = await snapnowApi.deletePhotoFromDelivery(id!, photoUrl);
+          setUploadingPhotos(result.photos || []);
+          queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
+          setSuccessMessage({ title: 'Photo Removed', message: 'The photo has been deleted.' });
+          setShowSuccessModal(true);
+        } catch (error) {
+          setErrorMessage({ title: 'Error', message: 'Failed to delete photo. Please try again.' });
+          setShowErrorModal(true);
+        }
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
   const handleSaveDelivery = async () => {
     try {
       await snapnowApi.savePhotoDelivery(id!, uploadMessage || undefined);
@@ -589,6 +613,13 @@ export default function PhotographerBookingDetailScreen() {
                       source={{ uri: getImageUrl(photo) || photo }} 
                       style={styles.photoImage} 
                     />
+                    <TouchableOpacity
+                      style={styles.deletePhotoButton}
+                      onPress={() => handleDeletePhoto(photo)}
+                      testID={`button-delete-photo-${idx}`}
+                    >
+                      <X size={14} color="#fff" />
+                    </TouchableOpacity>
                   </View>
                 ))}
                 
@@ -928,8 +959,20 @@ const styles = StyleSheet.create({
     aspectRatio: 1,
     borderRadius: 8,
     overflow: 'hidden',
+    position: 'relative',
   },
   photoImage: { width: '100%', height: '100%' },
+  deletePhotoButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   addPhotoButton: {
     width: '31%',
     aspectRatio: 1,

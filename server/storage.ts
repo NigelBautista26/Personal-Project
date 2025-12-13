@@ -553,6 +553,29 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
 
+  async removePhotoFromDelivery(id: string, photoUrl: string): Promise<PhotoDelivery | undefined> {
+    // Use atomic array_remove to safely remove a photo
+    const result = await db.execute(sql`
+      UPDATE photo_deliveries 
+      SET photos = array_remove(photos, ${photoUrl})
+      WHERE id = ${id}
+      RETURNING *
+    `);
+    
+    if (result.rows.length === 0) return undefined;
+    
+    const row = result.rows[0] as any;
+    return {
+      id: row.id,
+      bookingId: row.booking_id,
+      photographerId: row.photographer_id,
+      photos: row.photos,
+      message: row.message,
+      deliveredAt: row.delivered_at,
+      downloadedAt: row.downloaded_at,
+    };
+  }
+
   // Review methods
   async getReview(id: string): Promise<Review | undefined> {
     const result = await db.select().from(reviews).where(eq(reviews.id, id)).limit(1);
