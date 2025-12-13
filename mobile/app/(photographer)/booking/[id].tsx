@@ -616,9 +616,10 @@ export default function PhotographerBookingDetailScreen() {
                     <TouchableOpacity
                       style={styles.deletePhotoButton}
                       onPress={() => handleDeletePhoto(photo)}
+                      activeOpacity={0.7}
                       testID={`button-delete-photo-${idx}`}
                     >
-                      <X size={14} color="#fff" />
+                      <X size={18} color="#fff" />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -964,14 +965,15 @@ const styles = StyleSheet.create({
   photoImage: { width: '100%', height: '100%' },
   deletePhotoButton: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+    top: 0,
+    right: 0,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(239, 68, 68, 0.95)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
   },
   addPhotoButton: {
     width: '31%',
