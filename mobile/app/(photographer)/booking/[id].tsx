@@ -213,6 +213,7 @@ export default function PhotographerBookingDetailScreen() {
   };
 
   const handleDeletePhoto = async (photoUrl: string) => {
+    console.log('[DELETE] handleDeletePhoto called with:', photoUrl);
     setConfirmModalConfig({
       title: 'Delete Photo',
       message: 'Are you sure you want to remove this photo?',
@@ -220,19 +221,24 @@ export default function PhotographerBookingDetailScreen() {
       cancelText: 'Cancel',
       isDestructive: true,
       onConfirm: async () => {
+        console.log('[DELETE] onConfirm called, deleting photo...');
         setShowConfirmModal(false);
         try {
+          console.log('[DELETE] Calling API...');
           const result = await snapnowApi.deletePhotoFromDelivery(id!, photoUrl);
+          console.log('[DELETE] API success, photos remaining:', result.photos?.length);
           setUploadingPhotos(result.photos || []);
           queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
           setSuccessMessage({ title: 'Photo Removed', message: 'The photo has been deleted.' });
           setShowSuccessModal(true);
         } catch (error) {
+          console.error('[DELETE] API error:', error);
           setErrorMessage({ title: 'Error', message: 'Failed to delete photo. Please try again.' });
           setShowErrorModal(true);
         }
       },
     });
+    console.log('[DELETE] Showing confirmation modal');
     setShowConfirmModal(true);
   };
 
