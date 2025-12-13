@@ -1077,17 +1077,9 @@ export default function CustomerBookingsScreen() {
                             amount: total,
                             pricingModel: service.pricingModel,
                           });
-                          // Open payment page in browser
-                          await Linking.openURL(`${API_URL}/mobile-editing-checkout?token=${response.token}`);
-                          // Close the photo gallery modal
-                          setShowEditingFormInGallery(false);
-                          setSelectedBookingPhotos(null);
-                          // Show instruction to user
-                          Alert.alert(
-                            'Complete Payment',
-                            'Please complete the payment in your browser. Once done, return here and pull down to refresh your bookings.',
-                            [{ text: 'OK' }]
-                          );
+                          // Store token and show WebView modal (same as booking payment)
+                          setEditingPaymentToken(response.token);
+                          setShowEditingPaymentWebView(true);
                         } catch (error: any) {
                           Alert.alert('Error', error.message || 'Failed to start payment');
                         } finally {
@@ -1922,7 +1914,10 @@ export default function CustomerBookingsScreen() {
       >
         <SafeAreaView style={styles.webViewContainer}>
           <View style={styles.webViewHeader}>
-            <TouchableOpacity onPress={() => setShowEditingPaymentWebView(false)} style={styles.webViewClose}>
+            <TouchableOpacity onPress={() => {
+              setShowEditingPaymentWebView(false);
+              setEditingPaymentToken(null);
+            }} style={styles.webViewClose}>
               <X size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.webViewTitle}>Complete Payment</Text>
@@ -1936,17 +1931,48 @@ export default function CustomerBookingsScreen() {
             domStorageEnabled={true}
             sharedCookiesEnabled={true}
             thirdPartyCookiesEnabled={true}
+            mixedContentMode="compatibility"
+            allowsInlineMediaPlayback={true}
+            originWhitelist={['*']}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={styles.webViewLoading}>
+                <ActivityIndicator size="large" color={PRIMARY_COLOR} />
+                <Text style={styles.webViewLoadingText}>Loading payment form...</Text>
+              </View>
+            )}
+            onNavigationStateChange={(navState) => {
+              const url = navState.url;
+              // Check for success redirect from Stripe
+              if (url.includes('payment_intent=') && url.includes('redirect_status=succeeded')) {
+                setShowEditingPaymentWebView(false);
+                setEditingPaymentToken(null);
+                setShowEditingFormInGallery(false);
+                setSelectedBookingPhotos(null);
+                queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
+                setShowSuccessModal(true);
+              }
+            }}
             onMessage={(event) => {
               try {
                 const data = JSON.parse(event.nativeEvent.data);
                 if (data.type === 'EDITING_PAYMENT_SUCCESS') {
                   setShowEditingPaymentWebView(false);
+                  setEditingPaymentToken(null);
                   setShowEditingFormInGallery(false);
                   setSelectedBookingPhotos(null);
                   queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
                   setShowSuccessModal(true);
                 }
               } catch {}
+            }}
+            onError={(syntheticEvent) => {
+              const { nativeEvent } = syntheticEvent;
+              console.warn('WebView error: ', nativeEvent);
+            }}
+            onHttpError={(syntheticEvent) => {
+              const { nativeEvent } = syntheticEvent;
+              console.warn('WebView HTTP error: ', nativeEvent.statusCode);
             }}
           />
         </SafeAreaView>
@@ -3072,5 +3098,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  webViewLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#0a0a0a',
+  },
+  webViewLoadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#9ca3af',
   },
 });
