@@ -102,6 +102,25 @@ export default function CustomerBookingsScreen() {
   
   // Custom success modal state
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  
+  // Custom themed alert modal state
+  const [themedAlert, setThemedAlert] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'info';
+    onClose?: () => void;
+  }>({ visible: false, title: '', message: '', type: 'info' });
+  
+  const showThemedAlert = (title: string, message: string, type: 'success' | 'error' | 'info' = 'info', onClose?: () => void) => {
+    setThemedAlert({ visible: true, title, message, type, onClose });
+  };
+  
+  const hideThemedAlert = () => {
+    const callback = themedAlert.onClose;
+    setThemedAlert({ visible: false, title: '', message: '', type: 'info' });
+    if (callback) callback();
+  };
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
@@ -201,7 +220,7 @@ export default function CustomerBookingsScreen() {
       queryClient.invalidateQueries({ queryKey: ['customer-bookings'] });
     },
     onError: (error: Error) => {
-      Alert.alert('Error', error.message || 'Failed to dismiss booking');
+      showThemedAlert('Error', error.message || 'Failed to dismiss booking', 'error');
     },
   });
 
@@ -227,7 +246,7 @@ export default function CustomerBookingsScreen() {
       setShowSuccessModal(true);
     },
     onError: (error: Error) => {
-      Alert.alert('Error', error.message || 'Failed to send editing request');
+      showThemedAlert('Error', error.message || 'Failed to send editing request', 'error');
     },
   });
 
@@ -237,11 +256,11 @@ export default function CustomerBookingsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
-      Alert.alert('Approved!', 'You have approved the edited photos.');
+      showThemedAlert('Approved!', 'You have approved the edited photos.', 'success');
       setViewingEditedPhotos(null);
     },
     onError: (error: Error) => {
-      Alert.alert('Error', error.message || 'Failed to approve edits');
+      showThemedAlert('Error', error.message || 'Failed to approve edits', 'error');
     },
   });
 
@@ -254,13 +273,13 @@ export default function CustomerBookingsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
-      Alert.alert('Request Sent', 'Your revision request has been sent to the photographer.');
+      showThemedAlert('Request Sent', 'Your revision request has been sent to the photographer.', 'success');
       setViewingEditedPhotos(null);
       setShowRevisionInput(false);
       setRevisionNotes('');
     },
     onError: (error: Error) => {
-      Alert.alert('Error', error.message || 'Failed to request revision');
+      showThemedAlert('Error', error.message || 'Failed to request revision', 'error');
     },
   });
 
@@ -289,7 +308,7 @@ export default function CustomerBookingsScreen() {
     }
     
     if (startIndex >= photos.length) {
-      Alert.alert('Complete', 'All photos have been opened. Long-press each photo in your browser to save it.');
+      showThemedAlert('Complete', 'All photos have been opened. Long-press each photo in your browser to save it.', 'success');
       return;
     }
     
@@ -391,11 +410,11 @@ export default function CustomerBookingsScreen() {
         setShowEditingFormInGallery(false); // Reset editing form state
         setEditingNotes(''); // Reset notes
       } else {
-        Alert.alert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.');
+        showThemedAlert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.', 'info');
       }
     } catch (e) {
       console.error('Failed to load photos:', e);
-      Alert.alert('Error', 'Failed to load photos. Please try again.');
+      showThemedAlert('Error', 'Failed to load photos. Please try again.', 'error');
     }
   };
   
@@ -1110,7 +1129,7 @@ export default function CustomerBookingsScreen() {
                   ]}
                   onPress={() => {
                     if (service?.pricingModel === 'per_photo' && selectedCount === 0) {
-                      Alert.alert('Select Photos', 'Please tap on photos below to select which ones you want edited.');
+                      showThemedAlert('Select Photos', 'Please tap on photos below to select which ones you want edited.', 'info');
                       return;
                     }
                     // Show editing form inline within the same modal
@@ -1825,6 +1844,42 @@ export default function CustomerBookingsScreen() {
               onPress={() => setShowSuccessModal(false)}
             >
               <Text style={styles.successModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Themed Alert Modal */}
+      <Modal
+        visible={themedAlert.visible}
+        transparent
+        animationType="fade"
+        onRequestClose={hideThemedAlert}
+      >
+        <View style={styles.themedAlertOverlay}>
+          <View style={styles.themedAlertContent}>
+            <View style={[
+              styles.themedAlertIconCircle,
+              themedAlert.type === 'success' && { backgroundColor: 'rgba(34, 197, 94, 0.2)' },
+              themedAlert.type === 'error' && { backgroundColor: 'rgba(239, 68, 68, 0.2)' },
+              themedAlert.type === 'info' && { backgroundColor: 'rgba(59, 130, 246, 0.2)' },
+            ]}>
+              {themedAlert.type === 'success' && <Check size={28} color="#22c55e" />}
+              {themedAlert.type === 'error' && <X size={28} color="#ef4444" />}
+              {themedAlert.type === 'info' && <Eye size={28} color="#3b82f6" />}
+            </View>
+            <Text style={styles.themedAlertTitle}>{themedAlert.title}</Text>
+            <Text style={styles.themedAlertMessage}>{themedAlert.message}</Text>
+            <TouchableOpacity 
+              style={[
+                styles.themedAlertButton,
+                themedAlert.type === 'success' && { backgroundColor: '#22c55e' },
+                themedAlert.type === 'error' && { backgroundColor: '#ef4444' },
+                themedAlert.type === 'info' && { backgroundColor: '#3b82f6' },
+              ]} 
+              onPress={hideThemedAlert}
+            >
+              <Text style={styles.themedAlertButtonText}>OK</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -2872,6 +2927,55 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   successModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  themedAlertOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  themedAlertContent: {
+    backgroundColor: '#18181b',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    width: '100%',
+    maxWidth: 320,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  themedAlertIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  themedAlertTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  themedAlertMessage: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  themedAlertButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+  },
+  themedAlertButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
