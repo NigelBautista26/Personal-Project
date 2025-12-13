@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Modal,
   Image,
   TextInput,
@@ -43,6 +42,21 @@ export default function PhotographerBookingDetailScreen() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
   
+  // Error modal state
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({ title: '', message: '' });
+  
+  // Confirmation modal state (replaces Alert.alert with buttons)
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalConfig, setConfirmModalConfig] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    isDestructive: boolean;
+    onConfirm: () => void;
+  }>({ title: '', message: '', confirmText: 'Confirm', cancelText: 'Cancel', isDestructive: false, onConfirm: () => {} });
+  
   // Photo fullscreen viewer state
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   
@@ -69,10 +83,12 @@ export default function PhotographerBookingDetailScreen() {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
       refetch();
-      Alert.alert('Success', 'Booking confirmed! Payment has been captured.');
+      setSuccessMessage({ title: 'Booking Confirmed', message: 'Payment has been captured. Get ready for the session!' });
+      setShowSuccessModal(true);
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to confirm booking');
+      setErrorMessage({ title: 'Error', message: error.response?.data?.error || 'Failed to confirm booking' });
+      setShowErrorModal(true);
     },
   });
 
@@ -83,34 +99,44 @@ export default function PhotographerBookingDetailScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
-      router.back();
-      Alert.alert('Booking Declined', 'The booking has been declined and payment authorization released.');
+      setSuccessMessage({ title: 'Booking Declined', message: 'The booking has been declined and payment authorization released.' });
+      setShowSuccessModal(true);
+      setTimeout(() => router.back(), 1500);
     },
     onError: (error: any) => {
-      Alert.alert('Error', error.response?.data?.error || 'Failed to decline booking');
+      setErrorMessage({ title: 'Error', message: error.response?.data?.error || 'Failed to decline booking' });
+      setShowErrorModal(true);
     },
   });
 
   const handleConfirm = () => {
-    Alert.alert(
-      'Confirm Booking',
-      'Are you sure you want to accept this booking?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Confirm', onPress: () => confirmMutation.mutate() },
-      ]
-    );
+    setConfirmModalConfig({
+      title: 'Accept Booking',
+      message: 'Are you sure you want to accept this booking?',
+      confirmText: 'Accept',
+      cancelText: 'Cancel',
+      isDestructive: false,
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        confirmMutation.mutate();
+      },
+    });
+    setShowConfirmModal(true);
   };
 
   const handleDecline = () => {
-    Alert.alert(
-      'Decline Booking',
-      'Are you sure you want to decline this booking?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Decline', style: 'destructive', onPress: () => declineMutation.mutate() },
-      ]
-    );
+    setConfirmModalConfig({
+      title: 'Decline Booking',
+      message: 'Are you sure you want to decline this booking?',
+      confirmText: 'Decline',
+      cancelText: 'Cancel',
+      isDestructive: true,
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        declineMutation.mutate();
+      },
+    });
+    setShowConfirmModal(true);
   };
 
   // Photo upload functions
@@ -125,7 +151,8 @@ export default function PhotographerBookingDetailScreen() {
   const handlePickImages = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Needed', 'Please allow access to your photo library to upload photos.');
+      setErrorMessage({ title: 'Permission Needed', message: 'Please allow access to your photo library to upload photos.' });
+      setShowErrorModal(true);
       return;
     }
 
@@ -133,30 +160,26 @@ export default function PhotographerBookingDetailScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       quality: 0.8,
-      base64: true, // Include base64 data for reliable upload
+      base64: true,
     });
 
     if (!result.canceled && result.assets.length > 0) {
       setIsUploading(true);
       try {
         for (const asset of result.assets) {
-          // Get upload URL
           const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
           
-          // Convert base64 to binary for upload
           const base64Data = asset.base64;
           if (!base64Data) {
             throw new Error('No base64 data available');
           }
           
-          // Convert base64 to Uint8Array
           const binaryString = atob(base64Data);
           const bytes = new Uint8Array(binaryString.length);
           for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i);
           }
           
-          // Upload using XMLHttpRequest with binary data
           await new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.open('PUT', uploadURL);
@@ -174,14 +197,15 @@ export default function PhotographerBookingDetailScreen() {
             xhr.send(bytes.buffer);
           });
 
-          // Add to delivery
           const delivery = await snapnowApi.addPhotoToDelivery(id!, objectPath);
           setUploadingPhotos(delivery.photos || []);
         }
-        Alert.alert('Success', `${result.assets.length} photo(s) uploaded!`);
+        setSuccessMessage({ title: 'Photos Added', message: `${result.assets.length} photo${result.assets.length > 1 ? 's' : ''} uploaded successfully!` });
+        setShowSuccessModal(true);
       } catch (error) {
         console.error('Upload error:', error);
-        Alert.alert('Upload Failed', 'Could not upload photos. Please try again.');
+        setErrorMessage({ title: 'Upload Failed', message: 'Could not upload photos. Please try again.' });
+        setShowErrorModal(true);
       } finally {
         setIsUploading(false);
       }
@@ -191,17 +215,16 @@ export default function PhotographerBookingDetailScreen() {
   const handleSaveDelivery = async () => {
     try {
       await snapnowApi.savePhotoDelivery(id!, uploadMessage || undefined);
-      // Invalidate all relevant queries to ensure UI updates
       queryClient.invalidateQueries({ queryKey: ['photographer-bookings'] });
       queryClient.invalidateQueries({ queryKey: ['photo-delivery', id] });
       queryClient.invalidateQueries({ queryKey: ['booking', id] });
       await refetch();
       setShowUploadModal(false);
-      // Show themed success modal instead of ugly Alert
       setSuccessMessage({ title: 'Photos Delivered', message: 'Your photos have been sent to the customer!' });
       setShowSuccessModal(true);
     } catch (error) {
-      Alert.alert('Error', 'Could not save photo delivery.');
+      setErrorMessage({ title: 'Error', message: 'Could not save photo delivery. Please try again.' });
+      setShowErrorModal(true);
     }
   };
 
@@ -633,6 +656,62 @@ export default function PhotographerBookingDetailScreen() {
             >
               <Text style={styles.successModalButtonText}>OK</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Themed Error Modal */}
+      <Modal
+        visible={showErrorModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowErrorModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <View style={[styles.successIconContainer, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+              <X size={48} color="#ef4444" />
+            </View>
+            <Text style={styles.successModalTitle}>{errorMessage.title}</Text>
+            <Text style={styles.successModalMessage}>{errorMessage.message}</Text>
+            <TouchableOpacity 
+              style={[styles.successModalButton, { backgroundColor: '#ef4444' }]}
+              onPress={() => setShowErrorModal(false)}
+            >
+              <Text style={styles.successModalButtonText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Themed Confirmation Modal */}
+      <Modal
+        visible={showConfirmModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowConfirmModal(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View style={styles.successModalContent}>
+            <Text style={styles.successModalTitle}>{confirmModalConfig.title}</Text>
+            <Text style={styles.successModalMessage}>{confirmModalConfig.message}</Text>
+            <View style={styles.confirmButtonRow}>
+              <TouchableOpacity 
+                style={styles.confirmCancelButton}
+                onPress={() => setShowConfirmModal(false)}
+              >
+                <Text style={styles.confirmCancelButtonText}>{confirmModalConfig.cancelText}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.confirmActionButton,
+                  confirmModalConfig.isDestructive && { backgroundColor: '#ef4444' }
+                ]}
+                onPress={confirmModalConfig.onConfirm}
+              >
+                <Text style={styles.confirmActionButtonText}>{confirmModalConfig.confirmText}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -1134,6 +1213,38 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   successModalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Confirmation Modal Buttons
+  confirmButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  confirmCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+  },
+  confirmCancelButtonText: {
+    color: '#9ca3af',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmActionButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#22c55e',
+    alignItems: 'center',
+  },
+  confirmActionButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
