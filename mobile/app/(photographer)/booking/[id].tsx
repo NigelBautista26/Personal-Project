@@ -371,7 +371,7 @@ export default function PhotographerBookingDetailScreen() {
 
           // Set ACL for the photo - continue even if ACL fails
           try {
-            await api.post('/api/objects/acl', { objectPath });
+            await api.post('/api/objects/set-acl', { objectPath });
           } catch (aclError) {
             console.warn('ACL set failed for photo, continuing:', aclError);
           }
