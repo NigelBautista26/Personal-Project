@@ -249,10 +249,13 @@ export default function MobileEditingCheckout() {
         options={{
           clientSecret,
           appearance: {
-            theme: "stripe",
+            theme: "night",
             variables: {
               colorPrimary: "#8b5cf6",
               borderRadius: "8px",
+              colorBackground: "#1a1a1a",
+              colorText: "#ffffff",
+              colorTextSecondary: "#9ca3af",
             },
           },
         }}
@@ -275,13 +278,14 @@ export default function MobileEditingCheckout() {
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#0a0a0a",
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   },
   header: {
-    backgroundColor: "#8b5cf6",
+    backgroundColor: "#1a1a1a",
     padding: "16px 20px",
     textAlign: "center",
+    borderBottom: "1px solid rgba(255,255,255,0.1)",
   },
   headerTitle: {
     color: "white",
@@ -295,12 +299,12 @@ const styles: { [key: string]: React.CSSProperties } = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "60vh",
-    color: "#666",
+    color: "#9ca3af",
   },
   spinner: {
     width: "40px",
     height: "40px",
-    border: "3px solid #e5e7eb",
+    border: "3px solid #333",
     borderTopColor: "#8b5cf6",
     borderRadius: "50%",
     animation: "spin 1s linear infinite",
@@ -310,50 +314,51 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "20px",
   },
   summary: {
-    backgroundColor: "white",
+    backgroundColor: "#1a1a1a",
     borderRadius: "12px",
     padding: "16px",
     marginBottom: "20px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    border: "1px solid rgba(255,255,255,0.1)",
   },
   summaryTitle: {
     fontSize: "16px",
     fontWeight: "600",
     marginBottom: "12px",
-    color: "#111",
+    color: "#fff",
   },
   summaryRow: {
     display: "flex",
     justifyContent: "space-between",
     padding: "8px 0",
     fontSize: "14px",
-    color: "#666",
-    borderBottom: "1px solid #f0f0f0",
+    color: "#9ca3af",
+    borderBottom: "1px solid rgba(255,255,255,0.1)",
   },
   totalRow: {
     borderBottom: "none",
     paddingTop: "12px",
     fontWeight: "600",
-    color: "#111",
+    color: "#fff",
   },
   totalAmount: {
     color: "#8b5cf6",
     fontSize: "18px",
   },
   paymentSection: {
-    backgroundColor: "white",
+    backgroundColor: "#1a1a1a",
     borderRadius: "12px",
     padding: "16px",
     marginBottom: "20px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+    border: "1px solid rgba(255,255,255,0.1)",
   },
   error: {
-    backgroundColor: "#fef2f2",
-    color: "#dc2626",
+    backgroundColor: "rgba(239, 68, 68, 0.1)",
+    color: "#ef4444",
     padding: "12px",
     borderRadius: "8px",
     marginBottom: "16px",
     fontSize: "14px",
+    border: "1px solid rgba(239, 68, 68, 0.3)",
   },
   payButton: {
     width: "100%",
@@ -368,7 +373,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   securedBy: {
     textAlign: "center",
-    color: "#888",
+    color: "#6b7280",
     fontSize: "12px",
     marginTop: "16px",
   },
@@ -377,17 +382,17 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: "40px 20px",
   },
   errorTitle: {
-    color: "#dc2626",
+    color: "#ef4444",
     fontSize: "20px",
     marginBottom: "12px",
   },
   errorText: {
-    color: "#666",
+    color: "#9ca3af",
     fontSize: "16px",
     marginBottom: "8px",
   },
   errorSubtext: {
-    color: "#888",
+    color: "#6b7280",
     fontSize: "14px",
   },
   successContainer: {
@@ -412,21 +417,22 @@ const styles: { [key: string]: React.CSSProperties } = {
     marginBottom: "12px",
   },
   successText: {
-    color: "#333",
+    color: "#fff",
     fontSize: "16px",
     marginBottom: "8px",
   },
   successSubtext: {
-    color: "#888",
+    color: "#9ca3af",
     fontSize: "14px",
   },
   sandbox: {
-    backgroundColor: "#fef3c7",
-    color: "#92400e",
+    backgroundColor: "rgba(139, 92, 246, 0.15)",
+    color: "#a78bfa",
     padding: "12px",
     margin: "0 20px 20px",
     borderRadius: "8px",
     fontSize: "12px",
     textAlign: "center",
+    border: "1px solid rgba(139, 92, 246, 0.3)",
   },
 };
