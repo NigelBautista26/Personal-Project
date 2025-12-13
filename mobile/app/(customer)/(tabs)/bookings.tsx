@@ -82,6 +82,15 @@ export default function CustomerBookingsScreen() {
   const [showRevisionInput, setShowRevisionInput] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Editing request modal state
+  const [editingModalBooking, setEditingModalBooking] = useState<{
+    bookingId: string;
+    photographerId: string;
+    photos: string[];
+    service: EditingServiceInfo;
+  } | null>(null);
+  const [editingNotes, setEditingNotes] = useState('');
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
@@ -194,10 +203,11 @@ export default function CustomerBookingsScreen() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
+      setEditingModalBooking(null);
+      setSelectedBookingPhotos(null);
       Alert.alert(
         'Request Sent!', 
-        'Your editing request has been sent to the photographer. They will respond soon.',
-        [{ text: 'OK', onPress: () => setSelectedBookingPhotos(null) }]
+        'Your editing request has been sent to the photographer. They will respond soon.'
       );
     },
     onError: (error: Error) => {
@@ -899,26 +909,13 @@ export default function CustomerBookingsScreen() {
                   <TouchableOpacity 
                     style={styles.requestEditingButton}
                     onPress={() => {
-                      const photoCount = service.pricingModel === 'per_photo' ? selectedBookingPhotos.photos.length : undefined;
-                      const totalCost = service.pricingModel === 'flat' 
-                        ? parseFloat(service.flatRate || '0')
-                        : parseFloat(service.perPhotoRate || '0') * (photoCount || 1);
-                      
-                      Alert.alert(
-                        'Request Editing',
-                        `Request professional editing for £${totalCost.toFixed(2)}?\n\n${service.pricingModel === 'per_photo' ? `${photoCount} photos @ £${service.perPhotoRate}/photo` : 'Flat rate for all photos'}\n\nEstimated turnaround: ${service.turnaroundDays} days`,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Request', onPress: () => {
-                            createEditingRequestMutation.mutate({
-                              bookingId: selectedBookingPhotos.booking.id,
-                              photographerId: (selectedBookingPhotos.booking as any).photographerId,
-                              photoCount,
-                              requestedPhotoUrls: selectedBookingPhotos.photos,
-                            });
-                          }}
-                        ]
-                      );
+                      setEditingNotes('');
+                      setEditingModalBooking({
+                        bookingId: String(selectedBookingPhotos.booking.id),
+                        photographerId: String((selectedBookingPhotos.booking as any).photographerId),
+                        photos: selectedBookingPhotos.photos,
+                        service,
+                      });
                     }}
                     disabled={createEditingRequestMutation.isPending}
                   >
@@ -1270,6 +1267,127 @@ export default function CustomerBookingsScreen() {
               </View>
             </View>
           )}
+        </SafeAreaView>
+      </Modal>
+
+      {/* Editing Request Modal */}
+      <Modal
+        visible={!!editingModalBooking}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setEditingModalBooking(null)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View style={styles.modalTitleRow}>
+              <Palette size={20} color="#8b5cf6" />
+              <Text style={styles.modalTitle}>Request Editing</Text>
+            </View>
+            <TouchableOpacity onPress={() => setEditingModalBooking(null)} style={styles.modalCloseButton}>
+              <X size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          
+          {editingModalBooking && (() => {
+            const service = editingModalBooking.service;
+            const photoCount = editingModalBooking.photos.length;
+            const baseAmount = service.pricingModel === 'flat'
+              ? parseFloat(service.flatRate || '0')
+              : parseFloat(service.perPhotoRate || '0') * photoCount;
+            const serviceFee = baseAmount * 0.10;
+            const total = baseAmount + serviceFee;
+            
+            return (
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+                <View style={styles.editingPricingCard}>
+                  <Text style={styles.editingPricingTitle}>Pricing</Text>
+                  {service.pricingModel === 'flat' ? (
+                    <View style={styles.editingPriceRow}>
+                      <Text style={styles.editingPriceAmount}>£{parseFloat(service.flatRate || '0').toFixed(2)}</Text>
+                      <Text style={styles.editingPriceLabel}>flat rate for all photos</Text>
+                    </View>
+                  ) : (
+                    <View>
+                      <View style={styles.editingPriceRow}>
+                        <Text style={styles.editingPriceAmount}>£{parseFloat(service.perPhotoRate || '0').toFixed(2)}</Text>
+                        <Text style={styles.editingPriceLabel}>per photo</Text>
+                      </View>
+                      <Text style={styles.editingPhotoCount}>{photoCount} photo{photoCount > 1 ? 's' : ''} selected</Text>
+                    </View>
+                  )}
+                  {service.description && (
+                    <Text style={styles.editingDescription}>{service.description}</Text>
+                  )}
+                  <Text style={styles.editingTurnaround}>
+                    Estimated delivery: {service.turnaroundDays} {service.turnaroundDays === 1 ? 'day' : 'days'}
+                  </Text>
+                </View>
+                
+                <View style={styles.editingNotesSection}>
+                  <Text style={styles.editingNotesLabel}>Special requests (optional)</Text>
+                  <TextInput
+                    style={styles.editingNotesInput}
+                    value={editingNotes}
+                    onChangeText={setEditingNotes}
+                    placeholder="Any specific editing style or requests..."
+                    placeholderTextColor="#52525b"
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+                </View>
+                
+                <View style={styles.editingPriceSummary}>
+                  <View style={styles.editingSummaryRow}>
+                    <Text style={styles.editingSummaryLabel}>
+                      Editing {service.pricingModel === 'per_photo' ? `(${photoCount} photos)` : ''}
+                    </Text>
+                    <Text style={styles.editingSummaryValue}>£{baseAmount.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.editingSummaryRow}>
+                    <Text style={styles.editingSummaryLabel}>Service fee (10%)</Text>
+                    <Text style={styles.editingSummaryValue}>£{serviceFee.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.editingDivider} />
+                  <View style={styles.editingSummaryRow}>
+                    <Text style={styles.editingTotalLabel}>Total</Text>
+                    <Text style={styles.editingTotalValue}>£{total.toFixed(2)}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.editingButtons}>
+                  <TouchableOpacity 
+                    style={styles.editingCancelButton}
+                    onPress={() => setEditingModalBooking(null)}
+                  >
+                    <Text style={styles.editingCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.editingSubmitButton}
+                    onPress={() => {
+                      createEditingRequestMutation.mutate({
+                        bookingId: editingModalBooking.bookingId,
+                        photographerId: editingModalBooking.photographerId,
+                        photoCount: service.pricingModel === 'per_photo' ? photoCount : undefined,
+                        customerNotes: editingNotes || undefined,
+                        requestedPhotoUrls: editingModalBooking.photos,
+                      });
+                    }}
+                    disabled={createEditingRequestMutation.isPending}
+                  >
+                    {createEditingRequestMutation.isPending ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <>
+                        <Palette size={16} color="#fff" />
+                        <Text style={styles.editingSubmitText}>Request Editing</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            );
+          })()}
         </SafeAreaView>
       </Modal>
 
@@ -1979,6 +2097,136 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   requestEditingText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  
+  // Editing Request Modal styles
+  editingPricingCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  editingPricingTitle: {
+    color: '#8b5cf6',
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  editingPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  editingPriceAmount: {
+    color: '#fff',
+    fontSize: 28,
+    fontWeight: '700',
+  },
+  editingPriceLabel: {
+    color: '#9ca3af',
+    fontSize: 14,
+  },
+  editingPhotoCount: {
+    color: '#8b5cf6',
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  editingDescription: {
+    color: '#9ca3af',
+    fontSize: 13,
+    marginTop: 12,
+    lineHeight: 18,
+  },
+  editingTurnaround: {
+    color: '#6b7280',
+    fontSize: 12,
+    marginTop: 8,
+  },
+  editingNotesSection: {
+    marginBottom: 16,
+  },
+  editingNotesLabel: {
+    color: '#9ca3af',
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  editingNotesInput: {
+    backgroundColor: '#18181b',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    padding: 14,
+    color: '#fff',
+    fontSize: 14,
+    minHeight: 80,
+  },
+  editingPriceSummary: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+  },
+  editingSummaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  editingSummaryLabel: {
+    color: '#9ca3af',
+    fontSize: 14,
+  },
+  editingSummaryValue: {
+    color: '#fff',
+    fontSize: 14,
+  },
+  editingDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    marginVertical: 8,
+  },
+  editingTotalLabel: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  editingTotalValue: {
+    color: '#8b5cf6',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  editingButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  editingCancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  editingCancelText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  editingSubmitButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: '#8b5cf6',
+    borderRadius: 12,
+  },
+  editingSubmitText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   
   reviewBadge: {
     paddingHorizontal: 8,
