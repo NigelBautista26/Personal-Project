@@ -1077,8 +1077,17 @@ export default function CustomerBookingsScreen() {
                             amount: total,
                             pricingModel: service.pricingModel,
                           });
-                          setEditingPaymentToken(response.token);
-                          setShowEditingPaymentWebView(true);
+                          // Open payment page in browser
+                          await Linking.openURL(`${API_URL}/mobile-editing-checkout?token=${response.token}`);
+                          // Close the photo gallery modal
+                          setShowEditingFormInGallery(false);
+                          setSelectedBookingPhotos(null);
+                          // Show instruction to user
+                          Alert.alert(
+                            'Complete Payment',
+                            'Please complete the payment in your browser. Once done, return here and pull down to refresh your bookings.',
+                            [{ text: 'OK' }]
+                          );
                         } catch (error: any) {
                           Alert.alert('Error', error.message || 'Failed to start payment');
                         } finally {
