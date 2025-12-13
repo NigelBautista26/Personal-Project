@@ -43,6 +43,7 @@ export default function PhotographerProfileScreen() {
   const [photoToDelete, setPhotoToDelete] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploadingProfilePic, setIsUploadingProfilePic] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const getImageUrl = (path?: string | null) => {
     if (!path) return null;
@@ -202,9 +203,22 @@ export default function PhotographerProfileScreen() {
           </TouchableOpacity>
 
           {/* Edit Button */}
-          <TouchableOpacity style={styles.editButton}>
-            <Edit size={14} color="#fff" />
-            <Text style={styles.editButtonText}>Edit</Text>
+          <TouchableOpacity 
+            style={[styles.editButton, isEditMode && styles.editButtonActive]}
+            onPress={() => setIsEditMode(!isEditMode)}
+            testID="button-toggle-edit-mode"
+          >
+            {isEditMode ? (
+              <>
+                <X size={14} color="#fff" />
+                <Text style={styles.editButtonText}>Done</Text>
+              </>
+            ) : (
+              <>
+                <Edit size={14} color="#fff" />
+                <Text style={styles.editButtonText}>Edit</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           {/* Profile Picture Overlay */}
@@ -260,21 +274,23 @@ export default function PhotographerProfileScreen() {
         <View style={styles.portfolioSection}>
           <View style={styles.portfolioHeader}>
             <Text style={styles.sectionTitle}>Portfolio</Text>
-            <TouchableOpacity 
-              style={styles.addPhotoButton}
-              onPress={handleAddPhoto}
-              disabled={isUploading}
-              testID="button-add-portfolio-photo"
-            >
-              {isUploading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Plus size={16} color="#fff" />
-                  <Text style={styles.addPhotoButtonText}>Add</Text>
-                </>
-              )}
-            </TouchableOpacity>
+            {isEditMode && (
+              <TouchableOpacity 
+                style={styles.addPhotoButton}
+                onPress={handleAddPhoto}
+                disabled={isUploading}
+                testID="button-add-portfolio-photo"
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Plus size={16} color="#fff" />
+                    <Text style={styles.addPhotoButtonText}>Add</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
           
           {portfolioImages.length > 0 ? (
@@ -290,13 +306,15 @@ export default function PhotographerProfileScreen() {
                     source={{ uri: getImageUrl(imageUrl)! }} 
                     style={styles.portfolioImage}
                   />
-                  <TouchableOpacity 
-                    style={styles.deletePhotoButton}
-                    onPress={() => handleDeletePhoto(imageUrl)}
-                    testID={`button-delete-photo-${index}`}
-                  >
-                    <Trash2 size={12} color="#fff" />
-                  </TouchableOpacity>
+                  {isEditMode && (
+                    <TouchableOpacity 
+                      style={styles.deletePhotoButton}
+                      onPress={() => handleDeletePhoto(imageUrl)}
+                      testID={`button-delete-photo-${index}`}
+                    >
+                      <Trash2 size={12} color="#fff" />
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
               ))}
             </View>
@@ -465,6 +483,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  editButtonActive: {
+    backgroundColor: PRIMARY_COLOR,
   },
   editButtonText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   
