@@ -18,7 +18,15 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { MapPin, Users, ChevronRight, Layers, Navigation, X, Search, Check, Crosshair } from 'lucide-react-native';
 import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from '../../../src/components/SafeMapView';
-import type { Region, MapType } from 'react-native-maps';
+
+// Types for map (react-native-maps removed from Expo Go SDK 54)
+type Region = {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+};
+type MapType = 'standard' | 'satellite' | 'hybrid' | 'terrain';
 import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
