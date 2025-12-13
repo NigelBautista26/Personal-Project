@@ -94,6 +94,9 @@ export default function CustomerBookingsScreen() {
   
   // Photo selection for editing
   const [selectedPhotosForEditing, setSelectedPhotosForEditing] = useState<Set<string>>(new Set());
+  
+  // Show editing form inside photo gallery modal (no separate modal needed)
+  const [showEditingFormInGallery, setShowEditingFormInGallery] = useState(false);
 
   const { data: bookings, isLoading, refetch } = useQuery({
     queryKey: ['customer-bookings'],
@@ -207,7 +210,9 @@ export default function CustomerBookingsScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editingRequests'] });
       setEditingModalBooking(null);
+      setShowEditingFormInGallery(false);
       setSelectedBookingPhotos(null);
+      setEditingNotes('');
       Alert.alert(
         'Request Sent!', 
         'Your editing request has been sent to the photographer. They will respond soon.'
@@ -375,6 +380,8 @@ export default function CustomerBookingsScreen() {
         setSelectedBookingPhotos({ ...data, booking });
         setViewingPhotoIndex(0);
         setSelectedPhotosForEditing(new Set()); // Reset selection when opening
+        setShowEditingFormInGallery(false); // Reset editing form state
+        setEditingNotes(''); // Reset notes
       } else {
         Alert.alert('No Photos Yet', 'The photographer has not uploaded photos for this session yet.');
       }
@@ -892,42 +899,172 @@ export default function CustomerBookingsScreen() {
         visible={!!selectedBookingPhotos}
         animationType="slide"
         presentationStyle="pageSheet"
-        onRequestClose={() => setSelectedBookingPhotos(null)}
+        onRequestClose={() => {
+          if (showEditingFormInGallery) {
+            setShowEditingFormInGallery(false);
+          } else {
+            setSelectedBookingPhotos(null);
+          }
+        }}
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Your Photos</Text>
-            <TouchableOpacity onPress={() => setSelectedBookingPhotos(null)} style={styles.modalCloseButton}>
+            {showEditingFormInGallery ? (
+              <>
+                <TouchableOpacity 
+                  onPress={() => setShowEditingFormInGallery(false)} 
+                  style={styles.modalBackButton}
+                >
+                  <ChevronLeft size={24} color="#fff" />
+                </TouchableOpacity>
+                <View style={styles.modalTitleRow}>
+                  <Palette size={20} color="#8b5cf6" />
+                  <View>
+                    <Text style={styles.modalTitle}>Request Photo Editing</Text>
+                    <Text style={styles.modalSubtitle}>Professional editing for your photos</Text>
+                  </View>
+                </View>
+              </>
+            ) : (
+              <Text style={styles.modalTitle}>Your Photos</Text>
+            )}
+            <TouchableOpacity 
+              onPress={() => {
+                setShowEditingFormInGallery(false);
+                setSelectedBookingPhotos(null);
+              }} 
+              style={styles.modalCloseButton}
+            >
               <X size={24} color="#fff" />
             </TouchableOpacity>
           </View>
           
-          {/* Request Editing section - show if photographer offers editing and no existing request */}
-          {selectedBookingPhotos?.booking && (() => {
-            const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
-            const bookingId = String(selectedBookingPhotos.booking.id);
-            const service = editingServicesMap[photographerId];
-            const existingRequest = editingRequestsMap[bookingId];
-            const showEditingOption = service?.isEnabled && !existingRequest;
-            const selectedCount = selectedPhotosForEditing.size;
-            const perPhotoRate = parseFloat(service?.perPhotoRate || '0');
-            const flatRate = parseFloat(service?.flatRate || '0');
-            const estimatedCost = service?.pricingModel === 'flat' 
-              ? flatRate
-              : perPhotoRate * (selectedCount || 1);
-            
-            return (
-              <View style={styles.downloadAllContainer}>
-                <TouchableOpacity 
-                  style={styles.downloadAllButton}
-                  onPress={() => handleDownloadPhotos(selectedBookingPhotos?.photos || [])}
-                >
-                  <Download size={16} color="#fff" />
-                  <Text style={styles.downloadAllText}>Download All</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })()}
+          {/* Show editing form OR photo gallery content */}
+          {showEditingFormInGallery && selectedBookingPhotos?.booking ? (
+            // INLINE EDITING FORM
+            (() => {
+              const photographerId = String((selectedBookingPhotos.booking as any).photographerId);
+              const service = editingServicesMap[photographerId];
+              if (!service) return null;
+              
+              const photosToEdit = service.pricingModel === 'flat' 
+                ? selectedBookingPhotos.photos 
+                : Array.from(selectedPhotosForEditing);
+              const photoCount = photosToEdit.length;
+              const baseAmount = service.pricingModel === 'flat'
+                ? parseFloat(service.flatRate || '0')
+                : parseFloat(service.perPhotoRate || '0') * photoCount;
+              const serviceFee = baseAmount * 0.10;
+              const total = baseAmount + serviceFee;
+              
+              return (
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16 }}>
+                  <View style={styles.editingPricingCard}>
+                    <Text style={styles.editingPricingTitle}>Pricing</Text>
+                    {service.pricingModel === 'flat' ? (
+                      <View style={styles.editingPriceRow}>
+                        <Text style={styles.editingPriceAmount}>£{parseFloat(service.flatRate || '0').toFixed(2)}</Text>
+                        <Text style={styles.editingPriceLabel}>flat rate for all photos</Text>
+                      </View>
+                    ) : (
+                      <View>
+                        <View style={styles.editingPriceRow}>
+                          <Text style={styles.editingPriceAmount}>£{parseFloat(service.perPhotoRate || '0').toFixed(2)}</Text>
+                          <Text style={styles.editingPriceLabel}>per photo</Text>
+                        </View>
+                        <Text style={styles.editingPhotoCount}>{photoCount} photo{photoCount !== 1 ? 's' : ''} selected for editing</Text>
+                      </View>
+                    )}
+                    {service.description ? (
+                      <Text style={styles.editingDescription}>{service.description}</Text>
+                    ) : (
+                      <Text style={styles.editingDescription}>Professional color correction and retouching</Text>
+                    )}
+                    <Text style={styles.editingTurnaround}>
+                      Estimated delivery: {service.turnaroundDays} {service.turnaroundDays === 1 ? 'day' : 'days'}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.editingNotesSection}>
+                    <Text style={styles.editingNotesLabel}>Special requests (optional)</Text>
+                    <TextInput
+                      style={styles.editingNotesInput}
+                      value={editingNotes}
+                      onChangeText={setEditingNotes}
+                      placeholder="Any specific editing style or requests..."
+                      placeholderTextColor="#52525b"
+                      multiline
+                      numberOfLines={3}
+                      textAlignVertical="top"
+                    />
+                  </View>
+                  
+                  <View style={styles.editingPriceSummary}>
+                    <View style={styles.editingSummaryRow}>
+                      <Text style={styles.editingSummaryLabel}>
+                        Editing {service.pricingModel === 'per_photo' ? `(${photoCount} photos)` : ''}
+                      </Text>
+                      <Text style={styles.editingSummaryValue}>£{baseAmount.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.editingSummaryRow}>
+                      <Text style={styles.editingSummaryLabel}>Service fee (10%)</Text>
+                      <Text style={styles.editingSummaryValue}>£{serviceFee.toFixed(2)}</Text>
+                    </View>
+                    <View style={styles.editingDivider} />
+                    <View style={styles.editingSummaryRow}>
+                      <Text style={styles.editingTotalLabel}>Total</Text>
+                      <Text style={styles.editingTotalValue}>£{total.toFixed(2)}</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.editingButtons}>
+                    <TouchableOpacity 
+                      style={styles.editingCancelButton}
+                      onPress={() => setShowEditingFormInGallery(false)}
+                    >
+                      <Text style={styles.editingCancelText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={styles.editingSubmitButton}
+                      onPress={() => {
+                        createEditingRequestMutation.mutate({
+                          bookingId: String(selectedBookingPhotos.booking.id),
+                          photographerId,
+                          photoCount: service.pricingModel === 'per_photo' ? photoCount : undefined,
+                          customerNotes: editingNotes || undefined,
+                          requestedPhotoUrls: photosToEdit,
+                        });
+                      }}
+                      disabled={createEditingRequestMutation.isPending}
+                    >
+                      {createEditingRequestMutation.isPending ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Palette size={16} color="#fff" />
+                          <Text style={styles.editingSubmitText}>Request Editing</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </ScrollView>
+              );
+            })()
+          ) : (
+            // PHOTO GALLERY CONTENT
+            <>
+              {/* Download All button */}
+              {selectedBookingPhotos?.booking && (
+                <View style={styles.downloadAllContainer}>
+                  <TouchableOpacity 
+                    style={styles.downloadAllButton}
+                    onPress={() => handleDownloadPhotos(selectedBookingPhotos?.photos || [])}
+                  >
+                    <Download size={16} color="#fff" />
+                    <Text style={styles.downloadAllText}>Download All</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
           
           {/* Selection hint and Request Editing button */}
           {selectedBookingPhotos?.booking && (() => {
@@ -962,20 +1099,8 @@ export default function CustomerBookingsScreen() {
                       Alert.alert('Select Photos', 'Please tap on photos below to select which ones you want edited.');
                       return;
                     }
-                    const photosToEdit = service?.pricingModel === 'flat' 
-                      ? selectedBookingPhotos.photos 
-                      : Array.from(selectedPhotosForEditing);
-                    const editingData = {
-                      bookingId: String(selectedBookingPhotos.booking.id),
-                      photographerId: String((selectedBookingPhotos.booking as any).photographerId),
-                      photos: photosToEdit,
-                      service: service!,
-                    };
-                    setEditingNotes('');
-                    setSelectedBookingPhotos(null);
-                    setTimeout(() => {
-                      setEditingModalBooking(editingData);
-                    }, 100);
+                    // Show editing form inline within the same modal
+                    setShowEditingFormInGallery(true);
                   }}
                   disabled={createEditingRequestMutation.isPending}
                 >
@@ -1073,6 +1198,8 @@ export default function CustomerBookingsScreen() {
               </>
             )}
           </ScrollView>
+            </>
+          )}
         </SafeAreaView>
       </Modal>
 
@@ -2101,6 +2228,7 @@ const styles = StyleSheet.create({
   modalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   modalTitle: { fontSize: 18, fontWeight: '700', color: '#fff' },
   modalSubtitle: { fontSize: 13, color: '#9ca3af', marginTop: 2 },
+  modalBackButton: { padding: 8, marginRight: 4 },
   modalCloseButton: { padding: 8 },
   modalMessage: { color: '#9ca3af', fontSize: 14, paddingHorizontal: 16, paddingVertical: 12 },
   
