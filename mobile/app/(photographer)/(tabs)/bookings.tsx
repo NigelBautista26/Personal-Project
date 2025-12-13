@@ -391,7 +391,7 @@ export default function PhotographerBookingsScreen() {
   const renderEditingRequestCard = (
     request: EditingRequest, 
     borderColor: string = 'rgba(255,255,255,0.1)',
-    options: { showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean; isDeclined?: boolean } = {}
+    options: { showEditingUpload?: boolean; showRevisionUpload?: boolean; isAwaitingApproval?: boolean; isApproved?: boolean; showAcceptDecline?: boolean; isDeclined?: boolean } = {}
   ) => {
     const isDelivered = options.isAwaitingApproval || options.isApproved;
     const photosToShow = isDelivered && request.editedPhotoUrls?.length 
@@ -484,6 +484,17 @@ export default function PhotographerBookingsScreen() {
               )}
             </ScrollView>
           </View>
+        )}
+
+        {options.showEditingUpload && (
+          <TouchableOpacity 
+            style={[styles.uploadButton, { backgroundColor: '#3b82f6' }]}
+            onPress={() => router.push(`/(photographer)/booking/${request.bookingId}`)}
+            testID={`button-upload-editing-${request.id}`}
+          >
+            <Upload size={18} color="#fff" />
+            <Text style={styles.uploadButtonText}>Upload Edited Photos</Text>
+          </TouchableOpacity>
         )}
 
         {options.showRevisionUpload && (
@@ -660,7 +671,7 @@ export default function PhotographerBookingsScreen() {
               undefined,
               '#3b82f6'
             )}
-            {activeEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(59, 130, 246, 0.3)'))}
+            {activeEditingRequests.map(request => renderEditingRequestCard(request, 'rgba(59, 130, 246, 0.3)', { showEditingUpload: true }))}
           </View>
         )}
 
