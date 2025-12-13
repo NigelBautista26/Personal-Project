@@ -40,7 +40,7 @@ import {
   liveLocations
 } from "@shared/schema";
 import { db } from "@db";
-import { eq, and, desc, lt, or, isNull } from "drizzle-orm";
+import { eq, and, desc, lt, or, isNull, sql } from "drizzle-orm";
 
 export type PhotographerWithUser = Photographer & { fullName: string; email?: string };
 
@@ -526,14 +526,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addPhotoToDelivery(id: string, photoUrl: string): Promise<PhotoDelivery | undefined> {
-    const delivery = await this.getPhotoDelivery(id);
-    if (!delivery) return undefined;
+    // Use atomic array_append to avoid race conditions when uploading multiple photos
+    const result = await db.execute(sql`
+      UPDATE photo_deliveries 
+      SET photos = array_append(COALESCE(photos, ARRAY[]::text[]), ${photoUrl})
+      WHERE id = ${id}
+      RETURNING *
+    `);
     
-    const currentPhotos = delivery.photos || [];
-    const updatedPhotos = [...currentPhotos, photoUrl];
+    if (result.rows.length === 0) return undefined;
     
-    const result = await db.update(photoDeliveries).set({ photos: updatedPhotos }).where(eq(photoDeliveries.id, id)).returning();
-    return result[0];
+    const row = result.rows[0] as any;
+    return {
+      id: row.id,
+      bookingId: row.booking_id,
+      photographerId: row.photographer_id,
+      photos: row.photos,
+      message: row.message,
+      deliveredAt: row.delivered_at,
+      downloadedAt: row.downloaded_at,
+    };
   }
 
   async markPhotoDeliveryDownloaded(id: string): Promise<PhotoDelivery | undefined> {
