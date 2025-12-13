@@ -41,6 +41,8 @@ export default function BookingDetailScreen() {
     queryKey: ['photoDelivery', id],
     queryFn: () => snapnowApi.getPhotoDelivery(id!),
     enabled: !!id && booking?.status === 'completed',
+    refetchOnMount: 'always',
+    staleTime: 0,
   });
 
   const photos = photoDelivery?.photos || [];
