@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import { router, useRootNavigationState } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
 import { useAuth } from '../src/context/AuthContext';
@@ -9,16 +9,23 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function WelcomeScreen() {
   const { isAuthenticated, user, isLoading } = useAuth();
+  const rootNavigationState = useRootNavigationState();
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
+    // Wait for navigation to be ready before redirecting
+    if (!rootNavigationState?.key) return;
+    if (hasNavigated) return;
+    
     if (!isLoading && isAuthenticated && user) {
+      setHasNavigated(true);
       if (user.role === 'photographer') {
         router.replace('/(photographer)');
       } else {
         router.replace('/(customer)');
       }
     }
-  }, [isLoading, isAuthenticated, user]);
+  }, [isLoading, isAuthenticated, user, rootNavigationState?.key, hasNavigated]);
 
   if (isLoading) {
     return (
