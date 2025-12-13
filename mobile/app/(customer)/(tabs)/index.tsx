@@ -21,7 +21,6 @@ import { SafeMapView, SafeMarker, PROVIDER_GOOGLE } from '../../../src/component
 import MapView, { Region, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { snapnowApi, PhotographerProfile, Booking } from '../../../src/api/snapnowApi';
-import { API_URL } from '../../../src/api/client';
 import { useAuth } from '../../../src/context/AuthContext';
 import { useCity, City, POPULAR_CITIES } from '../../../src/context/CityContext';
 
@@ -155,7 +154,6 @@ export default function CustomerMapScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapType, setMapType] = useState<MapType>('standard');
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [markersReady, setMarkersReady] = useState(false);
   const [photographerLiveLocation, setPhotographerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string } | null>(null);
 
   const { data: photographers, isLoading } = useQuery({
@@ -240,23 +238,6 @@ export default function CustomerMapScreen() {
     }
   }, [selectedCity]);
 
-  // Force markers to render after data loads
-  useEffect(() => {
-    if (photographers && photographers.length > 0 && !markersReady) {
-      const timer = setTimeout(() => {
-        setMarkersReady(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [photographers, markersReady]);
-
-  const getImageUrl = (photographer: PhotographerProfile) => {
-    const path = photographer.profileImageUrl || photographer.profilePicture;
-    if (!path) return 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200';
-    if (path.startsWith('http')) return path;
-    return `${API_URL}${path}`;
-  };
-
   const filteredPhotographers = useMemo(() => {
     if (!photographers || photographers.length === 0) return [];
     
@@ -332,7 +313,7 @@ export default function CustomerMapScreen() {
         userInterfaceStyle="dark"
         testID="map-view"
       >
-        {/* Photographer Markers */}
+        {/* Photographer Markers - Using simple pins for Fabric compatibility */}
         {filteredPhotographers.map((photographer, index) => {
           const lat = Number(photographer.latitude);
           const lng = Number(photographer.longitude);
@@ -343,46 +324,32 @@ export default function CustomerMapScreen() {
           
           return (
             <SafeMarker
-              key={`photographer-${photographer.id}-${markersReady}`}
+              key={`photographer-${photographer.id}`}
               coordinate={{
                 latitude: coords.lat,
                 longitude: coords.lng,
               }}
+              pinColor={isAvailable ? '#22c55e' : PRIMARY_COLOR}
+              title={photographer.bio || 'Photographer'}
+              description={`£${photographer.hourlyRate}/hr`}
               onPress={() => handlePhotographerPress(photographer)}
               testID={`marker-photographer-${photographer.id}`}
-              tracksViewChanges={!markersReady}
-            >
-              <View style={styles.photographerMarker}>
-                <Image
-                  source={{ uri: getImageUrl(photographer) }}
-                  style={[styles.photographerMarkerImage, isAvailable && { borderColor: '#22c55e' }]}
-                />
-                <View style={styles.photographerMarkerPrice}>
-                  <Text style={styles.photographerMarkerPriceText}>£{photographer.hourlyRate}</Text>
-                </View>
-              </View>
-            </SafeMarker>
+            />
           );
         })}
 
-        {/* Photo Spot Markers */}
+        {/* Photo Spot Markers - Using simple pins for Fabric compatibility */}
         {photoSpots.map((spot) => (
           <SafeMarker
-            key={`spot-${spot.id}-${markersReady}`}
+            key={`spot-${spot.id}`}
             coordinate={{
               latitude: spot.latitude,
               longitude: spot.longitude,
             }}
+            pinColor="#f59e0b"
+            title={spot.name}
             testID={`marker-spot-${spot.id}`}
-            tracksViewChanges={!markersReady}
-          >
-            <View style={styles.spotMarker}>
-              <Image
-                source={{ uri: spot.image }}
-                style={styles.spotImage}
-              />
-            </View>
-          </SafeMarker>
+          />
         ))}
 
         {/* Photographer Live Location Marker */}
@@ -393,15 +360,11 @@ export default function CustomerMapScreen() {
               latitude: photographerLiveLocation.lat,
               longitude: photographerLiveLocation.lng,
             }}
+            pinColor="#ef4444"
             title="Photographer's Location"
             onPress={() => router.push(`/(customer)/booking/${photographerLiveLocation.bookingId}`)}
             testID="marker-photographer-live"
-          >
-            <View style={styles.liveLocationMarker}>
-              <View style={styles.liveLocationPulse} />
-              <View style={styles.liveLocationDot} />
-            </View>
-          </SafeMarker>
+          />
         )}
       </SafeMapView>
 
@@ -702,89 +665,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',
-  },
-  markerArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: '#374151',
-    marginTop: -1,
-  },
-  markerArrowAvailable: {
-    borderTopColor: PRIMARY_COLOR,
-  },
-  spotMarker: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#f59e0b',
-    backgroundColor: '#1a1a1a',
-  },
-  spotImage: {
-    width: '100%',
-    height: '100%',
-  },
-  liveLocationMarker: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  liveLocationPulse: {
-    position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
-  },
-  liveLocationDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#22c55e',
-    borderWidth: 3,
-    borderColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  photographerMarker: {
-    width: 50,
-    height: 56,
-    alignItems: 'center',
-  },
-  photographerMarkerAvailable: {
-    // Green glow effect handled by border
-  },
-  photographerMarkerImage: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 3,
-    borderColor: '#3b82f6',
-    backgroundColor: '#1a1a1a',
-  },
-  photographerMarkerPrice: {
-    backgroundColor: '#1a1a1a',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    marginTop: -8,
-    borderWidth: 1,
-    borderColor: '#333',
-  },
-  photographerMarkerPriceText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '600',
   },
   loadingOverlay: {
     position: 'absolute',
