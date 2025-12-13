@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { ChevronRight } from 'lucide-react-native';
 import PhotoBackground from '../src/components/PhotoBackground';
 import { useAuth } from '../src/context/AuthContext';
 
@@ -73,7 +73,7 @@ export default function WelcomeScreen() {
               testID="button-login"
             >
               <Text style={styles.loginLinkText}>Log in</Text>
-              <Feather name="chevron-right" size={14} color="#fff" />
+              <ChevronRight size={14} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>

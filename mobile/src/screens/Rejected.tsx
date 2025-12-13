@@ -6,7 +6,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { XCircle, LogOut, Mail } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
 import PhotoBackground from '../components/PhotoBackground';
 
@@ -25,7 +25,7 @@ export default function RejectedScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <Feather name="x-circle" size={64} color="#ef4444" />
+            <XCircle size={64} color="#ef4444" />
           </View>
 
           <Text style={styles.title}>Application Not Approved</Text>
@@ -45,7 +45,7 @@ export default function RejectedScreen() {
           </Text>
 
           <TouchableOpacity style={styles.contactButton}>
-            <Feather name="mail" size={20} color="#fff" />
+            <Mail size={20} color="#fff" />
             <Text style={styles.contactButtonText}>Contact Support</Text>
           </TouchableOpacity>
 
@@ -53,7 +53,7 @@ export default function RejectedScreen() {
             style={styles.logoutButton}
             onPress={handleLogout}
           >
-            <Feather name="log-out" size={18} color="#ef4444" />
+            <LogOut size={18} color="#ef4444" />
             <Text style={styles.logoutText}>Log out</Text>
           </TouchableOpacity>
         </View>

@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -83,7 +83,7 @@ export default function LoginScreen() {
               onPress={() => router.back()}
               testID="button-back"
             >
-              <Feather name="arrow-left" size={24} color="#fff" />
+              <ArrowLeft size={24} color="#fff" />
             </TouchableOpacity>
 
             <View style={styles.card}>
@@ -94,7 +94,7 @@ export default function LoginScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Email</Text>
                   <View style={[styles.inputWrapper, errors.email && styles.inputWrapperError]}>
-                    <Feather name="mail" size={20} color="#6b7280" style={styles.inputIcon} />
+                    <Mail size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
@@ -115,7 +115,7 @@ export default function LoginScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Password</Text>
                   <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
-                    <Feather name="lock" size={20} color="#6b7280" style={styles.inputIcon} />
+                    <Lock size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your password"
@@ -134,9 +134,9 @@ export default function LoginScreen() {
                       onPress={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <Feather name="eye-off" size={20} color="#6b7280" />
+                        <EyeOff size={20} color="#6b7280" />
                       ) : (
-                        <Feather name="eye" size={20} color="#6b7280" />
+                        <Eye size={20} color="#6b7280" />
                       )}
                     </TouchableOpacity>
                   </View>

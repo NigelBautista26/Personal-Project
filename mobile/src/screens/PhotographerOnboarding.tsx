@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import * as Location from 'expo-location';
-import { Feather } from '@expo/vector-icons';
+import { MapPin, DollarSign, Instagram, Globe, FileText, LogOut, Camera } from 'lucide-react-native';
 import { useMutation } from '@tanstack/react-query';
 import { snapnowApi } from '../api/snapnowApi';
 import { useAuth } from '../context/AuthContext';
@@ -94,7 +94,7 @@ export default function PhotographerOnboardingScreen() {
           <View style={styles.card}>
             <View style={styles.header}>
               <View style={styles.iconContainer}>
-                <Feather name="camera" size={32} color={PRIMARY_COLOR} />
+                <Camera size={32} color={PRIMARY_COLOR} />
               </View>
               <Text style={styles.title}>Complete Your Profile</Text>
               <Text style={styles.subtitle}>
@@ -106,7 +106,7 @@ export default function PhotographerOnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Hourly Rate (£)</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="dollar-sign" size={20} color="#6b7280" style={styles.inputIcon} />
+                  <DollarSign size={20} color="#6b7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. 75"
@@ -121,7 +121,7 @@ export default function PhotographerOnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>City</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="map-pin" size={20} color="#6b7280" style={styles.inputIcon} />
+                  <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="e.g. London"
@@ -139,7 +139,7 @@ export default function PhotographerOnboardingScreen() {
                     <ActivityIndicator size="small" color={PRIMARY_COLOR} />
                   ) : (
                     <>
-                      <Feather name="map-pin" size={16} color={PRIMARY_COLOR} />
+                      <MapPin size={16} color={PRIMARY_COLOR} />
                       <Text style={styles.locationButtonText}>Use Current Location</Text>
                     </>
                   )}
@@ -152,7 +152,7 @@ export default function PhotographerOnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Bio (optional)</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="file-text" size={20} color="#6b7280" style={[styles.inputIcon, { top: 16 }]} />
+                  <FileText size={20} color="#6b7280" style={[styles.inputIcon, { top: 16 }]} />
                   <TextInput
                     style={[styles.input, styles.textArea]}
                     placeholder="Tell clients about yourself..."
@@ -169,7 +169,7 @@ export default function PhotographerOnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Instagram URL (required for verification)</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="instagram" size={20} color="#e1306c" style={styles.inputIcon} />
+                  <Instagram size={20} color="#e1306c" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="https://instagram.com/yourprofile"
@@ -185,7 +185,7 @@ export default function PhotographerOnboardingScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Website URL (optional)</Text>
                 <View style={styles.inputWrapper}>
-                  <Feather name="globe" size={20} color={PRIMARY_COLOR} style={styles.inputIcon} />
+                  <Globe size={20} color={PRIMARY_COLOR} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
                     placeholder="https://yourwebsite.com"
@@ -223,7 +223,7 @@ export default function PhotographerOnboardingScreen() {
                   <ActivityIndicator size="small" color="#9ca3af" />
                 ) : (
                   <>
-                    <Feather name="log-out" size={18} color="#9ca3af" style={styles.finishLaterIcon} />
+                    <LogOut size={18} color="#9ca3af" style={styles.finishLaterIcon} />
                     <Text style={styles.finishLaterText}>Finish later</Text>
                   </>
                 )}

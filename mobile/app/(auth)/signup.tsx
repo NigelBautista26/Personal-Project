@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Feather } from '@expo/vector-icons';
+import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react-native';
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -105,7 +105,7 @@ export default function SignupScreen() {
               onPress={() => router.back()}
               testID="button-back"
             >
-              <Feather name="arrow-left" size={24} color="#fff" />
+              <ArrowLeft size={24} color="#fff" />
             </TouchableOpacity>
 
             <View style={styles.card}>
@@ -118,7 +118,7 @@ export default function SignupScreen() {
                   onPress={() => setRole('customer')}
                   testID="button-role-customer"
                 >
-                  <Feather name="user" size={20} color={role === 'customer' ? '#fff' : '#9ca3af'} />
+                  <User size={20} color={role === 'customer' ? '#fff' : '#9ca3af'} />
                   <Text style={[styles.roleText, role === 'customer' && styles.roleTextActive]}>
                     Customer
                   </Text>
@@ -128,7 +128,7 @@ export default function SignupScreen() {
                   onPress={() => setRole('photographer')}
                   testID="button-role-photographer"
                 >
-                  <Feather name="camera" size={20} color={role === 'photographer' ? '#fff' : '#9ca3af'} />
+                  <Camera size={20} color={role === 'photographer' ? '#fff' : '#9ca3af'} />
                   <Text style={[styles.roleText, role === 'photographer' && styles.roleTextActive]}>
                     Photographer
                   </Text>
@@ -139,7 +139,7 @@ export default function SignupScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Full name</Text>
                   <View style={[styles.inputWrapper, errors.fullName && styles.inputWrapperError]}>
-                    <Feather name="user" size={20} color="#6b7280" style={styles.inputIcon} />
+                    <User size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your name"
@@ -159,7 +159,7 @@ export default function SignupScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Email</Text>
                   <View style={[styles.inputWrapper, errors.email && styles.inputWrapperError]}>
-                    <Feather name="mail" size={20} color="#6b7280" style={styles.inputIcon} />
+                    <Mail size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Enter your email"
@@ -180,7 +180,7 @@ export default function SignupScreen() {
                 <View style={styles.inputContainer}>
                   <Text style={styles.label}>Password</Text>
                   <View style={[styles.inputWrapper, errors.password && styles.inputWrapperError]}>
-                    <Feather name="lock" size={20} color="#6b7280" style={styles.inputIcon} />
+                    <Lock size={20} color="#6b7280" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       placeholder="Create a password (min 6 chars)"
@@ -199,9 +199,9 @@ export default function SignupScreen() {
                       onPress={() => setShowPassword(!showPassword)}
                     >
                       {showPassword ? (
-                        <Feather name="eye-off" size={20} color="#6b7280" />
+                        <EyeOff size={20} color="#6b7280" />
                       ) : (
-                        <Feather name="eye" size={20} color="#6b7280" />
+                        <Eye size={20} color="#6b7280" />
                       )}
                     </TouchableOpacity>
                   </View>
