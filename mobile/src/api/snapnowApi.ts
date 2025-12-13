@@ -210,6 +210,23 @@ export const snapnowApi = {
     return response.data;
   },
 
+  async getEditingRequestByBooking(bookingId: string): Promise<EditingRequest | null> {
+    try {
+      const response = await api.get<EditingRequest>(`/api/editing-requests/booking/${bookingId}`);
+      return response.data;
+    } catch {
+      return null;
+    }
+  },
+
+  async deliverEditedPhotos(requestId: string, editedPhotos: string[], photographerNotes?: string): Promise<EditingRequest> {
+    const response = await api.post<EditingRequest>(`/api/editing-requests/${requestId}/deliver`, {
+      editedPhotos,
+      photographerNotes,
+    });
+    return response.data;
+  },
+
   // Photo delivery methods
   async getPhotoDelivery(bookingId: string): Promise<{ id: string; photos: string[]; message?: string } | null> {
     try {

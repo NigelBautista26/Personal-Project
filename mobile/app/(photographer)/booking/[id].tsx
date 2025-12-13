@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign, Camera, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign, Camera, ChevronLeft, ChevronRight, CheckCircle, Palette, MessageSquare } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
@@ -62,6 +62,12 @@ export default function PhotographerBookingDetailScreen() {
   // Photo fullscreen viewer state
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
   
+  // Editing request state
+  const [showEditingModal, setShowEditingModal] = useState(false);
+  const [editedPhotos, setEditedPhotos] = useState<string[]>([]);
+  const [photographerNotes, setPhotographerNotes] = useState('');
+  const [isUploadingEdited, setIsUploadingEdited] = useState(false);
+  const [selectedEditedPhotos, setSelectedEditedPhotos] = useState<Set<string>>(new Set());
 
   const { data: booking, isLoading, error, refetch } = useQuery({
     queryKey: ['booking', id],
@@ -74,6 +80,13 @@ export default function PhotographerBookingDetailScreen() {
     queryKey: ['photo-delivery', id],
     queryFn: () => snapnowApi.getPhotoDelivery(id!),
     enabled: !!id && (booking?.status === 'photos_pending' || booking?.status === 'completed'),
+  });
+
+  // Fetch editing request for this booking (enabled whenever booking exists)
+  const { data: editingRequest, refetch: refetchEditingRequest } = useQuery({
+    queryKey: ['editing-request', id],
+    queryFn: () => snapnowApi.getEditingRequestByBooking(id!),
+    enabled: !!id && !!booking,
   });
 
   const confirmMutation = useMutation({
@@ -294,6 +307,133 @@ export default function PhotographerBookingDetailScreen() {
     setShowSuccessModal(true);
   };
 
+  // Editing request functions
+  const handleOpenEditingModal = () => {
+    if (!editingRequest) return;
+    if (editingRequest.editedPhotoUrls && editingRequest.editedPhotoUrls.length > 0) {
+      setEditedPhotos(editingRequest.editedPhotoUrls);
+    } else {
+      setEditedPhotos([]);
+    }
+    setPhotographerNotes('');
+    setShowEditingModal(true);
+  };
+
+  const handlePickEditedImages = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      setErrorMessage({ title: 'Permission Needed', message: 'Please allow access to your photo library to upload photos.' });
+      setShowErrorModal(true);
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets.length > 0) {
+      setIsUploadingEdited(true);
+      try {
+        const newPhotos: string[] = [];
+        for (const asset of result.assets) {
+          const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
+          
+          const base64Data = asset.base64;
+          if (!base64Data) {
+            throw new Error('No base64 data available');
+          }
+          
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadURL);
+            xhr.setRequestHeader('Content-Type', asset.mimeType || 'image/jpeg');
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+              } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(bytes.buffer);
+          });
+
+          // Set ACL for the photo - continue even if ACL fails
+          try {
+            await api.post('/api/objects/acl', { objectPath });
+          } catch (aclError) {
+            console.warn('ACL set failed for photo, continuing:', aclError);
+          }
+          newPhotos.push(objectPath);
+        }
+        setEditedPhotos(prev => [...prev, ...newPhotos]);
+        setSuccessMessage({ title: 'Photos Added', message: `${result.assets.length} edited photo${result.assets.length > 1 ? 's' : ''} uploaded!` });
+        setShowSuccessModal(true);
+      } catch (error) {
+        console.error('Upload error:', error);
+        setErrorMessage({ title: 'Upload Failed', message: 'Could not upload photos. Please try again.' });
+        setShowErrorModal(true);
+      } finally {
+        setIsUploadingEdited(false);
+      }
+    }
+  };
+
+  const toggleEditedPhotoSelection = (photoUrl: string) => {
+    setSelectedEditedPhotos(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoUrl)) {
+        newSet.delete(photoUrl);
+      } else {
+        newSet.add(photoUrl);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDeleteSelectedEditedPhotos = () => {
+    const count = selectedEditedPhotos.size;
+    setEditedPhotos(prev => prev.filter(p => !selectedEditedPhotos.has(p)));
+    setSelectedEditedPhotos(new Set());
+    setSuccessMessage({ title: 'Photos Removed', message: `${count} photo${count > 1 ? 's' : ''} removed.` });
+    setShowSuccessModal(true);
+  };
+
+  const handleDeliverEditedPhotos = async () => {
+    if (!editingRequest || editedPhotos.length === 0) return;
+    
+    try {
+      await snapnowApi.deliverEditedPhotos(editingRequest.id, editedPhotos, photographerNotes || undefined);
+      queryClient.invalidateQueries({ queryKey: ['editing-request', id] });
+      queryClient.invalidateQueries({ queryKey: ['photographer-editing-requests'] });
+      await refetchEditingRequest();
+      setShowEditingModal(false);
+      setEditedPhotos([]);
+      setPhotographerNotes('');
+      setSelectedEditedPhotos(new Set());
+      setSuccessMessage({ title: 'Photos Delivered', message: 'Your edited photos have been sent to the customer!' });
+      setShowSuccessModal(true);
+    } catch (error) {
+      setErrorMessage({ title: 'Delivery Failed', message: 'Could not deliver edited photos. Please try again.' });
+      setShowErrorModal(true);
+    }
+  };
+
+  // Check if this booking has an active editing request that needs work
+  const hasActiveEditingRequest = editingRequest && 
+    (editingRequest.status === 'accepted' || editingRequest.status === 'in_progress' || editingRequest.status === 'revision_requested');
+
   // Get the photos to display (for completed bookings)
   const deliveredPhotos = existingDelivery?.photos || [];
 
@@ -509,6 +649,91 @@ export default function PhotographerBookingDetailScreen() {
             <Text style={styles.sectionTitle}>Customer Notes</Text>
             <View style={styles.notesCard}>
               <Text style={styles.notesText}>{booking.notes}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Editing Request Section - shown whenever there's an active editing request */}
+        {hasActiveEditingRequest && editingRequest && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Palette size={20} color="#8b5cf6" />
+                <Text style={styles.sectionTitle}>
+                  {editingRequest.status === 'revision_requested' ? 'Revision Requested' : 'Editing Request'}
+                </Text>
+              </View>
+              <View style={[styles.editingStatusBadge, 
+                editingRequest.status === 'revision_requested' && styles.editingStatusRevision
+              ]}>
+                <Text style={[styles.editingStatusText,
+                  editingRequest.status === 'revision_requested' && styles.editingStatusTextRevision
+                ]}>
+                  {editingRequest.status === 'revision_requested' ? 'Needs Revision' : 'In Progress'}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.editingRequestCard}>
+              {/* Earnings from editing */}
+              <View style={styles.editingEarningsRow}>
+                <DollarSign size={18} color="#22c55e" />
+                <Text style={styles.editingEarningsLabel}>Editing Earnings:</Text>
+                <Text style={styles.editingEarningsValue}>
+                  £{parseFloat(editingRequest.photographerEarnings || '0').toFixed(2)}
+                </Text>
+              </View>
+
+              {/* Photos to edit */}
+              {editingRequest.requestedPhotoUrls && editingRequest.requestedPhotoUrls.length > 0 && (
+                <View style={styles.editingPhotosSection}>
+                  <Text style={styles.editingPhotosLabel}>
+                    Photos to Edit ({editingRequest.requestedPhotoUrls.length})
+                  </Text>
+                  <View style={styles.editingPhotoGrid}>
+                    {editingRequest.requestedPhotoUrls.slice(0, 6).map((photo, idx) => (
+                      <View key={idx} style={styles.editingPhotoThumbnail}>
+                        <Image 
+                          source={{ uri: getImageUrl(photo)! }} 
+                          style={styles.editingPhotoImage} 
+                        />
+                      </View>
+                    ))}
+                    {editingRequest.requestedPhotoUrls.length > 6 && (
+                      <View style={styles.editingPhotoMore}>
+                        <Text style={styles.editingPhotoMoreText}>
+                          +{editingRequest.requestedPhotoUrls.length - 6}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              )}
+
+              {/* Customer notes */}
+              {editingRequest.customerNotes && (
+                <View style={styles.editingNotesSection}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                    <MessageSquare size={16} color="#9ca3af" />
+                    <Text style={styles.editingNotesLabel}>Customer Notes</Text>
+                  </View>
+                  <Text style={styles.editingNotesText}>{editingRequest.customerNotes}</Text>
+                </View>
+              )}
+
+              {/* Upload Edited Photos Button */}
+              <TouchableOpacity
+                style={[styles.uploadEditedButton, 
+                  editingRequest.status === 'revision_requested' && styles.uploadEditedButtonRevision
+                ]}
+                onPress={handleOpenEditingModal}
+                testID="button-upload-edited-photos"
+              >
+                <Upload size={18} color="#fff" />
+                <Text style={styles.uploadEditedButtonText}>
+                  {editingRequest.status === 'revision_requested' ? 'Submit Revision' : 'Upload Edited Photos'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -878,6 +1103,186 @@ export default function PhotographerBookingDetailScreen() {
             )}
           </SafeAreaView>
         </View>
+      </Modal>
+
+      {/* Editing Upload Modal */}
+      <Modal
+        visible={showEditingModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setSelectedEditedPhotos(new Set());
+          setShowEditingModal(false);
+        }}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <KeyboardAvoidingView 
+            style={{ flex: 1 }} 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          >
+            <View style={styles.modalHeader}>
+              <TouchableOpacity 
+                onPress={() => {
+                  setSelectedEditedPhotos(new Set());
+                  setShowEditingModal(false);
+                }}
+                testID="button-close-editing-modal"
+              >
+                <X size={24} color="#fff" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>
+                {editingRequest?.status === 'revision_requested' ? 'Submit Revision' : 'Deliver Edited Photos'}
+              </Text>
+              <View style={{ width: 24 }} />
+            </View>
+
+            <ScrollView 
+              style={styles.modalContent} 
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Earnings reminder */}
+              {editingRequest && (
+                <View style={styles.editingModalEarnings}>
+                  <DollarSign size={16} color="#22c55e" />
+                  <Text style={styles.editingModalEarningsText}>
+                    Earnings: £{parseFloat(editingRequest.photographerEarnings || '0').toFixed(2)}
+                  </Text>
+                </View>
+              )}
+
+              {/* Original photos to edit */}
+              {editingRequest?.requestedPhotoUrls && editingRequest.requestedPhotoUrls.length > 0 && (
+                <View style={styles.editingModalSection}>
+                  <Text style={styles.editingModalSectionTitle}>
+                    Original Photos ({editingRequest.requestedPhotoUrls.length})
+                  </Text>
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.editingModalOriginalScroll}
+                  >
+                    {editingRequest.requestedPhotoUrls.map((photo, idx) => (
+                      <View key={idx} style={styles.editingModalOriginalPhoto}>
+                        <Image 
+                          source={{ uri: getImageUrl(photo)! }} 
+                          style={styles.editingModalOriginalImage} 
+                        />
+                      </View>
+                    ))}
+                  </ScrollView>
+                </View>
+              )}
+
+              {/* Customer notes */}
+              {editingRequest?.customerNotes && (
+                <View style={styles.editingModalSection}>
+                  <Text style={styles.editingModalSectionTitle}>Customer Notes</Text>
+                  <View style={styles.editingModalNotesCard}>
+                    <Text style={styles.editingModalNotesText}>{editingRequest.customerNotes}</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* Edited photos grid */}
+              <Text style={styles.photoCountLabel}>
+                {selectedEditedPhotos.size > 0 
+                  ? `${selectedEditedPhotos.size} selected` 
+                  : `Edited Photos (${editedPhotos.length})`}
+              </Text>
+              {selectedEditedPhotos.size === 0 && editedPhotos.length > 0 && (
+                <Text style={styles.photoHintLabel}>Tap photos to select for removal</Text>
+              )}
+              
+              <View style={styles.photoGrid}>
+                {editedPhotos.map((photo, idx) => {
+                  const isSelected = selectedEditedPhotos.has(photo);
+                  return (
+                    <TouchableOpacity 
+                      key={idx} 
+                      style={[styles.photoItem, isSelected && styles.photoItemSelected]}
+                      onPress={() => toggleEditedPhotoSelection(photo)}
+                      activeOpacity={0.8}
+                      testID={`edited-photo-item-${idx}`}
+                    >
+                      <Image 
+                        source={{ uri: getImageUrl(photo) || photo }} 
+                        style={[styles.photoImage, isSelected && styles.photoImageSelected]} 
+                      />
+                      {isSelected && (
+                        <View style={styles.photoSelectOverlay}>
+                          <View style={styles.photoCheckBadge}>
+                            <Check size={16} color="#fff" />
+                          </View>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+                
+                <TouchableOpacity 
+                  style={styles.addPhotoButton}
+                  onPress={handlePickEditedImages}
+                  disabled={isUploadingEdited}
+                  testID="button-add-edited-photos"
+                >
+                  {isUploadingEdited ? (
+                    <ActivityIndicator color="#8b5cf6" />
+                  ) : (
+                    <>
+                      <Plus size={24} color="#8b5cf6" />
+                      <Text style={[styles.addPhotoText, { color: '#8b5cf6' }]}>Add</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.messageLabel}>Notes for Customer (optional)</Text>
+              <TextInput
+                style={styles.messageInput}
+                placeholder="Add a note about the edits..."
+                placeholderTextColor="#6b7280"
+                value={photographerNotes}
+                onChangeText={setPhotographerNotes}
+                multiline
+                numberOfLines={3}
+              />
+              <View style={{ height: 120 }} />
+            </ScrollView>
+
+            {/* Selection Footer - shows when photos selected */}
+            {selectedEditedPhotos.size > 0 ? (
+              <View style={styles.selectionFooter}>
+                <View style={styles.selectionInfo}>
+                  <Text style={styles.selectionCountText}>{selectedEditedPhotos.size} selected</Text>
+                  <TouchableOpacity onPress={() => setSelectedEditedPhotos(new Set())}>
+                    <Text style={styles.clearSelectionText}>Clear</Text>
+                  </TouchableOpacity>
+                </View>
+                <TouchableOpacity
+                  style={styles.deleteSelectedButton}
+                  onPress={handleDeleteSelectedEditedPhotos}
+                >
+                  <Text style={styles.deleteSelectedButtonText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.modalFooter}>
+                <TouchableOpacity
+                  style={[styles.editingDeliverButton, editedPhotos.length === 0 && styles.deliverButtonDisabled]}
+                  onPress={handleDeliverEditedPhotos}
+                  disabled={editedPhotos.length === 0}
+                  testID="button-deliver-edited"
+                >
+                  <Upload size={18} color="#fff" />
+                  <Text style={styles.deliverButtonText}>
+                    Deliver {editedPhotos.length} Edited Photo{editedPhotos.length !== 1 ? 's' : ''}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
     </SafeAreaView>
   );
@@ -1465,5 +1870,175 @@ const styles = StyleSheet.create({
   },
   navButtonRight: {
     right: 16,
+  },
+
+  // Editing Request Section Styles
+  editingStatusBadge: {
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  editingStatusRevision: {
+    backgroundColor: 'rgba(249, 115, 22, 0.2)',
+  },
+  editingStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8b5cf6',
+  },
+  editingStatusTextRevision: {
+    color: '#f97316',
+  },
+  editingRequestCard: {
+    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.2)',
+  },
+  editingEarningsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
+  editingEarningsLabel: {
+    fontSize: 14,
+    color: '#9ca3af',
+  },
+  editingEarningsValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#22c55e',
+  },
+  editingPhotosSection: {
+    marginBottom: 16,
+  },
+  editingPhotosLabel: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginBottom: 8,
+  },
+  editingPhotoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  editingPhotoThumbnail: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  editingPhotoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  editingPhotoMore: {
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editingPhotoMoreText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontWeight: '600',
+  },
+  editingNotesSection: {
+    marginBottom: 16,
+  },
+  editingNotesLabel: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  editingNotesText: {
+    fontSize: 14,
+    color: '#d1d5db',
+    lineHeight: 20,
+  },
+  uploadEditedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  uploadEditedButtonRevision: {
+    backgroundColor: '#f97316',
+  },
+  uploadEditedButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Editing Modal Styles
+  editingModalEarnings: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  editingModalEarningsText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#22c55e',
+  },
+  editingModalSection: {
+    marginBottom: 20,
+  },
+  editingModalSectionTitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginBottom: 10,
+  },
+  editingModalOriginalScroll: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  editingModalOriginalPhoto: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginRight: 8,
+  },
+  editingModalOriginalImage: {
+    width: '100%',
+    height: '100%',
+  },
+  editingModalNotesCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  editingModalNotesText: {
+    fontSize: 14,
+    color: '#d1d5db',
+    lineHeight: 20,
+  },
+  editingDeliverButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#8b5cf6',
+    paddingVertical: 16,
+    borderRadius: 12,
   },
 });
