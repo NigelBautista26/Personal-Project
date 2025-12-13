@@ -24,6 +24,8 @@
     "react-native-safe-area-context": "*",
     "react-native-screens": "*",
     "react-native-svg": "*",
+    "react-native-gesture-handler": "~2.20.2",
+    "react-native-reanimated": "~3.16.1",
     "react-native-maps": "^1.10.0",
     "lucide-react-native": "^0.468.0",
     "prop-types": "^15.8.1",

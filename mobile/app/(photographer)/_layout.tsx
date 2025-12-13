@@ -99,6 +99,7 @@ export default function PhotographerLayout() {
         name="booking/[id]"
         options={{
           href: null,
+          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>
