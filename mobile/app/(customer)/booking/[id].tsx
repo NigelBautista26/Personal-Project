@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,10 +10,13 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  Dimensions,
+  FlatList,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare } from 'lucide-react-native';
+import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { MeetUpExperience } from '../../../src/components/MeetUpExperience';
 import { BookingChat } from '../../../src/components/BookingChat';
@@ -21,16 +24,26 @@ import { useAuth } from '../../../src/context/AuthContext';
 import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function BookingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
+  const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
 
   const { data: booking, isLoading, error } = useQuery({
     queryKey: ['booking', id],
     queryFn: () => snapnowApi.getBooking(id!),
     enabled: !!id,
   });
+
+  const { data: photoDelivery } = useQuery({
+    queryKey: ['photoDelivery', id],
+    queryFn: () => snapnowApi.getPhotoDelivery(id!),
+    enabled: !!id && booking?.status === 'completed',
+  });
+
+  const photos = photoDelivery?.photos || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -238,7 +251,107 @@ export default function BookingDetailScreen() {
             </View>
           </View>
         )}
+
+        {/* Your Photos - for completed bookings */}
+        {booking.status === 'completed' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Camera size={20} color="#6366f1" />
+              <Text style={styles.sectionTitle}>Your Photos</Text>
+              {photos.length > 0 && (
+                <Text style={styles.photoCount}>{photos.length} photos</Text>
+              )}
+            </View>
+            
+            {photos.length > 0 ? (
+              <View style={styles.photoGrid}>
+                {photos.map((photo, index) => (
+                  <TouchableOpacity 
+                    key={index} 
+                    style={styles.photoThumbnail}
+                    onPress={() => setSelectedPhotoIndex(index)}
+                    testID={`photo-thumbnail-${index}`}
+                  >
+                    <Image 
+                      source={{ uri: getImageUrl(photo)! }} 
+                      style={styles.photoImage} 
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.noPhotosCard}>
+                <Camera size={32} color="#6b7280" />
+                <Text style={styles.noPhotosText}>Photos not yet delivered</Text>
+                <Text style={styles.noPhotosSubtext}>Your photographer will upload your photos soon</Text>
+              </View>
+            )}
+            
+            {photoDelivery?.message && (
+              <View style={styles.photographerMessageCard}>
+                <Text style={styles.photographerMessageLabel}>Message from photographer:</Text>
+                <Text style={styles.photographerMessageText}>{photoDelivery.message}</Text>
+              </View>
+            )}
+          </View>
+        )}
         </ScrollView>
+
+        {/* Fullscreen Photo Viewer Modal */}
+        <Modal
+          visible={selectedPhotoIndex !== null}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSelectedPhotoIndex(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <SafeAreaView style={styles.modalContainer}>
+              <View style={styles.modalHeader}>
+                <TouchableOpacity 
+                  style={styles.modalCloseButton} 
+                  onPress={() => setSelectedPhotoIndex(null)}
+                  testID="button-close-photo"
+                >
+                  <X size={24} color="#fff" />
+                </TouchableOpacity>
+                <Text style={styles.modalPhotoCounter}>
+                  {selectedPhotoIndex !== null ? `${selectedPhotoIndex + 1} / ${photos.length}` : ''}
+                </Text>
+                <View style={{ width: 40 }} />
+              </View>
+
+              {selectedPhotoIndex !== null && (
+                <View style={styles.fullscreenImageContainer}>
+                  <Image 
+                    source={{ uri: getImageUrl(photos[selectedPhotoIndex])! }} 
+                    style={styles.fullscreenImage}
+                    resizeMode="contain"
+                  />
+                  
+                  {/* Navigation arrows */}
+                  {selectedPhotoIndex > 0 && (
+                    <TouchableOpacity 
+                      style={[styles.navButton, styles.navButtonLeft]}
+                      onPress={() => setSelectedPhotoIndex(selectedPhotoIndex - 1)}
+                      testID="button-prev-photo"
+                    >
+                      <ChevronLeft size={32} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                  {selectedPhotoIndex < photos.length - 1 && (
+                    <TouchableOpacity 
+                      style={[styles.navButton, styles.navButtonRight]}
+                      onPress={() => setSelectedPhotoIndex(selectedPhotoIndex + 1)}
+                      testID="button-next-photo"
+                    >
+                      <ChevronRight size={32} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+            </SafeAreaView>
+          </View>
+        </Modal>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -519,5 +632,128 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#9ca3af',
     textAlign: 'center',
+  },
+
+  // Photo Gallery styles
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  photoCount: {
+    marginLeft: 'auto',
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  photoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  photoThumbnail: {
+    width: (SCREEN_WIDTH - 40 - 16) / 3,
+    height: (SCREEN_WIDTH - 40 - 16) / 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  photoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  noPhotosCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+  },
+  noPhotosText: {
+    fontSize: 16,
+    color: '#fff',
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  noPhotosSubtext: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  photographerMessageCard: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  photographerMessageLabel: {
+    fontSize: 12,
+    color: '#6366f1',
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  photographerMessageText: {
+    fontSize: 14,
+    color: '#d1d5db',
+    lineHeight: 20,
+  },
+
+  // Fullscreen Photo Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
+  },
+  modalContainer: {
+    flex: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPhotoCounter: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '500',
+  },
+  fullscreenImageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT * 0.75,
+  },
+  navButton: {
+    position: 'absolute',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    top: '50%',
+    marginTop: -25,
+  },
+  navButtonLeft: {
+    left: 16,
+  },
+  navButtonRight: {
+    right: 16,
   },
 });
