@@ -85,9 +85,10 @@ export default function PhotographerProfileScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: true,
       });
 
-      if (result.canceled || !result.assets?.[0]?.uri) {
+      if (result.canceled || !result.assets?.[0]?.uri || !result.assets?.[0]?.base64) {
         return;
       }
 
@@ -95,15 +96,25 @@ export default function PhotographerProfileScreen() {
 
       const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
       
-      const response = await fetch(result.assets[0].uri);
-      const blob = await response.blob();
+      // Convert base64 to binary for upload
+      const base64Data = result.assets[0].base64;
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
       
-      await fetch(uploadURL, {
-        method: 'PUT',
-        body: blob,
-        headers: {
-          'Content-Type': blob.type || 'image/jpeg',
-        },
+      // Upload using XMLHttpRequest with binary data
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', uploadURL);
+        xhr.setRequestHeader('Content-Type', result.assets[0].mimeType || 'image/jpeg');
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed with status ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(bytes.buffer);
       });
 
       await snapnowApi.addPortfolioPhoto(objectPath);
@@ -146,9 +157,10 @@ export default function PhotographerProfileScreen() {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.8,
+        base64: true,
       });
 
-      if (result.canceled || !result.assets?.[0]?.uri) {
+      if (result.canceled || !result.assets?.[0]?.uri || !result.assets?.[0]?.base64) {
         return;
       }
 
@@ -156,15 +168,25 @@ export default function PhotographerProfileScreen() {
 
       const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
       
-      const response = await fetch(result.assets[0].uri);
-      const blob = await response.blob();
+      // Convert base64 to binary for upload
+      const base64Data = result.assets[0].base64;
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
       
-      await fetch(uploadURL, {
-        method: 'PUT',
-        body: blob,
-        headers: {
-          'Content-Type': blob.type || 'image/jpeg',
-        },
+      // Upload using XMLHttpRequest with binary data
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', uploadURL);
+        xhr.setRequestHeader('Content-Type', result.assets[0].mimeType || 'image/jpeg');
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed with status ${xhr.status}`));
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(bytes.buffer);
       });
 
       await snapnowApi.updateProfilePicture(objectPath);

@@ -125,6 +125,7 @@ export default function PhotographerBookingDetailScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
       quality: 0.8,
+      base64: true, // Include base64 data for reliable upload
     });
 
     if (!result.canceled && result.assets.length > 0) {
@@ -134,14 +135,35 @@ export default function PhotographerBookingDetailScreen() {
           // Get upload URL
           const { uploadURL, objectPath } = await snapnowApi.getUploadUrl();
           
-          // Upload the file
-          const response = await fetch(asset.uri);
-          const blob = await response.blob();
+          // Convert base64 to binary for upload
+          const base64Data = asset.base64;
+          if (!base64Data) {
+            throw new Error('No base64 data available');
+          }
           
-          await fetch(uploadURL, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'image/jpeg' },
-            body: blob,
+          // Convert base64 to Uint8Array
+          const binaryString = atob(base64Data);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          
+          // Upload using XMLHttpRequest with binary data
+          await new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadURL);
+            xhr.setRequestHeader('Content-Type', asset.mimeType || 'image/jpeg');
+            
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve();
+              } else {
+                reject(new Error(`Upload failed with status ${xhr.status}`));
+              }
+            };
+            
+            xhr.onerror = () => reject(new Error('Network error during upload'));
+            xhr.send(bytes.buffer);
           });
 
           // Add to delivery
