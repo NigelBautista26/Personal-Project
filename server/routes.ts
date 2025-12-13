@@ -1628,6 +1628,38 @@ export async function registerRoutes(
       const platformFee = baseAmount * 0.20;
       const photographerEarnings = baseAmount - platformFee;
 
+      // Validate Stripe payment intent if provided
+      let validatedPaymentId: string | null = null;
+      if (stripePaymentId) {
+        try {
+          const stripe = await getUncachableStripeClient();
+          const paymentIntent = await stripe.paymentIntents.retrieve(stripePaymentId);
+          
+          // Verify the payment belongs to this user
+          if (paymentIntent.metadata?.userId !== req.session.userId) {
+            return res.status(403).json({ error: "Payment does not belong to this user" });
+          }
+          
+          // Verify payment is in a capturable state (requires_capture means authorization was successful)
+          if (paymentIntent.status !== 'requires_capture') {
+            return res.status(400).json({ error: "Payment is not in a valid state for editing request" });
+          }
+          
+          // Verify the amount matches (convert from cents)
+          const expectedAmountCents = Math.round(totalAmount * 100);
+          if (paymentIntent.amount !== expectedAmountCents) {
+            // Cancel the mismatched payment intent
+            await stripe.paymentIntents.cancel(stripePaymentId);
+            return res.status(400).json({ error: "Payment amount does not match editing cost" });
+          }
+          
+          validatedPaymentId = stripePaymentId;
+        } catch (stripeError: any) {
+          console.error("Stripe payment validation error:", stripeError);
+          return res.status(400).json({ error: "Invalid payment. Please try again." });
+        }
+      }
+
       const editingRequest = await storage.createEditingRequest({
         bookingId,
         customerId: req.session.userId,
@@ -1643,7 +1675,7 @@ export async function registerRoutes(
         customerNotes: customerNotes || null,
         photographerNotes: null,
         requestedPhotoUrls: requestedPhotoUrls || [],
-        stripePaymentId: stripePaymentId || null,
+        stripePaymentId: validatedPaymentId,
       });
 
       res.json(editingRequest);

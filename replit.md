@@ -117,6 +117,14 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- **Editing Service Payments** (Dec 2025): Stripe payment integration for photo editing add-on services:
+  - Payment authorization is held when customer requests editing (same pattern as photography bookings)
+  - Payment is captured when customer approves delivered edited photos
+  - Payment is cancelled if photographer declines the editing request
+  - Server validates payment intent (amount, ownership, status) before creating request
+  - New endpoint: POST /api/stripe/create-editing-payment-intent
+  - Added stripePaymentId field to editing_requests table
+
 - **Mobile-Optimized Modal System** (Nov 2025): All dialogs and modals now use consistent mobile-friendly widths (88vw, max-w-sm) with rounded corners. Base Dialog component updated to ensure future modals inherit these defaults automatically.
 
 - **Enhanced Photographer Home Page** (Nov 2025): Redesigned photographer dashboard with:
