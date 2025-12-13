@@ -341,7 +341,7 @@ export default function CustomerMapScreen() {
         initialRegion={region}
         mapType={Platform.OS === 'ios' ? (mapType === 'satellite' ? 'satellite' : 'mutedStandard') : mapType}
         customMapStyle={Platform.OS === 'android' && mapType === 'standard' ? darkMapStyle : undefined}
-        showsUserLocation={true}
+        showsUserLocation={false}
         showsMyLocationButton={false}
         userInterfaceStyle="dark"
         testID="map-view"
@@ -414,6 +414,24 @@ export default function CustomerMapScreen() {
             <View style={styles.liveLocationMarker}>
               <View style={styles.liveLocationPulse} />
               <View style={styles.liveLocationDot} />
+            </View>
+          </SafeMarker>
+        )}
+
+        {/* User Location Marker (custom instead of showsUserLocation) */}
+        {userLocation && (
+          <SafeMarker
+            key="user-location"
+            coordinate={{
+              latitude: userLocation.latitude,
+              longitude: userLocation.longitude,
+            }}
+            title="Your Location"
+            testID="marker-user-location"
+          >
+            <View style={styles.userLocationMarker}>
+              <View style={styles.userLocationPulse} />
+              <View style={styles.userLocationDot} />
             </View>
           </SafeMarker>
         )}
@@ -762,6 +780,32 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: '#22c55e',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  userLocationMarker: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userLocationPulse: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(37, 99, 235, 0.3)',
+  },
+  userLocationDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#2563eb',
     borderWidth: 3,
     borderColor: '#fff',
     shadowColor: '#000',
