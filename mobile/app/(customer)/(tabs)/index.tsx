@@ -216,39 +216,8 @@ export default function CustomerMapScreen() {
     }
   }, [photographerLocation, activeSession]);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const requestLocation = async () => {
-      try {
-        // Delay location request to avoid crash with new architecture in Expo Go
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        if (!isMounted) return;
-        
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted' && isMounted) {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          if (isMounted) {
-            setUserLocation({
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            });
-          }
-        }
-      } catch (error) {
-        console.log('Location request error:', error);
-      }
-    };
-    
-    requestLocation();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Location is now only requested when user taps the locate button
+  // This avoids crash with new architecture in Expo Go on iOS simulator
 
   useEffect(() => {
     if (mapRef.current && selectedCity) {
@@ -312,15 +281,46 @@ export default function CustomerMapScreen() {
     setSearchQuery('');
   };
 
-  const centerOnUser = () => {
+  const centerOnUser = async () => {
+    // If we already have location, just center on it
     if (userLocation && mapRef.current) {
       mapRef.current.animateToRegion({
         ...userLocation,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
       }, 500);
-    } else {
-      Alert.alert('Location', 'Unable to get your location. Please enable location services.');
+      return;
+    }
+    
+    // Otherwise, request location when user taps the button
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Please enable location services to use this feature.');
+        return;
+      }
+      
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      const newLocation = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+      
+      setUserLocation(newLocation);
+      
+      if (mapRef.current) {
+        mapRef.current.animateToRegion({
+          ...newLocation,
+          latitudeDelta: 0.05,
+          longitudeDelta: 0.05,
+        }, 500);
+      }
+    } catch (error) {
+      console.log('Location error:', error);
+      Alert.alert('Error', 'Could not get your location. Please try again.');
     }
   };
 
