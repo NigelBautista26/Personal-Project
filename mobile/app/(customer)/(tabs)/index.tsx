@@ -163,6 +163,17 @@ export default function CustomerMapScreen() {
     queryFn: () => snapnowApi.getPhotographers(),
   });
 
+  // Force map re-render when photographers data loads (fixes react-native-maps marker rendering bug)
+  const [mapKey, setMapKey] = useState(0);
+  useEffect(() => {
+    if (photographers && photographers.length > 0) {
+      const timer = setTimeout(() => {
+        setMapKey(prev => prev + 1);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [photographers]);
+
   // Fetch customer's bookings to find active sessions
   const { data: bookings } = useQuery({
     queryKey: ['customer-bookings'],
@@ -311,6 +322,7 @@ export default function CustomerMapScreen() {
   return (
     <View style={styles.container}>
       <SafeMapView
+        key={`map-${mapKey}`}
         ref={mapRef}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
