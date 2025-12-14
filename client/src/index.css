@@ -42,7 +42,7 @@
 
 :root {
   /* Dark Mode Strict for SnapNow */
-  --background: 220 13% 6%; /* Almost black */
+  --background: 0 0% 4%; /* #0a0a0a - matches mobile app */
   --foreground: 0 0% 100%;
 
   --card: 220 13% 10%;
