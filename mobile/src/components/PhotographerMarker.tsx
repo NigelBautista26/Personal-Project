@@ -70,6 +70,7 @@ interface PhotoSpotMarkerProps {
   };
   name: string;
   imageUrl: string;
+  onPress?: () => void;
   testID?: string;
 }
 
@@ -78,6 +79,7 @@ export function PhotoSpotMarker({
   coordinate,
   name,
   imageUrl,
+  onPress,
   testID,
 }: PhotoSpotMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -96,6 +98,7 @@ export function PhotoSpotMarker({
       ref={markerRef}
       coordinate={coordinate}
       title={name}
+      onPress={onPress}
       testID={testID}
       tracksViewChanges={!imageLoaded}
       anchor={{ x: 0.5, y: 0.5 }}

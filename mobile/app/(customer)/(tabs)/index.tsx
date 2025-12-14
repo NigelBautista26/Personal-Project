@@ -371,6 +371,7 @@ export default function CustomerMapScreen() {
             }}
             name={spot.name}
             imageUrl={spot.image}
+            onPress={() => router.push(`/(customer)/spot/${spot.id}`)}
             testID={`marker-spot-${spot.id}`}
           />
         ))}
