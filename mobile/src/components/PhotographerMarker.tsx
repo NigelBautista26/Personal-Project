@@ -1,5 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
-import { View, Image, Text, StyleSheet } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, Image, Text, StyleSheet, Platform } from 'react-native';
 import { Marker } from 'react-native-maps';
 
 interface PhotographerMarkerProps {
@@ -25,10 +25,21 @@ export function PhotographerMarker({
   testID,
 }: PhotographerMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
   const markerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceRender(1);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
+    if (Platform.OS === 'ios' && markerRef.current) {
+      markerRef.current.redraw?.();
+    }
   }, []);
 
   const handleImageError = useCallback(() => {
@@ -38,6 +49,7 @@ export function PhotographerMarker({
   return (
     <Marker
       ref={markerRef}
+      key={`marker-${id}-${forceRender}`}
       coordinate={coordinate}
       onPress={onPress}
       testID={testID}
@@ -46,12 +58,14 @@ export function PhotographerMarker({
     >
       <View style={styles.container}>
         <View style={[styles.imageWrapper, isAvailable && styles.availableBorder]}>
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.placeholderText}>£{hourlyRate}</Text>
+          </View>
           <Image
             source={{ uri: imageUrl }}
-            style={styles.image}
+            style={[styles.image, StyleSheet.absoluteFill]}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            defaultSource={{ uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' }}
           />
         </View>
         <View style={styles.priceTag}>
@@ -81,10 +95,21 @@ export function PhotoSpotMarker({
   testID,
 }: PhotoSpotMarkerProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
   const markerRef = useRef<any>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceRender(1);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleImageLoad = useCallback(() => {
     setImageLoaded(true);
+    if (Platform.OS === 'ios' && markerRef.current) {
+      markerRef.current.redraw?.();
+    }
   }, []);
 
   const handleImageError = useCallback(() => {
@@ -94,6 +119,7 @@ export function PhotoSpotMarker({
   return (
     <Marker
       ref={markerRef}
+      key={`spot-${id}-${forceRender}`}
       coordinate={coordinate}
       title={name}
       testID={testID}
@@ -101,9 +127,10 @@ export function PhotoSpotMarker({
       anchor={{ x: 0.5, y: 0.5 }}
     >
       <View style={styles.spotContainer}>
+        <View style={styles.spotPlaceholder} />
         <Image
           source={{ uri: imageUrl }}
-          style={styles.spotImage}
+          style={[styles.spotImage, StyleSheet.absoluteFill]}
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
@@ -165,6 +192,18 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  imagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeholderText: {
+    color: '#94a3b8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
   priceTag: {
     backgroundColor: '#0f172a',
     paddingHorizontal: 6,
@@ -191,6 +230,11 @@ const styles = StyleSheet.create({
   spotImage: {
     width: '100%',
     height: '100%',
+  },
+  spotPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#334155',
   },
   liveContainer: {
     width: 24,
