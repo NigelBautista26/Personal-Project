@@ -97,7 +97,6 @@ export function PhotoSpotMarker({
     <Marker
       ref={markerRef}
       coordinate={coordinate}
-      title={name}
       onPress={onPress}
       testID={testID}
       tracksViewChanges={!imageLoaded}
@@ -132,7 +131,6 @@ export function LiveLocationMarker({
   return (
     <Marker
       coordinate={coordinate}
-      title="Photographer's Location"
       onPress={onPress}
       testID={testID}
       tracksViewChanges={false}
