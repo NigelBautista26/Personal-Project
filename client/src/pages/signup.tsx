@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { register } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-import PhotoCube from "@/components/photo-cube";
+import PhotoBackground from "@/components/PhotoBackground";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -80,7 +80,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-background flex flex-col p-6 relative overflow-hidden">
       {/* 3D Photo Cube Background */}
-      <PhotoCube />
+      <PhotoBackground />
 
       {/* Ambient Glow Effects */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[30%] bg-primary/10 blur-[80px] rounded-full pointer-events-none z-10" />

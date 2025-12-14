@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { login } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import PhotoCube from "@/components/photo-cube";
+import PhotoBackground from "@/components/PhotoBackground";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -82,7 +82,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col p-6 relative overflow-hidden">
-      <PhotoCube />
+      <PhotoBackground />
       
       <div className="relative z-10 flex items-center mb-8 mt-4">
         <button 
