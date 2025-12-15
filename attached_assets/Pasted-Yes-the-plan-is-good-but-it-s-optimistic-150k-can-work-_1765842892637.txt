@@ -1,0 +1,228 @@
+Yes — the plan is good, but it’s optimistic.
+£150k can work, but it leaves very little margin for reality.
+If you want this to survive investor scrutiny and real-world friction, I’d improve the plan and strongly consider £200k–£250k instead.
+
+Below I’ll explain why, what’s missing, and how I’d improve it, in plain English — grounded in your actual document, not theory. 
+
+SnapNow Pre Seed Deployment Plan
+
+1. Is the current £150k plan “bad”?
+
+No. It’s actually well structured for pre-seed, especially because:
+
+You already have a working MVP 
+
+SnapNow Pre Seed Deployment Plan
+
+You’re founder-led (no salary)
+
+You’re leveraging AI + contractors
+
+You’re doing phased city launches
+
+Many pre-seed plans are far worse.
+
+But… it assumes everything goes almost perfectly.
+
+2. Where the plan is overly optimistic (important)
+A. Mobile development is underpriced
+
+You’ve allocated £55k total for:
+
+4 months Lead React Native engineer (£32k)
+
+3 months backend engineer (£18k)
+
+Tools & stores (£5k) 
+
+SnapNow Pre Seed Deployment Plan
+
+Reality check (plain English):
+
+One solid mobile engineer alone often costs £8–10k/month minimum
+
+App Store review cycles cause delays
+
+Push notifications, deep links, location services, background permissions → always take longer than planned
+
+Bug-fixing after launch is guaranteed, not optional
+
+👉 Risk: Month 4 slips to Month 6, but your plan assumes Month 4 apps live.
+
+B. Marketing budget is thin for 5 cities
+
+£40k across 5 global cities = £8k per city total. 
+
+SnapNow Pre Seed Deployment Plan
+
+That has to cover:
+
+Photographer incentives
+
+Events
+
+Content
+
+Referrals
+
+Ads
+
+That’s extremely tight, especially for:
+
+London
+
+NYC
+
+Tokyo (localization + trust barriers)
+
+👉 Risk: You get supply (photographers) but demand (customers) lags badly.
+
+C. No explicit buffer for “platform trust” costs
+
+What’s not explicitly budgeted:
+
+Chargebacks / Stripe disputes
+
+Fraud prevention tooling
+
+Customer support surges
+
+Photographer disputes
+
+Emergency fixes during live bookings
+
+These things don’t appear in spreadsheets… until they hit.
+
+D. 15 months runway assumes revenue ramps smoothly
+
+Your own numbers say:
+
+2,500 bookings over 15 months
+
+£32k platform revenue total 
+
+SnapNow Pre Seed Deployment Plan
+
+That’s fine for validation, but it doesn’t materially extend runway.
+
+👉 Translation: You are still fully dependent on the £150k lasting the full 15 months.
+
+Any delay shortens that fast.
+
+3. The single biggest strategic issue: 5 cities is too many for pre-seed
+
+This is the part investors will question.
+
+At pre-seed, the goal is not coverage.
+The goal is proof.
+
+Right now you’re trying to prove:
+
+Multi-sided marketplace
+
+Cross-border expansion
+
+Localization
+
+Payments
+
+Supply + demand
+
+Brand trust
+
+That’s a lot for £150k.
+
+4. How I would improve the plan (concrete changes)
+OPTION A — Same £150k, but smarter (lower risk)
+
+Change:
+
+Reduce from 5 cities → 2 cities
+
+Example: London + Paris or London + NYC
+
+Why this helps:
+
+Marketing spend doubles per city
+
+Operational complexity drops
+
+Case study becomes much stronger
+
+Investors care more about depth than breadth
+
+How this looks in the deck:
+
+“We intentionally limited pre-seed to two cities to maximize proof of unit economics and operational repeatability before expansion.”
+
+That sounds smart, not small.
+
+OPTION B — Keep 5 cities, raise more (£200k–£250k)
+
+If you want the 5-city vision intact, I’d revise to:
+
+Recommended raise: £225k
+
+Rough reallocation:
+
+Mobile + backend: £80k
+
+Marketing: £65k
+
+Team & ops: £45k
+
+Buffer: £35k
+
+Why investors won’t hate this:
+
+You’re still lean
+
+Still founder-led
+
+Still milestone-driven
+
+But now resilient to delays
+
+This dramatically improves survival odds.
+
+5. What investors really want to see (this matters)
+
+At pre-seed, investors are asking:
+
+Will this marketplace actually work in one place?
+
+Can you acquire supply without burning cash?
+
+Do users repeat bookings?
+
+Does trust hold under pressure?
+
+Can this be repeated city-by-city?
+
+They do not need:
+
+5 flags on a map
+
+Perfect polish
+
+Massive GMV yet
+
+They need evidence.
+
+6. My honest recommendation (clear and direct)
+
+If this were my company:
+
+I would either
+
+Raise £150k for 2 cities
+
+or
+
+Raise £225k for 5 cities
+
+What I would not do is:
+
+Run 5 cities on £150k and hope nothing slips
+
+Hope is not a strategy — and investors can smell it.
