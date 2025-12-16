@@ -168,7 +168,7 @@ export default function PreSeedPlan() {
                 We've Already Built Most of It
               </h2>
               <p className="text-gray-300 mb-4">
-                Unlike most early-stage companies that come with just an idea, we already have a <strong className="text-white">working product</strong>. 
+                Unlike most early-stage companies that come with just an idea, we already have a <strong className="text-white">fully working prototype</strong>. 
                 You can try it today. This means less risk - about <strong className="text-white">70-80% of the technical work is already done</strong>.
               </p>
               

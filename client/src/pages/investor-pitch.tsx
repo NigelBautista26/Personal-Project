@@ -244,7 +244,7 @@ export default function InvestorPitch() {
               </h2>
               
               <p className="text-gray-300 mb-4">
-                Unlike most early-stage companies, we come with a <strong className="text-white">fully working product</strong>. 
+                Unlike most early-stage companies, we come with a <strong className="text-white">fully working prototype</strong>. 
                 You can try it today. This dramatically reduces execution risk.
               </p>
 
@@ -634,7 +634,7 @@ export default function InvestorPitch() {
                 <ul className="text-gray-300 space-y-2 text-sm">
                   <li>• <strong className="text-white">12+ years</strong> in software development and quality assurance</li>
                   <li>• Led testing teams at major tech companies</li>
-                  <li>• <strong className="text-white">Built the entire SnapNow product</strong> - it's fully working today</li>
+                  <li>• <strong className="text-white">Built the entire SnapNow prototype</strong> - fully working product you can try today</li>
                   <li>• Active photographer and frequent traveler</li>
                   <li>• Can handle product, testing, design, and operations</li>
                   <li>• Taking minimal salary (£2k/month) to maximize runway</li>
