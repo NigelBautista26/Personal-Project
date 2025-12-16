@@ -114,498 +114,522 @@ export default function InvestorProjections() {
           {/* Header */}
           <div className="text-center mb-8 pb-6 border-b-2 border-violet-500">
             <h1 className="text-4xl font-bold text-violet-400 mb-2">SnapNow</h1>
-            <p className="text-xl text-gray-300">5-City Financial Projections</p>
-            <p className="text-sm text-gray-500 mt-2">Investor Data Pack - December 2025</p>
+            <p className="text-xl text-gray-300">Financial Projections</p>
+            <p className="text-sm text-gray-500 mt-2">Pre-Seed (London + Paris) → Series A (European Expansion)</p>
           </div>
 
           {/* Market Overview */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Target Market: 5 Global Tourism Capitals
+              Our Target Markets
             </h2>
             <p className="text-gray-300 text-sm mb-4">
-              Tourism data based on official 2024 statistics from city tourism authorities and national statistics offices.
+              We're starting with London and Paris - two of the world's most visited cities. After proving the business works, 
+              we'll expand to Rome, Barcelona, and Amsterdam. These cities together attract <strong className="text-white">69 million tourists per year</strong>.
             </p>
             
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm mb-4">
+              <table className="w-full border-collapse text-sm mb-2">
                 <thead>
                   <tr className="bg-violet-900/50">
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">City</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Int'l Tourists (2024)</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Photo Market (4%)</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Avg Session Rate</th>
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">Source</th>
+                    <th className="border border-gray-600 p-3 text-left text-violet-300">City</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Tourists per Year</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Potential Customers*</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Avg Session Price</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">When</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇬🇧 London</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">20.95M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">838,000</td>
+                  <tr className="bg-violet-900/30">
+                    <td className="border border-gray-600 p-3 text-white font-semibold">🇬🇧 London</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">21.7 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">868,000</td>
                     <td className="border border-gray-600 p-3 text-right text-gray-300">£45</td>
-                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">VisitBritain, ONS</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-semibold">Pre-Seed</td>
                   </tr>
-                  <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇫🇷 Paris</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">22.6M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">904,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-gray-300">€50 (£43)</td>
-                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">CRT Paris Île-de-France</td>
-                  </tr>
-                  <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇺🇸 New York</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">13.0M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">520,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-gray-300">$60 (£48)</td>
-                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">NYC Tourism + Conventions</td>
-                  </tr>
-                  <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇯🇵 Tokyo</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">14.0M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">560,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-gray-300">¥8,000 (£42)</td>
-                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Tokyo Metro Tourism Data</td>
+                  <tr className="bg-violet-900/30">
+                    <td className="border border-gray-600 p-3 text-white font-semibold">🇫🇷 Paris</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">19.1 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">764,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£43 (€50)</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-semibold">Pre-Seed</td>
                   </tr>
                   <tr className="bg-gray-800/50">
                     <td className="border border-gray-600 p-3 text-gray-300">🇮🇹 Rome</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">11.7M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">468,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-gray-300">€45 (£39)</td>
-                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Turismo Roma Official</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">10.1 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">404,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£39 (€45)</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-500">Series A</td>
                   </tr>
-                  <tr className="bg-violet-900/30">
-                    <td className="border border-gray-600 p-3 text-violet-300 font-bold">TOTAL</td>
-                    <td className="border border-gray-600 p-3 text-right text-violet-300 font-bold">82.25M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">3.29M</td>
-                    <td className="border border-gray-600 p-3 text-right text-violet-300 font-bold">£43 avg</td>
+                  <tr className="bg-gray-800/30">
+                    <td className="border border-gray-600 p-3 text-gray-300">🇪🇸 Barcelona</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">9.5 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">380,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£38 (€44)</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-500">Series A</td>
+                  </tr>
+                  <tr className="bg-gray-800/50">
+                    <td className="border border-gray-600 p-3 text-gray-300">🇳🇱 Amsterdam</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">8.3 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">332,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£42 (€49)</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-500">Series A</td>
+                  </tr>
+                  <tr className="bg-violet-900/50 font-bold">
+                    <td className="border border-gray-600 p-3 text-violet-300">TOTAL (5 Cities)</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">68.7 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">2.75 million</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">£41 avg</td>
                     <td className="border border-gray-600 p-3"></td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="text-gray-400 text-xs italic">
-              * Photo Market assumes 4% of international tourists seek professional photography services (industry benchmark for "Instagram-era" travelers, 2024)
+            <p className="text-xs text-gray-500">
+              *Potential Customers = 4% of tourists who want professional photos (industry benchmark for social media-focused travelers)
             </p>
           </section>
 
-          {/* Platform Economics */}
+          {/* How We Make Money */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Platform Economics
+              How We Make Money
             </h2>
+            <p className="text-gray-300 text-sm mb-4">
+              We charge a small fee to both the customer and the photographer. This is fair because we provide value to both sides - 
+              customers find trusted photographers, and photographers get new clients without any marketing costs.
+            </p>
             
             <div className="grid grid-cols-2 gap-6">
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="font-bold text-white mb-3">Revenue Model</h3>
-                <ul className="text-gray-300 space-y-2 text-sm">
-                  <li className="flex justify-between">
-                    <span>Customer Service Fee:</span>
-                    <span className="text-green-400 font-bold">10%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Photographer Commission:</span>
-                    <span className="text-green-400 font-bold">20%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Editing Add-on Commission:</span>
-                    <span className="text-green-400 font-bold">20%</span>
-                  </li>
-                  <li className="flex justify-between border-t border-gray-600 pt-2 mt-1">
-                    <span className="text-violet-300">Total Platform Take:</span>
-                    <span className="text-violet-400 font-bold">30%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Avg Session Duration:</span>
-                    <span className="text-white">1 hour</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Avg Base Rate:</span>
-                    <span className="text-white font-bold">£43</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Platform Revenue/Booking:</span>
-                    <span className="text-green-400 font-bold">£12.90</span>
-                  </li>
-                </ul>
-                <p className="text-gray-400 text-xs mt-2 italic">
-                  £4.30 (customer) + £8.60 (photographer) = £12.90
-                </p>
+              <div>
+                <h3 className="font-bold text-white mb-3">Our Fees</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Customer pays us (service fee)</td>
+                      <td className="py-2 text-right font-semibold text-violet-400">10%</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Photographer pays us (commission)</td>
+                      <td className="py-2 text-right font-semibold text-violet-400">20%</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Photo editing add-on (optional)</td>
+                      <td className="py-2 text-right font-semibold text-violet-400">20%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold text-white">Total we keep per booking</td>
+                      <td className="py-2 text-right font-bold text-violet-400 text-lg">30%</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="font-bold text-white mb-3">Industry Benchmarks</h3>
-                <ul className="text-gray-300 space-y-2 text-sm">
-                  <li className="flex justify-between">
-                    <span>Airbnb Take Rate:</span>
-                    <span className="text-gray-400">15-17%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Flytographer Take Rate:</span>
-                    <span className="text-gray-400">~30%</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>Uber Take Rate:</span>
-                    <span className="text-gray-400">25-30%</span>
-                  </li>
-                  <li className="flex justify-between border-t border-gray-600 pt-2 mt-2">
-                    <span className="text-violet-300">SnapNow (Dual-Sided):</span>
-                    <span className="text-violet-400 font-bold">30%</span>
-                  </li>
-                </ul>
-                <p className="text-gray-400 text-xs mt-3 italic">
-                  10% customer + 20% photographer = fair split
-                </p>
+              <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                <h3 className="font-bold text-blue-400 mb-3">How Our Fees Compare</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-1 text-gray-300">Airbnb</td>
+                      <td className="py-1 text-right text-gray-400">15-17%</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-1 text-gray-300">Uber</td>
+                      <td className="py-1 text-right text-gray-400">25-30%</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-1 text-gray-300">Flytographer (competitor)</td>
+                      <td className="py-1 text-right text-gray-400">~30%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 text-white font-semibold">SnapNow</td>
+                      <td className="py-1 text-right text-violet-400 font-semibold">30%</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-xs text-blue-300 mt-2">Our 30% is split fairly between both sides</p>
               </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-green-900/20 rounded-lg border border-green-500/30">
+              <h4 className="font-bold text-green-400 mb-2">Example Booking</h4>
+              <p className="text-green-300 text-sm">
+                A tourist books a 1-hour session for <strong className="text-green-200">£65</strong>. 
+                The customer pays £71.50 (including 10% fee). The photographer receives £52 (after 20% commission). 
+                <strong className="text-green-200"> We make £19.50</strong>.
+              </p>
             </div>
           </section>
 
-          {/* Photographer Unit Economics */}
+          {/* What Each Photographer Earns Us */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Photographer Unit Economics
+              What Each Photographer Earns Us
             </h2>
+            <p className="text-gray-300 text-sm mb-4">
+              The more photographers we have on the platform, the more we earn. Here's what we expect each photographer to generate:
+            </p>
             
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-violet-900/50">
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">Metric</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Conservative</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Moderate</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Optimistic</th>
+                  <tr className="bg-gray-800">
+                    <th className="border border-gray-600 p-3 text-left text-gray-300">Metric</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">Slow Start</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Expected</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">Best Case</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Sessions per Photographer/Day</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">1.5</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">2.0</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">2.5</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Sessions per day (per photographer)</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">1.5</td>
+                    <td className="border border-gray-600 p-3 text-center text-white font-semibold">2.0</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">2.5</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Avg Hourly Rate</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£40</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£45</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£50</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Average hourly rate</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£40</td>
+                    <td className="border border-gray-600 p-3 text-center text-white font-semibold">£45</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£50</td>
                   </tr>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Daily GMV per Photographer</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£60</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£90</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">£125</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Bookings value per day</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£60</td>
+                    <td className="border border-gray-600 p-3 text-center text-white font-semibold">£90</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£125</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Platform Revenue per Photographer/Day</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400">£18</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400">£27</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400">£37.50</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Our revenue per day (30%)</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£18</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-semibold">£27</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£37.50</td>
                   </tr>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Editing Add-on Attach Rate</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">20%</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">25%</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">35%</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Customers who add editing</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">20%</td>
+                    <td className="border border-gray-600 p-3 text-center text-white font-semibold">25%</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">35%</td>
                   </tr>
                   <tr className="bg-violet-900/30">
-                    <td className="border border-gray-600 p-3 text-violet-300 font-bold">Monthly Revenue per Photographer</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400 font-bold">£540</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400 font-bold">£810</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400 font-bold">£1,125</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">Our revenue per photographer/month</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£540</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-bold text-lg">£810</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£1,125</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="text-gray-400 text-xs mt-2 italic">
-              * Based on 30 active days per month. Professional photographers can realistically complete 2-3 sessions/day accounting for travel, setup, and post-processing.
+            <p className="text-xs text-gray-500 mt-2">
+              Based on 30 active days per month. Professional photographers can realistically do 2-3 sessions per day.
             </p>
           </section>
 
-          {/* Page Break for Print */}
-          <div className="page-break"></div>
-
-          {/* Year 1 Projections */}
-          <section className="mb-8">
+          {/* Pre-Seed Projections */}
+          <section className="mb-8 page-break">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Year 1: 5-City Rollout Projections
+              Pre-Seed: 18-Month Projections (London + Paris)
             </h2>
+            <p className="text-gray-300 text-sm mb-4">
+              With £200,000, we'll launch in London first, then Paris. Here's what we expect to achieve:
+            </p>
             
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm mb-4">
                 <thead>
                   <tr className="bg-violet-900/50">
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">Phase</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Cities</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Photographers</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Sessions/Day</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Monthly GMV</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Platform Revenue</th>
+                    <th className="border border-gray-600 p-3 text-left text-violet-300">Phase</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Cities</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Photographers</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Bookings/Day</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Monthly Bookings Value</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Our Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Q1 (Launch)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">London</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">25</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">38</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£49,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£14,700</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">Months 1-5</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">Building apps</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">-</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">-</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">-</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">-</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Q2 (Expand)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">+ Paris</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">75</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">113</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£146,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£43,800</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">Months 6-9</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">🇬🇧 London</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">30-50</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">20-40</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£39,000 - £78,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-400">£11,700 - £23,400</td>
                   </tr>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Q3 (Scale)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">+ New York</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">175</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">263</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£339,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£101,700</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">Months 10-14</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">🇬🇧🇫🇷 London + Paris</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">60-80</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">50-80</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£97,500 - £156,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-400">£29,250 - £46,800</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Q4 (Mature)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">+ Tokyo, Rome</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">300</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">450</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£581,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£174,300</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">Months 15-18</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">🇬🇧🇫🇷 Both cities growing</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">100-120</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">80-120</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£156,000 - £234,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-400">£46,800 - £70,200</td>
                   </tr>
-                  <tr className="bg-violet-900/30">
-                    <td className="border border-gray-600 p-3 text-violet-300 font-bold" colSpan={4}>Year 1 Total</td>
-                    <td className="border border-gray-600 p-3 text-right text-violet-300 font-bold">£3.45M GMV</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">£1.04M</td>
+                  <tr className="bg-violet-900/50 font-bold">
+                    <td className="border border-gray-600 p-3 text-violet-300" colSpan={4}>18-Month Totals (Expected Range)</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">£585,000 - £936,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">£175,000 - £281,000</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">100+</p>
+                <p className="text-sm text-gray-400">Photographers by Month 18</p>
+              </div>
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">1,500+</p>
+                <p className="text-sm text-gray-400">Bookings Completed</p>
+              </div>
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">£10k+</p>
+                <p className="text-sm text-gray-400">Monthly Revenue by End</p>
+              </div>
+            </div>
           </section>
 
-          {/* Year 2 Projections */}
+          {/* Series A Projections */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Year 2: Mature Market Projections (by City)
+              Series A: European Expansion (Year 2-3)
             </h2>
+            <p className="text-gray-300 text-sm mb-4">
+              After proving the business works in London and Paris, we'll raise more money to expand across Europe. 
+              By the end of Year 2, we expect to be in all 5 cities:
+            </p>
             
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm mb-4">
                 <thead>
                   <tr className="bg-violet-900/50">
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">City</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Active Photographers</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Sessions/Day</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Monthly GMV</th>
-                    <th className="border border-gray-600 p-3 text-right font-bold text-violet-300">Platform Revenue</th>
+                    <th className="border border-gray-600 p-3 text-left text-violet-300">City</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Photographers</th>
+                    <th className="border border-gray-600 p-3 text-center text-violet-300">Bookings/Day</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Monthly Bookings Value</th>
+                    <th className="border border-gray-600 p-3 text-right text-violet-300">Our Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇬🇧 London</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">400</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">600</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£810,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£243,000</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">🇬🇧 London</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">200</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">300</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£405,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-400">£121,500</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇫🇷 Paris</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">350</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">525</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£677,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£203,100</td>
-                  </tr>
-                  <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇺🇸 New York</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">500</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">750</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£1,080,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£324,000</td>
-                  </tr>
-                  <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">🇯🇵 Tokyo</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">300</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">450</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£567,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£170,100</td>
+                    <td className="border border-gray-600 p-3 text-white font-semibold">🇫🇷 Paris</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">175</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-300">260</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-300">£335,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-400">£100,500</td>
                   </tr>
                   <tr className="bg-gray-800/50">
                     <td className="border border-gray-600 p-3 text-gray-300">🇮🇹 Rome</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">200</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">300</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£351,000</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">£105,300</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">100</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">150</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£175,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£52,500</td>
                   </tr>
-                  <tr className="bg-violet-900/30">
-                    <td className="border border-gray-600 p-3 text-violet-300 font-bold">TOTAL (Monthly)</td>
-                    <td className="border border-gray-600 p-3 text-center text-violet-300 font-bold">1,750</td>
-                    <td className="border border-gray-600 p-3 text-center text-violet-300 font-bold">2,625</td>
-                    <td className="border border-gray-600 p-3 text-right text-violet-300 font-bold">£3.49M</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">£1.05M</td>
+                  <tr className="bg-gray-800/30">
+                    <td className="border border-gray-600 p-3 text-gray-300">🇪🇸 Barcelona</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">100</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">150</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£171,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£51,300</td>
                   </tr>
-                  <tr className="bg-green-900/30">
-                    <td className="border border-gray-600 p-3 text-green-300 font-bold" colSpan={3}>Year 2 Annual Total</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-300 font-bold">£41.8M GMV</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">£12.55M</td>
+                  <tr className="bg-gray-800/50">
+                    <td className="border border-gray-600 p-3 text-gray-300">🇳🇱 Amsterdam</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">75</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">110</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£139,000</td>
+                    <td className="border border-gray-600 p-3 text-right text-gray-400">£41,700</td>
+                  </tr>
+                  <tr className="bg-violet-900/50 font-bold">
+                    <td className="border border-gray-600 p-3 text-violet-300">TOTAL (Monthly)</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-300">650</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-300">970</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">£1.23M</td>
+                    <td className="border border-gray-600 p-3 text-right text-violet-300">£367,500</td>
+                  </tr>
+                  <tr className="bg-green-900/30 font-bold">
+                    <td className="border border-gray-600 p-3 text-green-300" colSpan={3}>Year 2 Annual Total</td>
+                    <td className="border border-gray-600 p-3 text-right text-green-300">£14.7M</td>
+                    <td className="border border-gray-600 p-3 text-right text-green-300">£4.4M</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* Key Investor Metrics */}
+          {/* Key Numbers for Investors */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Key Investor Metrics
+              Key Numbers for Investors
             </h2>
             
             <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-violet-900/30 p-4 rounded-lg border border-violet-500/30 text-center">
-                <p className="text-3xl font-bold text-violet-400">3.29M</p>
-                <p className="text-gray-400 text-sm">Serviceable Market (5 Cities)</p>
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">1.63M</p>
+                <p className="text-sm text-gray-400">Potential Customers</p>
+                <p className="text-xs text-gray-500">(London + Paris only)</p>
               </div>
-              <div className="bg-green-900/30 p-4 rounded-lg border border-green-500/30 text-center">
-                <p className="text-3xl font-bold text-green-400">£43</p>
-                <p className="text-gray-400 text-sm">Average Base Rate</p>
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">£44</p>
+                <p className="text-sm text-gray-400">Average Booking Price</p>
               </div>
-              <div className="bg-blue-900/30 p-4 rounded-lg border border-blue-500/30 text-center">
-                <p className="text-3xl font-bold text-blue-400">30%</p>
-                <p className="text-gray-400 text-sm">Platform Take Rate</p>
+              <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                <p className="text-3xl font-bold text-violet-400">30%</p>
+                <p className="text-sm text-gray-400">Our Cut Per Booking</p>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <tbody>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Total Addressable Market (TAM)</td>
-                    <td className="border border-gray-600 p-3 text-right text-white font-medium">3.29M photo-seeking tourists (5 cities)</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Cost to get a new customer (ads)</td>
+                    <td className="border border-gray-600 p-3 text-right text-white font-semibold">£5-8</td>
+                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Instagram/TikTok ads targeting tourists</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Editing Add-on Attach Rate Target</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">25% (+£15-30 per booking)</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Value of each customer over time</td>
+                    <td className="border border-gray-600 p-3 text-right text-white font-semibold">£52</td>
+                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">1.2 sessions average + editing add-on</td>
                   </tr>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Photographer Churn (Target)</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400">&lt;10% annually</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Return on customer acquisition</td>
+                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">6.5:1</td>
+                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Healthy ratio (above 3:1 is good)</td>
                   </tr>
                   <tr className="bg-gray-800/30">
-                    <td className="border border-gray-600 p-3 text-gray-300">Customer Acquisition Cost (CAC)</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£5-8 (Instagram/TikTok ads)</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Photographers who leave per year</td>
+                    <td className="border border-gray-600 p-3 text-right text-white font-semibold">&lt;10%</td>
+                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Low churn because we help them earn money</td>
                   </tr>
                   <tr className="bg-gray-800/50">
-                    <td className="border border-gray-600 p-3 text-gray-300">Customer Lifetime Value (LTV)</td>
-                    <td className="border border-gray-600 p-3 text-right text-white">£52 (1.2 sessions avg + editing)</td>
-                  </tr>
-                  <tr className="bg-green-900/30">
-                    <td className="border border-gray-600 p-3 text-green-300 font-bold">LTV:CAC Ratio</td>
-                    <td className="border border-gray-600 p-3 text-right text-green-400 font-bold">6.5:1 ✓ (healthy &gt;3:1)</td>
+                    <td className="border border-gray-600 p-3 text-gray-300">Customers who add photo editing</td>
+                    <td className="border border-gray-600 p-3 text-right text-white font-semibold">25%</td>
+                    <td className="border border-gray-600 p-3 text-gray-400 text-xs">Extra £15-30 per booking</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </section>
 
-          {/* Page Break for Print */}
-          <div className="page-break"></div>
-
-          {/* Competitive Pricing */}
+          {/* How Our Prices Compare */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Competitive Pricing Analysis
+              How Our Prices Compare to Competitors
             </h2>
             <p className="text-gray-300 text-sm mb-4">
-              SnapNow's pricing is competitive with market leaders while offering better photographer compensation.
+              We're significantly cheaper than competitors, making professional photography accessible to more travelers. 
+              And photographers still keep 80% of their rate.
             </p>
             
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-sm">
                 <thead>
-                  <tr className="bg-violet-900/50">
-                    <th className="border border-gray-600 p-3 text-left font-bold text-violet-300">Platform</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">30 min</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">60 min</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">90 min</th>
-                    <th className="border border-gray-600 p-3 text-center font-bold text-violet-300">Platform Take</th>
+                  <tr className="bg-gray-800">
+                    <th className="border border-gray-600 p-3 text-left text-gray-300">Platform</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">30 min</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">60 min</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">90 min</th>
+                    <th className="border border-gray-600 p-3 text-center text-gray-300">Their Cut</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="bg-gray-800/50">
                     <td className="border border-gray-600 p-3 text-gray-300">Flytographer</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$325 (£260)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$385 (£308)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$525 (£420)</td>
-                    <td className="border border-gray-600 p-3 text-center text-red-400">~30%</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£260</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£308</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£420</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">~30%</td>
                   </tr>
                   <tr className="bg-gray-800/30">
                     <td className="border border-gray-600 p-3 text-gray-300">Local Lens</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">-</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$275 (£220)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$300 (£240)</td>
-                    <td className="border border-gray-600 p-3 text-center text-red-400">~25%</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">-</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£220</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£240</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">~25%</td>
                   </tr>
                   <tr className="bg-gray-800/50">
                     <td className="border border-gray-600 p-3 text-gray-300">Snappr</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$89 (£71)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$175 (£140)</td>
-                    <td className="border border-gray-600 p-3 text-center text-white">$235 (£188)</td>
-                    <td className="border border-gray-600 p-3 text-center text-red-400">~35%</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£71</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£140</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">£188</td>
+                    <td className="border border-gray-600 p-3 text-center text-gray-400">~35%</td>
                   </tr>
-                  <tr className="bg-violet-900/30">
-                    <td className="border border-gray-600 p-3 text-violet-300 font-bold">SnapNow (Target)</td>
-                    <td className="border border-gray-600 p-3 text-center text-violet-300 font-bold">£25</td>
-                    <td className="border border-gray-600 p-3 text-center text-violet-300 font-bold">£40-50</td>
-                    <td className="border border-gray-600 p-3 text-center text-violet-300 font-bold">£60-75</td>
-                    <td className="border border-gray-600 p-3 text-center text-green-400 font-bold">30%*</td>
+                  <tr className="bg-violet-900/40">
+                    <td className="border border-gray-600 p-3 text-violet-300 font-bold">SnapNow</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-bold">£25</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-bold">£40-50</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-bold">£60-75</td>
+                    <td className="border border-gray-600 p-3 text-center text-violet-400 font-bold">30%</td>
                   </tr>
                 </tbody>
               </table>
             </div>
-            <p className="text-gray-400 text-xs mt-2 italic">
-              *SnapNow's 30% is split fairly: 10% from customer service fee + 20% from photographer. Photographers keep 80% of their rate.
+            <p className="text-xs text-gray-500 mt-2">
+              Our prices are 50-80% lower than competitors. This makes us accessible to budget-conscious travelers 
+              while still paying photographers well.
             </p>
           </section>
 
-          {/* Market Size Context */}
+          {/* The Big Market */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Global Photography Services Market
+              Why This Market is Growing
             </h2>
             
-            <div className="grid grid-cols-2 gap-6 mb-4">
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="font-bold text-white mb-3">Market Size (2024-2030)</h3>
-                <ul className="text-gray-300 space-y-2 text-sm">
-                  <li className="flex justify-between">
-                    <span>2024 Global Market:</span>
-                    <span className="text-white font-bold">$37.5B</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>2030 Projected:</span>
-                    <span className="text-white font-bold">$47.5B</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span>CAGR:</span>
-                    <span className="text-green-400 font-bold">4.8%</span>
-                  </li>
-                  <li className="flex justify-between border-t border-gray-600 pt-2 mt-2">
-                    <span>Travel/Vacation Segment:</span>
-                    <span className="text-violet-400 font-bold">$10B+</span>
-                  </li>
-                </ul>
-                <p className="text-gray-400 text-xs mt-3">Source: Mordor Intelligence, 2024</p>
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-bold text-white mb-3">The Photography Market</h3>
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Global market (2024)</td>
+                      <td className="py-2 text-right font-semibold text-white">$37.5 billion</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Expected by 2030</td>
+                      <td className="py-2 text-right font-semibold text-white">$47.5 billion</td>
+                    </tr>
+                    <tr className="border-b border-gray-700">
+                      <td className="py-2 text-gray-300">Yearly growth</td>
+                      <td className="py-2 text-right font-semibold text-green-400">4.8%</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 text-gray-300">Travel/vacation segment</td>
+                      <td className="py-2 text-right font-semibold text-white">$10+ billion</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p className="text-xs text-gray-500 mt-2">Source: Mordor Intelligence, 2024</p>
               </div>
-              
-              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-700">
-                <h3 className="font-bold text-white mb-3">Key Growth Drivers</h3>
-                <ul className="text-gray-300 space-y-2 text-sm">
-                  <li>📱 Instagram/TikTok culture driving demand</li>
-                  <li>✈️ Post-COVID travel boom (record 2024 numbers)</li>
-                  <li>💰 Travelers spend more on experiences</li>
-                  <li>🤳 "Everyone in the photo" trend vs selfies</li>
-                  <li>💍 Proposals, anniversaries, family reunions</li>
+              <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                <h3 className="font-bold text-blue-400 mb-3">Why It's Growing</h3>
+                <ul className="text-blue-300 space-y-2 text-sm">
+                  <li>📱 Instagram/TikTok culture - everyone wants great photos</li>
+                  <li>✈️ Travel is booming - 2024 had record tourist numbers</li>
+                  <li>💰 People spend more on experiences than things</li>
+                  <li>🤳 "Everyone in the photo" trend replacing selfies</li>
+                  <li>💍 Proposals, anniversaries, family reunions abroad</li>
                   <li>🌍 Remote work = more leisure travel</li>
                 </ul>
               </div>
@@ -615,52 +639,45 @@ export default function InvestorProjections() {
           {/* Expansion Roadmap */}
           <section className="mb-8">
             <h2 className="text-2xl font-bold text-violet-400 mb-4 pb-2 border-b border-gray-700">
-              Expansion Roadmap
+              Our Growth Plan
             </h2>
             
             <div className="space-y-4">
-              <div className="flex gap-4 items-start">
-                <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-400 font-bold text-sm">Y1</span>
+              <div className="bg-violet-900/30 p-4 rounded-lg border border-violet-500/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">🚀</span>
+                  <h3 className="font-bold text-violet-300 text-lg">Pre-Seed (Now - 18 months)</h3>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white">Phase 1: Foundation</h4>
-                  <p className="text-gray-400 text-sm">London → Paris → New York</p>
-                  <p className="text-gray-300 text-sm">Focus on quality, verification, and product-market fit</p>
-                </div>
+                <p className="text-violet-200 text-sm mb-2">London → Paris</p>
+                <p className="text-gray-400 text-sm">Focus on building great apps, getting verified photographers, and proving people will pay for this.</p>
               </div>
               
-              <div className="flex gap-4 items-start">
-                <div className="w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-400 font-bold text-sm">Y2</span>
+              <div className="bg-blue-900/20 p-4 rounded-lg border border-blue-500/30">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">📈</span>
+                  <h3 className="font-bold text-blue-300 text-lg">Series A (Year 2)</h3>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white">Phase 2: Scale</h4>
-                  <p className="text-gray-400 text-sm">+ Tokyo, Rome, Barcelona, Dubai</p>
-                  <p className="text-gray-300 text-sm">Proven playbook, aggressive photographer acquisition</p>
-                </div>
+                <p className="text-blue-200 text-sm mb-2">+ Rome, Barcelona, Amsterdam</p>
+                <p className="text-gray-400 text-sm">Use what we learned in London/Paris to quickly expand across Europe. Sign up photographers fast.</p>
               </div>
               
-              <div className="flex gap-4 items-start">
-                <div className="w-8 h-8 bg-violet-500/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-violet-400 font-bold text-sm">Y3</span>
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-600">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">🌍</span>
+                  <h3 className="font-bold text-gray-300 text-lg">Series B (Year 3+)</h3>
                 </div>
-                <div>
-                  <h4 className="font-bold text-white">Phase 3: Global</h4>
-                  <p className="text-gray-400 text-sm">+ Sydney, Singapore, LA, Miami, Amsterdam, Prague, Vienna</p>
-                  <p className="text-gray-300 text-sm">50+ tourist destinations, enterprise partnerships</p>
-                </div>
+                <p className="text-gray-400 text-sm mb-2">+ Dubai, Sydney, Singapore, LA, Miami, Prague, Vienna...</p>
+                <p className="text-gray-500 text-sm">50+ tourist destinations worldwide, partnerships with hotels and tour operators.</p>
               </div>
             </div>
           </section>
 
           {/* Footer */}
           <div className="text-center pt-6 border-t border-gray-700">
-            <p className="text-gray-400 text-sm">
-              SnapNow - Connecting Travelers with Professional Photographers
-            </p>
-            <p className="text-gray-500 text-xs mt-2">
-              Data sources: VisitBritain, CRT Paris, NYC Tourism + Conventions, Tokyo Metro Tourism, Turismo Roma, Mordor Intelligence (2024)
+            <p className="text-violet-400 font-bold text-2xl">SnapNow</p>
+            <p className="text-gray-400">Connecting Tourists with Professional Photographers</p>
+            <p className="text-xs text-gray-600 mt-4">
+              Data sources: VisitBritain, Euromonitor 2024, CRT Paris, Turismo Roma, Mordor Intelligence
             </p>
           </div>
         </div>
