@@ -132,6 +132,10 @@ export default function InvestorPitch() {
                   <p className="text-sm text-gray-500">Pre-Seed Round</p>
                 </div>
                 <div className="text-center">
+                  <p className="text-3xl font-bold text-violet-400">10%</p>
+                  <p className="text-sm text-gray-500">Equity</p>
+                </div>
+                <div className="text-center">
                   <p className="text-3xl font-bold text-violet-400">🇬🇧 🇫🇷</p>
                   <p className="text-sm text-gray-500">London + Paris</p>
                 </div>
@@ -453,6 +457,22 @@ export default function InvestorPitch() {
               <h2 className="text-2xl font-bold text-violet-400 mb-6 pb-2 border-b border-gray-700">
                 The Ask: £200,000 Pre-Seed
               </h2>
+
+              {/* Deal Terms */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="text-center p-5 bg-violet-900/40 rounded-lg border-2 border-violet-500">
+                  <p className="text-4xl font-bold text-violet-400">£200k</p>
+                  <p className="text-sm text-gray-400 mt-1">Investment</p>
+                </div>
+                <div className="text-center p-5 bg-violet-900/40 rounded-lg border-2 border-violet-500">
+                  <p className="text-4xl font-bold text-violet-400">10%</p>
+                  <p className="text-sm text-gray-400 mt-1">Equity</p>
+                </div>
+                <div className="text-center p-5 bg-violet-900/40 rounded-lg border-2 border-violet-500">
+                  <p className="text-4xl font-bold text-violet-400">£2M</p>
+                  <p className="text-sm text-gray-400 mt-1">Pre-Money Valuation</p>
+                </div>
+              </div>
               
               <div className="grid grid-cols-2 gap-6 mb-6">
                 <div>
@@ -729,7 +749,7 @@ export default function InvestorPitch() {
               <p className="text-violet-400 font-bold text-2xl">SnapNow</p>
               <p className="text-gray-400">Connecting Tourists with Professional Photographers</p>
               <p className="text-sm text-gray-600 mt-4">
-                Pre-Seed Round | £200,000 | 18 Months | London + Paris
+                Pre-Seed Round | £200,000 for 10% Equity | £2M Valuation | 18 Months | London + Paris
               </p>
             </div>
           </div>

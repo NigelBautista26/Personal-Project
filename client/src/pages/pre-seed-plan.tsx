@@ -142,22 +142,26 @@ export default function PreSeedPlan() {
                 We're starting with just 2 cities so we can focus on getting it right before expanding to more places.
               </p>
               
-              <div className="grid grid-cols-4 gap-4 mt-6">
+              <div className="grid grid-cols-5 gap-3 mt-6">
                 <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
-                  <p className="text-3xl font-bold text-violet-400">£200k</p>
-                  <p className="text-sm text-gray-400">Investment Needed</p>
+                  <p className="text-2xl font-bold text-violet-400">£200k</p>
+                  <p className="text-xs text-gray-400">Investment</p>
                 </div>
                 <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
-                  <p className="text-3xl font-bold text-violet-400">2</p>
-                  <p className="text-sm text-gray-400">Cities to Start</p>
+                  <p className="text-2xl font-bold text-violet-400">10%</p>
+                  <p className="text-xs text-gray-400">Equity</p>
                 </div>
                 <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
-                  <p className="text-3xl font-bold text-violet-400">18</p>
-                  <p className="text-sm text-gray-400">Months of Funding</p>
+                  <p className="text-2xl font-bold text-violet-400">£2M</p>
+                  <p className="text-xs text-gray-400">Valuation</p>
                 </div>
                 <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
-                  <p className="text-3xl font-bold text-violet-400">2</p>
-                  <p className="text-sm text-gray-400">Mobile Apps</p>
+                  <p className="text-2xl font-bold text-violet-400">18</p>
+                  <p className="text-xs text-gray-400">Months</p>
+                </div>
+                <div className="text-center p-4 bg-violet-900/30 rounded-lg border border-violet-500/30">
+                  <p className="text-2xl font-bold text-violet-400">2</p>
+                  <p className="text-xs text-gray-400">Cities</p>
                 </div>
               </div>
             </section>
@@ -758,7 +762,7 @@ export default function PreSeedPlan() {
               <p className="text-violet-400 font-bold text-2xl">SnapNow</p>
               <p className="text-gray-400">Connecting Tourists with Professional Photographers</p>
               <p className="text-sm text-gray-500 mt-2">
-                Investment Ask: £200,000 | Money lasts: 18 months | Goal: Prove it works in London + Paris
+                £200,000 for 10% Equity | £2M Pre-Money Valuation | 18 Months | London + Paris
               </p>
               <p className="text-xs text-gray-600 mt-4">
                 Numbers based on: Our own data, Euromonitor 2024, industry research
