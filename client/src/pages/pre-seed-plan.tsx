@@ -412,24 +412,18 @@ export default function PreSeedPlan() {
                   </thead>
                   <tbody>
                     <tr className="bg-gray-800/50">
-                      <td className="border border-gray-600 p-3 text-gray-300">Founder/CEO</td>
-                      <td className="border border-gray-600 p-3 text-center text-gray-400">Full-time</td>
-                      <td className="border border-gray-600 p-3 text-right text-white font-semibold">£36,000*</td>
-                      <td className="border border-gray-600 p-3 text-gray-400 text-xs">Runs everything, tests the product, makes decisions</td>
-                    </tr>
-                    <tr className="bg-gray-800/30">
                       <td className="border border-gray-600 p-3 text-gray-300">Marketing Helper</td>
                       <td className="border border-gray-600 p-3 text-center text-gray-400">A few hours/week</td>
                       <td className="border border-gray-600 p-3 text-right text-white font-semibold">£10,000</td>
                       <td className="border border-gray-600 p-3 text-gray-400 text-xs">Helps plan ads and track what's working</td>
                     </tr>
-                    <tr className="bg-gray-800/50">
+                    <tr className="bg-gray-800/30">
                       <td className="border border-gray-600 p-3 text-gray-300">Photographer Support</td>
                       <td className="border border-gray-600 p-3 text-center text-gray-400">Part-time</td>
                       <td className="border border-gray-600 p-3 text-right text-white font-semibold">£7,000</td>
                       <td className="border border-gray-600 p-3 text-gray-400 text-xs">Helps photographers sign up and answers their questions</td>
                     </tr>
-                    <tr className="bg-gray-800/30">
+                    <tr className="bg-gray-800/50">
                       <td className="border border-gray-600 p-3 text-gray-300">Legal, Accounting, Servers</td>
                       <td className="border border-gray-600 p-3 text-center text-gray-400">-</td>
                       <td className="border border-gray-600 p-3 text-right text-white font-semibold">£12,000</td>
@@ -438,7 +432,7 @@ export default function PreSeedPlan() {
                   </tbody>
                 </table>
               </div>
-              <p className="text-xs text-gray-500 mt-2">*Founder salary shown separately in the main budget (£2,000/month)</p>
+              <p className="text-xs text-gray-500 mt-2">Founder salary (£36k) is listed separately in the main budget above.</p>
             </section>
 
             {/* The Plan: 18 Months */}
