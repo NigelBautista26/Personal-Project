@@ -4,11 +4,10 @@ import snapnowLogo from "@/assets/snapnow-logo.png";
 
 export default function Landing() {
   return (
-    <div className="fixed inset-0 z-50 min-h-screen w-screen bg-gray-900 text-white overflow-y-auto">
+    <div className="fixed inset-0 z-50 min-h-screen w-screen text-white overflow-y-auto" style={{ backgroundColor: '#0b1221' }}>
       {/* Hero Section */}
-      <section className="relative overflow-hidden" style={{ backgroundColor: '#0a1628' }}>
+      <section className="relative overflow-hidden" style={{ backgroundColor: '#0b1221' }}>
         {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900/50"></div>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-400 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
@@ -16,19 +15,24 @@ export default function Landing() {
         
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-32">
           <div className="text-center">
-            <img 
-              src={snapnowLogo} 
-              alt="SnapNow Logo" 
-              className="h-48 md:h-64 mx-auto mb-6"
-              style={{ background: 'transparent' }}
-            />
-            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              On Demand Photography, Anytime Anywhere
-            </p>
+            <div 
+              className="inline-block mx-auto mb-8"
+              style={{
+                background: 'radial-gradient(ellipse at center, #0b1628 0%, #0b1221 70%)',
+                padding: '20px',
+                borderRadius: '20px'
+              }}
+            >
+              <img 
+                src={snapnowLogo} 
+                alt="SnapNow Logo" 
+                className="h-48 md:h-64"
+              />
+            </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/auth">
-                <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-8 py-6">
+                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-6">
                   Try the Demo
                 </Button>
               </Link>
@@ -63,7 +67,7 @@ export default function Landing() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-16 md:py-24 bg-gray-800/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#0d1526' }}>
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             The <span className="text-red-400">Problem</span>
@@ -145,7 +149,7 @@ export default function Landing() {
       </section>
 
       {/* What's Built Section */}
-      <section className="py-16 md:py-24 bg-gray-800/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#0d1526' }}>
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
             Fully Working <span className="text-violet-400">Prototype</span>
@@ -250,7 +254,7 @@ export default function Landing() {
       </section>
 
       {/* Business Model */}
-      <section className="py-16 md:py-24 bg-gray-800/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#0d1526' }}>
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
             Simple <span className="text-green-400">Business Model</span>
@@ -364,7 +368,7 @@ export default function Landing() {
       </section>
 
       {/* Demo Accounts */}
-      <section className="py-16 md:py-24 bg-gray-800/30">
+      <section className="py-16 md:py-24" style={{ backgroundColor: '#0d1526' }}>
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
             Try the <span className="text-violet-400">Demo</span>
