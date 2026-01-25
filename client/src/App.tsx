@@ -38,6 +38,7 @@ import FounderCV from "@/pages/founder-cv";
 import MobileGuide from "@/pages/mobile-guide";
 import MobileCheckout from "@/pages/mobile-checkout";
 import PreSeedPlan from "@/pages/pre-seed-plan";
+import Landing from "@/pages/landing";
 
 function Router() {
   return (
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/mobile-guide" component={MobileGuide} />
       <Route path="/mobile-checkout" component={MobileCheckout} />
       <Route path="/pre-seed-plan" component={PreSeedPlan} />
+      <Route path="/landing" component={Landing} />
       <Route component={NotFound} />
     </Switch>
   );
