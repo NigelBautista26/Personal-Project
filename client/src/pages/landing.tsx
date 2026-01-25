@@ -23,11 +23,11 @@ export default function Landing() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <Link href="/auth">
+              <a href="https://mobile-creator--nigelzamudiobau.replit.app/">
                 <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-8 py-6">
                   Try the Demo
                 </Button>
-              </Link>
+              </a>
             </div>
 
             {/* Key Stats */}
@@ -370,11 +370,11 @@ export default function Landing() {
             </div>
           </div>
 
-          <Link href="/auth">
+          <a href="https://mobile-creator--nigelzamudiobau.replit.app/">
             <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-12">
               Try the Demo Now
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 
