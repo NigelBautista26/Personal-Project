@@ -6,12 +6,12 @@ export default function Landing() {
   return (
     <div className="fixed inset-0 z-50 min-h-screen w-screen bg-gray-900 text-white overflow-y-auto">
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-gray-900 to-gray-900"></div>
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+      <section className="relative overflow-hidden" style={{ backgroundColor: '#0a1628' }}>
+        {/* Subtle gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900/50"></div>
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-400 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-32">
@@ -20,6 +20,7 @@ export default function Landing() {
               src={snapnowLogo} 
               alt="SnapNow Logo" 
               className="h-48 md:h-64 mx-auto mb-6"
+              style={{ background: 'transparent' }}
             />
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
               On Demand Photography, Anytime Anywhere
