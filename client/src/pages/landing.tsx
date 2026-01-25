@@ -335,7 +335,7 @@ export default function Landing() {
           </div>
 
           <div className="flex flex-col items-center gap-4">
-            <a href="mailto:invest@snapnow.app?subject=Investor%20Pack%20Request&body=Hi%2C%0A%0AI'm%20interested%20in%20learning%20more%20about%20SnapNow's%20pre-seed%20round.%0A%0APlease%20send%20me%20the%20full%20investor%20pack%20including%3A%0A-%20Pitch%20Deck%0A-%20Detailed%20Spending%20Plan%0A-%20Financial%20Projections%0A%0AName%3A%20%0ACompany%2FFund%3A%20%0A%0AThank%20you!">
+            <a href="mailto:nigel.zamudio.bautista@gmail.com?subject=Investor%20Pack%20Request&body=Hi%2C%0A%0AI'm%20interested%20in%20learning%20more%20about%20SnapNow's%20pre-seed%20round.%0A%0APlease%20send%20me%20the%20full%20investor%20pack%20including%3A%0A-%20Pitch%20Deck%0A-%20Detailed%20Spending%20Plan%0A-%20Financial%20Projections%0A%0AName%3A%20%0ACompany%2FFund%3A%20%0A%0AThank%20you!">
               <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-12 py-6">
                 Request Investor Pack
               </Button>
