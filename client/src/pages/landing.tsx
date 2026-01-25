@@ -28,11 +28,6 @@ export default function Landing() {
                   Try the Demo
                 </Button>
               </Link>
-              <Link href="/investor-pitch">
-                <Button size="lg" variant="outline" className="border-violet-500 text-violet-400 hover:bg-violet-500/10 text-lg px-8 py-6">
-                  Investor Deck
-                </Button>
-              </Link>
             </div>
 
             {/* Key Stats */}
