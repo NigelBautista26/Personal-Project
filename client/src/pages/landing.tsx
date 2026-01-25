@@ -3,7 +3,7 @@ import { Link } from "wouter";
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="fixed inset-0 z-50 min-h-screen w-screen bg-gray-900 text-white overflow-y-auto">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Animated Background */}
