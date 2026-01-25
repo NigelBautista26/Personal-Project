@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import snapnowLogo from "@/assets/snapnow-logo.png";
 
 export default function Landing() {
   return (
@@ -7,23 +8,21 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/30 via-gray-900 to-gray-900"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-gray-900 to-gray-900"></div>
         <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-violet-500 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-32">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
-              <span className="text-violet-400">Snap</span>Now
-            </h1>
-            <p className="text-2xl md:text-3xl text-gray-300 mb-4">
-              Uber for Photography
-            </p>
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Connecting tourists with professional local photographers. 
-              Book a photoshoot as easily as booking a ride.
+            <img 
+              src={snapnowLogo} 
+              alt="SnapNow Logo" 
+              className="h-48 md:h-64 mx-auto mb-6"
+            />
+            <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto">
+              On Demand Photography, Anytime Anywhere
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -397,8 +396,11 @@ export default function Landing() {
       {/* Footer */}
       <footer className="py-8 border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="text-3xl font-bold text-violet-400 mb-2">SnapNow</p>
-          <p className="text-gray-400 mb-4">Connecting Tourists with Professional Photographers</p>
+          <img 
+            src={snapnowLogo} 
+            alt="SnapNow" 
+            className="h-24 mx-auto mb-4"
+          />
           <p className="text-sm text-gray-600">
             Pre-Seed Round | £200,000 for 10% Equity | £2M Valuation
           </p>
