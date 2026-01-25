@@ -18,12 +18,8 @@ export default function Landing() {
             <h1 className="text-5xl md:text-7xl font-bold mb-4">
               <span className="text-violet-400">Snap</span>Now
             </h1>
-            <p className="text-xl md:text-2xl text-blue-300 mb-6">
+            <p className="text-xl md:text-2xl text-blue-300 mb-8">
               On Demand Photography, Anytime Anywhere
-            </p>
-            <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-              Connecting tourists with professional local photographers. 
-              Book a photoshoot as easily as booking a ride.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
