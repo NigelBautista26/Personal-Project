@@ -21,8 +21,8 @@ const STOCK_IMAGES = [
   '/stock_images/traveler_at_dubai_sk_f1037b31.jpg',
 ];
 
-const ROW_COUNT = 7;
-const IMAGES_PER_ROW = 4;
+const ROW_COUNT = 8;
+const IMAGES_PER_ROW = 6;
 
 interface RowConfig {
   id: number;
@@ -84,10 +84,10 @@ export function PhotoBackground() {
                 animationDirection: row.direction,
               }}
             >
-              {[...row.images, ...row.images, ...row.images].map((src, idx) => (
+              {[...row.images, ...row.images, ...row.images, ...row.images].map((src, idx) => (
                 <div
                   key={`${row.id}-${idx}`}
-                  className="flex-shrink-0 w-28 h-28 md:w-32 md:h-32 rounded-3xl overflow-hidden opacity-90"
+                  className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-2xl sm:rounded-3xl overflow-hidden opacity-90"
                 >
                   <img
                     src={src}
