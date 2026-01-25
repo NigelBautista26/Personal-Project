@@ -334,22 +334,15 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/investor-pitch">
-              <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-8">
-                View Pitch Deck
+          <div className="flex flex-col items-center gap-4">
+            <a href="mailto:invest@snapnow.app?subject=Investor%20Pack%20Request&body=Hi%2C%0A%0AI'm%20interested%20in%20learning%20more%20about%20SnapNow's%20pre-seed%20round.%0A%0APlease%20send%20me%20the%20full%20investor%20pack%20including%3A%0A-%20Pitch%20Deck%0A-%20Detailed%20Spending%20Plan%0A-%20Financial%20Projections%0A%0AName%3A%20%0ACompany%2FFund%3A%20%0A%0AThank%20you!">
+              <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-12 py-6">
+                Request Investor Pack
               </Button>
-            </Link>
-            <Link href="/pre-seed-plan">
-              <Button size="lg" variant="outline" className="border-violet-500 text-violet-400 hover:bg-violet-500/10 text-lg px-8">
-                Detailed Plan
-              </Button>
-            </Link>
-            <Link href="/investor-projections">
-              <Button size="lg" variant="outline" className="border-violet-500 text-violet-400 hover:bg-violet-500/10 text-lg px-8">
-                Financials
-              </Button>
-            </Link>
+            </a>
+            <p className="text-gray-500 text-sm">
+              Pitch deck, financial projections, and detailed spending plan
+            </p>
           </div>
         </div>
       </section>
