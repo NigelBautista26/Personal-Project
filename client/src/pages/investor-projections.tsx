@@ -13,17 +13,6 @@ export default function InvestorProjections() {
   return (
     <>
       <style>{`
-        .investor-projections-page {
-          position: fixed;
-          inset: 0;
-          z-index: 9999;
-          background: #09090b;
-          color: white;
-          padding: 1rem;
-          overflow-y: auto;
-          width: 100vw;
-          height: 100vh;
-        }
         
         @media print {
           @page { 
@@ -88,7 +77,7 @@ export default function InvestorProjections() {
           }
         }
       `}</style>
-      <div className="investor-projections-page">
+      <div className="fixed inset-0 z-[9999] bg-[#09090b] text-white p-4 overflow-y-auto w-screen h-screen">
         <div className="print-wrapper max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-6 no-print">
           <Link href="/">
