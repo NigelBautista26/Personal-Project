@@ -23,7 +23,7 @@ export default function Landing() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <a href="https://mobile-creator--nigelzamudiobau.replit.app/">
+              <a href="https://snapnow.app/">
                 <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-8 py-6">
                   Try the Demo
                 </Button>
@@ -370,7 +370,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <a href="https://mobile-creator--nigelzamudiobau.replit.app/">
+          <a href="https://snapnow.app/">
             <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-12">
               Try the Demo Now
             </Button>
