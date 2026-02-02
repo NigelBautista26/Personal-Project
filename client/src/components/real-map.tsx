@@ -31,10 +31,19 @@ interface PhotoSpot {
   imageUrl: string;
 }
 
+interface LiveLocation {
+  lat: number;
+  lng: number;
+  bookingId: string;
+  name?: string;
+}
+
 interface RealMapProps {
   selectedCity: City;
   photographers: Photographer[];
   photoSpots?: PhotoSpot[];
+  photographerLiveLocation?: LiveLocation | null;
+  onLiveLocationClick?: (bookingId: string) => void;
 }
 
 type MapStyle = 'dark' | 'satellite' | 'street';
@@ -292,7 +301,54 @@ function getOffsetPhotographers(photographers: Photographer[]): (Photographer & 
   return result;
 }
 
-export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMapProps) {
+function PhotographerLiveMarker({ location, onClick }: { location: LiveLocation; onClick?: () => void }) {
+  const icon = L.divIcon({
+    className: "photographer-live-marker",
+    html: `
+      <div style="
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <div style="
+          position: absolute;
+          width: 60px;
+          height: 60px;
+          background: rgba(16, 185, 129, 0.25);
+          border-radius: 50%;
+          animation: liveMarkerPulse 2s infinite;
+        "></div>
+        <div style="
+          width: 28px;
+          height: 28px;
+          background: #10b981;
+          border: 4px solid white;
+          border-radius: 50%;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.6);
+          position: relative;
+          z-index: 10;
+        "></div>
+      </div>
+    `,
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+  });
+
+  return (
+    <Marker position={[location.lat, location.lng]} icon={icon} eventHandlers={{ click: onClick }}>
+      <Popup className="photographer-popup">
+        <div className="text-center p-2">
+          <p className="font-medium text-green-400 text-sm">{location.name || "Your Photographer"}</p>
+          <p className="text-xs text-gray-300">Live Location</p>
+          <p className="text-xs text-green-400 mt-1">Tap to view booking</p>
+        </div>
+      </Popup>
+    </Marker>
+  );
+}
+
+export function RealMap({ selectedCity, photographers, photoSpots = [], photographerLiveLocation, onLiveLocationClick }: RealMapProps) {
   const [userPosition, setUserPosition] = useState<[number, number] | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -395,6 +451,10 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
           0%, 100% { box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4), 0 0 0 2px rgba(59, 130, 246, 0.2); }
           50% { box-shadow: 0 4px 25px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.3); }
         }
+        @keyframes liveMarkerPulse {
+          0% { transform: scale(1); opacity: 0.8; }
+          100% { transform: scale(2.5); opacity: 0; }
+        }
       `}</style>
       <MapContainer
         center={mapCenter}
@@ -425,6 +485,13 @@ export function RealMap({ selectedCity, photographers, photoSpots = [] }: RealMa
             image={p.profileImageUrl || "https://via.placeholder.com/52?text=P"}
           />
         ))}
+        
+        {photographerLiveLocation && (
+          <PhotographerLiveMarker 
+            location={photographerLiveLocation} 
+            onClick={() => onLiveLocationClick?.(photographerLiveLocation.bookingId)}
+          />
+        )}
       </MapContainer>
       
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-[1000]" />

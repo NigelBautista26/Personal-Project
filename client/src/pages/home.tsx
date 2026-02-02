@@ -4,9 +4,21 @@ import { MapPin, Users, Camera } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { getPhotographers } from "@/lib/api";
+import { getPhotographers, getCurrentUser } from "@/lib/api";
 import { CitySelector, City } from "@/components/city-selector";
 import { useLocation } from "wouter";
+
+interface Booking {
+  id: string;
+  status: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  duration: number;
+  photographerId: string;
+  photographer: {
+    fullName: string;
+  };
+}
 
 const DEFAULT_CITY: City = { name: "London", country: "United Kingdom", lat: 51.5074, lng: -0.1278 };
 const SEARCH_RADIUS_KM = 50;
@@ -39,6 +51,7 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const [showCitySelector, setShowCitySelector] = useState(false);
   const [selectedCity, setSelectedCity] = useState<City>(DEFAULT_CITY);
+  const [photographerLiveLocation, setPhotographerLiveLocation] = useState<{ lat: number; lng: number; bookingId: string; name: string } | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("selectedCity");
@@ -56,6 +69,11 @@ export default function Home() {
     localStorage.setItem("selectedCity", JSON.stringify(city));
   };
 
+  const { data: currentUser } = useQuery({
+    queryKey: ["currentUser"],
+    queryFn: getCurrentUser,
+  });
+
   const { data: photographers = [] } = useQuery({
     queryKey: ["photographers"],
     queryFn: getPhotographers,
@@ -69,6 +87,67 @@ export default function Home() {
       return res.json();
     },
   });
+
+  const { data: bookings = [] } = useQuery<Booking[]>({
+    queryKey: ["customerBookings", currentUser?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/bookings/customer/${currentUser?.id}`, {
+        credentials: "include",
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!currentUser?.id && currentUser?.role === "customer",
+  });
+
+  const activeSession = useMemo(() => {
+    const now = new Date();
+    return bookings.find((booking) => {
+      if (booking.status !== "confirmed") return false;
+
+      const sessionDate = new Date(booking.scheduledDate);
+      const timeParts = booking.scheduledTime.replace(/[AP]M/i, "").trim().split(":");
+      const hours = parseInt(timeParts[0]);
+      const minutes = parseInt(timeParts[1]) || 0;
+      const isPM = booking.scheduledTime.toLowerCase().includes("pm");
+      sessionDate.setHours(
+        isPM && hours !== 12 ? hours + 12 : hours === 12 && !isPM ? 0 : hours,
+        minutes
+      );
+
+      const duration = booking.duration || 1;
+      const sessionEnd = new Date(sessionDate.getTime() + duration * 60 * 60 * 1000);
+
+      const minutesUntilStart = (sessionDate.getTime() - now.getTime()) / (1000 * 60);
+      return minutesUntilStart <= 10 && now < sessionEnd;
+    });
+  }, [bookings]);
+
+  const { data: photographerLocation } = useQuery<{ latitude: string; longitude: string } | null>({
+    queryKey: ["photographer-live-location", activeSession?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/bookings/${activeSession!.id}/photographer-location`, {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!activeSession,
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    if (photographerLocation && activeSession) {
+      setPhotographerLiveLocation({
+        lat: parseFloat(photographerLocation.latitude),
+        lng: parseFloat(photographerLocation.longitude),
+        bookingId: activeSession.id,
+        name: activeSession.photographer?.fullName || "Your Photographer",
+      });
+    } else {
+      setPhotographerLiveLocation(null);
+    }
+  }, [photographerLocation, activeSession]);
 
   const filteredPhotographers = useMemo(() => {
     return photographers.filter((p: any) => {
@@ -100,6 +179,8 @@ export default function Home() {
         selectedCity={selectedCity}
         photographers={filteredPhotographers}
         photoSpots={photoSpots}
+        photographerLiveLocation={photographerLiveLocation}
+        onLiveLocationClick={(bookingId) => setLocation(`/booking/${bookingId}`)}
       />
 
       <motion.div
