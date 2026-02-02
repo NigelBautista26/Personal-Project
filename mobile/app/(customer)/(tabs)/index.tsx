@@ -325,10 +325,10 @@ export default function CustomerMapScreen() {
         key={`map-${mapKey}`}
         ref={mapRef}
         style={styles.map}
-        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
+        provider={PROVIDER_GOOGLE}
         initialRegion={region}
-        mapType={Platform.OS === 'ios' ? (mapType === 'satellite' ? 'satellite' : 'mutedStandard') : mapType}
-        customMapStyle={Platform.OS === 'android' && mapType === 'standard' ? darkMapStyle : undefined}
+        mapType={mapType === 'satellite' ? 'satellite' : 'standard'}
+        customMapStyle={mapType === 'standard' ? darkMapStyle : undefined}
         showsUserLocation={true}
         showsMyLocationButton={false}
         userInterfaceStyle="dark"

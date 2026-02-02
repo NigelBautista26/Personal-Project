@@ -25,6 +25,23 @@ interface MeetUpExperienceProps {
 
 const PRIMARY_COLOR = '#2563eb';
 
+const darkMapStyle = [
+  { elementType: 'geometry', stylers: [{ color: '#0d1117' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8b949e' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0d1117' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative.country', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'administrative.locality', elementType: 'labels', stylers: [{ visibility: 'on' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1a1f2e' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1f2937' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1f2937' }] },
+  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#1a1f2e' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0c1929' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4f5b66' }] },
+];
+
 export function MeetUpExperience({
   bookingId,
   scheduledDate,
@@ -285,6 +302,8 @@ export function MeetUpExperience({
           <View style={styles.mapContainer}>
             <SafeMapView
               style={styles.map}
+              provider={PROVIDER_GOOGLE}
+              customMapStyle={darkMapStyle}
               region={{
                 latitude: editLat,
                 longitude: editLng,
@@ -367,7 +386,7 @@ export function MeetUpExperience({
       {/* Map */}
       {(hasMeetingPoint || currentLocation || hasOtherPartyLocation) && (
         <View style={styles.mapContainer}>
-          <SafeMapView style={styles.map} region={getMapRegion()}>
+          <SafeMapView style={styles.map} region={getMapRegion()} provider={PROVIDER_GOOGLE} customMapStyle={darkMapStyle}>
             {/* Meeting Point Marker */}
             {hasMeetingPoint && (
               <SafeMarker
