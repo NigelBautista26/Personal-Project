@@ -999,26 +999,31 @@ export async function registerRoutes(
       
       // Handle Stripe payment based on status change
       if (booking.stripePaymentId) {
-        const stripe = await getUncachableStripeClient();
-        
-        if (status === 'confirmed') {
-          // Capture the payment when photographer accepts
-          try {
-            await stripe.paymentIntents.capture(booking.stripePaymentId);
-            console.log(`Payment captured for booking ${booking.id}`);
-          } catch (stripeError: any) {
-            console.error("Failed to capture payment:", stripeError);
-            return res.status(500).json({ error: "Failed to capture payment. The authorization may have expired." });
+        try {
+          const stripe = await getUncachableStripeClient();
+          
+          if (status === 'confirmed') {
+            // Capture the payment when photographer accepts
+            try {
+              await stripe.paymentIntents.capture(booking.stripePaymentId);
+              console.log(`Payment captured for booking ${booking.id}`);
+            } catch (stripeError: any) {
+              console.error("Failed to capture payment:", stripeError);
+              return res.status(500).json({ error: "Failed to capture payment. The authorization may have expired." });
+            }
+          } else if (status === 'cancelled' || status === 'declined') {
+            // Cancel the payment authorization when photographer declines
+            try {
+              await stripe.paymentIntents.cancel(booking.stripePaymentId);
+              console.log(`Payment authorization cancelled for booking ${booking.id}`);
+            } catch (stripeError: any) {
+              // Payment may already be cancelled or captured - log but don't fail
+              console.log("Payment cancellation note:", stripeError.message);
+            }
           }
-        } else if (status === 'cancelled' || status === 'declined') {
-          // Cancel the payment authorization when photographer declines
-          try {
-            await stripe.paymentIntents.cancel(booking.stripePaymentId);
-            console.log(`Payment authorization cancelled for booking ${booking.id}`);
-          } catch (stripeError: any) {
-            // Payment may already be cancelled or captured - log but don't fail
-            console.log("Payment cancellation note:", stripeError.message);
-          }
+        } catch (stripeClientError: any) {
+          // Stripe client couldn't be initialized - log but continue with status update
+          console.log("Stripe client error (continuing with status update):", stripeClientError.message);
         }
       }
       
