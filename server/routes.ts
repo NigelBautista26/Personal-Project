@@ -968,22 +968,32 @@ export async function registerRoutes(
   app.patch("/api/bookings/:bookingId/status", async (req, res) => {
     try {
       if (!req.session.userId) {
+        console.log("Booking status update: Not authenticated");
         return res.status(401).json({ error: "Not authenticated" });
       }
       
       const { status } = req.body;
       if (!['pending', 'confirmed', 'cancelled', 'completed', 'declined'].includes(status)) {
+        console.log("Booking status update: Invalid status", status);
         return res.status(400).json({ error: "Invalid status" });
       }
       
       const booking = await storage.getBooking(req.params.bookingId);
       if (!booking) {
+        console.log("Booking status update: Booking not found", req.params.bookingId);
         return res.status(404).json({ error: "Booking not found" });
       }
       
       // Verify the photographer owns this booking
       const photographer = await storage.getPhotographer(booking.photographerId);
+      console.log("Booking status update: photographer lookup", { 
+        bookingPhotographerId: booking.photographerId, 
+        photographerFound: !!photographer,
+        photographerUserId: photographer?.userId,
+        sessionUserId: req.session.userId
+      });
       if (!photographer || photographer.userId !== req.session.userId) {
+        console.log("Booking status update: Not authorized");
         return res.status(403).json({ error: "Not authorized to update this booking" });
       }
       
@@ -1019,8 +1029,9 @@ export async function registerRoutes(
       broadcastToCustomer(booking.customerId, "booking.updated", updatedBooking);
       
       res.json(updatedBooking);
-    } catch (error) {
-      console.error("Booking status update error:", error);
+    } catch (error: any) {
+      console.error("Booking status update error:", error?.message || error);
+      console.error("Full error:", JSON.stringify(error, null, 2));
       res.status(500).json({ error: "Failed to update booking status" });
     }
   });
