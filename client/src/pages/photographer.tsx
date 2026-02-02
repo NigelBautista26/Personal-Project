@@ -133,30 +133,35 @@ export default function PhotographerProfile() {
         </div>
       </div>
 
-      {/* Portfolio Grid - Full Width */}
-      <div className="mb-6">
-        <div className="px-6 mb-4">
-          <h3 className="font-bold text-white">Portfolio</h3>
+      {/* Portfolio Grid - Instagram Style 3 Column */}
+      {portfolioImages.length > 0 && (
+        <div className="mb-6">
+          <div className="px-6 mb-4">
+            <h3 className="font-bold text-white">Portfolio</h3>
+          </div>
+          <div className="flex flex-wrap gap-[1px]">
+            {portfolioImages.map((img: string, i: number) => (
+              <div 
+                key={i} 
+                className="relative group cursor-pointer overflow-hidden bg-card"
+                style={{ width: 'calc(33.333% - 1px)' }}
+                onClick={() => setSelectedImage(img)}
+                data-testid={`img-portfolio-${i}`}
+              >
+                <div className="aspect-square w-full">
+                  <img 
+                    src={img} 
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-200 hover:scale-105 active:scale-95" 
+                    alt={`Portfolio ${i + 1}`}
+                  />
+                </div>
+                <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="columns-3 gap-0.5 space-y-0.5 px-0.5">
-          {portfolioImages.map((img: string, i: number) => (
-            <div 
-              key={i} 
-              className="break-inside-avoid relative group cursor-pointer overflow-hidden bg-card"
-              onClick={() => setSelectedImage(img)}
-              data-testid={`img-portfolio-${i}`}
-            >
-              <img 
-                src={img} 
-                loading="lazy"
-                className="w-full h-auto object-contain bg-black transition-transform duration-200 hover:scale-105 active:scale-95" 
-                alt={`Portfolio ${i + 1}`}
-              />
-              <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Reviews Section */}
       {reviewsData && reviewsData.reviews.length > 0 && (
