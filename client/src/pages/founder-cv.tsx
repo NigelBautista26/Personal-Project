@@ -32,13 +32,25 @@ export default function FounderCV() {
     {
       company: "Atlast.co (Part-time Contractor)",
       role: "Founding Automation Architect",
-      period: "Jan 2024 - Present",
+      period: "Jan 2025 - Jan 2026",
       highlights: [
         "Built the foundational TypeScript/Playwright automation framework validating 20+ carrier integrations from the ground up",
         "Eliminated a critical business risk related to external API reliability and operational readiness",
         "Recognised by CTO and CEO as the 'Founding Architect' of the company's validation infrastructure",
         "Enabled investor confidence by stabilising multi-carrier logistics workflows",
         "Engineered end-to-end, integration, and API test suites for Albert AI, implementing pre-merge validation pipelines that enforce green builds before any code merges to master"
+      ]
+    },
+    {
+      company: "Cambridge Blockchain Group Limited (Part-time Contractor)",
+      role: "Senior Automation Engineer",
+      period: "Jan 2024 - Aug 2024",
+      highlights: [
+        "Established comprehensive test automation infrastructure covering web applications and blockchain-integrated services",
+        "Developed robust TypeScript-based testing frameworks ensuring platform reliability across distributed systems",
+        "Implemented continuous integration workflows with automated quality checks, significantly improving deployment confidence",
+        "Collaborated with development teams to embed testing practices early in the development cycle, reducing post-release defects",
+        "Created API and integration test suites that validated critical blockchain transaction workflows and smart contract interactions"
       ]
     },
     {
