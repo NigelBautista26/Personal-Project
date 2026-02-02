@@ -290,7 +290,10 @@ export default function PhotographerBookings() {
         credentials: "include",
         body: JSON.stringify({ status }),
       });
-      if (!res.ok) throw new Error("Failed to update status");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(errorData.error || `Failed to update status (${res.status})`);
+      }
       return res.json();
     },
     onSuccess: () => {
@@ -300,10 +303,10 @@ export default function PhotographerBookings() {
         description: "Booking status has been updated.",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Update Failed",
-        description: "Could not update booking status.",
+        description: error.message || "Could not update booking status.",
         variant: "destructive",
       });
     },
