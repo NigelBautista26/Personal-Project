@@ -19,7 +19,7 @@ import { API_URL } from '../../../src/api/client';
 
 const PRIMARY_COLOR = '#2563eb';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const PORTFOLIO_IMAGE_SIZE = (SCREEN_WIDTH - 4) / 3;
+const PORTFOLIO_IMAGE_SIZE = (SCREEN_WIDTH - 6) / 2;
 
 const formatDate = (dateStr: string) => {
   const date = new Date(dateStr);
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
   portfolioSection: { marginBottom: 24 },
   sectionHeader: { paddingHorizontal: 24, marginBottom: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 2, paddingHorizontal: 2 },
+  portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 2 },
   portfolioImageWrapper: {
     width: PORTFOLIO_IMAGE_SIZE,
     backgroundColor: '#1a1a1a',
