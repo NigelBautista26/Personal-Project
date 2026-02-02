@@ -9,7 +9,7 @@ declare global {
 }
 import { useLocation } from "wouter";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 
 interface BookingData {
   photographerId: string;
@@ -25,6 +25,25 @@ interface SessionData {
   bookingData: BookingData;
   stripePublishableKey: string;
 }
+
+const cardElementOptions = {
+  style: {
+    base: {
+      color: '#333',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      fontSmoothing: 'antialiased',
+      fontSize: '16px',
+      '::placeholder': {
+        color: '#6b7280',
+      },
+      iconColor: '#8b5cf6',
+    },
+    invalid: {
+      color: '#ef4444',
+      iconColor: '#ef4444',
+    },
+  },
+};
 
 function CheckoutForm({ 
   token, 
@@ -42,27 +61,25 @@ function CheckoutForm({
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
+  const [cardComplete, setCardComplete] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
 
-    setProcessing(true);
-    setError(null);
-
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setError(submitError.message || "Payment failed");
-      setProcessing(false);
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      setError("Card element not found");
       return;
     }
 
-    const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: window.location.origin + `/mobile-checkout-success?token=${token}`,
+    setProcessing(true);
+    setError(null);
+
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
       },
-      redirect: "if_required",
     });
 
     if (confirmError) {
@@ -140,17 +157,20 @@ function CheckoutForm({
       </div>
 
       <div style={styles.paymentSection}>
-        <PaymentElement options={{ layout: "tabs" }} />
+        <CardElement 
+          options={cardElementOptions}
+          onChange={(e) => setCardComplete(e.complete)}
+        />
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
 
       <button
         type="submit"
-        disabled={!stripe || processing}
+        disabled={!stripe || processing || !cardComplete}
         style={{
           ...styles.payButton,
-          opacity: !stripe || processing ? 0.6 : 1,
+          opacity: !stripe || processing || !cardComplete ? 0.6 : 1,
         }}
       >
         {processing ? "Processing..." : `Pay £${bookingData.amount.toFixed(2)}`}
@@ -245,19 +265,7 @@ export default function MobileCheckout() {
         <h1 style={styles.headerTitle}>Complete Payment</h1>
       </header>
 
-      <Elements
-        stripe={stripePromise}
-        options={{
-          clientSecret,
-          appearance: {
-            theme: "stripe",
-            variables: {
-              colorPrimary: "#8b5cf6",
-              borderRadius: "8px",
-            },
-          },
-        }}
-      >
+      <Elements stripe={stripePromise}>
         <CheckoutForm
           token={token}
           bookingData={sessionData.bookingData}
