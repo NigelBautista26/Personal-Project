@@ -135,8 +135,106 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* What's Built Section */}
+      {/* Mobile App Showcase */}
       <section className="py-16 md:py-24 bg-gray-800/30">
+        <div className="max-w-6xl mx-auto px-6">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+            <span className="text-violet-400">Mobile App</span> Experience
+          </h2>
+          <p className="text-xl text-gray-400 text-center mb-12 max-w-2xl mx-auto">
+            A polished, native iOS/Android app that makes booking photographers effortless
+          </p>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/welcome.png" 
+                  alt="SnapNow Welcome Screen" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Welcome</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/map.png" 
+                  alt="SnapNow Map View" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Find Nearby</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/profile.png" 
+                  alt="SnapNow Photographer Profile" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">View Portfolio</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/bookings.png" 
+                  alt="SnapNow Bookings" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Manage Bookings</p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/signup.png" 
+                  alt="SnapNow Sign Up" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Easy Sign Up</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/photographers.png" 
+                  alt="SnapNow Photographers List" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Browse Photographers</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/spots.png" 
+                  alt="SnapNow Photo Spots" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Photo Spots</p>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-violet-500/20 border border-gray-700">
+                <img 
+                  src="/mobile-screenshots/login.png" 
+                  alt="SnapNow Login" 
+                  className="w-full h-auto"
+                />
+              </div>
+              <p className="text-sm text-gray-400 mt-3 text-center">Secure Login</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* What's Built Section */}
+      <section className="py-16 md:py-24">
         <div className="max-w-6xl mx-auto px-6">
           <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
             Fully Working <span className="text-violet-400">Prototype</span>
