@@ -20,7 +20,7 @@ export default function Landing() {
               <span className="text-violet-400">Snap</span>Now
             </h1>
             <p className="text-xl md:text-2xl text-blue-300 mb-8">
-              On Demand Photography, Anytime Anywhere
+              On Demand Photography, Anytime Anywhere You Travel
             </p>
             
             {/* Key Stats */}
@@ -391,7 +391,7 @@ export default function Landing() {
           <p className="text-3xl font-bold mb-2">
             <span className="text-violet-400">Snap</span>Now
           </p>
-          <p className="text-gray-400 mb-4">On Demand Photography, Anytime Anywhere</p>
+          <p className="text-gray-400 mb-4">On Demand Photography, Anytime Anywhere You Travel</p>
           <p className="text-sm text-gray-600">
             Pre-Seed Round | £200,000 for 10% Equity | £2M Valuation
           </p>
