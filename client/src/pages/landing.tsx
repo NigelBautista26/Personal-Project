@@ -23,14 +23,6 @@ export default function Landing() {
               On Demand Photography, Anytime Anywhere
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              <a href="https://snapnow.app/">
-                <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-lg px-8 py-6">
-                  Try the Demo
-                </Button>
-              </a>
-            </div>
-
             {/* Key Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
               <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
