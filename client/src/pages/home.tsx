@@ -1,6 +1,6 @@
 import { RealMap } from "@/components/real-map";
 import { BottomNav } from "@/components/bottom-nav";
-import { MapPin, Users, Camera } from "lucide-react";
+import { MapPin, Users, Camera, ChevronRight } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -193,18 +193,19 @@ export default function Home() {
       >
         <button
           onClick={() => setLocation("/photographers")}
-          className="w-full glass rounded-2xl p-4 flex items-center gap-4 hover:bg-white/10 transition-colors"
+          className="w-full bg-gray-900/95 rounded-2xl p-4 flex items-center gap-4 hover:bg-gray-800 transition-colors border border-gray-700"
           data-testid="button-browse-photographers"
         >
-          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-            <Users className="w-6 h-6 text-primary" />
+          <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+            <Users className="w-6 h-6 text-blue-500" />
           </div>
           <div className="flex-1 text-left">
             <p className="text-white font-semibold">
               {filteredPhotographers.length} Photographer{filteredPhotographers.length !== 1 ? "s" : ""} Available
             </p>
-            <p className="text-muted-foreground text-sm">Browse photographers in {selectedCity.name}</p>
+            <p className="text-gray-400 text-sm">Browse photographers in {selectedCity.name}</p>
           </div>
+          <ChevronRight className="w-5 h-5 text-gray-400" />
         </button>
       </motion.div>
 
