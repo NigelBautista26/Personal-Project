@@ -390,7 +390,7 @@ export default function CustomerMapScreen() {
         )}
       </SafeMapView>
 
-      {/* Location Header - Two separate buttons like web */}
+      {/* Location Header */}
       <View style={styles.header}>
         <TouchableOpacity 
           style={styles.locationButton} 
@@ -399,13 +399,6 @@ export default function CustomerMapScreen() {
         >
           <MapPin size={18} color="#fff" />
           <Text style={styles.locationText}>{selectedCity.name}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.changeButton}
-          onPress={() => setShowCitySelector(true)}
-          testID="button-change-city"
-        >
-          <Text style={styles.changeButtonText}>Change</Text>
         </TouchableOpacity>
       </View>
 
@@ -573,19 +566,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
     fontSize: 15,
-  },
-  changeButton: {
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  changeButtonText: {
-    color: PRIMARY_COLOR,
-    fontWeight: '600',
-    fontSize: 14,
   },
   controls: {
     position: 'absolute',

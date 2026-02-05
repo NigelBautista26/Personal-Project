@@ -162,17 +162,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-12 pointer-events-none">
-        <div className="flex items-center justify-between pointer-events-auto">
-          <div className="flex items-center gap-2 bg-gray-900/90 rounded-full px-4 py-2 border border-gray-700">
-            <MapPin className="w-4 h-4 text-blue-500" />
-            <span className="text-white font-medium text-sm">{selectedCity.name}</span>
-          </div>
+        <div className="flex items-center pointer-events-auto">
           <button
             onClick={() => setShowCitySelector(true)}
-            className="bg-gray-900/90 rounded-full px-4 py-2 border border-gray-700 text-blue-500 font-medium text-sm hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-2 bg-gray-900/90 rounded-full px-4 py-2 border border-gray-700 hover:bg-gray-800 transition-colors"
             data-testid="button-change-city"
           >
-            Change
+            <MapPin className="w-4 h-4 text-blue-500" />
+            <span className="text-white font-medium text-sm">{selectedCity.name}</span>
           </button>
         </div>
       </div>
