@@ -169,7 +169,7 @@ export default function Home() {
           </div>
           <button
             onClick={() => setShowCitySelector(true)}
-            className="text-blue-500 font-medium text-sm hover:text-blue-400 transition-colors"
+            className="bg-gray-900/90 rounded-full px-4 py-2 border border-gray-700 text-blue-500 font-medium text-sm hover:bg-gray-800 transition-colors"
             data-testid="button-change-city"
           >
             Change
