@@ -61,7 +61,7 @@ export default function PhotographerProfile() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
         <div className="text-white text-center mb-4">Photographer not found</div>
-        <Link href="/home">
+        <Link href="/photographers">
           <Button variant="outline">Go Back</Button>
         </Link>
       </div>
@@ -80,7 +80,7 @@ export default function PhotographerProfile() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-background/20 to-background" />
         
         <div className="absolute top-0 left-0 right-0 p-6 pt-12 flex justify-between items-center z-10">
-          <Link href="/home">
+          <Link href="/photographers">
             <button className="w-10 h-10 glass-dark rounded-full flex items-center justify-center text-white hover:bg-white/10" data-testid="button-back">
               <ArrowLeft className="w-5 h-5" />
             </button>
