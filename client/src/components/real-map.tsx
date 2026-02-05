@@ -46,13 +46,13 @@ interface RealMapProps {
   onLiveLocationClick?: (bookingId: string) => void;
 }
 
-type MapStyle = 'dark' | 'satellite' | 'street';
+type MapStyle = 'street' | 'satellite' | 'dark';
 
 const MAP_STYLES = {
-  dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  street: {
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    name: "Dark",
+    name: "Street",
     icon: MapViewIcon,
   },
   satellite: {
@@ -61,10 +61,10 @@ const MAP_STYLES = {
     name: "Satellite",
     icon: Satellite,
   },
-  street: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+  dark: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    name: "Street",
+    name: "Dark",
     icon: MapIcon,
   },
 };
@@ -353,7 +353,7 @@ export function RealMap({ selectedCity, photographers, photoSpots = [], photogra
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [shouldFollowUser, setShouldFollowUser] = useState(false);
-  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
+  const [mapStyle, setMapStyle] = useState<MapStyle>('street');
   const [showStylePicker, setShowStylePicker] = useState(false);
   
   const offsetPhotographers = useMemo(() => getOffsetPhotographers(photographers), [photographers]);

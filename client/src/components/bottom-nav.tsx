@@ -38,11 +38,10 @@ export function BottomNav() {
             <Link key={item.href} href={item.href}>
               <div className={cn(
                 "flex flex-col items-center gap-1 transition-colors duration-200 cursor-pointer py-2",
-                isActive ? "text-white" : "text-muted-foreground hover:text-white/80"
+                isActive ? "text-blue-500" : "text-gray-500 hover:text-gray-400"
               )} data-testid={`nav-${item.label.toLowerCase()}`}>
-                <item.icon className={cn("w-6 h-6", isActive && "fill-current")} strokeWidth={isActive ? 0 : 2} />
+                <item.icon className="w-6 h-6" strokeWidth={1.5} />
                 <span className="text-[10px] font-medium">{item.label}</span>
-                {isActive && <div className="w-1 h-1 bg-primary rounded-full" />}
               </div>
             </Link>
           );
