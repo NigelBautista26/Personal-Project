@@ -25,26 +25,6 @@ interface MeetUpExperienceProps {
 
 const PRIMARY_COLOR = '#2563eb';
 
-const darkMapStyle = [
-  { elementType: 'geometry', stylers: [{ color: '#1a1a2e' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#1a1a2e' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative.country', elementType: 'labels', stylers: [{ visibility: 'on' }] },
-  { featureType: 'administrative.locality', elementType: 'labels', stylers: [{ visibility: 'on' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8a8a8a' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3d3d5c' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a1a2e' }] },
-  { featureType: 'road.arterial', elementType: 'geometry', stylers: [{ color: '#2d2d44' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#4a5568' }] },
-];
-
 export function MeetUpExperience({
   bookingId,
   scheduledDate,
@@ -305,8 +285,6 @@ export function MeetUpExperience({
           <View style={styles.mapContainer}>
             <SafeMapView
               style={styles.map}
-              provider={PROVIDER_GOOGLE}
-              customMapStyle={darkMapStyle}
               region={{
                 latitude: editLat,
                 longitude: editLng,
@@ -389,7 +367,7 @@ export function MeetUpExperience({
       {/* Map */}
       {(hasMeetingPoint || currentLocation || hasOtherPartyLocation) && (
         <View style={styles.mapContainer}>
-          <SafeMapView style={styles.map} region={getMapRegion()} provider={PROVIDER_GOOGLE} customMapStyle={darkMapStyle}>
+          <SafeMapView style={styles.map} region={getMapRegion()}>
             {/* Meeting Point Marker */}
             {hasMeetingPoint && (
               <SafeMarker
