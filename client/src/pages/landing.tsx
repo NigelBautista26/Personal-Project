@@ -47,7 +47,7 @@ export default function Landing() {
               </div>
               <div className="text-center">
                 <div className="text-4xl mb-2">📸</div>
-                <p className="text-sm text-gray-400">Get photos<br/>fast</p>
+                <p className="text-sm text-gray-400">Get your photos<br/>fast</p>
               </div>
             </div>
             
