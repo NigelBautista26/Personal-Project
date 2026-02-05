@@ -16,31 +16,46 @@ export default function Landing() {
         
         <div className="relative max-w-6xl mx-auto px-6 py-20 md:py-32">
           <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-4">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">
               <span className="text-violet-400">Snap</span>Now
             </h1>
-            <p className="text-xl md:text-2xl text-blue-300 mb-8">
-              On Demand Photography, Anytime Anywhere You Travel
+            
+            {/* Clear Product Explanation */}
+            <p className="text-2xl md:text-3xl font-semibold text-white mb-4">
+              Book a Local Photographer in Minutes
+            </p>
+            <p className="text-lg md:text-xl text-gray-300 mb-6 max-w-2xl mx-auto">
+              Traveling somewhere new? Find verified photographers near you, book a session instantly, and get professional photos delivered to your phone.
             </p>
             
-            {/* Key Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-2xl md:text-3xl font-bold text-violet-400">£200k</p>
-                <p className="text-sm text-gray-500">Pre-Seed Round</p>
+            {/* Vision Statement */}
+            <div className="inline-block px-6 py-3 bg-violet-900/40 rounded-full border border-violet-500/50 mb-8">
+              <p className="text-lg md:text-xl text-violet-300 font-medium">
+                Think <span className="text-white font-bold">Uber</span>, but for photography
+              </p>
+            </div>
+            
+            {/* How it Works - Simple */}
+            <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto mb-12">
+              <div className="text-center">
+                <div className="text-4xl mb-2">📍</div>
+                <p className="text-sm text-gray-400">Find photographers<br/>near any landmark</p>
               </div>
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-2xl md:text-3xl font-bold text-violet-400">10%</p>
-                <p className="text-sm text-gray-500">Equity</p>
+              <div className="text-center">
+                <div className="text-4xl mb-2">📱</div>
+                <p className="text-sm text-gray-400">Book and pay<br/>through the app</p>
               </div>
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-2xl md:text-3xl font-bold text-violet-400">🇬🇧 🇫🇷</p>
-                <p className="text-sm text-gray-500">London + Paris</p>
+              <div className="text-center">
+                <div className="text-4xl mb-2">📸</div>
+                <p className="text-sm text-gray-400">Get photos<br/>within hours</p>
               </div>
-              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-                <p className="text-2xl md:text-3xl font-bold text-violet-400">18mo</p>
-                <p className="text-sm text-gray-500">Runway</p>
-              </div>
+            </div>
+            
+            {/* Investor Badge */}
+            <div className="inline-block px-4 py-2 bg-gray-800/70 rounded-lg border border-gray-600 mb-6">
+              <p className="text-sm text-gray-400">
+                Now raising <span className="text-violet-400 font-bold">£200k pre-seed</span> to launch in London + Paris
+              </p>
             </div>
           </div>
         </div>
