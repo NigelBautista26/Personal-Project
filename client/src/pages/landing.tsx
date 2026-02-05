@@ -22,7 +22,7 @@ export default function Landing() {
             
             {/* Clear Product Explanation */}
             <p className="text-2xl md:text-3xl font-semibold text-white mb-4">
-              Book a Local Professional Photographer in Minutes
+              Book a Professional Photographer in Minutes
             </p>
             <p className="text-lg md:text-xl text-gray-300 mb-6 max-w-2xl mx-auto">
               Traveling somewhere new? Find verified photographers near you, book a session instantly, and get professional photos delivered to your phone.
