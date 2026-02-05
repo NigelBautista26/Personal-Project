@@ -353,7 +353,7 @@ export function RealMap({ selectedCity, photographers, photoSpots = [], photogra
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [shouldFollowUser, setShouldFollowUser] = useState(false);
-  const [mapStyle, setMapStyle] = useState<MapStyle>('street');
+  const [mapStyle, setMapStyle] = useState<MapStyle>('dark');
   const [showStylePicker, setShowStylePicker] = useState(false);
   
   const offsetPhotographers = useMemo(() => getOffsetPhotographers(photographers), [photographers]);
