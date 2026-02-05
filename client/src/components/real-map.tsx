@@ -496,11 +496,11 @@ export function RealMap({ selectedCity, photographers, photoSpots = [], photogra
       
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-black/80 to-transparent pointer-events-none z-[1000]" />
       
-      <div className="absolute bottom-[45%] right-4 z-[1000] flex flex-col gap-2">
+      <div className="absolute bottom-[45%] right-4 z-[1000] flex flex-col gap-3">
         <div className="relative">
           <button
             onClick={() => setShowStylePicker(!showStylePicker)}
-            className="w-12 h-12 bg-black/80 hover:bg-black rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 transition-all backdrop-blur-sm"
+            className="w-10 h-10 bg-gray-900/90 hover:bg-gray-800 rounded-xl flex items-center justify-center text-white shadow-lg border border-gray-700 transition-all"
             data-testid="button-map-style"
             title="Change map style"
           >
@@ -547,7 +547,7 @@ export function RealMap({ selectedCity, photographers, photoSpots = [], photogra
         <button
           onClick={handleLocateMe}
           disabled={isLocating}
-          className="w-12 h-12 bg-black/80 hover:bg-black rounded-full flex items-center justify-center text-white shadow-lg border border-white/20 transition-all backdrop-blur-sm"
+          className="w-10 h-10 bg-gray-900/90 hover:bg-gray-800 rounded-xl flex items-center justify-center text-white shadow-lg border border-gray-700 transition-all"
           data-testid="button-locate-me"
           title="Find my location"
         >
