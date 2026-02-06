@@ -319,18 +319,18 @@ export default function Landing() {
             The <span className="text-violet-400">Investment</span>
           </h2>
           
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
-              <p className="text-3xl md:text-4xl font-bold text-violet-400">£200k</p>
-              <p className="text-gray-400 mt-1">Investment</p>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-8">
+            <div className="p-4 sm:p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-violet-400">£200k</p>
+              <p className="text-gray-400 mt-1 text-xs sm:text-base">Investment</p>
             </div>
-            <div className="p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
-              <p className="text-3xl md:text-4xl font-bold text-violet-400">10%</p>
-              <p className="text-gray-400 mt-1">Equity</p>
+            <div className="p-4 sm:p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-violet-400">10%</p>
+              <p className="text-gray-400 mt-1 text-xs sm:text-base">Equity</p>
             </div>
-            <div className="p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
-              <p className="text-3xl md:text-4xl font-bold text-violet-400">£2M</p>
-              <p className="text-gray-400 mt-1">Valuation</p>
+            <div className="p-4 sm:p-6 bg-violet-900/40 rounded-xl border-2 border-violet-500 text-center">
+              <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-violet-400">£2M</p>
+              <p className="text-gray-400 mt-1 text-xs sm:text-base">Valuation</p>
             </div>
           </div>
 
