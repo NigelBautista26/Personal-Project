@@ -34,7 +34,10 @@ export default function CustomerProfileScreen() {
   const confirmLogout = async () => {
     setShowLogoutAlert(false);
     await logout();
-    router.dismissAll();
+    while (router.canGoBack()) {
+      router.back();
+    }
+    router.replace('/');
   };
 
   const menuItems = [
