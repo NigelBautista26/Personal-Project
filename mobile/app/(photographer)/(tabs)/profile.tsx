@@ -70,7 +70,6 @@ export default function PhotographerProfileScreen() {
   const confirmLogout = async () => {
     setShowLogoutAlert(false);
     await logout();
-    router.replace('/');
   };
 
   const handleAddPhoto = async () => {
