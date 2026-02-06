@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
 import PhotographerOnboardingScreen from '../../src/screens/PhotographerOnboarding';
 import PendingVerificationScreen from '../../src/screens/PendingVerification';
@@ -10,6 +10,12 @@ const PRIMARY_COLOR = '#2563eb';
 
 export default function PhotographerLayout() {
   const { photographerProfile, isLoading, user, isAuthenticated, isProfileLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/');
+    }
+  }, [isLoading, isAuthenticated]);
 
   if (isLoading) {
     return (
