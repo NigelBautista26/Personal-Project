@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
-import React, { useEffect } from 'react';
-import { Stack, useSegments, useRouter } from 'expo-router';
+import React from 'react';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
@@ -10,19 +10,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 const PRIMARY_COLOR = '#2563eb';
 
 function RootNavigator() {
-  const { isLoading, isAuthenticated } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoading) return;
-
-    const inProtectedGroup = segments[0] === '(customer)' || segments[0] === '(photographer)';
-
-    if (!isAuthenticated && inProtectedGroup) {
-      router.replace('/');
-    }
-  }, [isLoading, isAuthenticated, segments]);
+  const { isLoading } = useAuth();
 
   if (isLoading) {
     return (
