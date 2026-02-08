@@ -84,7 +84,7 @@ export function DemoPresentation() {
 
   return (
     <div 
-      className="relative"
+      className="relative touch-pan-y"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -100,14 +100,14 @@ export function DemoPresentation() {
                 <div className="absolute top-2 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-10"></div>
                 
                 {/* Screenshot */}
-                <div className="relative">
+                <div className="relative" style={{ aspectRatio: '9/19.5' }}>
                   {slides.map((s, index) => (
                     <img
                       key={index}
                       src={s.image}
                       alt={s.title}
-                      className={`w-full h-auto transition-opacity duration-500 ${
-                        index === currentSlide ? 'opacity-100' : 'opacity-0 absolute inset-0'
+                      className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+                        index === currentSlide ? 'opacity-100' : 'opacity-0'
                       }`}
                     />
                   ))}

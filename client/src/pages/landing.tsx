@@ -4,7 +4,7 @@ import { DemoPresentation } from "@/components/DemoPresentation";
 
 export default function Landing() {
   return (
-    <div className="fixed inset-0 z-50 min-h-screen w-screen bg-gray-900 text-white overflow-y-auto">
+    <div className="fixed inset-0 z-50 min-h-screen w-screen bg-gray-900 text-white overflow-y-auto overscroll-none" style={{ WebkitOverflowScrolling: 'touch' }}>
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Animated Background */}
