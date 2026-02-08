@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, Play, Pause } from "lucide-react";
 
 interface Slide {
@@ -53,38 +53,50 @@ const slides: Slide[] = [
   },
 ];
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+  return isMobile;
+}
+
 export function DemoPresentation() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const isMobile = useIsMobile();
   const [isPlaying, setIsPlaying] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (!isPlaying || isHovered) return;
+    if (!isPlaying || isHovered || isMobile) return;
     
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, isHovered]);
+  }, [isPlaying, isHovered, isMobile]);
 
-  const goToSlide = (index: number) => {
+  const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
-  };
+  }, []);
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+  }, []);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+  }, []);
 
   const slide = slides[currentSlide];
 
   return (
     <div 
-      className="relative touch-pan-y"
+      className="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -120,17 +132,17 @@ export function DemoPresentation() {
           </div>
         </div>
 
-        {/* Content */}
-        <div className="text-center md:text-left">
-          <div className="inline-block px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm font-medium mb-4">
+        {/* Content - fixed height on mobile to prevent layout shifts */}
+        <div className="text-center md:text-left min-h-[280px] md:min-h-0 flex flex-col justify-start">
+          <div className="inline-block px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm font-medium mb-4 self-center md:self-start">
             {slide.feature}
           </div>
           
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4 transition-all duration-300">
+          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
             {slide.title}
           </h3>
           
-          <p className="text-lg text-gray-400 mb-8 transition-all duration-300">
+          <p className="text-lg text-gray-400 mb-8 min-h-[72px]">
             {slide.description}
           </p>
 
@@ -162,7 +174,7 @@ export function DemoPresentation() {
               onClick={() => setIsPlaying(!isPlaying)}
               className="p-3 rounded-full bg-violet-600 hover:bg-violet-700 transition-colors"
             >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying && !isMobile ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             
             <button
