@@ -134,15 +134,16 @@ export function DemoPresentation() {
 
         {/* Content - stacked layers so text changes never shift layout */}
         <div className="text-center md:text-left">
-          <div className="relative" style={{ minHeight: '200px' }}>
+          <div className="grid" style={{ gridTemplateColumns: '1fr', gridTemplateRows: '1fr' }}>
             {slides.map((s, index) => (
               <div
                 key={index}
                 className={`transition-opacity duration-500 ${
                   index === currentSlide
-                    ? 'opacity-100 relative'
-                    : 'opacity-0 absolute inset-0 pointer-events-none'
+                    ? 'opacity-100'
+                    : 'opacity-0 pointer-events-none'
                 }`}
+                style={{ gridArea: '1 / 1' }}
               >
                 <div className="inline-block px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm font-medium mb-4">
                   {s.feature}
