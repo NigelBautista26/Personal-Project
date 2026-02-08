@@ -71,14 +71,14 @@ export function DemoPresentation() {
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (!isPlaying || isHovered || isMobile) return;
+    if (!isPlaying || isHovered) return;
     
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isPlaying, isHovered, isMobile]);
+  }, [isPlaying, isHovered]);
 
   const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
@@ -132,22 +132,35 @@ export function DemoPresentation() {
           </div>
         </div>
 
-        {/* Content - fixed height on mobile to prevent layout shifts */}
-        <div className="text-center md:text-left min-h-[280px] md:min-h-0 flex flex-col justify-start">
-          <div className="inline-block px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm font-medium mb-4 self-center md:self-start">
-            {slide.feature}
+        {/* Content - stacked layers so text changes never shift layout */}
+        <div className="text-center md:text-left">
+          <div className="relative" style={{ minHeight: '200px' }}>
+            {slides.map((s, index) => (
+              <div
+                key={index}
+                className={`transition-opacity duration-500 ${
+                  index === currentSlide
+                    ? 'opacity-100 relative'
+                    : 'opacity-0 absolute inset-0 pointer-events-none'
+                }`}
+              >
+                <div className="inline-block px-3 py-1 bg-violet-500/20 rounded-full text-violet-300 text-sm font-medium mb-4">
+                  {s.feature}
+                </div>
+                
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                  {s.title}
+                </h3>
+                
+                <p className="text-lg text-gray-400">
+                  {s.description}
+                </p>
+              </div>
+            ))}
           </div>
-          
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            {slide.title}
-          </h3>
-          
-          <p className="text-lg text-gray-400 mb-8 min-h-[72px]">
-            {slide.description}
-          </p>
 
           {/* Progress Dots */}
-          <div className="flex items-center gap-2 justify-center md:justify-start mb-6">
+          <div className="flex items-center gap-2 justify-center md:justify-start mb-6 mt-8">
             {slides.map((_, index) => (
               <button
                 key={index}
@@ -174,7 +187,7 @@ export function DemoPresentation() {
               onClick={() => setIsPlaying(!isPlaying)}
               className="p-3 rounded-full bg-violet-600 hover:bg-violet-700 transition-colors"
             >
-              {isPlaying && !isMobile ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
             </button>
             
             <button
