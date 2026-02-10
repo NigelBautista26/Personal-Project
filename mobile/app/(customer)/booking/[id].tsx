@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, DollarSign, Shield, MessageSquare, Camera, X, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { MeetUpExperience } from '../../../src/components/MeetUpExperience';
 import { BookingChat } from '../../../src/components/BookingChat';
@@ -89,9 +89,7 @@ export default function BookingDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
           <Text style={styles.title}>Booking Details</Text>
           <View style={styles.placeholder} />
         </View>
@@ -110,9 +108,7 @@ export default function BookingDetailScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} testID="button-back">
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
           <Text style={styles.title}>Booking Details</Text>
           <View style={styles.placeholder} />
         </View>
@@ -372,7 +368,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  backButton: { padding: 4 },
   title: { fontSize: 18, fontWeight: '600', color: '#fff' },
   placeholder: { width: 32 },
   content: { flex: 1, padding: 20 },

@@ -13,7 +13,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react-native';
+import { Mail, Lock, User, Eye, EyeOff, Camera } from 'lucide-react-native';
 import PhotoBackground from '../../src/components/PhotoBackground';
 import { useAuth } from '../../src/context/AuthContext';
 
@@ -100,14 +100,6 @@ export default function SignupScreen() {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-              testID="button-back"
-            >
-              <ArrowLeft size={24} color="#fff" />
-            </TouchableOpacity>
-
             <View style={styles.card}>
               <Text style={styles.title}>Create account</Text>
               <Text style={styles.subtitle}>Join SnapNow today</Text>
@@ -242,17 +234,6 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
   card: {
     backgroundColor: 'rgba(0,0,0,0.75)',
     borderRadius: 24,

@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, MapPin, Camera, Users, Clock, Star } from 'lucide-react-native';
+import { MapPin, Camera, Users, Clock, Star } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PRIMARY_COLOR = '#2563eb';
@@ -240,9 +240,6 @@ export default function SpotDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>Spot not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -254,15 +251,7 @@ export default function SpotDetailScreen() {
         <View style={styles.heroContainer}>
           <Image source={{ uri: spot.image }} style={styles.heroImage} />
           <View style={styles.heroOverlay} />
-          <SafeAreaView style={styles.headerSafe}>
-            <TouchableOpacity 
-              style={styles.backIcon} 
-              onPress={() => router.back()}
-              testID="button-back"
-            >
-              <ArrowLeft size={24} color="#fff" />
-            </TouchableOpacity>
-          </SafeAreaView>
+          <SafeAreaView style={styles.headerSafe} />
           <View style={styles.heroContent}>
             <Text style={styles.heroTitle}>{spot.name}</Text>
             <View style={styles.heroLocation}>
@@ -351,13 +340,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0a0a0a' },
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: '#fff', fontSize: 18, marginBottom: 16 },
-  backButton: { backgroundColor: PRIMARY_COLOR, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
-  backButtonText: { color: '#fff', fontWeight: '600' },
   heroContainer: { height: 280, position: 'relative' },
   heroImage: { width: '100%', height: '100%' },
   heroOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.3)' },
   headerSafe: { position: 'absolute', top: 0, left: 0, right: 0 },
-  backIcon: { margin: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
   heroContent: { position: 'absolute', bottom: 20, left: 20, right: 20 },
   heroTitle: { color: '#fff', fontSize: 26, fontWeight: '700', marginBottom: 8 },
   heroLocation: { flexDirection: 'row', alignItems: 'center', gap: 6 },

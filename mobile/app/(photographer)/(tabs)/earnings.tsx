@@ -11,7 +11,6 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { 
-  ArrowLeft, 
   DollarSign, 
   Lock, 
   CheckCircle, 
@@ -89,12 +88,6 @@ export default function PhotographerEarningsScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={20} color="#fff" />
-        </TouchableOpacity>
         <Text style={styles.headerTitle}>Earnings & Stats</Text>
       </View>
 
@@ -244,14 +237,6 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 12,
     gap: 16,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   headerTitle: { fontSize: 20, fontWeight: '700', color: '#fff' },
 

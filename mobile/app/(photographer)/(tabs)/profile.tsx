@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { 
-  ArrowLeft, 
   Camera, 
   Star, 
   MapPin, 
@@ -215,14 +214,6 @@ export default function PhotographerProfileScreen() {
           
           {/* Overlay Gradient */}
           <View style={styles.coverOverlay} />
-
-          {/* Back Button */}
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={20} color="#fff" />
-          </TouchableOpacity>
 
           {/* Edit Button */}
           <TouchableOpacity 
@@ -482,17 +473,6 @@ const styles = StyleSheet.create({
   coverOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  backButton: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   editButton: {
     position: 'absolute',

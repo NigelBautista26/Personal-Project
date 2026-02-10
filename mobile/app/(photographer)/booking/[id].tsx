@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign, Camera, ChevronLeft, ChevronRight, CheckCircle, Palette, MessageSquare } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, User, Check, X, Upload, Plus, DollarSign, Camera, ChevronLeft, ChevronRight, CheckCircle, Palette, MessageSquare } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import api, { API_URL } from '../../../src/api/client';
@@ -492,9 +492,7 @@ export default function PhotographerBookingDetailScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
           <Text style={styles.title}>Booking Details</Text>
           <View style={styles.placeholder} />
         </View>
@@ -535,9 +533,7 @@ export default function PhotographerBookingDetailScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.back()} testID="button-back">
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
+          <View style={styles.placeholder} />
           <Text style={styles.title}>Booking Details</Text>
           <View style={styles.placeholder} />
         </View>
@@ -1307,7 +1303,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.1)',
   },
-  backButton: { padding: 4 },
   title: { fontSize: 18, fontWeight: '600', color: '#fff' },
   placeholder: { width: 32 },
   content: { flex: 1, padding: 20 },

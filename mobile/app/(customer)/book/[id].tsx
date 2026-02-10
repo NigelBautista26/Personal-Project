@@ -19,7 +19,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeft, Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock, CheckCircle } from 'lucide-react-native';
+import { Calendar, Clock, MapPin, Navigation, X, ChevronRight, CreditCard, Lock, CheckCircle } from 'lucide-react-native';
 import * as Location from 'expo-location';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
@@ -239,9 +239,7 @@ export default function BookingScreen() {
       >
       {/* Header with Progress */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={handleBack} testID="button-back">
-          <ArrowLeft size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.placeholder} />
         <Text style={styles.title}>Book Session</Text>
         <View style={styles.placeholder} />
       </View>
@@ -867,7 +865,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  backButton: { padding: 8 },
   title: { fontSize: 18, fontWeight: '600', color: '#fff' },
   placeholder: { width: 40 },
   

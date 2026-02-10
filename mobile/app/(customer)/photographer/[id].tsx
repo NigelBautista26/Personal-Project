@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, MapPin, Star, Heart, Share2, MessageSquare, X, User } from 'lucide-react-native';
+import { MapPin, Star, Heart, Share2, MessageSquare, X, User } from 'lucide-react-native';
 import { snapnowApi } from '../../../src/api/snapnowApi';
 import { API_URL } from '../../../src/api/client';
 
@@ -101,9 +101,6 @@ export default function PhotographerDetailScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.errorState}>
           <Text style={styles.errorText}>Photographer not found</Text>
-          <TouchableOpacity style={styles.goBackButton} onPress={() => router.back()}>
-            <Text style={styles.goBackText}>Go Back</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -127,13 +124,7 @@ export default function PhotographerDetailScreen() {
           <View style={styles.heroGradient} />
           
           <View style={styles.headerButtons}>
-            <TouchableOpacity
-              style={styles.headerButton}
-              onPress={() => router.back()}
-              testID="button-back"
-            >
-              <ArrowLeft size={20} color="#fff" />
-            </TouchableOpacity>
+            <View style={{ width: 40 }} />
             <TouchableOpacity style={styles.headerButton} testID="button-share">
               <Share2 size={20} color="#fff" />
             </TouchableOpacity>
@@ -324,8 +315,6 @@ const styles = StyleSheet.create({
   loader: { marginTop: 100 },
   errorState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   errorText: { color: '#fff', fontSize: 16, marginBottom: 16 },
-  goBackButton: { paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', borderRadius: 8 },
-  goBackText: { color: '#fff', fontSize: 14 },
 
   heroContainer: { position: 'relative', height: 280 },
   heroImage: { width: '100%', height: '100%', opacity: 0.6 },
