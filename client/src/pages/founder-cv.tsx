@@ -30,7 +30,7 @@ export default function FounderCV() {
       ]
     },
     {
-      company: "Atlast.co (Part-time Contractor)",
+      company: "Atlast.co (Contract)",
       role: "Founding Automation Architect",
       period: "Jan 2025 - Jan 2026",
       highlights: [
@@ -42,7 +42,7 @@ export default function FounderCV() {
       ]
     },
     {
-      company: "Cambridge Blockchain Group Limited (Part-time Contractor)",
+      company: "Cambridge Blockchain Group Limited (Contract)",
       role: "Senior Automation Engineer",
       period: "Apr 2023 - Apr 2025",
       highlights: [
