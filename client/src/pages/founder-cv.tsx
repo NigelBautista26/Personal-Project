@@ -127,6 +127,7 @@ export default function FounderCV() {
           @page { 
             size: A4; 
             margin: 0.6in 0.5in;
+            marks: none;
           }
           
           * {
