@@ -56,7 +56,7 @@ export default function FounderCV() {
     {
       company: "Natter (Tenth Chapter Limited)",
       role: "Principal Software Engineer in Test (SDET)",
-      period: "Jan 2024 - Aug 2024",
+      period: "Jan 2023 - Aug 2024",
       highlights: [
         "Architected and deployed organisation-wide automated release-validation infrastructure used across all product squads",
         "Implemented CI/CD quality-gate enforcement, increasing release confidence and stability",
