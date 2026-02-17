@@ -44,7 +44,7 @@ export default function FounderCV() {
     {
       company: "Cambridge Blockchain Group Limited (Contract)",
       role: "Senior Automation Engineer",
-      period: "Apr 2023 - Apr 2025",
+      period: "Apr 2023 - Dec 2024",
       highlights: [
         "Established comprehensive test automation infrastructure covering web applications and blockchain-integrated services",
         "Developed robust TypeScript-based testing frameworks ensuring platform reliability across distributed systems",
