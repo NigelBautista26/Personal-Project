@@ -412,12 +412,10 @@ export default function FounderCV() {
               <div className="space-y-4">
                 {experience.map((job, idx) => (
                   <div key={idx} className="job-card print-bg-light rounded-xl p-4 bg-slate-800/50 border-l-4 border-indigo-500">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <h3 className="font-bold text-white print-dark-text">{job.company}</h3>
-                        <p className="text-indigo-400 print-accent font-medium">{job.role}</p>
-                      </div>
-                      <span className="text-sm text-gray-400 print-muted-text whitespace-nowrap ml-4">{job.period}</span>
+                    <div className="mb-2">
+                      <h3 className="font-bold text-white print-dark-text">{job.company}</h3>
+                      <p className="text-indigo-400 print-accent font-medium">{job.role}</p>
+                      <span className="text-sm text-gray-400 print-muted-text">{job.period}</span>
                     </div>
                     <ul className="space-y-1 mt-2">
                       {job.highlights.map((highlight, i) => (
