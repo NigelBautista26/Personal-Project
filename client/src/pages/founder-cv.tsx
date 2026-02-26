@@ -61,7 +61,7 @@ export default function FounderCV() {
         "Architected and deployed organisation-wide automated release-validation infrastructure used across all product squads",
         "Implemented CI/CD quality-gate enforcement, increasing release confidence and stability",
         "Recognised by CEO for delivering a high-ROI engineering platform that reduced commercial risk",
-        "Promoted to Principal role to lead and mentor a team of 2 SDETs, establishing quality standards from sprint planning through deployment",
+        "Hired as Principal to lead and mentor a team of 2 SDETs, establishing quality standards from sprint planning through deployment",
         "Designed and implemented a Playwright/TypeScript framework that reduced regression testing time from 4 hours to 45 minutes"
       ]
     },
