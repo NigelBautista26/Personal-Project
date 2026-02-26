@@ -32,8 +32,6 @@ export function setupWebSocket(server: Server, sessionParser: any) {
           wss.emit("connection", ws, request, session.userId);
         });
       });
-    } else {
-      socket.destroy();
     }
   });
 
