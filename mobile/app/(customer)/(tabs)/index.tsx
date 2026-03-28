@@ -322,7 +322,7 @@ export default function CustomerMapScreen() {
   return (
     <View style={styles.container}>
       <SafeMapView
-        key={`map-${mapKey}`}
+        key={`map-${mapKey}-${mapType}`}
         ref={mapRef}
         style={styles.map}
         provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
