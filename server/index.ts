@@ -7,6 +7,10 @@ import pgSession from "connect-pg-simple";
 import pg from "pg";
 import cors from "cors";
 import { setupWebSocket } from "./realtime";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const httpServer = createServer(app);
@@ -138,6 +142,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Serve the offline landing page HTML file directly
+  app.get("/snapnow-landing.html", (_req: Request, res: Response) => {
+    res.sendFile(path.resolve(__dirname, "../client/public/snapnow-landing.html"));
+  });
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
