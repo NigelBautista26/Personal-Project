@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SnapNow — Book a Professional Photographer in Minutes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    body { background:#111827; color:#fff; font-family: system-ui, -apple-system, sans-serif; margin:0; }
+    .slide { display:none; }
+    .slide.active { display:flex; }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section style="position:relative;overflow:hidden;padding:80px 24px 40px;">
+  <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(76,29,149,0.3),#111827,#111827);"></div>
+  <div class="animate-pulse" style="position:absolute;top:80px;left:40px;width:288px;height:288px;background:rgba(139,92,246,0.2);border-radius:50%;filter:blur(60px);"></div>
+  <div class="animate-pulse" style="position:absolute;bottom:80px;right:40px;width:384px;height:384px;background:rgba(59,130,246,0.2);border-radius:50%;filter:blur(60px);animation-delay:1s;"></div>
+
+  <div style="position:relative;max-width:1100px;margin:0 auto;text-align:center;">
+    <h1 style="font-size:clamp(3rem,8vw,5rem);font-weight:800;margin-bottom:24px;">
+      <span style="color:#a78bfa;">Snap</span>Now
+    </h1>
+
+    <p style="font-size:clamp(1.3rem,3vw,1.8rem);font-weight:700;margin-bottom:16px;">
+      Book a Professional Photographer in Minutes
+    </p>
+    <p style="font-size:1.1rem;color:#d1d5db;margin-bottom:24px;max-width:600px;margin-left:auto;margin-right:auto;">
+      Traveling somewhere new? Find verified photographers near you, book a session instantly, and get professional photos delivered to your phone.
+    </p>
+
+    <div style="display:inline-block;padding:12px 24px;background:rgba(76,29,149,0.4);border-radius:999px;border:1px solid rgba(139,92,246,0.5);margin-bottom:32px;">
+      <p style="font-size:1.1rem;color:#c4b5fd;font-weight:500;margin:0;">
+        Think <strong style="color:#fff;">Uber</strong>, but for photography
+      </p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:560px;margin:0 auto 40px;">
+      <div style="text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">📍</div>
+        <p style="font-size:0.875rem;color:#9ca3af;margin:0;">Find photographers<br>near any landmark</p>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">📱</div>
+        <p style="font-size:0.875rem;color:#9ca3af;margin:0;">Book and pay<br>through the app</p>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:2.5rem;margin-bottom:8px;">📸</div>
+        <p style="font-size:0.875rem;color:#9ca3af;margin:0;">Get your photos<br>fast</p>
+      </div>
+    </div>
+
+    <div style="display:inline-block;padding:8px 16px;background:rgba(31,41,55,0.7);border-radius:8px;border:1px solid #4b5563;">
+      <p style="font-size:0.875rem;color:#9ca3af;margin:0;">
+        Now raising <strong style="color:#a78bfa;">£200k pre-seed</strong> to launch in London + Paris
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section style="padding:64px 24px;background:rgba(31,41,55,0.3);">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:48px;">
+      The <span style="color:#f87171;">Problem</span>
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+      <div style="padding:24px;background:rgba(127,29,29,0.2);border-radius:16px;border:1px solid rgba(239,68,68,0.3);">
+        <h3 style="color:#f87171;font-size:1.2rem;font-weight:700;margin:0 0 16px;">For Tourists</h3>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> Selfies don't capture the magic of travel</li>
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> Finding a reliable local photographer is risky and time-consuming</li>
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> No easy way to book, pay, or receive photos while traveling</li>
+        </ul>
+      </div>
+      <div style="padding:24px;background:rgba(127,29,29,0.2);border-radius:16px;border:1px solid rgba(239,68,68,0.3);">
+        <h3 style="color:#f87171;font-size:1.2rem;font-weight:700;margin:0 0 16px;">For Photographers</h3>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> Hard to find consistent clients, especially tourists</li>
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> No platform designed for quick, on-demand sessions</li>
+          <li style="display:flex;gap:12px;color:#d1d5db;"><span style="color:#ef4444;">✗</span> Getting paid by international clients is complicated</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Solution -->
+<section style="padding:64px 24px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:16px;">
+      The <span style="color:#4ade80;">Solution</span>
+    </h2>
+    <p style="text-align:center;color:#9ca3af;font-size:1.1rem;margin-bottom:48px;max-width:600px;margin-left:auto;margin-right:auto;">
+      Book a professional photographer as easily as booking an Uber
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;">
+      <div style="padding:24px;background:rgba(76,29,149,0.2);border-radius:16px;border:1px solid rgba(139,92,246,0.3);text-align:center;">
+        <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
+        <h3 style="color:#c4b5fd;font-size:1.2rem;font-weight:700;margin:0 0 8px;">Discover</h3>
+        <p style="color:#9ca3af;margin:0;">Find verified local photographers near any tourist spot with real portfolios and reviews</p>
+      </div>
+      <div style="padding:24px;background:rgba(76,29,149,0.2);border-radius:16px;border:1px solid rgba(139,92,246,0.3);text-align:center;">
+        <div style="font-size:3rem;margin-bottom:16px;">📱</div>
+        <h3 style="color:#c4b5fd;font-size:1.2rem;font-weight:700;margin:0 0 8px;">Book Instantly</h3>
+        <p style="color:#9ca3af;margin:0;">Request sessions in minutes, not days. Secure payment through the app</p>
+      </div>
+      <div style="padding:24px;background:rgba(76,29,149,0.2);border-radius:16px;border:1px solid rgba(139,92,246,0.3);text-align:center;">
+        <div style="font-size:3rem;margin-bottom:16px;">📸</div>
+        <h3 style="color:#c4b5fd;font-size:1.2rem;font-weight:700;margin:0 0 8px;">Get Your Photos</h3>
+        <p style="color:#9ca3af;margin:0;">Professionally edited photos delivered to your personal gallery within hours</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- App Demo Slideshow -->
+<section style="padding:64px 24px;background:rgba(31,41,55,0.3);">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:16px;">
+      See the <span style="color:#a78bfa;">App in Action</span>
+    </h2>
+    <p style="text-align:center;color:#9ca3af;font-size:1.1rem;margin-bottom:48px;">An interactive walkthrough of the SnapNow experience</p>
+
+    <div id="slideshow" style="max-width:800px;margin:0 auto;">
+      <div style="display:flex;align-items:center;gap:16px;">
+        <button onclick="changeSlide(-1)" style="background:rgba(55,65,81,0.8);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1.2rem;flex-shrink:0;">‹</button>
+        <div style="flex:1;">
+          <div id="slide-content" style="background:rgba(17,24,39,0.8);border:1px solid #374151;border-radius:16px;padding:32px;text-align:center;min-height:200px;display:flex;flex-direction:column;justify-content:center;">
+            <div id="slide-icon" style="font-size:4rem;margin-bottom:16px;">📱</div>
+            <div id="slide-feature" style="display:inline-block;padding:4px 12px;background:rgba(139,92,246,0.2);border-radius:999px;border:1px solid rgba(139,92,246,0.4);color:#c4b5fd;font-size:0.8rem;margin-bottom:12px;"></div>
+            <h3 id="slide-title" style="font-size:1.5rem;font-weight:700;margin:0 0 12px;"></h3>
+            <p id="slide-desc" style="color:#9ca3af;margin:0;line-height:1.6;"></p>
+          </div>
+          <div id="slide-dots" style="display:flex;justify-content:center;gap:8px;margin-top:16px;"></div>
+        </div>
+        <button onclick="changeSlide(1)" style="background:rgba(55,65,81,0.8);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1.2rem;flex-shrink:0;">›</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What's Built -->
+<section style="padding:64px 24px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:16px;">
+      Fully Working <span style="color:#a78bfa;">Prototype</span>
+    </h2>
+    <p style="text-align:center;color:#9ca3af;font-size:1.1rem;margin-bottom:48px;max-width:600px;margin-left:auto;margin-right:auto;">
+      70-80% of the technical work is already done. You can try it today.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;">
+      <div style="padding:24px;background:rgba(6,78,59,0.2);border-radius:16px;border:1px solid rgba(74,222,128,0.3);">
+        <h3 style="color:#4ade80;font-size:1.2rem;font-weight:700;margin:0 0 16px;">✓ Already Working</h3>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;color:#86efac;font-size:0.9rem;">
+          <li>✓ User signup and login</li>
+          <li>✓ Photographer verification system</li>
+          <li>✓ Booking and payment (Stripe)</li>
+          <li>✓ Photo delivery through the app</li>
+          <li>✓ Reviews and star ratings</li>
+          <li>✓ Map showing nearby photographers</li>
+          <li>✓ Live location sharing</li>
+          <li>✓ Photo editing add-on service</li>
+          <li>✓ Admin dashboard</li>
+          <li>✓ React Native mobile app (iOS & Android)</li>
+        </ul>
+      </div>
+      <div style="padding:24px;background:rgba(30,58,138,0.2);border-radius:16px;border:1px solid rgba(96,165,250,0.3);">
+        <h3 style="color:#60a5fa;font-size:1.2rem;font-weight:700;margin:0 0 16px;">→ What Investment Buys</h3>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;color:#93c5fd;font-size:0.9rem;">
+          <li>→ iPhone app (App Store)</li>
+          <li>→ Android app (Google Play)</li>
+          <li>→ Push notifications</li>
+          <li>→ Sign up photographers in London + Paris</li>
+          <li>→ Marketing to attract customers</li>
+          <li>→ 18 months to prove it works</li>
+        </ul>
+        <div style="margin-top:16px;padding:12px;background:rgba(6,78,59,0.3);border-radius:8px;border:1px solid rgba(74,222,128,0.2);">
+          <p style="color:#4ade80;font-size:0.9rem;font-weight:600;margin:0;">Lower risk: Most of the product is already built</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Market -->
+<section style="padding:64px 24px;">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:48px;">
+      Massive <span style="color:#a78bfa;">Market</span>
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-bottom:48px;">
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:2.5rem;font-weight:800;color:#a78bfa;margin:0 0 8px;">$37B</p>
+        <p style="color:#9ca3af;margin:0 0 4px;">Global Photography Market</p>
+        <p style="font-size:0.8rem;color:#6b7280;margin:0;">Growing 4.8% yearly</p>
+      </div>
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:2.5rem;font-weight:800;color:#a78bfa;margin:0 0 8px;">41M</p>
+        <p style="color:#9ca3af;margin:0 0 4px;">Tourists Per Year</p>
+        <p style="font-size:0.8rem;color:#6b7280;margin:0;">London + Paris combined</p>
+      </div>
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:2.5rem;font-weight:800;color:#a78bfa;margin:0 0 8px;">1.6M</p>
+        <p style="color:#9ca3af;margin:0 0 4px;">Potential Customers</p>
+        <p style="font-size:0.8rem;color:#6b7280;margin:0;">4% want professional photos</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;">
+      <div style="padding:12px 16px;background:rgba(76,29,149,0.4);border-radius:8px;border:2px solid #7c3aed;text-align:center;">
+        <p style="font-size:1.5rem;margin:0;">🇬🇧</p>
+        <p style="font-weight:700;color:#c4b5fd;font-size:0.875rem;margin:0;">London</p>
+        <p style="font-size:0.75rem;color:#a78bfa;margin:0;">Pre-Seed</p>
+      </div>
+      <span style="color:#4b5563;font-size:1.5rem;">→</span>
+      <div style="padding:12px 16px;background:rgba(76,29,149,0.4);border-radius:8px;border:2px solid #7c3aed;text-align:center;">
+        <p style="font-size:1.5rem;margin:0;">🇫🇷</p>
+        <p style="font-weight:700;color:#c4b5fd;font-size:0.875rem;margin:0;">Paris</p>
+        <p style="font-size:0.75rem;color:#a78bfa;margin:0;">Pre-Seed</p>
+      </div>
+      <span style="color:#4b5563;font-size:1.5rem;">→</span>
+      <div style="padding:12px 16px;background:rgba(31,41,55,0.5);border-radius:8px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:1.5rem;margin:0;">🇮🇹</p>
+        <p style="font-weight:700;color:#9ca3af;font-size:0.875rem;margin:0;">Rome</p>
+        <p style="font-size:0.75rem;color:#6b7280;margin:0;">Series A</p>
+      </div>
+      <span style="color:#4b5563;font-size:1.5rem;">→</span>
+      <div style="padding:12px 16px;background:rgba(31,41,55,0.5);border-radius:8px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:1.5rem;margin:0;">🇪🇸</p>
+        <p style="font-weight:700;color:#9ca3af;font-size:0.875rem;margin:0;">Barcelona</p>
+        <p style="font-size:0.75rem;color:#6b7280;margin:0;">Series A</p>
+      </div>
+      <span style="color:#4b5563;font-size:1.5rem;">→</span>
+      <div style="padding:12px 16px;background:rgba(31,41,55,0.5);border-radius:8px;border:1px solid #374151;text-align:center;">
+        <p style="font-size:1.5rem;margin:0;">🇳🇱</p>
+        <p style="font-weight:700;color:#9ca3af;font-size:0.875rem;margin:0;">Amsterdam</p>
+        <p style="font-size:0.75rem;color:#6b7280;margin:0;">Series A</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Business Model -->
+<section style="padding:64px 24px;background:rgba(31,41,55,0.3);">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:48px;">
+      Simple <span style="color:#4ade80;">Business Model</span>
+    </h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px;max-width:800px;margin:0 auto;">
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;">
+        <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 16px;">Our Fees</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#d1d5db;">Customer pays us</span>
+            <span style="color:#a78bfa;font-weight:800;font-size:1.3rem;">10%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="color:#d1d5db;">Photographer pays us</span>
+            <span style="color:#a78bfa;font-weight:800;font-size:1.3rem;">20%</span>
+          </div>
+          <div style="border-top:1px solid #374151;padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;">Total per booking</span>
+            <span style="color:#a78bfa;font-weight:800;font-size:1.5rem;">30%</span>
+          </div>
+        </div>
+      </div>
+      <div style="padding:24px;background:rgba(6,78,59,0.2);border-radius:16px;border:1px solid rgba(74,222,128,0.3);">
+        <h3 style="color:#4ade80;font-size:1.1rem;font-weight:700;margin:0 0 16px;">Example Booking</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:0.9rem;">
+          <div style="display:flex;justify-content:space-between;"><span style="color:#d1d5db;">Photographer's rate</span><span>£65</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:#d1d5db;">Customer pays</span><span>£71.50</span></div>
+          <div style="display:flex;justify-content:space-between;"><span style="color:#d1d5db;">Photographer receives</span><span>£52</span></div>
+          <div style="border-top:1px solid rgba(74,222,128,0.3);padding-top:8px;display:flex;justify-content:space-between;">
+            <span style="color:#4ade80;font-weight:600;">SnapNow keeps</span>
+            <span style="color:#4ade80;font-weight:800;font-size:1.1rem;">£19.50</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- The Investment -->
+<section style="padding:64px 24px;">
+  <div style="max-width:800px;margin:0 auto;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;text-align:center;margin-bottom:48px;">
+      The <span style="color:#a78bfa;">Investment</span>
+    </h2>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px;">
+      <div style="padding:20px;background:rgba(76,29,149,0.4);border-radius:16px;border:2px solid #7c3aed;text-align:center;">
+        <p style="font-size:clamp(1.5rem,4vw,2.5rem);font-weight:800;color:#a78bfa;margin:0 0 4px;">£200k</p>
+        <p style="color:#9ca3af;margin:0;font-size:0.875rem;">Investment</p>
+      </div>
+      <div style="padding:20px;background:rgba(76,29,149,0.4);border-radius:16px;border:2px solid #7c3aed;text-align:center;">
+        <p style="font-size:clamp(1.5rem,4vw,2.5rem);font-weight:800;color:#a78bfa;margin:0 0 4px;">10%</p>
+        <p style="color:#9ca3af;margin:0;font-size:0.875rem;">Equity</p>
+      </div>
+      <div style="padding:20px;background:rgba(76,29,149,0.4);border-radius:16px;border:2px solid #7c3aed;text-align:center;">
+        <p style="font-size:clamp(1.5rem,4vw,2.5rem);font-weight:800;color:#a78bfa;margin:0 0 4px;">£2M</p>
+        <p style="color:#9ca3af;margin:0;font-size:0.875rem;">Valuation</p>
+      </div>
+    </div>
+
+    <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;margin-bottom:32px;">
+      <h3 style="font-size:1.1rem;font-weight:700;margin:0 0 16px;">18-Month Milestones</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;text-align:center;">
+        <div><p style="font-size:1.5rem;font-weight:800;color:#a78bfa;margin:0 0 4px;">100+</p><p style="font-size:0.875rem;color:#9ca3af;margin:0;">Photographers</p></div>
+        <div><p style="font-size:1.5rem;font-weight:800;color:#a78bfa;margin:0 0 4px;">1,500+</p><p style="font-size:0.875rem;color:#9ca3af;margin:0;">Bookings</p></div>
+        <div><p style="font-size:1.5rem;font-weight:800;color:#a78bfa;margin:0 0 4px;">£10k+</p><p style="font-size:0.875rem;color:#9ca3af;margin:0;">Monthly Revenue</p></div>
+        <div><p style="font-size:1.5rem;font-weight:800;color:#a78bfa;margin:0 0 4px;">2</p><p style="font-size:0.875rem;color:#9ca3af;margin:0;">Cities Live</p></div>
+      </div>
+    </div>
+
+    <div style="text-align:center;">
+      <a href="mailto:nigel.zamudio.bautista@gmail.com?subject=Investor%20Pack%20Request&body=Hi%2C%0A%0AI'm%20interested%20in%20learning%20more%20about%20SnapNow's%20pre-seed%20round.%0A%0APlease%20send%20me%20the%20full%20investor%20pack%20including%3A%0A-%20Pitch%20Deck%0A-%20Detailed%20Spending%20Plan%0A-%20Financial%20Projections%0A%0AName%3A%20%0ACompany%2FFund%3A%20%0A%0AThank%20you!">
+        <button style="background:#7c3aed;color:#fff;border:none;padding:16px 48px;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;">
+          Request Investor Pack
+        </button>
+      </a>
+      <p style="color:#6b7280;font-size:0.875rem;margin-top:12px;">Pitch deck, financial projections, and detailed spending plan</p>
+    </div>
+  </div>
+</section>
+
+<!-- Demo Accounts -->
+<section style="padding:64px 24px;background:rgba(31,41,55,0.3);">
+  <div style="max-width:800px;margin:0 auto;text-align:center;">
+    <h2 style="font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;margin-bottom:16px;">
+      Try the <span style="color:#a78bfa;">Demo</span>
+    </h2>
+    <p style="color:#9ca3af;margin-bottom:32px;">Experience the platform from both customer and photographer perspectives</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;max-width:500px;margin:0 auto 32px;">
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;">
+        <h3 style="font-weight:700;margin:0 0 8px;">Customer Account</h3>
+        <p style="color:#9ca3af;font-size:0.875rem;margin:0 0 4px;">customer@test.com</p>
+        <p style="color:#6b7280;font-size:0.875rem;margin:0;">password</p>
+      </div>
+      <div style="padding:24px;background:rgba(31,41,55,0.5);border-radius:16px;border:1px solid #374151;">
+        <h3 style="font-weight:700;margin:0 0 8px;">Photographer Account</h3>
+        <p style="color:#9ca3af;font-size:0.875rem;margin:0 0 4px;">anna@snapnow.com</p>
+        <p style="color:#6b7280;font-size:0.875rem;margin:0;">password</p>
+      </div>
+    </div>
+    <a href="https://snapnow.app/">
+      <button style="background:#7c3aed;color:#fff;border:none;padding:14px 48px;border-radius:8px;font-size:1.1rem;font-weight:600;cursor:pointer;">
+        Try the Demo Now
+      </button>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="padding:32px 24px;border-top:1px solid #1f2937;text-align:center;">
+  <p style="font-size:1.8rem;font-weight:800;margin:0 0 8px;"><span style="color:#a78bfa;">Snap</span>Now</p>
+  <p style="color:#9ca3af;margin:0 0 16px;">On Demand Photography, Anytime Anywhere You Travel</p>
+  <p style="font-size:0.875rem;color:#4b5563;margin:0;">Pre-Seed Round | £200,000 for 10% Equity | £2M Valuation</p>
+</footer>
+
+<script>
+  const slides = [
+    { icon: '👋', feature: 'Stunning First Impression', title: 'Welcome to SnapNow', desc: 'A beautiful, intuitive app that connects travelers with professional photographers anywhere in the world.' },
+    { icon: '✍️', feature: '30-Second Onboarding', title: 'Quick Sign Up', desc: 'Join as a customer looking for photos, or as a photographer ready to earn. Simple role-based registration.' },
+    { icon: '🗺️', feature: 'Location-Based Discovery', title: 'Find Photographers Near You', desc: 'Interactive map shows verified photographers in your area. See their prices, ratings, and availability at a glance.' },
+    { icon: '👥', feature: 'Transparent Pricing', title: 'Browse & Compare', desc: 'View photographer profiles with ratings, reviews, and hourly rates. Find the perfect match for your style and budget.' },
+    { icon: '🖼️', feature: 'Portfolio Preview', title: 'View Portfolios', desc: 'Browse stunning portfolio galleries. See real work samples before you book to ensure the style matches your vision.' },
+    { icon: '📍', feature: 'Local Expertise', title: 'Discover Photo Spots', desc: 'Explore curated photo locations in each city. Find the most Instagram-worthy spots recommended by local photographers.' },
+    { icon: '📋', feature: 'End-to-End Experience', title: 'Manage Your Sessions', desc: 'Track all your bookings in one place. View photos, leave reviews, and request photo editing — all from the app.' },
+  ];
+
+  let current = 0;
+  let timer;
+
+  function renderDots() {
+    const dots = document.getElementById('slide-dots');
+    dots.innerHTML = slides.map((_, i) =>
+      `<span onclick="goTo(${i})" style="width:8px;height:8px;border-radius:50%;background:${i===current?'#7c3aed':'#374151'};cursor:pointer;display:inline-block;transition:background 0.3s;"></span>`
+    ).join('');
+  }
+
+  function renderSlide() {
+    const s = slides[current];
+    document.getElementById('slide-icon').textContent = s.icon;
+    document.getElementById('slide-feature').textContent = s.feature;
+    document.getElementById('slide-title').textContent = s.title;
+    document.getElementById('slide-desc').textContent = s.desc;
+    renderDots();
+  }
+
+  function changeSlide(dir) {
+    current = (current + dir + slides.length) % slides.length;
+    renderSlide();
+    resetTimer();
+  }
+
+  function goTo(i) {
+    current = i;
+    renderSlide();
+    resetTimer();
+  }
+
+  function resetTimer() {
+    clearInterval(timer);
+    timer = setInterval(() => changeSlide(1), 4000);
+  }
+
+  renderSlide();
+  resetTimer();
+</script>
+</body>
+</html>
