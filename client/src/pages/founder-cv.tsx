@@ -413,58 +413,6 @@ export default function FounderCV() {
               </div>
             </section>
 
-            {/* Recognition & Leadership */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Recognition & Leadership
-              </h2>
-              <ul className="space-y-2">
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Identified by multiple CEOs/CTOs as a principal-level SDET architect with organisation-wide impact
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Delivered business-critical engineering platforms at Natter and Atlast.co, documented in leadership recommendation letters
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Served as founding automation architect across multiple startups, influencing engineering culture and delivery standards
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Provided cross-team mentoring and technical guidance to engineering squads, improving automation maturity and testability practices
-                </li>
-              </ul>
-            </section>
-
-            {/* Founder & Innovation Roadmap */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Founder & Innovation Roadmap
-              </h2>
-              <ul className="space-y-2">
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Currently developing an early-stage prototype for a new technology startup
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Currently developing a prototype built using Replit, focusing on solving marketplace connectivity problems using automation and systems design principles
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Focused on leveraging automation, systems architecture, and platform engineering expertise to build scalable tech products
-                </li>
-                <li className="text-sm text-gray-300 flex items-start gap-2">
-                  <span className="text-indigo-400 mt-1">•</span>
-                  Future plans include contributing automation frameworks, open-source tooling, and engineering knowledge to the UK tech ecosystem
-                </li>
-              </ul>
-            </section>
-
             {/* Education */}
             <section className="cv-section print-bg-light rounded-xl p-4 bg-slate-800/50">
               <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
