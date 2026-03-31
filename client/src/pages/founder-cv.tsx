@@ -340,46 +340,6 @@ export default function FounderCV() {
               </div>
             </section>
 
-            {/* Innovation & Technical Leadership Highlights */}
-            <section className="cv-section mb-6 print-bg-light rounded-xl p-4 bg-slate-800/50">
-              <h2 className="text-xl font-bold text-white print-dark-text mb-3 flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400 print-accent" />
-                Innovation & Technical Leadership Highlights
-              </h2>
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Architected Proprietary Enterprise Validation Platform — Natter</h3>
-                  <p className="text-sm text-gray-300">
-                    Designed and deployed the company-wide automation and release-validation infrastructure, cited by the CEO as 
-                    mission-critical for mitigating commercial and operational risk. This system enforced automated quality gates 
-                    across all services and became the core technical safeguard for the organisation's scalability.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Founding Automation Architect — Atlast.co</h3>
-                  <p className="text-sm text-gray-300">
-                    Built the entire TypeScript/Playwright multi-carrier logistics automation framework from the ground up. This 
-                    platform validated integrations with 20+ external carrier APIs, eliminating the company's most significant 
-                    technical risk and directly contributing to funding readiness and commercial reliability (confirmed by CEO and CTO letters).
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">CI/CD Quality Gate Transformation — Hopin</h3>
-                  <p className="text-sm text-gray-300">
-                    Engineered the green-build enforcement system and integrated automation across more than 20 engineering squads 
-                    during hyper-growth. Increased unit-test coverage from 40% to 85%, enabling safe continuous delivery at scale.
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-indigo-400 mb-1">Cross-Functional Engineering Leadership</h3>
-                  <p className="text-sm text-gray-300">
-                    Recognised as a technical leader across engineering squads, mentoring developers on testability, automation, 
-                    and architectural patterns, and influencing organisational development standards.
-                  </p>
-                </div>
-              </div>
-            </section>
-
             {/* Skills Grid */}
             <section className="cv-section mb-6">
               <h2 className="text-xl font-bold text-white print-dark-text mb-4 flex items-center gap-2">
