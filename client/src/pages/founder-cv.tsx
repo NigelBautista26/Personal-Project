@@ -293,9 +293,9 @@ export default function FounderCV() {
                   <p className="text-xl text-indigo-200 font-medium">Senior SDET / Software Engineer in Test</p>
                 </div>
                 <div className="contact-info flex flex-col gap-2 text-sm text-indigo-100">
-                  <a href="tel:07462413044" className="flex items-center gap-2 hover:text-white transition-colors">
+                  <a href="tel:0224353481" className="flex items-center gap-2 hover:text-white transition-colors">
                     <Phone className="w-4 h-4" />
-                    07462413044
+                    0224353481
                   </a>
                   <a href="mailto:nigel.zamudio.bautista@gmail.com" className="flex items-center gap-2 hover:text-white transition-colors">
                     <Mail className="w-4 h-4" />
