@@ -1,11 +1,13 @@
 import { drizzle } from "drizzle-orm/neon-serverless";
 import ws from "ws";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+const connectionString = process.env.SNAPNOW_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("No database URL found. Set SNAPNOW_DATABASE_URL or DATABASE_URL.");
 }
 
 export const db = drizzle({
-  connection: process.env.DATABASE_URL,
+  connection: connectionString,
   ws: ws,
 });

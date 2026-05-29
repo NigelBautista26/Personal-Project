@@ -50,3 +50,9 @@ waitForPort = 5000
 [agent]
 mockupState = "FULLSTACK"
 integrations = ["javascript_object_storage:1.0.0", "stripe:1.0.0", "javascript_database:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+NEON_API_KEY = "napi_6o6gzcjiodbyu4w0h64t1jz10twz255k3g3vuprnydl9sa6z2e9wtt6ocsi1gujo"
+SNAPNOW_DATABASE_URL = "postgresql://neondb_owner:npg_RT2DyZSL5VnJ@ep-autumn-mouse-aka4n11g.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require"
