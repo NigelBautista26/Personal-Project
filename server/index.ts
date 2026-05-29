@@ -54,7 +54,7 @@ if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
 // PostgreSQL session store for persistent sessions
 const PgStore = pgSession(session);
 const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.SNAPNOW_DATABASE_URL || process.env.DATABASE_URL,
 });
 
 app.set("trust proxy", 1); // Trust first proxy for secure cookies
